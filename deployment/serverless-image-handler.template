@@ -1,0 +1,502 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description" : "(SO0023) - Serverless Image Handler: This template creates a CloudFront distribution and an AWS API Gateway to provide an easy-to-use image manipulation API based on Thumbor. Template Version 1",
+  "Parameters": {
+    "OriginS3Bucket": {
+      "Description": "S3 bucket that will source your images.",
+      "Default": "original-images-bucket-name",
+      "Type": "String",
+      "ConstraintDescription": "Must be a valid S3 Bucket.",
+      "MinLength": "1",
+      "MaxLength": "64",
+      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9-]*"
+    },
+    "OriginS3BucketRegion": {
+      "Description": "S3 bucket Region that will source your images.",
+      "Default": "us-east-1",
+      "Type": "String",
+      "AllowedValues": [
+        "ap-south-1",
+        "ap-northeast-1",
+        "ap-northeast-2",
+        "ap-southeast-1",
+        "ap-southeast-2",
+        "ca-central-1",
+        "eu-central-1",
+        "eu-west-1",
+        "eu-west-2",
+        "sa-east-1",
+        "us-east-1",
+        "us-east-2",
+        "us-west-1",
+        "us-west-2"
+      ]
+    },
+    "LambdaLogRetention": {
+      "Description": "Retain Lambda CloudWatch Logs by days.",
+      "Type": "Number",
+      "Default": 1,
+      "AllowedValues": [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]
+    }
+  },
+  "Metadata" : {
+    "AWS::CloudFormation::Interface" : {
+     "ParameterGroups" : [
+      {
+        "Label" : { "default":"Image Handler API Configuration" },
+        "Parameters" : [ "OriginS3Bucket", "OriginS3BucketRegion", "LambdaLogRetention" ]
+      }
+     ],
+     "ParameterLabels" : {
+      "OriginS3Bucket" : { "default" : "Origin S3 Bucket" },
+      "OriginS3BucketRegion" : { "default" : "Origin S3 Bucket Region" },
+      "LambdaLogRetention" : { "default" : "Lambda Log Retention" }
+     }
+    }
+  },
+  "Mappings": {
+    "Send" : {
+      "AnonymousUsage" : { "Data" : "Yes" }
+    },
+    "Function" : {
+      "ImageHandler" : { 
+	      "S3Bucket" : "%%BUCKET_NAME%%",
+	      "S3Key" : "serverless-image-handler/latest/serverless-image-handler.zip",
+	      "Name" : "serverless-image-handler",
+	      "Handler": "serverless_image_handler/lambda_function.lambda_handler",
+        "Description": "Serverless Image Handler: This function is invoked by the serverless-image-handler API Gateway to manipulate images with Thumbor.",
+        "Runtime": "python2.7",
+        "Timeout": "10",
+        "MemorySize": "1536"
+      }
+    },
+    "S3EndPointMap": {
+      "us-east-1":      {"endpoint": "https://s3.amazonaws.com"},
+      "us-east-2":      {"endpoint": "https://s3.us-east-2.amazonaws.com"},
+      "us-west-1":      {"endpoint": "https://s3-us-west-1.amazonaws.com"},
+      "us-west-2":      {"endpoint": "https://s3-us-west-2.amazonaws.com"},
+      "ca-central-1":   {"endpoint": "https://s3.ca-central-1.amazonaws.com"},
+      "eu-west-1":      {"endpoint": "https://s3-eu-west-1.amazonaws.com"},
+      "eu-central-1":   {"endpoint": "https://s3.eu-central-1.amazonaws.com"},
+      "eu-west-2":      {"endpoint": "https://s3.eu-west-2.amazonaws.com"},
+      "ap-northeast-1": {"endpoint": "https://s3-ap-northeast-1.amazonaws.com"},
+      "ap-northeast-2": {"endpoint": "https://s3.ap-northeast-2.amazonaws.com"},
+      "ap-southeast-1": {"endpoint": "https://s3-ap-southeast-1.amazonaws.com"},
+      "ap-southeast-2": {"endpoint": "https://s3-ap-southeast-2.amazonaws.com"},
+      "ap-south-1":     {"endpoint": "https://s3.ap-south-1.amazonaws.com"},
+      "sa-east-1":      {"endpoint": "https://s3-sa-east-1.amazonaws.com"}
+    }
+  },
+  "Resources": {
+    "ImageHandlerS3Policy": {
+      "DependsOn": ["ImageHandlerRole"],
+      "Type": "AWS::IAM::Policy",
+      "Properties": { 
+      "PolicyName": {
+        "Fn::Join": [
+               "",
+                [ 
+                {"Ref": "AWS::StackName"},
+                "S3ReadPolicy"
+                ]
+               ]
+              },
+      "Roles": [{"Ref": "ImageHandlerRole"}],         
+      "PolicyDocument": {
+        "Version": "2012-10-17",
+        "Statement": 
+          [{
+            "Effect": "Allow",
+            "Action": ["s3:GetObject"],
+            "Resource": {
+              "Fn::Join": [
+                 "",
+                 [
+                   "arn:aws:s3:::",
+                   { "Ref": "OriginS3Bucket" },
+                   "/*"
+                 ]
+              ]
+            }
+          }]
+        }
+      }
+    },
+    "ImageHandlerLogPolicy": {
+      "DependsOn": ["ImageHandlerRole"],
+      "Type": "AWS::IAM::Policy",
+      "Properties": { 
+        "PolicyName": {
+          "Fn::Join": [
+            "",
+            [ 
+              {"Ref": "AWS::StackName"},
+              "LogPolicy"
+            ]
+          ]
+        },
+        "Roles": [{"Ref": "ImageHandlerRole"}],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+              ],
+	      "Resource": { "Fn::Join" : ["", ["arn:aws:logs:",{"Ref" : "AWS::Region"},":",{ "Ref" : "AWS::AccountId" }, ":log-group:/aws/lambda/*" ]]}
+            }
+          ]
+        }
+      }
+    },  
+    "ImageHandlerRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": {
+              "Service": ["lambda.amazonaws.com"]
+            },
+            "Action": [ "sts:AssumeRole" ]
+          }]
+        },
+        "Path": "/",
+        "RoleName": {
+          "Fn::Join": [
+             "",
+            [ 
+              {"Ref": "AWS::StackName"},
+              "Role"
+            ]
+          ]
+        }
+      }
+    },
+    "ImageHandlerFunction": {
+      "DependsOn": [
+        "ImageHandlerRole",
+        "ImageHandlerLogPolicy",
+        "ImageHandlerS3Policy",
+        "CreateUniqueID"
+      ],
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": { "Fn::Join": ["", [ { "Fn::FindInMap" : [ "Function", "ImageHandler", "S3Bucket"]}, "-", {"Ref": "AWS::Region"} ]] },
+          "S3Key": { "Fn::FindInMap" : [ "Function", "ImageHandler", "S3Key"]}
+        },
+        "MemorySize": { "Fn::FindInMap" : [ "Function", "ImageHandler", "MemorySize"]},
+        "Handler": { "Fn::FindInMap" : [ "Function", "ImageHandler", "Handler"]},
+        "Role": {"Fn::GetAtt": ["ImageHandlerRole", "Arn"]},
+        "Timeout": { "Fn::FindInMap" : [ "Function", "ImageHandler", "Timeout"]},
+        "Runtime": { "Fn::FindInMap" : [ "Function", "ImageHandler", "Runtime"]},
+        "Description": { "Fn::FindInMap" : [ "Function", "ImageHandler", "Description"]},
+        "Environment": {
+            "Variables": { 
+            "TC_AWS_LOADER_BUCKET":{ "Ref": "OriginS3Bucket" },
+            "TC_AWS_STORAGE_ROOT_PATH":"",
+            "TC_AWS_ENDPOINT":{ 
+              "Fn::FindInMap": 
+                [ 
+                  "S3EndPointMap",
+                  { "Ref": "OriginS3BucketRegion" },
+                  "endpoint"
+                ]
+            },
+            "TC_AWS_REGION":{ "Ref": "OriginS3BucketRegion" },
+            "TC_AWS_STORAGE_BUCKET":{ "Ref": "OriginS3Bucket" },
+            "SEND_ANONYMOUS_DATA":{ "Fn::FindInMap" : [ "Send", "AnonymousUsage", "Data"]},
+            "UUID":{"Fn::GetAtt": ["CreateUniqueID", "UUID"]},
+            "LOG_LEVEL":"INFO"
+          }
+        } 
+      }
+    },
+    "ImageHandlerLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+        "DependsOn": "ImageHandlerFunction",
+        "Properties": {
+            "RetentionInDays": { "Ref": "LambdaLogRetention" },
+        "LogGroupName": {
+              "Fn::Join":
+              [
+                "", 
+                ["/aws/lambda/", {"Ref": "ImageHandlerFunction"}]
+              ]
+            }
+          }
+    },
+    "ImageHandlerApiDeployment": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "ImageHandlerApi"
+        },
+        "StageName": "image"
+      }
+    },
+    "ImageHandlerApi": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Body": {
+          "swagger": "2.0",
+          "info": {
+            "version": "2017-01-27T21:44:58Z",
+            "title": "ImageHandler"
+          },
+          "basePath": "/image",
+          "schemes": [
+            "https"
+          ],
+          "paths": {
+            "/{proxy+}": {
+              "x-amazon-apigateway-any-method": {
+                "produces": [
+                  "application/json"
+                ],
+                "parameters": [
+                  {
+                    "name": "proxy",
+                    "in": "path",
+                    "required": true,
+                    "type": "string"
+                  }
+                ],
+                "responses": {},
+                "x-amazon-apigateway-integration": {
+                  "responses": {
+                    "default": {
+                      "statusCode": "200"
+                    }
+                  },
+                  "uri": {
+                     "Fn::Join": [
+                       "",
+                       [
+                         "arn:aws:apigateway:",
+                         { "Ref": "AWS::Region" },
+                         ":",
+                         "lambda:path/2015-03-31/functions/",
+                         {"Fn::GetAtt": ["ImageHandlerFunction", "Arn"]},
+                         "/invocations"
+                       ]
+                     ]
+                   },
+                  "passthroughBehavior": "when_no_match",
+                  "httpMethod": "POST",
+                  "cacheNamespace": "xh7gp9",
+                  "cacheKeyParameters": [
+                    "method.request.path.proxy"
+                  ],
+                  "contentHandling": "CONVERT_TO_TEXT",
+                  "type": "aws_proxy"
+                }
+              }
+            }
+          },
+          "x-amazon-apigateway-binary-media-types": [
+            "*/*"
+          ]
+        }
+      }
+    },
+    "ImageHandlerPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": { "Fn::GetAtt": ["ImageHandlerFunction", "Arn"] },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:aws:execute-api:",
+              { "Ref": "AWS::Region" },
+              ":",
+              { "Ref": "AWS::AccountId" },
+              ":",
+              { "Ref": "ImageHandlerApi" },
+              "/*/*/*"
+            ]
+          ]
+        }
+      }
+    },
+    "ImageHandlerDistribution": {
+      "Type": "AWS::CloudFront::Distribution",
+      "Properties": {
+        "DistributionConfig": {
+          "Origins": [ 
+            { 
+              "DomainName": {
+                "Fn::Join": [
+                  "", 
+                  [
+                    { "Ref": "ImageHandlerApi"}, 
+                    ".execute-api.", 
+                    {"Ref": "AWS::Region"}, 
+                    ".amazonaws.com"
+                  ]
+                ]
+              },
+              "Id": { "Ref": "ImageHandlerApi"},
+              "OriginPath": "/image",
+              "CustomOriginConfig": {
+                "HTTPSPort": "443",
+                "OriginProtocolPolicy": "https-only",
+                "OriginSSLProtocols": ["TLSv1", "TLSv1.1", "TLSv1.2"]
+              }
+            }
+          ],
+          "Enabled": "true",
+          "HttpVersion": "http2",
+          "Comment": "Image Resize Distribution",
+          "DefaultCacheBehavior": {
+            "AllowedMethods": [ "GET", "HEAD"],
+            "TargetOriginId": { "Ref": "ImageHandlerApi"},
+            "ForwardedValues": {
+              "QueryString": "false",
+              "Cookies": { "Forward": "none" }
+            },
+            "ViewerProtocolPolicy": "https-only"
+          },
+          "CustomErrorResponses": [
+            {
+              "ErrorCode": 500,
+              "ErrorCachingMinTTL": 10
+            },
+            {
+              "ErrorCode": 501,
+              "ErrorCachingMinTTL": 10
+            },
+            {
+              "ErrorCode": 502,
+              "ErrorCachingMinTTL": 10
+            },
+            {
+              "ErrorCode": 503,
+              "ErrorCachingMinTTL": 10
+            },
+            {
+              "ErrorCode": 504,
+              "ErrorCachingMinTTL": 10
+            }
+          ],
+          "PriceClass": "PriceClass_All"
+        }
+      }
+    },
+    "SolutionHelperRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [ {
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "lambda.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+          } ]
+        },
+        "Path": "/"
+      }
+   },
+    "SolutionHelperPermission" : {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+	      "Roles" : [ { "Ref" : "SolutionHelperRole" } ],
+        "PolicyName": "Solution_Helper_Permissions",
+        "PolicyDocument": {
+          "Version" : "2012-10-17",
+	        "Statement": [ {
+		        "Effect": "Allow",
+		        "Action": [
+		          "logs:CreateLogGroup",
+		          "logs:CreateLogStream",
+		          "logs:PutLogEvents"
+		        ],
+		        "Resource": { "Fn::Join" : ["", ["arn:aws:logs:",{"Ref" : "AWS::Region"},":",{ "Ref" : "AWS::AccountId" }, ":log-group:/aws/lambda/*" ]]}
+		      } ]
+        }
+      }
+   },
+    "SolutionHelper": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn" : "SolutionHelperPermission",
+      "Properties": {
+      	"Handler": "solution-helper.lambda_handler",
+      	"Role": { "Fn::GetAtt" : [ "SolutionHelperRole" , "Arn" ] },
+        "Description": "Serverless-Image-Handler: CloudFormation custom resource function invoked during CloudFormation create, update, and delete stack operations.",
+      	"Code": {
+      	  "S3Bucket": { "Fn::Join": ["", ["solutions-", {"Ref" : "AWS::Region"}]] },
+      	  "S3Key": "library/solution-helper/v2/solution-helper.zip"
+      	},
+      	"Runtime": "python2.7",
+      	"Timeout": "60"
+     }
+   },
+  "CreateUniqueID": {
+      "Type": "Custom::LoadLambda",
+      "Properties": {
+        "ServiceToken": { "Fn::GetAtt": ["SolutionHelper", "Arn"] },
+        "Region": { "Ref": "AWS::Region" },
+        "CreateUniqueID": "true"
+      }
+    },
+    "SendingData": {
+        "Type": "Custom::LoadLambda",
+        "Properties": {
+          "ServiceToken": { "Fn::GetAtt": ["SolutionHelper", "Arn"] },
+          "SendAnonymousData": { "Fn::Join": ["", [
+                "{ 'Solution' : '", "SO0023", "', ",
+                  "'UUID' : '", {"Fn::GetAtt": ["CreateUniqueID", "UUID"]}, "', ",
+                  "'Data': {", "'ApiRegion': '", {"Ref": "AWS::Region"}, "',",
+                               "'LogRetention': '", {"Ref": "LambdaLogRetention"}, "'",
+                               "'OriginS3BucketRegion': '", {"Ref": "OriginS3BucketRegion"}, "'",
+                               "'SendAnonymousData': '", { "Fn::FindInMap" : [ "Send", "AnonymousUsage", "Data"]}, "'",
+                          "}",
+                "}"
+              ]]
+            }
+        }
+    }    
+  },
+  "Outputs": {
+    "CloudFrontURL": {
+      "Description": "URL for new CloudFront distribution",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Fn::GetAtt": ["ImageHandlerDistribution", "DomainName"]
+            }
+          ]
+        ]
+      }
+    },
+    "CloudFrontSampleRequest": {
+      "Description": "Sample URL calling origin image key through CloudFront",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Fn::GetAtt": ["ImageHandlerDistribution", "DomainName"]
+            },
+            "/fit-in/100x100/image-name.jpg"
+          ]
+        ]
+      }
+    }
+  }
+}
+
