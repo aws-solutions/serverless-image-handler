@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description" : "(SO0023) - Serverless Image Handler: This template creates a CloudFront distribution and an AWS API Gateway to provide an easy-to-use image manipulation API based on Thumbor. Template Version 1",
+  "Description" : "(SO0023) - Serverless Image Handler: This template creates a CloudFront distribution and an AWS API Gateway to provide an easy-to-use image manipulation API based on Thumbor. Template Version 2",
   "Parameters": {
     "OriginS3Bucket": {
       "Description": "S3 bucket that will source your images.",
@@ -37,6 +37,25 @@
       "Type": "Number",
       "Default": 1,
       "AllowedValues": [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]
+    },
+    "DeployUI": {
+      "Description": "Do you want to deploy a demo Serverless Image Handler UI to your original images bucket?",
+      "Type": "String",
+      "Default": "Yes",
+      "AllowedValues": ["Yes", "No"]
+    },
+    "UIDestPrefix": {
+      "Description" : "Prefix for UI files in S3 bucket (currently only supports one folder)",
+      "Type": "String",
+      "Default": "serverless-image-handler-ui/",
+      "ConstraintDescription": "Prefix must contains letters, numbers, or dashes and end with a forward slash (/); it cannot start with a forward slash or contain a forward slash -- for example 'serverless-image-handler-ui/'",
+      "AllowedPattern": "^(?!\/)[a-zA-Z][a-zA-Z0-9-]+\/$"
+    },
+    "UIPublicRead" : {
+      "Description": "Should the UI be configured for public (anonymous) access?",
+      "Type": "String",
+      "Default" : "Yes",
+      "AllowedValues": ["Yes", "No"]
     }
   },
   "Metadata" : {
@@ -45,12 +64,19 @@
       {
         "Label" : { "default":"Image Handler API Configuration" },
         "Parameters" : [ "OriginS3Bucket", "OriginS3BucketRegion", "LambdaLogRetention" ]
+      },
+      {
+        "Label" : { "default":"Image Handler UI Configuration" },
+        "Parameters" : [ "DeployUI", "UIDestPrefix", "UIPublicRead" ]
       }
      ],
      "ParameterLabels" : {
       "OriginS3Bucket" : { "default" : "Origin S3 Bucket" },
       "OriginS3BucketRegion" : { "default" : "Origin S3 Bucket Region" },
-      "LambdaLogRetention" : { "default" : "Lambda Log Retention" }
+      "LambdaLogRetention" : { "default" : "Lambda Log Retention" },
+      "DeployUI" : { "default" : "Deploy UI?" },
+      "UIDestPrefix" : { "default" : "UI Prefix" },
+      "UIPublicRead" : { "default" : "Make UI Public?" }
      }
     }
   },
@@ -59,15 +85,36 @@
       "AnonymousUsage" : { "Data" : "Yes" }
     },
     "Function" : {
-      "ImageHandler" : { 
+      "ImageHandler" : {
 	      "S3Bucket" : "%%BUCKET_NAME%%",
 	      "S3Key" : "serverless-image-handler/latest/serverless-image-handler.zip",
 	      "Name" : "serverless-image-handler",
-	      "Handler": "serverless_image_handler/lambda_function.lambda_handler",
+	      "Handler": "image_handler/lambda_function.lambda_handler",
         "Description": "Serverless Image Handler: This function is invoked by the serverless-image-handler API Gateway to manipulate images with Thumbor.",
         "Runtime": "python2.7",
         "Timeout": "10",
         "MemorySize": "1536"
+      },
+      "CustomResource" : {
+	      "S3Bucket" : "%%BUCKET_NAME%%",
+	      "S3Key" : "serverless-image-handler/latest/serverless-image-handler-custom-resource.zip",
+	      "Name" : "serverless-image-handler-custom-resource",
+	      "Handler": "image_handler_custom_resource/cfn_custom_resource.lambda_handler",
+        "Description": "Serverless Image Handler: CloudFormation custom resource function invoked during CloudFormation create, update, and delete stack operations.",
+        "Runtime": "python2.7",
+        "Timeout": "60",
+        "MemorySize": "128"
+      }
+    },
+    "UI" : {
+      "Src" : {
+        "Bucket" : "%%BUCKET_NAME%%",
+	      "Key" : "serverless-image-handler/latest/serverless-image-handler-ui.zip"
+      },
+      "FindReplace" : {
+        "DomainName"  : "%%CloudFrontDomainName%%",
+        "S3URL"       : "%%S3URL%%",
+        "Deliminator" : "|"
       }
     },
     "S3EndPointMap": {
@@ -87,24 +134,27 @@
       "sa-east-1":      {"endpoint": "https://s3-sa-east-1.amazonaws.com"}
     }
   },
+  "Conditions" : {
+   "AutoDeployUI" : {"Fn::Equals" : [{"Ref" : "DeployUI"}, "Yes"]}
+ },
   "Resources": {
     "ImageHandlerS3Policy": {
       "DependsOn": ["ImageHandlerRole"],
       "Type": "AWS::IAM::Policy",
-      "Properties": { 
+      "Properties": {
       "PolicyName": {
         "Fn::Join": [
                "",
-                [ 
+                [
                 {"Ref": "AWS::StackName"},
                 "S3ReadPolicy"
                 ]
                ]
               },
-      "Roles": [{"Ref": "ImageHandlerRole"}],         
+      "Roles": [{"Ref": "ImageHandlerRole"}],
       "PolicyDocument": {
         "Version": "2012-10-17",
-        "Statement": 
+        "Statement":
           [{
             "Effect": "Allow",
             "Action": ["s3:GetObject"],
@@ -125,11 +175,11 @@
     "ImageHandlerLogPolicy": {
       "DependsOn": ["ImageHandlerRole"],
       "Type": "AWS::IAM::Policy",
-      "Properties": { 
+      "Properties": {
         "PolicyName": {
           "Fn::Join": [
             "",
-            [ 
+            [
               {"Ref": "AWS::StackName"},
               "LogPolicy"
             ]
@@ -151,7 +201,7 @@
           ]
         }
       }
-    },  
+    },
     "ImageHandlerRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -169,7 +219,7 @@
         "RoleName": {
           "Fn::Join": [
              "",
-            [ 
+            [
               {"Ref": "AWS::StackName"},
               "Role"
             ]
@@ -197,12 +247,12 @@
         "Runtime": { "Fn::FindInMap" : [ "Function", "ImageHandler", "Runtime"]},
         "Description": { "Fn::FindInMap" : [ "Function", "ImageHandler", "Description"]},
         "Environment": {
-            "Variables": { 
+            "Variables": {
             "TC_AWS_LOADER_BUCKET":{ "Ref": "OriginS3Bucket" },
             "TC_AWS_STORAGE_ROOT_PATH":"",
-            "TC_AWS_ENDPOINT":{ 
-              "Fn::FindInMap": 
-                [ 
+            "TC_AWS_ENDPOINT":{
+              "Fn::FindInMap":
+                [
                   "S3EndPointMap",
                   { "Ref": "OriginS3BucketRegion" },
                   "endpoint"
@@ -214,7 +264,7 @@
             "UUID":{"Fn::GetAtt": ["CreateUniqueID", "UUID"]},
             "LOG_LEVEL":"INFO"
           }
-        } 
+        }
       }
     },
     "ImageHandlerLogGroup": {
@@ -225,7 +275,7 @@
         "LogGroupName": {
               "Fn::Join":
               [
-                "", 
+                "",
                 ["/aws/lambda/", {"Ref": "ImageHandlerFunction"}]
               ]
             }
@@ -331,15 +381,15 @@
       "Type": "AWS::CloudFront::Distribution",
       "Properties": {
         "DistributionConfig": {
-          "Origins": [ 
-            { 
+          "Origins": [
+            {
               "DomainName": {
                 "Fn::Join": [
-                  "", 
+                  "",
                   [
-                    { "Ref": "ImageHandlerApi"}, 
-                    ".execute-api.", 
-                    {"Ref": "AWS::Region"}, 
+                    { "Ref": "ImageHandlerApi"},
+                    ".execute-api.",
+                    {"Ref": "AWS::Region"},
                     ".amazonaws.com"
                   ]
                 ]
@@ -391,7 +441,7 @@
         }
       }
     },
-    "SolutionHelperRole": {
+    "CustomResourceRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
         "AssumeRolePolicyDocument": {
@@ -407,11 +457,11 @@
         "Path": "/"
       }
    },
-    "SolutionHelperPermission" : {
+    "CustomResourceLoggingPolicy" : {
       "Type": "AWS::IAM::Policy",
       "Properties": {
-	      "Roles" : [ { "Ref" : "SolutionHelperRole" } ],
-        "PolicyName": "Solution_Helper_Permissions",
+	      "Roles" : [ { "Ref" : "CustomResourceRole" } ],
+        "PolicyName": "Image_Handler_Custom_Resource_Logging_Policy",
         "PolicyDocument": {
           "Version" : "2012-10-17",
 	        "Statement": [ {
@@ -426,77 +476,154 @@
         }
       }
    },
-    "SolutionHelper": {
-      "Type": "AWS::Lambda::Function",
-      "DependsOn" : "SolutionHelperPermission",
-      "Properties": {
-      	"Handler": "solution-helper.lambda_handler",
-      	"Role": { "Fn::GetAtt" : [ "SolutionHelperRole" , "Arn" ] },
-        "Description": "Serverless-Image-Handler: CloudFormation custom resource function invoked during CloudFormation create, update, and delete stack operations.",
-      	"Code": {
-      	  "S3Bucket": { "Fn::Join": ["", ["solutions-", {"Ref" : "AWS::Region"}]] },
-      	  "S3Key": "library/solution-helper/v2/solution-helper.zip"
-      	},
-      	"Runtime": "python2.7",
-      	"Timeout": "60"
+   "CustomResourceDeployPolicy" : {
+     "Type": "AWS::IAM::Policy",
+     "Properties": {
+       "Roles" : [ { "Ref" : "CustomResourceRole" } ],
+       "PolicyName": "Image_Handler_Custom_Resource_S3_Deploy_Policy",
+       "PolicyDocument": {
+         "Version" : "2012-10-17",
+         "Statement": [ {
+           "Effect": "Allow",
+           "Action": [
+             "s3:GetObject"
+           ],
+           "Resource": { "Fn::Join": ["", [
+                 "arn:aws:s3:::",{ "Fn::FindInMap" : [ "UI", "Src", "Bucket"]}, "-", {"Ref": "AWS::Region"},
+                             "/",{ "Fn::FindInMap" : [ "UI", "Src", "Key"]} ]]
+           }
+         },{
+           "Effect": "Allow",
+           "Action": [
+             "s3:DeleteObject",
+             "s3:PutObject",
+             "s3:PutObjectAcl"
+           ],
+           "Resource": { "Fn::Join": ["", [
+                 "arn:aws:s3:::", { "Ref" : "OriginS3Bucket"},"/",
+                                  { "Ref" : "UIDestPrefix"}, "*" ]]
+           }
+         },{
+           "Effect": "Allow",
+           "Action": [
+             "s3:ListBucket"
+           ],
+           "Resource": { "Fn::Join": ["", [ "arn:aws:s3:::", { "Ref" : "OriginS3Bucket"} ]]
+           }
+         } ]
+       }
+     }
+  },
+   "CustomResource": {
+     "Type": "AWS::Lambda::Function",
+     "DependsOn" : [
+       "CustomResourceLoggingPolicy",
+       "CustomResourceDeployPolicy"
+     ],
+     "Properties": {
+       "Code": {
+         "S3Bucket": { "Fn::Join": ["", [ { "Fn::FindInMap" : [ "Function", "CustomResource", "S3Bucket"]}, "-", {"Ref": "AWS::Region"} ]] },
+         "S3Key": { "Fn::FindInMap" : [ "Function", "CustomResource", "S3Key"]}
+       },
+       "MemorySize": { "Fn::FindInMap" : [ "Function", "CustomResource", "MemorySize"]},
+       "Handler": { "Fn::FindInMap" : [ "Function", "CustomResource", "Handler"]},
+       "Role": {"Fn::GetAtt": ["CustomResourceRole", "Arn"]},
+       "Timeout": { "Fn::FindInMap" : [ "Function", "CustomResource", "Timeout"]},
+       "Runtime": { "Fn::FindInMap" : [ "Function", "CustomResource", "Runtime"]},
+       "Description": { "Fn::FindInMap" : [ "Function", "CustomResource", "Description"]},
+       "Environment": {
+           "Variables": {
+             "LOG_LEVEL":"INFO"
+           }
+       }
      }
    },
   "CreateUniqueID": {
       "Type": "Custom::LoadLambda",
+      "DependsOn" : [
+        "CustomResourceLoggingPolicy",
+        "CustomResourceDeployPolicy",
+        "CustomResource"
+      ],
       "Properties": {
-        "ServiceToken": { "Fn::GetAtt": ["SolutionHelper", "Arn"] },
+        "ServiceToken": { "Fn::GetAtt": ["CustomResource", "Arn"] },
         "Region": { "Ref": "AWS::Region" },
         "CreateUniqueID": "true"
       }
     },
+    "DeployingUI": {
+        "Type": "Custom::LoadLambda",
+        "DependsOn" : [
+          "CustomResourceLoggingPolicy",
+          "CustomResourceDeployPolicy",
+          "CustomResource"
+        ],
+        "Condition" : "AutoDeployUI",
+        "Properties": {
+          "ServiceToken": { "Fn::GetAtt": ["CustomResource", "Arn"] },
+          "DeployUI": { "Fn::Join": ["", [
+                "{ 'UISourceURL' : '",{ "Fn::FindInMap" : [ "UI", "Src", "Bucket"]}, "-", {"Ref": "AWS::Region"},
+                                  "/",{ "Fn::FindInMap" : [ "UI", "Src", "Key"]},"',",
+                  "'UIBucket' : '", { "Ref" : "OriginS3Bucket"}, "', ",
+                  "'UIBucketRegion' : '", { "Ref" : "OriginS3BucketRegion"}, "', ",
+                  "'UIPrefix' : '", { "Ref" : "UIDestPrefix"}, "', ",
+                  "'UIPublicRead' : '", { "Ref" : "UIPublicRead"}, "', ",
+                  "'FindReplace' : '",{ "Fn::FindInMap" : [ "UI", "FindReplace", "DomainName"]},
+                                      { "Fn::FindInMap" : [ "UI", "FindReplace", "Deliminator"]},
+                                      {"Fn::GetAtt": ["ImageHandlerDistribution", "DomainName"]},",",
+                                      { "Fn::FindInMap" : [ "UI", "FindReplace", "S3URL"]},
+                                      { "Fn::FindInMap" : [ "UI", "FindReplace", "Deliminator"]},
+                                      { "Fn::FindInMap" : [ "S3EndPointMap", { "Ref" : "OriginS3BucketRegion"}, "endpoint"]},"/",
+                                      { "Ref" : "OriginS3Bucket"},"/",
+                                      { "Ref" : "UIDestPrefix" },"', ",
+                  "'Deliminator' : '",{ "Fn::FindInMap" : [ "UI", "FindReplace", "Deliminator"]},"'",
+                "}"
+              ]]
+            }
+        }
+    },
     "SendingData": {
         "Type": "Custom::LoadLambda",
+        "DependsOn" : [
+          "CustomResourceLoggingPolicy",
+          "CustomResourceDeployPolicy",
+          "CustomResource"
+        ],
         "Properties": {
-          "ServiceToken": { "Fn::GetAtt": ["SolutionHelper", "Arn"] },
+          "ServiceToken": { "Fn::GetAtt": ["CustomResource", "Arn"] },
           "SendAnonymousData": { "Fn::Join": ["", [
-                "{ 'Solution' : '", "SO0023", "', ",
-                  "'UUID' : '", {"Fn::GetAtt": ["CreateUniqueID", "UUID"]}, "', ",
-                  "'Data': {", "'ApiRegion': '", {"Ref": "AWS::Region"}, "',",
-                               "'LogRetention': '", {"Ref": "LambdaLogRetention"}, "'",
-                               "'OriginS3BucketRegion': '", {"Ref": "OriginS3BucketRegion"}, "'",
+                "{ 'UUID' : '", {"Fn::GetAtt": ["CreateUniqueID", "UUID"]}, "', ",
+                  "'Data': {", "'Version' : '2', ",
+                               "'ApiRegion': '", {"Ref": "AWS::Region"}, "',",
+                               "'LogRetention': '", {"Ref": "LambdaLogRetention"}, "',",
+                               "'OriginS3BucketRegion': '", {"Ref": "OriginS3BucketRegion"}, "',",
+                               "'DeployUI': '", {"Ref": "DeployUI"}, "',",
+                               "'UIPublicRead': '", {"Ref": "UIPublicRead"}, "',",
                                "'SendAnonymousData': '", { "Fn::FindInMap" : [ "Send", "AnonymousUsage", "Data"]}, "'",
                           "}",
                 "}"
               ]]
             }
         }
-    }    
+    }
   },
   "Outputs": {
     "CloudFrontURL": {
       "Description": "URL for new CloudFront distribution",
-      "Value": {
-        "Fn::Join": [
-          "",
-          [
-            "https://",
-            {
-              "Fn::GetAtt": ["ImageHandlerDistribution", "DomainName"]
-            }
-          ]
-        ]
-      }
+      "Value": { "Fn::Sub": [ "https://${Domain}", { "Domain": {"Fn::GetAtt": ["ImageHandlerDistribution", "DomainName"]}} ]}
     },
     "CloudFrontSampleRequest": {
       "Description": "Sample URL calling origin image key through CloudFront",
-      "Value": {
-        "Fn::Join": [
-          "",
-          [
-            "https://",
-            {
-              "Fn::GetAtt": ["ImageHandlerDistribution", "DomainName"]
-            },
-            "/fit-in/100x100/image-name.jpg"
-          ]
-        ]
-      }
+      "Value": { "Fn::Sub": [ "https://${Domain}/fit-in/100x100/image-name.jpg", { "Domain": {"Fn::GetAtt": ["ImageHandlerDistribution", "DomainName"]}} ]}
+    },
+    "SolutionUI": {
+      "Description": "If enabled, the URL for the UI.",
+      "Value": { "Fn::Sub": [
+                  "${S3Url}/${Bucket}/${Prefix}index.html",
+                  { "S3Url": { "Fn::FindInMap" : [ "S3EndPointMap", { "Ref" : "OriginS3BucketRegion"}, "endpoint"]},
+                    "Bucket": { "Ref" : "OriginS3Bucket"},
+                    "Prefix": { "Ref" : "UIDestPrefix" } }
+               ] }
     }
   }
 }
-

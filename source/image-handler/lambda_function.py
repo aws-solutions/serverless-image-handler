@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 ##############################################################################
-#  Copyright 2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.   #
+#  Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.   #
 #                                                                            #
 #  Licensed under the Amazon Software License (the "License"). You may not   #
 #  use this file except in compliance with the License. A copy of the        #
@@ -27,7 +27,8 @@ import os.path
 import json
 import os
 import timeit
-from serverless_image_handler import lambda_metrics
+from image_handler import lambda_metrics
+from image_handler import lambda_rewrite
 from PIL import Image
 from io import BytesIO
 
@@ -39,7 +40,7 @@ from thumbor.console import get_server_parameters
 from thumbor.context import ServerParameters
 from thumbor.server import *
 
-thumbor_config_path = '/var/task/serverless_image_handler/thumbor.conf'
+thumbor_config_path = '/var/task/image_handler/thumbor.conf'
 thumbor_socket = '/tmp/thumbor'
 
 
@@ -133,6 +134,17 @@ def start_server():
     t = threading.Thread(target=start_thumbor)
     t.daemon = True
     t.start()
+    return t
+
+
+def restart_server():
+    threads = threading.enumerate()
+    main_thread = threading.current_thread()
+    for t in threads:
+        if t is not main_thread:
+            t.exit()
+            t.join()
+    start_server()
 
 
 def call_thumbor(request):
@@ -152,12 +164,18 @@ def call_thumbor(request):
             retries -= 1
             continue
     if retries <= 0:
-        logging.error('call_thumbor error: 502')
+        logging.error(
+            'call_thumbor error: tornado server unavailable,\
+            proceeding with tornado server restart'
+        )
+        restart_server()
         return response_formater(status_code='502')
     if config.ALLOW_UNSAFE_URL:
         http_path = '/unsafe' + request['path']
     else:
         http_path = request['path']
+    if str(os.environ.get('REWRITE_ENABLED')).upper() == 'YES':
+        http_path = lambda_rewrite.match_patterns(http_path)
     response = session.get(unix_path + http_path)
     if response.status_code != 200:
         return response_formater(status_code=response.status_code)
@@ -193,11 +211,12 @@ def gen_body(ctype, content):
 
 
 def send_metrics(event, result, start_time):
-    threading.Thread(
-        target=lambda_metrics.sed_data,
+    t = threading.Thread(
+        target=lambda_metrics.send_data,
         args=(event, result, start_time, )
-    ).start()
-
+    )
+    t.start()
+    return t
 
 def lambda_handler(event, context):
     try:
@@ -215,8 +234,7 @@ def lambda_handler(event, context):
            event['requestContext']['httpMethod'] != 'HEAD':
             return response_formater(status_code=405)
         result = call_thumbor(event)
-        if os.environ.get('SEND_ANONYMOUS_DATA') == 'Yes' or\
-           os.environ.get('SEND_ANONYMOUS_DATA') == 'yes':
+        if str(os.environ.get('SEND_ANONYMOUS_DATA')).upper() == 'YES':
             send_metrics(event, result, start_time)
         return result
     except Exception as error:

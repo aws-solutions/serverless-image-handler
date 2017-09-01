@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ##############################################################################
-#  Copyright 2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.   #
+#  Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.   #
 #                                                                            #
 #  Licensed under the Amazon Software License (the 'License'). You may not   #
 #  use this file except in compliance with the License. A copy of the        #
@@ -28,7 +28,7 @@ from pkg_resources import get_distribution
 from thumbor.url import Url
 
 
-def sed_data(event, result, start_time):
+def send_data(event, result, start_time):
     time_now = datetime.datetime.utcnow().isoformat()
     time_stamp = str(time_now)
     postDict = {}
@@ -38,7 +38,7 @@ def sed_data(event, result, start_time):
     if int(result['statusCode']) == 200:
         size = (len(result['body'] * 3)) / 4
     postDict['Data'] = {
-        'Version': get_distribution('serverless_image_handler').version,
+        'Version': get_distribution('image_handler').version,
         'Company': 'AWS',
         'Name': 'AWS Serverless Image Handler',
         'Region': os.environ.get('AWS_DEFAULT_REGION'),
@@ -60,3 +60,4 @@ def sed_data(event, result, start_time):
     rspcode = rsp.getcode()
     logging.debug('Response Code: {}'.format(rspcode))
     logging.debug('Response Content: {}'.format(content))
+    return req
