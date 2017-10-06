@@ -9,7 +9,7 @@
       "ConstraintDescription": "Must be a valid S3 Bucket.",
       "MinLength": "1",
       "MaxLength": "64",
-      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9-]*"
+      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9-.]*"
     },
     "OriginS3BucketRegion": {
       "Description": "S3 bucket Region that will source your images.",
@@ -31,6 +31,20 @@
         "us-west-1",
         "us-west-2"
       ]
+    },
+    "EnableCors": {
+      "Description": "Will this API require Cross-Origin Resource Sharing (CORS) support?",
+      "Default": "No",
+      "Type": "String",
+      "AllowedValues": [
+        "Yes",
+        "No"
+      ]
+    },
+    "CorsOrig": {
+      "Description": "This value will be returned by the API in the Access-Control-Allow-Origin header. A star (*) value will support any origin. We recommend specifying a specific origin (e.g. http://example.domain) to restrict cross-site access to your API.",
+      "Default": "*",
+      "Type": "String"
     },
     "LambdaLogRetention": {
       "Description": "Retain Lambda CloudWatch Logs by days.",
@@ -63,7 +77,7 @@
      "ParameterGroups" : [
       {
         "Label" : { "default":"Image Handler API Configuration" },
-        "Parameters" : [ "OriginS3Bucket", "OriginS3BucketRegion", "LambdaLogRetention" ]
+        "Parameters" : [ "OriginS3Bucket", "OriginS3BucketRegion", "EnableCors", "CorsOrig","LambdaLogRetention" ]
       },
       {
         "Label" : { "default":"Image Handler UI Configuration" },
@@ -73,6 +87,8 @@
      "ParameterLabels" : {
       "OriginS3Bucket" : { "default" : "Origin S3 Bucket" },
       "OriginS3BucketRegion" : { "default" : "Origin S3 Bucket Region" },
+      "EnableCors" : { "default" : "Enable CORS?" },
+      "CorsOrig" : { "default" : "CORS Origin" },
       "LambdaLogRetention" : { "default" : "Lambda Log Retention" },
       "DeployUI" : { "default" : "Deploy UI?" },
       "UIDestPrefix" : { "default" : "UI Prefix" },
@@ -260,6 +276,8 @@
             },
             "TC_AWS_REGION":{ "Ref": "OriginS3BucketRegion" },
             "TC_AWS_STORAGE_BUCKET":{ "Ref": "OriginS3Bucket" },
+            "ENABLE_CORS":{ "Ref" : "EnableCors"},
+            "CORS_ORIGIN":{ "Ref" : "CorsOrig"},
             "SEND_ANONYMOUS_DATA":{ "Fn::FindInMap" : [ "Send", "AnonymousUsage", "Data"]},
             "UUID":{"Fn::GetAtt": ["CreateUniqueID", "UUID"]},
             "LOG_LEVEL":"INFO"
@@ -608,14 +626,6 @@
     }
   },
   "Outputs": {
-    "CloudFrontURL": {
-      "Description": "URL for new CloudFront distribution",
-      "Value": { "Fn::Sub": [ "https://${Domain}", { "Domain": {"Fn::GetAtt": ["ImageHandlerDistribution", "DomainName"]}} ]}
-    },
-    "CloudFrontSampleRequest": {
-      "Description": "Sample URL calling origin image key through CloudFront",
-      "Value": { "Fn::Sub": [ "https://${Domain}/fit-in/100x100/image-name.jpg", { "Domain": {"Fn::GetAtt": ["ImageHandlerDistribution", "DomainName"]}} ]}
-    },
     "SolutionUI": {
       "Description": "If enabled, the URL for the UI.",
       "Value": { "Fn::Sub": [
@@ -624,6 +634,22 @@
                     "Bucket": { "Ref" : "OriginS3Bucket"},
                     "Prefix": { "Ref" : "UIDestPrefix" } }
                ] }
+    },
+    "CloudFrontURL": {
+      "Description": "URL for new CloudFront distribution",
+      "Value": { "Fn::Sub": [ "https://${Domain}", { "Domain": {"Fn::GetAtt": ["ImageHandlerDistribution", "DomainName"]}} ]}
+    },
+    "CloudFrontSampleRequest": {
+      "Description": "Sample URL calling origin image key through CloudFront",
+      "Value": { "Fn::Sub": [ "https://${Domain}/fit-in/100x100/image-name.jpg", { "Domain": {"Fn::GetAtt": ["ImageHandlerDistribution", "DomainName"]}} ]}
+    },
+    "CorsEnabled": {
+      "Description": "Was CORS support enabled?",
+      "Value": { "Ref" : "EnableCors"}
+    },
+    "CorsOrigin": {
+      "Description": "If enabled, allow CORS from this origin.",
+      "Value": { "Ref" : "CorsOrig"}
     }
   }
 }

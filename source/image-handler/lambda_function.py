@@ -51,29 +51,29 @@ def response_formater(status_code='400',
                       expires='',
                       etag='',
                       date=''):
-    if int(status_code) != 200:
-        return {
-            'statusCode': status_code,
-            'body':  json.dumps(body),
-            'headers': {
-                'Cache-Control': cache_control,
-                'Content-Type': content_type
-            }
-        }
-    else:
-        return {
-            'statusCode': status_code,
-            'body': body,
-            'isBase64Encoded': 'true',
-            'headers': {
-                'Content-Type': content_type,
-                'Expires': expires,
-                'Etag': etag,
-                'Cache-Control': cache_control,
-                'Date': date,
-            },
-        }
 
+    api_response = {
+        'statusCode': status_code,
+        'headers': {
+            'Content-Type': content_type
+        }
+    }
+
+    if str(os.environ.get('ENABLE_CORS')).upper() == "YES":
+        api_response['headers']['Access-Control-Allow-Origin'] = os.environ.get('CORS_ORIGIN')
+
+    if int(status_code) != 200:
+        api_response['body'] = json.dumps(body)
+        api_response['Cache-Control'] = cache_control
+    else:
+        api_response['body'] = body
+        api_response['isBase64Encoded'] = 'true'
+        api_response['headers']['Expires'] = expires
+        api_response['headers']['Etag'] = etag
+        api_response['headers']['Cache-Control'] = cache_control
+        api_response['headers']['Date'] = date
+    logging.debug(api_response)
+    return api_response
 
 def run_server(application, context):
     server = HTTPServer(application)
@@ -170,12 +170,13 @@ def call_thumbor(request):
         )
         restart_server()
         return response_formater(status_code='502')
-    if config.ALLOW_UNSAFE_URL:
-        http_path = '/unsafe' + request['path']
-    else:
-        http_path = request['path']
+    http_path = request['path']
     if str(os.environ.get('REWRITE_ENABLED')).upper() == 'YES':
         http_path = lambda_rewrite.match_patterns(http_path)
+    if config.ALLOW_UNSAFE_URL:
+        http_path = '/unsafe' + http_path
+    else:
+        http_path = http_path
     response = session.get(unix_path + http_path)
     if response.status_code != 200:
         return response_formater(status_code=response.status_code)
