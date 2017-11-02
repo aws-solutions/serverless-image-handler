@@ -30,64 +30,74 @@ set -euxo pipefail
 
 # Check to see if input has been provided:
 if [ -z "$1" ]; then
-    printf "Please provide the base source bucket name where the lambda code will eventually reside.\nFor example: ./build-s3-dist.sh solutions"
+    printf "Please provide the base source bucket name where the lambda code will eventually reside."
+    printf "For example: ./build-s3-dist.sh solutions"
     exit 1
 fi
 
 # Build source
 printf "Starting to build distribution"
-deployment_dir=$(pwd)
-export deployment_dir
-mkdir -p dist
-cp -f serverless-image-handler.template dist
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+src_dir="$script_dir/../source"
+dist_dir="$script_dir/dist"
+env_dir="$script_dir/env"
+
+mkdir -p "$dist_dir"
 
 printf "Updating code source bucket in template with %s" "$1"
 replace="s/%%BUCKET_NAME%%/$1/g"
-sed -i'' -e "$replace" dist/serverless-image-handler.template
+sed -e "$replace" < "$script_dir/serverless-image-handler.template" > "$dist_dir/serverless-image-handler.template"
 
 printf "Creating UI ZIP file"
-cd "$deployment_dir/../source/ui"
-zip -q -r9 "$deployment_dir/dist/serverless-image-handler-ui.zip" ./*
+(
+  cd "$src_dir/ui"
+  zip -q -r9 "$dist_dir/serverless-image-handler-ui.zip" ./*
+)
 
 printf "Building custom resource package ZIP file"
-cd "$deployment_dir/dist"
-pwd
-virtualenv env
-VIRTUAL_ENV_DISABLE_PROMPT=true source env/bin/activate
-pip install "$deployment_dir/../source/image-handler-custom-resource/." --target="$deployment_dir/dist/env/lib/python2.7/site-packages/"
-cd "$deployment_dir/dist/env/lib/python2.7/site-packages/"
-zip -r9 "$deployment_dir/dist/serverless-image-handler-custom-resource.zip" ./*
-cd "$deployment_dir/dist"
-zip -q -d serverless-image-handler-custom-resource.zip pip*
-zip -q -d serverless-image-handler-custom-resource.zip easy*
-rm -rf env
+virtualenv "$env_dir"
+VIRTUAL_ENV_DISABLE_PROMPT=true source "$env_dir/bin/activate"
+pkg_dir="$VIRTUAL_ENV/lib/python2.7/site-packages/"
+pip install "$src_dir/image-handler-custom-resource/." --target="$pkg_dir"
+
+(
+  cd "$pkg_dir/"
+  zip -r9 "$dist_dir/serverless-image-handler-custom-resource.zip" ./*
+)
+
+zip -q -d "$dist_dir/serverless-image-handler-custom-resource.zip" pip*
+zip -q -d "$dist_dir/serverless-image-handler-custom-resource.zip" easy*
+
+rm -rf "$VIRTUAL_ENV"
 
 printf "Building Image Handler package ZIP file"
-cd "$deployment_dir/dist"
-pwd
-virtualenv env
-VIRTUAL_ENV_DISABLE_PROMPT=true source env/bin/activate
-cd ../..
-pwd
-pip install source/image-handler/. --target="$VIRTUAL_ENV/lib/python2.7/site-packages/"
-pip install -r source/image-handler/requirements.txt --target="$VIRTUAL_ENV/lib/python2.7/site-packages/"
-cd "$VIRTUAL_ENV"
-pwd
-git clone https://github.com/pornel/pngquant.git pngquant_s
-cd pngquant_s
-pwd
-./configure --enable-static --disable-shared
-make
-cp -f pngquant "$VIRTUAL_ENV"
-cd "$VIRTUAL_ENV/lib/python2.7/site-packages"
-pwd
-zip -q -r9 "$VIRTUAL_ENV/../serverless-image-handler.zip" ./*
-cd "$VIRTUAL_ENV"
-pwd
-zip -q -g "$VIRTUAL_ENV/../serverless-image-handler.zip" pngquant
-cd ..
-zip -q -d serverless-image-handler.zip pip*
-zip -q -d serverless-image-handler.zip easy*
+virtualenv "$env_dir"
+VIRTUAL_ENV_DISABLE_PROMPT=true source "$env_dir/bin/activate"
+pkg_dir="$VIRTUAL_ENV/lib/python2.7/site-packages/"
+
+pip install "$src_dir/image-handler/." --target="$pkg_dir"
+pip install -r "$src_dir/image-handler/requirements.txt" --target="$pkg_dir"
+
+(
+  cd "$pkg_dir"
+  zip -q -r9 "$dist_dir/serverless-image-handler.zip" ./*
+)
+
+(
+  cd "$dist_dir"
+  rm -rf pngquant_s
+  git clone https://github.com/pornel/pngquant.git pngquant_s
+  (
+    cd pngquant_s
+    ./configure --enable-static --disable-shared
+    make
+    zip -q -g "$dist_dir/serverless-image-handler.zip" pngquant
+  )
+  rm -rf pngquant_s
+)
+
+zip -q -d "$dist_dir/serverless-image-handler.zip" pip*
+zip -q -d "$dist_dir/serverless-image-handler.zip" easy*
 
 printf "Clean up build material"
 rm -rf "$VIRTUAL_ENV"
