@@ -2,13 +2,25 @@
 A solution to dynamically handle images on the fly, utilizing Thumbor (thumbor.org) 
 
 ## OS/Python Environment Setup
+On CentOS:
+
+```bash
+sudo yum -y install epel-release
+sudo yum -y install python-pip zip
+```
+
+On Amazon Linux:
 ```bash
 sudo yum-config-manager --enable epel
+```
+
+On both:
+```bash
 sudo yum update -y
 sudo yum install git libpng-devel libcurl-devel gcc python-devel libjpeg-devel -y
 sudo pip install --upgrade pip
 alias sudo='sudo env PATH=$PATH'
-sudo  pip install --upgrade setuptools
+sudo pip install --upgrade setuptools
 sudo pip install --upgrade virtualenv 
 ```
 
