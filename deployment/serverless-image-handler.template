@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description" : "(SO0023) - Serverless Image Handler: This template creates a CloudFront distribution and an AWS API Gateway to provide an easy-to-use image manipulation API based on Thumbor. Template Version 2",
+  "Description": "(SO0023) - Serverless Image Handler: This template creates a CloudFront distribution and an AWS API Gateway to provide an easy-to-use image manipulation API based on Thumbor. Template Version 2",
   "Parameters": {
     "OriginS3Bucket": {
       "Description": "S3 bucket that will source your images.",
@@ -59,7 +59,7 @@
       "AllowedValues": ["Yes", "No"]
     },
     "UIDestPrefix": {
-      "Description" : "Prefix for UI files in S3 bucket (currently only supports one folder)",
+      "Description": "Prefix for UI files in S3 bucket (currently only supports one folder)",
       "Type": "String",
       "Default": "serverless-image-handler-ui/",
       "ConstraintDescription": "Prefix must contains letters, numbers, or dashes and end with a forward slash (/); it cannot start with a forward slash or contain a forward slash -- for example 'serverless-image-handler-ui/'",
