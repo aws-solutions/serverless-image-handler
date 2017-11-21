@@ -84,16 +84,30 @@ pip install -r "$src_dir/image-handler/requirements.txt" --target="$pkg_dir"
 )
 
 (
+  # build/install libpng
+  static_lib="$dist_dir/static_lib"
+  cd "$dist_dir"
+  rm -rf libpng-1.6.34 libpng-1.6.34.tar.gz
+  curl -JLO https://download.sourceforge.net/libpng/libpng-1.6.34.tar.gz
+  tar zxvf libpng-1.6.34.tar.gz
+  cd libpng-1.6.34
+  ./configure --prefix="$static_lib"
+  make
+  make install
+  rm -rf "$dist_dir/libpng-1.6.34" "$dist_dir/libpng-1.6.34.tar.gz"
+
+  # build pngquant with static libpng
   cd "$dist_dir"
   rm -rf pngquant_s
   git clone https://github.com/pornel/pngquant.git pngquant_s
   (
     cd pngquant_s
-    ./configure --enable-static --disable-shared
+    ./configure --with-libpng="$static_lib"
     make
     zip -q -g "$dist_dir/serverless-image-handler.zip" pngquant
   )
   rm -rf pngquant_s
+  rm -rf "$static_lib"
 )
 
 zip -q -d "$dist_dir/serverless-image-handler.zip" pip*
