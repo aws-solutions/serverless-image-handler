@@ -87,6 +87,8 @@ pwd
 echo "zip -q -g $VIRTUAL_ENV/../serverless-image-handler.zip pngquant"
 zip -q -g $VIRTUAL_ENV/../serverless-image-handler.zip pngquant
 cd ..
+pwd
+zip -ur $deployment_dir/dist/serverless-image-handler.zip jpegtran
 zip -q -d serverless-image-handler.zip pip*
 zip -q -d serverless-image-handler.zip easy*
 echo "Clean up build material"
