@@ -31,13 +31,6 @@ echo "mkdir -p dist"
 mkdir -p dist
 echo "cp -f serverless-image-handler.template dist"
 cp -f serverless-image-handler.template dist
-echo "Updating code source bucket in template with $1"
-replace="s/%%BUCKET_NAME%%/$1/g"
-echo "sed -i '' -e $replace dist/serverless-image-handler.template"
-sed -i '' -e $replace dist/serverless-image-handler.template
-echo "Creating UI ZIP file"
-cd $deployment_dir/../source/ui
-zip -q -r9 $deployment_dir/dist/serverless-image-handler-ui.zip *
 echo "Building custom resource package ZIP file"
 cd $deployment_dir/dist
 pwd
