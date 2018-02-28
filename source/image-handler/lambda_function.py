@@ -219,6 +219,7 @@ def gen_body(ctype, content):
     try:
         format_ = ctype[ctype.find('/')+1:]
         #TODO: Do we need other mime content-types that thumbor supports
+        logging.error('[format_]: %s' % (format_))
         supported = ['jpeg', 'png', 'gif']
         if format_ not in supported:
             None
