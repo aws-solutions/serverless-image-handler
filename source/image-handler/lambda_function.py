@@ -180,18 +180,18 @@ def call_thumbor(request):
     else:
         http_path = http_path
     #TODO: REMOVE
-    logging.error(
+    logging.info(
             'VERIFY S3 PATH:' + http_path
     )
     #file returned from S3 as a response
     response = session.get(unix_path + http_path)
     # todo: remove
-    logging.error('[RESPONSE RECEIVED]: %s' % (response))
+    logging.info('[RESPONSE RECEIVED]: %s' % (response))
     #NOTE: We are returning an error in the case that the file cannot be grabbed from S3
     #TODO: Change to warn but wanted to log this for now
     if response.status_code != 200:
         logging.error(
-            'BAD PATH FOR URL:' + http_path + 'with status code:' + response.status_code
+            'BAD PATH FOR URL:' + http_path + 'with status code:' + str(response.status_code)
         )
         return response_formater(status_code=response.status_code)
     content_type = response.headers['content-type']
@@ -221,7 +221,7 @@ def gen_body(ctype, content):
     try:
         format_ = ctype[ctype.find('/')+1:]
         #TODO: Do we need other mime content-types that thumbor supports
-        logging.error('[format_]: %s' % (format_))
+        logging.info('[format_]: %s' % (format_))
         supported = ['jpeg', 'png', 'gif']
         if format_ not in supported:
             None
