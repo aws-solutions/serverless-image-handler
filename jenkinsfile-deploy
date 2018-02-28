@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Prepare') { 
             steps {
-                node('default'){
+                node('small'){
                     checkout([$class: 'GitSCM',
                     branches: [[name: "origin/MAIN-142-Image-Resizing-Build"]],
                     doGenerateSubmoduleConfigurations: false,
@@ -18,7 +18,7 @@ pipeline {
         }
         stage('Build') { 
             steps {
-                node('default'){
+                node('small'){
                     sh 'pwd'
                     sh 'ls'
                     sh '''
