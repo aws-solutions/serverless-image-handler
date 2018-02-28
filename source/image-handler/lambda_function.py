@@ -185,6 +185,8 @@ def call_thumbor(request):
     )
     #file returned from S3 as a response
     response = session.get(unix_path + http_path)
+    # todo: remove
+    logging.error('[RESPONSE RECEIVED]: %s' % (response))
     #NOTE: We are returning an error in the case that the file cannot be grabbed from S3
     #TODO: Change to warn but wanted to log this for now
     if response.status_code != 200:
