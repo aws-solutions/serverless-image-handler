@@ -23,7 +23,7 @@ pipeline {
                     sh 'ls'
                     sh '''
                     cd deployment
-                    sudo ./build-s3-dist.sh patientpop
+                    ./build-s3-dist.sh patientpop
                     aws s3 cp --recursive dist/ s3://irshadsource/latest
                     '''
                     sh 'pwd'
