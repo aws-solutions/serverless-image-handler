@@ -7,7 +7,8 @@ pipeline {
     stages {
         stage('Prepare') { 
             steps {
-                node('small'){
+                node('default'){
+                    cleanWs() // Need to remove this
                     checkout([$class: 'GitSCM',
                     branches: [[name: "origin/MAIN-142-Image-Resizing-Build"]],
                     doGenerateSubmoduleConfigurations: false,
@@ -16,19 +17,24 @@ pipeline {
                     userRemoteConfigs: [[
                     credentialsId: 'irshad-github',
                     url: 'https://github.com/PatientPopInc/serverless-image-handler']]])
+                    stash name: 'source', useDefaultExcludes: false, includes: '**,**/.*', allowEmpty: true
+                    cleanWs()
                     }
             }
  
         }
+        
+   // making this change so Aashin is unblocked.... Will revert this back when I go home     
         stage('Build') { 
             steps {
                 node('small'){
+                    unstash 'source'
                     sh 'pwd'
                     sh 'ls'
                     sh '''
                     cd deployment
                     ./build-s3-dist.sh patientpop
-                    aws s3 cp --recursive dist/ s3://irshadsource/latest
+                    aws s3 cp --recursive dist/ s3://ppimageresize-us-east-1/latest
                     '''
                     sh 'pwd'
                     cleanWs()
