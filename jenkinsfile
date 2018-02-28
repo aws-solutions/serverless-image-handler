@@ -1,0 +1,24 @@
+pipeline {
+    agent {
+        node {
+            label 'master'
+        }
+    }
+    stages {
+        stage('Build') { 
+            steps {
+                node('master'){
+                    sh 'pwd'
+                    sh 'ls'
+                    sh '''
+                    cd serverless-image-handler/deployment
+                    ./build-s3-dist.sh ppimageresize
+                    aws s3 cp --recursive dist/ s3://ppimageresize-us-east-1/serverless-image-handler/latest
+
+                    '''
+                }
+
+            }
+        }
+    }
+}
