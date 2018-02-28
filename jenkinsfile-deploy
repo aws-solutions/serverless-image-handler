@@ -8,29 +8,29 @@ pipeline {
         stage('Prepare') { 
             steps {
                 node('master'){
-                    cleanWs()
-                    sh 'pwd'
-                    sh 'ls'
-                    sh 'mkdir image'
-                    sh 'cd image'
-                    sh '''
-                    git clone https://github.com/PatientPopInc/serverless-image-handler.git  && echo pwd
-                    '''
-                    sh 'sleep 10s'
-
-                }
-
+                    checkout([$class: 'GitSCM',
+                    branches: [[name: "origin/MAIN-142-Image-Resizing-Build"]],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [[$class: 'LocalBranch']],
+                    submoduleCfg: [],
+                    userRemoteConfigs: [[
+                    credentialsId: 'irshad-github',
+                    url: 'https://github.com/PatientPopInc/serverless-image-handler']]])
+                    }
             }
+ 
         }
         stage('Build') { 
             steps {
                 node('master'){
+                    sh 'pwd'
+                    sh 'ls'
                     sh '''
-                    cd serverless-image-handler/deployment
-                    git checkout MAIN-142-Image-Resizing-Build
+                    cd deployment
                     sudo ./build-s3-dist.sh patientpop
                     aws s3 cp --recursive dist/ s3://irshadsource/latest
                     '''
+                    sh 'pwd'
                     cleanWs()
                 }
             }
