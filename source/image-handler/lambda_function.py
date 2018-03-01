@@ -183,7 +183,7 @@ def call_thumbor(request):
     logging.info(
             'VERIFY S3 PATH:' + http_path
     )
-    #file returned from S3 as a response
+    #file returned from Thumbor
     response = session.get(unix_path + http_path)
     # todo: remove
     logging.info('[RESPONSE RECEIVED]: %s' % (response))
@@ -191,9 +191,16 @@ def call_thumbor(request):
     #TODO: Change to warn but wanted to log this for now
     if response.status_code != 200:
         logging.error(
-            'BAD PATH FOR URL:' + http_path + 'with status code:' + str(response.status_code)
+            'BAD PATH FOR URL and trying redirect:' + http_path + 'with status code:' + str(response.status_code)
         )
-        return response_formater(status_code=response.status_code)
+        #return response_formater(status_code=response.status_code)
+        return response_formater(status_code='301',
+                             body='Location: http://www.patientpop.com',
+                             cache_control=response.headers['Cache-Control'],
+                             content_type=content_type,
+                             expires=response.headers['Expires'],
+                             etag=response.headers['Etag'],
+                             date=response.headers['Date'])
     content_type = response.headers['content-type']
     #this is where we try to resize if format matches (JPEG, PNG, GIF) and None is returned if there is an error in resizing or it is an unsupported format
     body = gen_body(content_type, response.content)
