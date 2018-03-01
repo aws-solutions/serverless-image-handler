@@ -68,7 +68,8 @@ def response_formater(status_code='400',
         api_response['body'] = json.dumps(body)
         api_response['Cache-Control'] = cache_control
     elif int(status_code) == 301:
-      logging.error("RETURNING STEP2")
+      logging.error("RETURNING STEP2 and trying as a 200")
+      api_response['statusCode'] = '200'
       api_response['body'] = json.dumps(body)
       api_response['Cache-Control'] = cache_control
       api_response['isBase64Encoded'] = 'false'
