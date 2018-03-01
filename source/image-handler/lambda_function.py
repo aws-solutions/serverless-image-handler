@@ -196,11 +196,7 @@ def call_thumbor(request):
         #return response_formater(status_code=response.status_code)
         return response_formater(status_code='301',
                              body='Location: http://www.patientpop.com',
-                             cache_control=response.headers['Cache-Control'],
-                             content_type=content_type,
-                             expires=response.headers['Expires'],
-                             etag=response.headers['Etag'],
-                             date=response.headers['Date'])
+                             content_type=content_type)
     content_type = response.headers['content-type']
     #this is where we try to resize if format matches (JPEG, PNG, GIF) and None is returned if there is an error in resizing or it is an unsupported format
     body = gen_body(content_type, response.content)
