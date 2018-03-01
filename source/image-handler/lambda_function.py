@@ -55,6 +55,7 @@ def response_formater(status_code='400',
     api_response = {
         'statusCode': status_code,
         'headers': {
+            #TODO: Fix content-type return
             'Content-Type': content_type
         }
     }
@@ -62,7 +63,7 @@ def response_formater(status_code='400',
     if str(os.environ.get('ENABLE_CORS')).upper() == "YES":
         api_response['headers']['Access-Control-Allow-Origin'] = os.environ.get('CORS_ORIGIN')
 
-    if int(status_code) != 200:
+    if int(status_code) != 200 and int(status_code) != 301:
         api_response['body'] = json.dumps(body)
         api_response['Cache-Control'] = cache_control
     else:
@@ -72,7 +73,8 @@ def response_formater(status_code='400',
         api_response['headers']['Etag'] = etag
         api_response['headers']['Cache-Control'] = cache_control
         api_response['headers']['Date'] = date
-    logging.debug(api_response)
+    #todo: back to debug
+    logging.info(api_response)
     return api_response
 
 def run_server(application, context):
