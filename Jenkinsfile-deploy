@@ -41,8 +41,10 @@ pipeline {
         stage('Staging Deploy') {
             steps {
                 node('small'){
-                    sh 'aws lambda update-function-code --function-name ${FUNCTION_NAME} --s3-bucket ppimageresize-us-east-1 --s3-key 'staging/serverless-image-handler.zip' --region us-east-1 --publish'
-                    cleanWs() // nothing to clean right now
+                /* Uncomment this when we have a staging env ready
+                    sh 'aws lambda update-function-code --function-name ${FUNCTION_NAME} --s3-bucket ppimageresize-us-east-1 --s3-key \'staging/serverless-image-handler.zip\' --region us-east-1 --publish'
+                    cleanWs() */
+                    // nothing to clean right now
                 }
 
             }
@@ -51,8 +53,10 @@ pipeline {
         stage('Production Deploy') {
             steps {
                 node('small'){
-                    sh 'aws lambda update-function-code --function-name ${FUNCTION_NAME} --s3-bucket ppimageresize-us-east-1 --s3-key 'latest/serverless-image-handler.zip' --region us-east-1 --publish'
-                    cleanWs() // nothing to clean right now
+                /* Uncomment this when we have a prod env ready
+                    sh 'aws lambda update-function-code --function-name ${FUNCTION_NAME} --s3-bucket ppimageresize-us-east-1 --s3-key \'latest/serverless-image-handler.zip\' --region us-east-1 --publish'
+                    cleanWs() */
+                    // nothing to clean right now
                 }
 
             }
