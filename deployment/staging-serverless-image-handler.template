@@ -4,7 +4,7 @@
   "Parameters": {
     "OriginS3Bucket": {
       "Description": "S3 bucket that will source your images.",
-      "Default": "patientpop-staging",
+      "Default": "ppimageresize-us-east-1",
       "Type": "String",
       "ConstraintDescription": "Must be a valid S3 Bucket.",
       "MinLength": "1",
