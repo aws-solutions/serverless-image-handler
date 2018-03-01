@@ -173,6 +173,7 @@ def call_thumbor(request):
         return response_formater(status_code='502')
     #S3 path to file for full URL
     http_path = request['path']
+    orig_http_path = request['path']
     if str(os.environ.get('REWRITE_ENABLED')).upper() == 'YES':
         http_path = lambda_rewrite.match_patterns(http_path)
     if config.ALLOW_UNSAFE_URL:
@@ -194,9 +195,9 @@ def call_thumbor(request):
             'BAD PATH FOR URL and trying redirect:' + http_path + 'with status code:' + str(response.status_code)
         )
         #return response_formater(status_code=response.status_code)
+        logging.error('future redirect: ' + 'https://sa1s3.patientpop.com'+orig_http_path)
         return response_formater(status_code='301',
-                             body='Location: http://www.patientpop.com',
-                             content_type=content_type)
+                             body='Location: http://www.patientpop.com')
     content_type = response.headers['content-type']
     #this is where we try to resize if format matches (JPEG, PNG, GIF) and None is returned if there is an error in resizing or it is an unsupported format
     body = gen_body(content_type, response.content)
