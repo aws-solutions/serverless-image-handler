@@ -64,12 +64,15 @@ def response_formater(status_code='400',
         api_response['headers']['Access-Control-Allow-Origin'] = os.environ.get('CORS_ORIGIN')
 
     if int(status_code) != 200 and int(status_code) != 301:
+        logging.error("RETURNING STEP1")
         api_response['body'] = json.dumps(body)
         api_response['Cache-Control'] = cache_control
     elif int(status_code) == 301:
+      logging.error("RETURNING STEP2")
       api_response['body'] = json.dumps(body)
       api_response['Cache-Control'] = cache_control
     else:
+        logging.error("RETURNING STEP3")
         api_response['body'] = body
         api_response['isBase64Encoded'] = 'true'
         api_response['headers']['Expires'] = expires
