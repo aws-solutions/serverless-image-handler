@@ -8,9 +8,9 @@ pipeline {
         stage('Prepare') { 
             steps {
                 node('default'){
-                    cleanWs() // Need to remove this
+                    cleanWs() 
                     checkout([$class: 'GitSCM',
-                    branches: [[name: "origin/MAIN-142-Image-Resizing-Build"]],
+                    branches: [[name: "*/${BRANCH_NAME}"]],
                     doGenerateSubmoduleConfigurations: false,
                     extensions: [[$class: 'LocalBranch']],
                     submoduleCfg: [],
@@ -24,21 +24,37 @@ pipeline {
  
         }
         
-   // making this change so Aashin is unblocked.... Will revert this back when I go home     
         stage('Build') { 
             steps {
                 node('small'){
                     unstash 'source'
-                    sh 'pwd'
-                    sh 'ls'
                     sh '''
                     cd deployment
                     ./build-s3-dist.sh patientpop
                     aws s3 cp --recursive dist/ s3://ppimageresize-us-east-1/latest
                     '''
-                    sh 'pwd'
                     cleanWs()
                 }
+            }
+        }
+
+        stage('Staging Deploy') {
+            steps {
+                node('small'){
+                    sh 'aws lambda update-function-code --function-name ${FUNCTION_NAME} --s3-bucket ppimageresize-us-east-1 --s3-key 'staging/serverless-image-handler.zip' --region us-east-1 --publish'
+                    cleanWs() // nothing to clean right now
+                }
+
+            }
+        }        
+
+        stage('Production Deploy') {
+            steps {
+                node('small'){
+                    sh 'aws lambda update-function-code --function-name ${FUNCTION_NAME} --s3-bucket ppimageresize-us-east-1 --s3-key 'latest/serverless-image-handler.zip' --region us-east-1 --publish'
+                    cleanWs() // nothing to clean right now
+                }
+
             }
         }
         
