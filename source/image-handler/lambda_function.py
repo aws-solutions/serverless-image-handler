@@ -55,6 +55,7 @@ def response_formater(status_code='400',
     api_response = {
         'statusCode': status_code,
         'headers': {
+            #TODO: Fix content-type return
             'Content-Type': content_type
         }
     }
@@ -62,17 +63,26 @@ def response_formater(status_code='400',
     if str(os.environ.get('ENABLE_CORS')).upper() == "YES":
         api_response['headers']['Access-Control-Allow-Origin'] = os.environ.get('CORS_ORIGIN')
 
-    if int(status_code) != 200:
+    if int(status_code) != 200 and int(status_code) != 301:
+        logging.error("RETURNING STEP1")
         api_response['body'] = json.dumps(body)
         api_response['Cache-Control'] = cache_control
+    elif int(status_code) == 301:
+      logging.error("RETURNING STEP2 and trying as a 200 amd mot putting in json")
+      api_response['statusCode'] = '200'
+      api_response['body'] = body
+      api_response['Cache-Control'] = cache_control
+      api_response['isBase64Encoded'] = 'false'
     else:
+        logging.error("RETURNING STEP3")
         api_response['body'] = body
         api_response['isBase64Encoded'] = 'true'
         api_response['headers']['Expires'] = expires
         api_response['headers']['Etag'] = etag
         api_response['headers']['Cache-Control'] = cache_control
         api_response['headers']['Date'] = date
-    logging.debug(api_response)
+    #todo: back to debug
+    logging.info(api_response)
     return api_response
 
 def run_server(application, context):
@@ -150,6 +160,7 @@ def restart_server():
 def call_thumbor(request):
     if not os.path.exists(thumbor_socket):
         start_server()
+    #call to get HTTP session
     session = requests_unixsocket.Session()
     unix_path = 'http+unix://%2Ftmp%2Fthumbor'
     http_health = '/healthcheck'
@@ -170,21 +181,46 @@ def call_thumbor(request):
         )
         restart_server()
         return response_formater(status_code='502')
+    #S3 path to file for full URL
     http_path = request['path']
+    orig_http_path = request['path']
     if str(os.environ.get('REWRITE_ENABLED')).upper() == 'YES':
         http_path = lambda_rewrite.match_patterns(http_path)
     if config.ALLOW_UNSAFE_URL:
         http_path = '/unsafe' + http_path
     else:
         http_path = http_path
+    #TODO: REMOVE
+    logging.info(
+            'VERIFY S3 PATH:' + http_path
+    )
+    #file returned from Thumbor
     response = session.get(unix_path + http_path)
+    # todo: remove
+    logging.info('[RESPONSE RECEIVED]: %s' % (response))
+    #NOTE: We are returning an error in the case that the file cannot be grabbed from S3
+    #TODO: Change to warn but wanted to log this for now
     if response.status_code != 200:
-        return response_formater(status_code=response.status_code)
+        logging.error(
+            'BAD PATH FOR URL and trying redirect:' + http_path + 'with status code:' + str(response.status_code)
+        )
+        #return response_formater(status_code=response.status_code)
+        logging.error('future redirect: ' + 'https://sa1s3.patientpop.com'+orig_http_path)
+        #TODO: add in my custom body
+        return response_formater(status_code='301')
     content_type = response.headers['content-type']
+    #this is where we try to resize if format matches (JPEG, PNG, GIF) and None is returned if there is an error in resizing or it is an unsupported format
     body = gen_body(content_type, response.content)
+    #currently returning null but should return the actual body
     if body is None:
-        return response_formater(status_code='500',
-                                 cache_control='no-cache,no-store')
+        #return response_formater(status_code='500', cache_control='no-cache,no-store')
+        return response_formater(status_code='200',
+                             body=response.content,
+                             cache_control=response.headers['Cache-Control'],
+                             content_type=content_type,
+                             expires=response.headers['Expires'],
+                             etag=response.headers['Etag'],
+                             date=response.headers['Date'])
     return response_formater(status_code='200',
                              body=body,
                              cache_control=response.headers['Cache-Control'],
@@ -198,6 +234,8 @@ def gen_body(ctype, content):
     '''Convert image to base64 to be sent as body response. '''
     try:
         format_ = ctype[ctype.find('/')+1:]
+        #TODO: Do we need other mime content-types that thumbor supports
+        logging.info('[format_]: %s' % (format_))
         supported = ['jpeg', 'png', 'gif']
         if format_ not in supported:
             None
@@ -206,8 +244,8 @@ def gen_body(ctype, content):
         image.save(buffer_, format_)
         return base64.b64encode(buffer_.getvalue())
     except Exception as error:
-        logging.error('gen_body error: %s' % (error))
-        logging.error('gen_body trace: %s' % traceback.format_exc())
+        logging.error('[resizing error]: %s' % (error))
+        logging.error('[resizing error]: %s' % traceback.format_exc())
         return None
 
 
@@ -234,12 +272,13 @@ def lambda_handler(event, context):
         if event['requestContext']['httpMethod'] != 'GET' and\
            event['requestContext']['httpMethod'] != 'HEAD':
             return response_formater(status_code=405)
+        #call thumbor if we get a get request
         result = call_thumbor(event)
         if str(os.environ.get('SEND_ANONYMOUS_DATA')).upper() == 'YES':
             send_metrics(event, result, start_time)
         return result
     except Exception as error:
-        logging.error('lambda_handler error: %s' % (error))
-        logging.error('lambda_handler trace: %s' % traceback.format_exc())
+        logging.error('[lambda_handler error]: %s' % (error))
+        logging.error('[lambda_handler trace]: %s' % traceback.format_exc())
         return response_formater(status_code='500',
                                  cache_control='no-cache,no-store')

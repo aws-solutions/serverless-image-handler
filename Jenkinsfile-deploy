@@ -1,0 +1,63 @@
+pipeline {
+    agent {
+        node {
+            label 'small'
+        }
+    }
+    stages {
+        stage('Prepare') {
+            steps {
+                node('default'){
+                    cleanWs()
+                    checkout([$class: 'GitSCM',
+                    branches: [[name: "*/${BRANCH_NAME}"]],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [[$class: 'LocalBranch']],
+                    submoduleCfg: [],
+                    userRemoteConfigs: [[
+                    credentialsId: 'irshad-github',
+                    url: 'https://github.com/PatientPopInc/serverless-image-handler']]])
+                    stash name: 'source', useDefaultExcludes: false, includes: '**,**/.*', allowEmpty: true
+                    cleanWs()
+                    }
+            }
+
+        }
+
+        stage('Build') {
+            steps {
+                node('small'){
+                    unstash 'source'
+                    sh '''
+                    cd deployment
+                    ./build-s3-dist.sh patientpop
+                    aws s3 cp --recursive dist/ s3://ppimageresize-us-east-1/staging
+                    '''
+                    cleanWs()
+                }
+            }
+        }
+
+        stage('Staging Deploy') {
+            steps {
+                node('small'){
+                    sh 'aws lambda update-function-code --function-name ${FUNCTION_NAME} --s3-bucket ppimageresize-us-east-1 --s3-key \'staging/serverless-image-handler.zip\' --region us-east-1 --publish'
+                }
+
+            }
+        }
+
+        stage('Production Deploy') {
+            steps {
+                node('small'){
+                /* Uncomment this when we have a prod env ready
+                    sh 'aws lambda update-function-code --function-name ${FUNCTION_NAME} --s3-bucket ppimageresize-us-east-1 --s3-key \'latest/serverless-image-handler.zip\' --region us-east-1 --publish'
+                    cleanWs() */
+                    // nothing to clean right now
+                }
+
+            }
+        }
+
+    }
+}

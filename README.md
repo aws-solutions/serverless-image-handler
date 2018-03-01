@@ -3,13 +3,15 @@ A solution to dynamically handle images on the fly, utilizing Thumbor (thumbor.o
 
 ## OS/Python Environment Setup
 ```bash
-sudo yum-config-manager --enable epel
-sudo yum update -y
-sudo yum install git libpng-devel libcurl-devel gcc python-devel libjpeg-devel -y
-sudo pip install --upgrade pip
+sudo su
+yum-config-manager --enable epel
+yum update -y
+yum install git libpng-devel libcurl-devel gcc python-devel libjpeg-devel -y
+pip install --upgrade pip
 alias sudo='sudo env PATH=$PATH'
-sudo  pip install --upgrade setuptools
-sudo pip install --upgrade virtualenv 
+pip install --upgrade setuptools
+pip install --upgrade virtualenv
+yum install git
 ```
 
 ## Building Lambda Package

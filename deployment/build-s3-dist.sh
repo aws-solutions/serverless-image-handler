@@ -31,13 +31,9 @@ echo "mkdir -p dist"
 mkdir -p dist
 echo "cp -f serverless-image-handler.template dist"
 cp -f serverless-image-handler.template dist
-echo "Updating code source bucket in template with $1"
-replace="s/%%BUCKET_NAME%%/$1/g"
-echo "sed -i '' -e $replace dist/serverless-image-handler.template"
-sed -i '' -e $replace dist/serverless-image-handler.template
-echo "Creating UI ZIP file"
-cd $deployment_dir/../source/ui
-zip -q -r9 $deployment_dir/dist/serverless-image-handler-ui.zip *
+echo "cp -f staging-serverless-image-handler.template dist"
+cp -f staging-serverless-image-handler.template dist
+
 echo "Building custom resource package ZIP file"
 cd $deployment_dir/dist
 pwd
@@ -86,7 +82,10 @@ cd $VIRTUAL_ENV
 pwd
 echo "zip -q -g $VIRTUAL_ENV/../serverless-image-handler.zip pngquant"
 zip -q -g $VIRTUAL_ENV/../serverless-image-handler.zip pngquant
-cd ..
+cd ../..
+pwd
+zip -ur $deployment_dir/dist/serverless-image-handler.zip jpegtran
+cd  dist
 zip -q -d serverless-image-handler.zip pip*
 zip -q -d serverless-image-handler.zip easy*
 echo "Clean up build material"
