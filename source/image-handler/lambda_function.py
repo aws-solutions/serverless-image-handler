@@ -71,6 +71,7 @@ def response_formater(status_code='400',
       logging.error("RETURNING STEP2")
       api_response['body'] = json.dumps(body)
       api_response['Cache-Control'] = cache_control
+      api_response['isBase64Encoded'] = 'false'
     else:
         logging.error("RETURNING STEP3")
         api_response['body'] = body
@@ -204,7 +205,8 @@ def call_thumbor(request):
         )
         #return response_formater(status_code=response.status_code)
         logging.error('future redirect: ' + 'https://sa1s3.patientpop.com'+orig_http_path)
-        return response_formater(status_code='301', body={'message': 'Location: http://www.patientpop.com'})
+        #TODO: add in my custom body
+        return response_formater(status_code='301')
     content_type = response.headers['content-type']
     #this is where we try to resize if format matches (JPEG, PNG, GIF) and None is returned if there is an error in resizing or it is an unsupported format
     body = gen_body(content_type, response.content)
