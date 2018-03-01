@@ -5,10 +5,10 @@ pipeline {
         }
     }
     stages {
-        stage('Prepare') { 
+        stage('Prepare') {
             steps {
                 node('default'){
-                    cleanWs() 
+                    cleanWs()
                     checkout([$class: 'GitSCM',
                     branches: [[name: "*/${BRANCH_NAME}"]],
                     doGenerateSubmoduleConfigurations: false,
@@ -21,17 +21,17 @@ pipeline {
                     cleanWs()
                     }
             }
- 
+
         }
-        
-        stage('Build') { 
+
+        stage('Build') {
             steps {
                 node('small'){
                     unstash 'source'
                     sh '''
                     cd deployment
                     ./build-s3-dist.sh patientpop
-                    aws s3 cp --recursive dist/ s3://ppimageresize-us-east-1/latest
+                    aws s3 cp --recursive dist/ s3://ppimageresize-us-east-1/staging
                     '''
                     cleanWs()
                 }
@@ -48,7 +48,7 @@ pipeline {
                 }
 
             }
-        }        
+        }
 
         stage('Production Deploy') {
             steps {
@@ -61,6 +61,6 @@ pipeline {
 
             }
         }
-        
+
     }
 }

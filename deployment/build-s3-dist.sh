@@ -31,6 +31,9 @@ echo "mkdir -p dist"
 mkdir -p dist
 echo "cp -f serverless-image-handler.template dist"
 cp -f serverless-image-handler.template dist
+echo "cp -f staging-serverless-image-handler.template dist"
+cp -f staging-serverless-image-handler.template dist
+
 echo "Building custom resource package ZIP file"
 cd $deployment_dir/dist
 pwd
