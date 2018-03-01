@@ -63,7 +63,7 @@ def response_formater(status_code='400',
     if str(os.environ.get('ENABLE_CORS')).upper() == "YES":
         api_response['headers']['Access-Control-Allow-Origin'] = os.environ.get('CORS_ORIGIN')
 
-    if int(status_code) != 200:
+    if int(status_code) != 200 and int(status_code) != 301:
         api_response['body'] = json.dumps(body)
         api_response['Cache-Control'] = cache_control
     elif int(status_code) == 301:
