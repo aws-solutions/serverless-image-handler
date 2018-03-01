@@ -102,8 +102,8 @@
     },
     "Function" : {
       "ImageHandler" : {
-        "S3Bucket" : "ppimageresize-us-east-1",
-        "S3Key" : "serverless-image-handler/latest/serverless-image-handler.zip",
+        "S3Bucket" : "ppimageresize",
+        "S3Key" : "latest/serverless-image-handler.zip",
         "Name" : "serverless-image-handler",
         "Handler": "image_handler/lambda_function.lambda_handler",
         "Description": "Serverless Image Handler: This function is invoked by the serverless-image-handler API Gateway to manipulate images with Thumbor.",
@@ -112,8 +112,8 @@
         "MemorySize": "1536"
       },
       "CustomResource" : {
-        "S3Bucket" : "ppimageresize-us-east-1",
-        "S3Key" : "serverless-image-handler/latest/serverless-image-handler-custom-resource.zip",
+        "S3Bucket" : "ppimageresize",
+        "S3Key" : "latest/serverless-image-handler-custom-resource.zip",
         "Name" : "serverless-image-handler-custom-resource",
         "Handler": "image_handler_custom_resource/cfn_custom_resource.lambda_handler",
         "Description": "Serverless Image Handler: CloudFormation custom resource function invoked during CloudFormation create, update, and delete stack operations.",
@@ -124,8 +124,8 @@
     },
     "UI" : {
       "Src" : {
-        "Bucket" : "ppimageresize-us-east-1",
-        "Key" : "serverless-image-handler/latest/serverless-image-handler-ui.zip"
+        "Bucket" : "ppimageresize",
+        "Key" : "latest/serverless-image-handler-ui.zip"
       },
       "FindReplace" : {
         "DomainName"  : "%%CloudFrontDomainName%%",
