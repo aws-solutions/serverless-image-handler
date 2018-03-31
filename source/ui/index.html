@@ -47,6 +47,12 @@
                     </a><br />
                     <a class="thumbnail" href="#">
                         <img class="img-responsive" src="%%S3URL%%img/planet.jpg" alt="">
+                    </a><br />
+                    <a class="thumbnail" href="#">
+                        <img class="img-responsive" src="%%S3URL%%img/face.jpg" alt="">
+                    </a><br />
+                    <a class="thumbnail" href="#">
+                        <img class="img-responsive" src="%%S3URL%%img/face2.jpg" alt="">
                     </a>
                 </div>
             </div>
@@ -140,6 +146,18 @@
                 </div>
               </div>
               <div class="row">
+                <div class="form-group col-lg-8">
+                    <input class="checkbox-inline" type="checkbox" id="convolution_checkbox">
+                    <label for="convolution">Convolution:</label>
+                    <input class="form-control" type="text" name="convolution" id="convolution" value="-1;-1;-1;-1;8;-1;-1;-1;-1,3,false">
+                </div>
+                <div class="form-group col-lg-4">
+                    <input type="checkbox" id="maxbytes_checkbox">
+                    <label for="maxbytes">Max Bytes:</label>
+                    <input class="form-control" type="text" name="maxbytes" id="maxbytes" placeholder="40000">
+                </div>
+              </div>
+              <div class="row">
                 <div class="form-group col-lg-6">
                     <input type="checkbox" id="roundcorner_checkbox">
                     <label for"roundcorner">Round Corner (a|b,r,g,b):</label>
@@ -152,10 +170,14 @@
                 </div>
               </div>
               <div class="row">
-                <div class="form-group col-lg-8">
-                    <input class="checkbox-inline" type="checkbox" id="convolution_checkbox">
-                    <label for="convolution">Convolution:</label>
-                    <input class="form-control" type="text" name="convolution" id="convolution" value="-1;-1;-1;-1;8;-1;-1;-1;-1,3,false">
+                <div class="form-group col-lg-4">
+                    <input class="checkbox-inline" type="checkbox" id="fit_in_checkbox" checked>
+                    <label for="fit_in">Fit In:</label>
+                    <select class="form-control" id="fit_in">
+                      <option value="fit-in">fit-in</option>
+                      <option value="full-fit-in">full</option>
+                      <option value="adaptive-fit-in">adaptive</option>
+                    </select>
                 </div>
                 <div class="col-lg-4">
                     <input type="checkbox" id="black_white">
@@ -166,15 +188,11 @@
                     <br />
                     <input type="checkbox" id="strip_icc">
                     <label for="strip_icc">Strip ICC</label>
+                    <br />
+                    <input type="checkbox" id="smart_crop">
+                    <label for="smart_crop">Smart Crop</label>
                 </div>
-              </div>
-              <div class="row">
                 <div class="form-group col-lg-4">
-                    <input type="checkbox" id="maxbytes_checkbox">
-                    <label for="maxbytes">Max Bytes:</label>
-                    <input class="form-control" type="text" name="maxbytes" id="maxbytes" placeholder="40000">
-                </div>
-                <div class="form-group col-lg-8">
                     <a href="#" class="btn btn-primary btn-lg active" role="button" aria-pressed="true" onClick="justDoIt()">Just do it!</a>
                 </div>
               </div>
@@ -207,17 +225,12 @@
     createUrl = {
         baseUrl: "https://%%CloudFrontDomainName%%",
 
-        resize: function(imageOriginalUrl, resizeW, resizeH, method, filter) {
+        resize: function(imageOriginalUrl, resizeW, resizeH, fit_in, smart_crop, filter) {
 
             imageUrlParts = imageOriginalUrl.split('?')[0].split('/');
 
-            filterPart = '';
-            if (filter) {
-                filterPart = '/' + filter;
-            }
-
             imageName = imageUrlParts[4] + '/' + imageUrlParts[5] + '/' + imageUrlParts[6];
-            url = this.baseUrl + '/' + method + '/' + resizeW + 'x' + resizeH + filterPart + '/' + imageName;
+            url = this.baseUrl + fit_in + '/' + resizeW + 'x' + resizeH + smart_crop + filter + '/' + imageName;
 
             return url;
         }
@@ -229,6 +242,8 @@
         c = document.getElementById('contrast').value;
 
         filter = '';
+        fit_in = '';
+        smart_crop = '';
         if ($('#brightness_checkbox').is(':checked') && b !== "" && b !=="0"){
             filter += ':brightness(' + b + ')';
         }
@@ -281,10 +296,15 @@
             filter += ':strip_icc()';
         }
         if (filter) {
-            filter = 'filters' + filter;
+            filter = '/filters' + filter;
         }
-
-        url = createUrl.resize(document.getElementById('image-url').value, w, h, 'fit-in', filter);
+        if ($('#fit_in_checkbox').is(':checked')) {
+            fit_in = '/' + $('#fit_in').val();
+        }
+        if ($('#smart_crop').is(':checked')) {
+            smart_crop = '/smart';
+        }
+        url = createUrl.resize(document.getElementById('image-url').value, w, h, fit_in, smart_crop, filter);
         img_link = '<a target="_blank" href="' + url + '"><img style="border:2px solid" src="'+url+'"></a>';
         ph = $('#output_links');
         ph.html('Loading...');
@@ -303,6 +323,9 @@
        $('#black_white').change(function () { justDoIt(); });
        $('#equalize').change(function () { justDoIt(); });
        $('#strip_icc').change(function () { justDoIt(); });
+       $('#fit_in_checkbox').change(function () { justDoIt(); });
+       $('#fit_in').change(function () { justDoIt(); });
+       $('#smart_crop').change(function () { justDoIt(); });
        $('#width').change(function () { justDoIt(); });
        $('#height').change(function () { justDoIt(); });
        $('#brightness').change(function () { justDoIt(); });
