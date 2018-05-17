@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description" : "(SO0023) - Serverless Image Handler: This template creates a CloudFront distribution and an AWS API Gateway to provide an easy-to-use image manipulation API based on Thumbor. Template Version 2",
+  "Description": "(SO0023) - Serverless Image Handler: This template creates a CloudFront distribution and an AWS API Gateway to provide an easy-to-use image manipulation API based on Thumbor. Template Version 2",
   "Parameters": {
     "OriginS3Bucket": {
       "Description": "S3 bucket that will source your images.",
@@ -47,6 +47,29 @@
       "Default": "*",
       "Type": "String"
     },
+    "AllowUnsafeUrl": {
+      "Description": "Will this service allow unsafe URLs? If not leave this blank and supply a security key. See https://github.com/thumbor/thumbor/wiki/Security for details.",
+      "Default": "True",
+      "Type": "String",
+      "AllowedValues": [
+        "True",
+        ""
+      ]
+    },
+    "SecurityKey": {
+      "Description": "This is the key used to generate a hash-based message authentication code and is required if unsafe URLs are not permitted. See https://github.com/thumbor/thumbor/wiki/Security for details. See also https://crypto.stackexchange.com/questions/35476/how-long-should-a-hmac-cryptographic-key-be for recommendations around key content and length.",
+      "Default": "MY_SECURITY_KEY",
+      "Type": "String"
+    },
+    "EnableHttpLoader": {
+      "Description": "Will this service enable the HTTP image loader? If not, leave this blank.",
+      "Default": "",
+      "Type": "String",
+      "AllowedValues": [
+        "True",
+        ""
+      ]
+    },
     "LambdaLogRetention": {
       "Description": "Retain Lambda CloudWatch Logs by days.",
       "Type": "Number",
@@ -60,7 +83,7 @@
       "AllowedValues": ["Yes", "No"]
     },
     "UIDestPrefix": {
-      "Description" : "Prefix for UI files in S3 bucket (currently only supports one folder)",
+      "Description": "Prefix for UI files in S3 bucket (currently only supports one folder)",
       "Type": "String",
       "Default": "serverless-image-handler-ui/",
       "ConstraintDescription": "Prefix must contains letters, numbers, or dashes and end with a forward slash (/); it cannot start with a forward slash or contain a forward slash -- for example 'serverless-image-handler-ui/'",
@@ -78,7 +101,16 @@
      "ParameterGroups" : [
       {
         "Label" : { "default":"Image Handler API Configuration" },
-        "Parameters" : [ "OriginS3Bucket", "OriginS3BucketRegion", "EnableCors", "CorsOrig","LambdaLogRetention" ]
+        "Parameters" : [
+          "OriginS3Bucket",
+          "OriginS3BucketRegion",
+          "EnableCors",
+          "CorsOrig",
+          "AllowUnsafeUrl",
+          "SecurityKey",
+          "EnableHttpLoader",
+          "LambdaLogRetention"
+        ]
       },
       {
         "Label" : { "default":"Image Handler UI Configuration" },
@@ -90,6 +122,9 @@
       "OriginS3BucketRegion" : { "default" : "Origin S3 Bucket Region" },
       "EnableCors" : { "default" : "Enable CORS?" },
       "CorsOrig" : { "default" : "CORS Origin" },
+      "AllowUnsafeUrl" : { "default" : "Allow unsafe URLs?" },
+      "SecurityKey" : { "default" : "Security Key (required if unsafe URLs are not allowed)" },
+      "EnableHttpLoader" : { "default" : "Enable HTTP image loader" },
       "LambdaLogRetention" : { "default" : "Lambda Log Retention" },
       "DeployUI" : { "default" : "Deploy UI?" },
       "UIDestPrefix" : { "default" : "UI Prefix" },
@@ -280,6 +315,9 @@
             "TC_AWS_STORAGE_BUCKET":{ "Ref": "OriginS3Bucket" },
             "ENABLE_CORS":{ "Ref" : "EnableCors"},
             "CORS_ORIGIN":{ "Ref" : "CorsOrig"},
+            "ALLOW_UNSAFE_URL":{ "Ref" : "AllowUnsafeUrl" },
+            "SECURITY_KEY":{ "Ref" : "SecurityKey" },
+            "TC_AWS_ENABLE_HTTP_LOADER":{ "Ref" : "EnableHttpLoader" },
             "SEND_ANONYMOUS_DATA":{ "Fn::FindInMap" : [ "Send", "AnonymousUsage", "Data"]},
             "UUID":{"Fn::GetAtt": ["CreateUniqueID", "UUID"]},
             "LOG_LEVEL":"INFO"
@@ -653,6 +691,18 @@
     "CorsOrigin": {
       "Description": "If enabled, allow CORS from this origin.",
       "Value": { "Ref" : "CorsOrig"}
+    },
+    "AllowUnsafeUrl": {
+      "Description": "",
+      "Value": { "Ref" : "AllowUnsafeUrl"}
+    },
+    "SecurityKey": {
+      "Description": "",
+      "Value": { "Ref" : "SecurityKey"}
+    },
+    "EnableHttpLoader": {
+      "Description": "",
+      "Value": { "Ref" : "EnableHttpLoader"}
     }
   }
 }
