@@ -1,7 +1,10 @@
 # coding: utf-8
 
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
+try: # for pip >= 10
+    from pip._internal.req import parse_requirements
+except ImportError: # for pip <= 9.0.3
+    from pip.req import parse_requirements
 
 tests_require = [
     'mock',
@@ -24,7 +27,7 @@ setup(
     },
     install_requires=[
         'botocore==1.3.7',
-        'tornado_botocore==1.0.2',
+        'tornado_botocore==1.3.2',
         'requests_unixsocket>=0.1.5',
         'thumbor>=6.4.2',
         'tc_aws==6.0.3',
