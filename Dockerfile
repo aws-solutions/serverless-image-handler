@@ -11,3 +11,5 @@ RUN yum install python2 python2-pip.noarch python2-setuptools.noarch -y
 RUN alias sudo='env PATH=$PATH' && \
     pip install --upgrade setuptools && \
     pip install --upgrade virtualenv
+
+RUN yum install -y gcc-c++ make
