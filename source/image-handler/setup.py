@@ -26,10 +26,10 @@ setup(
             '': ['*.conf'],
     },
     install_requires=[
-        'botocore==1.3.7',
+        'botocore==1.8',
         'tornado_botocore==1.3.2',
         'requests_unixsocket>=0.1.5',
-        'thumbor>=6.4.2',
+        'thumbor>=6.5.2',
         'tc_aws==6.0.3',
         'opencv-python==3.2.0.6'
     ],
