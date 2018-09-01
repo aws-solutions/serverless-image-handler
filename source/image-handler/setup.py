@@ -30,7 +30,7 @@ setup(
         'tornado_botocore==1.3.2',
         'requests_unixsocket>=0.1.5',
         'thumbor>=6.5.2',
-        'tc_aws==6.0.3',
+        'tc_aws==6.2.10',
         'opencv-python==3.2.0.6'
     ],
     extras_require={
