@@ -15,6 +15,9 @@ RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
 # ImageMagick
 RUN yum install -y ImageMagick-devel
 
+# Other libraries
+RUN yum install -y pngcrush libjpeg* gifsicle
+
 # pip
 RUN alias sudo='env PATH=$PATH' && \
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
