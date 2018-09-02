@@ -9,6 +9,9 @@ RUN yum install yum-utils zip -y && \
     yum-config-manager --enable epel && \
     yum install git libpng-devel libcurl-devel gcc python27-devel libjpeg-devel -y
 
+# enable epel on Amazon Linux 2
+RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+
 # pip
 RUN alias sudo='env PATH=$PATH' && \
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
