@@ -26,8 +26,8 @@ setup(
             '': ['*.conf'],
     },
     install_requires=[
-        'botocore==1.11.6',
-        'tornado_botocore==1.4.0',
+        'botocore==1.8',
+        'tornado_botocore==1.3.2',
         'requests_unixsocket>=0.1.5',
         'thumbor>=6.5.2',
         'tc_aws==6.2.10',
