@@ -12,6 +12,9 @@ RUN yum install yum-utils zip -y && \
 # enable epel on Amazon Linux 2
 RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 
+# ImageMagick
+RUN yum install -y ImageMagick-devel
+
 # pip
 RUN alias sudo='env PATH=$PATH' && \
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
@@ -22,6 +25,3 @@ RUN alias sudo='env PATH=$PATH' && \
 # pycurl
 RUN yum install -y nss-devel
 ENV PYCURL_SSL_LIBRARY=nss
-
-# ImageMagick
-RUN yum install -y ImageMagick-devel
