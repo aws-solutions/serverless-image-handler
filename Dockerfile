@@ -22,3 +22,6 @@ RUN alias sudo='env PATH=$PATH' && \
 # pycurl
 RUN yum install -y nss-devel
 ENV PYCURL_SSL_LIBRARY=nss
+
+# ImageMagick
+RUN yum install -y ImageMagick-devel
