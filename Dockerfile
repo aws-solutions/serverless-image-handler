@@ -18,6 +18,16 @@ RUN yum install -y ImageMagick-devel
 # Other libraries
 RUN yum install -y pngcrush libjpeg* gifsicle
 
+# optipng
+RUN wget http://dl.fedoraproject.org/pub/epel/6/x86_64/Packages/o/optipng-0.7.6-6.el6.x86_64.rpm && \
+    yum localinstall optipng-0.7.6-6.el6.x86_64.rpm -y && rm optipng*rpm
+
+# pngquant
+RUN wget http://dl.fedoraproject.org/pub/epel/6/x86_64/Packages/l/libimagequant-2.5.2-5.el6.x86_64.rpm && \
+    yum localinstall libimagequant-2.5.2-5.el6.x86_64.rpm -y && rm libimagequant*rpm && \
+    wget http://dl.fedoraproject.org/pub/epel/6/x86_64/Packages/p/pngquant-2.5.2-5.el6.x86_64.rpm && \
+    yum localinstall pngquant-2.5.2-5.el6.x86_64.rpm -y && rm pngquant*rpm
+
 # pip
 RUN alias sudo='env PATH=$PATH' && \
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
