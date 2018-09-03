@@ -38,3 +38,10 @@ RUN alias sudo='env PATH=$PATH' && \
 # pycurl
 RUN yum install -y nss-devel
 ENV PYCURL_SSL_LIBRARY=nss
+
+RUN mkdir /lambda
+VOLUME /lambda
+WORKDIR /lambda/deployment
+
+ENTRYPOINT ["./build-s3-dist.sh"]
+CMD ["source-bucket-base-name"]
