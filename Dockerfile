@@ -7,7 +7,7 @@ RUN sed -i 's/releasever=.*/releasever=2017.03/g' /etc/yum.conf
 # base requirements
 RUN yum install yum-utils zip -y && \
     yum-config-manager --enable epel && \
-    yum install git libpng-devel libcurl-devel gcc python27-devel libjpeg-devel -y
+    yum install wget git libpng-devel libcurl-devel gcc python27-devel libjpeg-devel -y
 
 # enable epel on Amazon Linux 2
 RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
