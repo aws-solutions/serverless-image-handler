@@ -9,4 +9,4 @@ before_install:
   - docker build -t serverless-image-handler .
 
 script:
-  - docker run -it --rm --volume $PWD/lambda serverless-image-handler
+  - docker run -it --rm --volume $PWD:/lambda serverless-image-handler
