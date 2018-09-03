@@ -1,5 +1,4 @@
 FROM amazonlinux:2017.03.1.20170812
-MAINTAINER Levi Wilson <levi@leviwilson.com>
 
 # lock yum to the same repository version
 RUN sed -i 's/releasever=.*/releasever=2017.03/g' /etc/yum.conf
