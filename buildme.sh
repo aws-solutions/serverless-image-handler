@@ -7,4 +7,4 @@ if [[ $# -gt 0 ]]; then
     EXTRA_ARGS="-e source-bucket-base-name='$1'"
 fi
 
-docker build -f Dockerfile.builder -t northwoods/serverless-image-handler-builder .
+docker exec $extra_args northwoods/serverless-image-handler-builder 
