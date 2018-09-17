@@ -10,6 +10,6 @@ VERSION=${BUILD_NUMBER:-${TIMESTAMP}}
 
 docker build -t serverless-image-handler .
 
-docker run --rm -v `PWD`:/lambda serverless-image-handler
+docker run --rm -v `pwd`:/lambda serverless-image-handler
 
 aws s3 cp ${OUTDIR}/${ARTIFACT}.zip s3://traverse-lambda-artifacts/${ARTIFACT}-${VERSION}.zip
