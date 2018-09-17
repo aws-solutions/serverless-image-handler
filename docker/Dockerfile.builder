@@ -1,21 +1,25 @@
-FROM amazonlinux:2.20180827
-ENV source-bucket-base-name="/stuff"
+FROM amazonlinux:2.0.20180827
 
-mkdir -p /build/deployment
+ENV BUCKET_BASE_NAME="stuff"
+
+COPY docker-entrypoint.sh /
+
+RUN chmod +x /docker-entrypoint.sh && \
+    mkdir -p /build/deployment
 
 RUN yum update -y && \
-        yum install yum-utils && \
-        yum-config-manager --enable epel && \
-        yum update -y && \
-        yum install git libpng-devel libcurl-devel gcc python-devel \
-            libjpeg-devel python-pip -y && \
-        pip install --upgrade pip && \
-        pip install --upgrade setuptools && \
-        pip install --upgrade virtualenv
+    yum install -y yum-utils && \
+    yum-config-manager --enable epel && \
+    yum update -y && \
+    yum install git libpng-devel libcurl-devel gcc python-devel \
+        libjpeg-devel python-pip zip make -y && \
+    pip install --upgrade pip && \
+    pip install --upgrade setuptools && \
+    pip install --upgrade virtualenv
 
 WORKDIR /build/deployment
 
-CMD ./build-s3-dist.sh $source-bucket-base-name
+CMD /docker-entrypoint.sh
 
         
 
