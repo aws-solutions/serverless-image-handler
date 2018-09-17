@@ -17,12 +17,6 @@
 # For example: ./build-s3-dist.sh solutions
 # The template will then expect the source code to be located in the solutions-[region_name] bucket
 
-# Check to see if input has been provided:
-if [ -z "$1" ]; then
-    echo "Please provide the base source bucket name where the lambda code will eventually reside.\nFor example: ./build-s3-dist.sh solutions"
-    exit 1
-fi
-
 # Build source
 echo "Staring to build distribution"
 echo "export deployment_dir=`pwd`"
@@ -31,10 +25,6 @@ echo "mkdir -p dist"
 mkdir -p dist
 echo "cp -f serverless-image-handler.template dist"
 cp -f serverless-image-handler.template dist
-echo "Updating code source bucket in template with $1"
-replace="s/%%BUCKET_NAME%%/$1/g"
-echo "sed -i  -e $replace dist/serverless-image-handler.template"
-sed -i  -e $replace dist/serverless-image-handler.template
 echo "Creating UI ZIP file"
 cd $deployment_dir/../source/ui
 zip -q -r9 $deployment_dir/dist/serverless-image-handler-ui.zip *
