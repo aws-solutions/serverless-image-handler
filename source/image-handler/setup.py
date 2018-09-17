@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
+from pip._internal.req import parse_requirements
 
 tests_require = [
     'mock',
@@ -23,11 +23,11 @@ setup(
             '': ['*.conf'],
     },
     install_requires=[
-        'botocore==1.3.7',
-        'tornado_botocore==1.0.2',
+        'botocore==1.8',
+        'tornado_botocore==1.3.2',
         'requests_unixsocket>=0.1.5',
-        'thumbor>=6.4.2',
-        'tc_aws==6.0.3',
+        'thumbor>=6.5.2',
+        'tc_aws==6.2.10',
         'opencv-python==3.2.0.6'
     ],
     extras_require={

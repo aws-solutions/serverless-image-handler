@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
+from pip._internal.req import parse_requirements
 
 setup(
     name='image_handler_custom_resource',
