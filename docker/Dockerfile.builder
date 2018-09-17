@@ -13,9 +13,11 @@ RUN yum update -y && \
     yum update -y && \
     yum install git libpng-devel libcurl-devel gcc python-devel \
         libjpeg-devel python-pip zip make -y && \
-    pip install --upgrade pip && \
     pip install --upgrade setuptools && \
     pip install --upgrade virtualenv
+
+#     pip install --upgrade pip && \
+
 
 WORKDIR /build/deployment
 
