@@ -1,10 +1,14 @@
 #!/bin/bash
 
 set -eu
-EXTRA_ARGS=""
+export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd ${SCRIPT_DIR}
+OUTDIR=${SCRIPT_DIR}/deployment/dist
+ARTIFACT=serverless-image-handler
+VERSION=${BUILD_NUMBER:-MANUAL}
 
-if [[ $# -gt 0 ]]; then
-    EXTRA_ARGS="-e BUCKET_BASE_NAME=$1"
-fi
+docker build -t serverless-image-handler .
 
-docker run -v `PWD`:/build $EXTRA_ARGS northwoods/serverless-image-handler-builder 
+docker run --rm -v `PWD`:/lambda serverless-image-handler LOLRUS-BUKKIT
+
+aws s3 cp ${OUTDIR}/${ARTIFACT}.zip s3://traverse-lambda-artifacts/${ARTIFACT}-${VERSION}.zip
