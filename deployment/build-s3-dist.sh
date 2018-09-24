@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 # This assumes all of the OS-level configuration has been completed and git repo has already been cloned
 #sudo yum-config-manager --enable epel
@@ -16,6 +16,14 @@
 # The template will append '-[region_name]' to this bucket name.
 # For example: ./build-s3-dist.sh solutions
 # The template will then expect the source code to be located in the solutions-[region_name] bucket
+
+# Fix ownership of output files
+finish() {
+    # Fix ownership of output files
+    user_id=$(stat -c '%u:%g' /lambda)
+    chown -R ${user_id} /lambda/deployment/dist
+}
+trap finish EXIT
 
 # Build source
 echo "Staring to build distribution"
