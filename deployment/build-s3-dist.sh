@@ -17,11 +17,13 @@
 # For example: ./build-s3-dist.sh solutions
 # The template will then expect the source code to be located in the solutions-[region_name] bucket
 
-# Check to see if input has been provided:
-if [ -z "$1" ]; then
-    echo "Please provide the base source bucket name where the lambda code will eventually reside.\nFor example: ./build-s3-dist.sh solutions"
-    exit 1
-fi
+# Fix ownership of output files
+finish() {
+    # Fix ownership of output files
+    user_id=$(stat -c '%u:%g' /lambda)
+    chown -R ${user_id} /lambda/deployment/dist
+}
+trap finish EXIT
 
 # Build source
 echo "Staring to build distribution"
@@ -29,30 +31,6 @@ echo "export deployment_dir=`pwd`"
 export deployment_dir=`pwd`
 echo "mkdir -p dist"
 mkdir -p dist
-echo "cp -f serverless-image-handler.template dist"
-cp -f serverless-image-handler.template dist
-echo "Updating code source bucket in template with $1"
-replace="s/%%BUCKET_NAME%%/$1/g"
-echo "sed -i '' -e $replace dist/serverless-image-handler.template"
-sed -i '' -e $replace dist/serverless-image-handler.template
-echo "Creating UI ZIP file"
-cd $deployment_dir/../source/ui
-zip -q -r9 $deployment_dir/dist/serverless-image-handler-ui.zip *
-echo "Building custom resource package ZIP file"
-cd $deployment_dir/dist
-pwd
-echo "virtualenv env"
-virtualenv env
-echo "source env/bin/activate"
-source env/bin/activate
-echo "pip install $deployment_dir/../source/image-handler-custom-resource/. --target=$deployment_dir/dist/env/lib/python2.7/site-packages/"
-pip install $deployment_dir/../source/image-handler-custom-resource/. --target=$deployment_dir/dist/env/lib/python2.7/site-packages/
-cd $deployment_dir/dist/env/lib/python2.7/site-packages/
-zip -r9 $deployment_dir/dist/serverless-image-handler-custom-resource.zip *
-cd $deployment_dir/dist
-zip -q -d serverless-image-handler-custom-resource.zip pip*
-zip -q -d serverless-image-handler-custom-resource.zip easy*
-rm -rf env
 echo "Building Image Handler package ZIP file"
 cd $deployment_dir/dist
 pwd
