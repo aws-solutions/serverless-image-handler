@@ -33,12 +33,17 @@ from image_handler import lambda_rewrite
 from PIL import Image
 from io import BytesIO
 from distutils.util import strtobool
+import json
+from hashlib import sha1
+import hmac
+import base64
+import re
+from requests.compat import quote
 
 from tornado.httpserver import HTTPServer
 from tornado.netutil import bind_unix_socket
 from tornado.options import options, define
 
-from thumbor.console import get_server_parameters
 from thumbor.context import ServerParameters
 from thumbor.server import *
 
@@ -46,7 +51,9 @@ thumbor_config_path = '/var/task/image_handler/thumbor.conf'
 thumbor_socket = '/tmp/thumbor'
 unix_path = 'http+unix://%2Ftmp%2Fthumbor'
 
-
+##############################################################################
+# helper methods
+#
 def response_formater(status_code='400',
                       body={'message': 'error'},
                       cache_control='max-age=120,public',
@@ -79,9 +86,97 @@ def response_formater(status_code='400',
         api_response['headers']['Date'] = date
     if vary:
         api_response['headers']['Vary'] = vary
-    logging.debug(api_response)
+    logging.debug('api response: %s' % (api_response))
     return api_response
 
+def auto_webp(original_request, request_headers):
+    headers = {'Accept':'*/*'}
+    vary = bool(strtobool(str(config.AUTO_WEBP)))
+    if vary:
+        if original_request.get('headers'):
+            if original_request['headers'].get('Accept'):
+                request_headers['Accept'] = original_request['headers']['Accept']
+    return vary, request_headers
+
+# SO-SIH-166 - 08/08/2018 - Enabling safe url
+# Encoding url and hashing with security key
+def encoding_string(string):
+    """
+    Encoding URL per RFC 3986.
+    """
+    return(quote(string,safe=''))
+
+def signed_url(secret_key, string_to_sign):
+    """
+    Signing URL with security key
+    """
+    hashed = hmac.new(secret_key,string_to_sign, sha1)
+    return base64.b64encode(hashed.digest())
+
+
+def true_url(http_path):
+    """
+    Generate URL based on /unsafe or security key
+    """
+    if bool(strtobool(str(config.ALLOW_UNSAFE_URL))):
+        http_path = '/unsafe' + http_path
+    else:
+        try:
+            unsafe_or_key = r'(?:(?:(?P<unsafe>unsafe)|(?P<key>.+?))/)?'
+            reg = ['/?']
+            reg.append(unsafe_or_key)
+            reg = re.compile(''.join(reg))
+            result = reg.match(http_path)
+            result = result.groupdict()
+            http_key = result['key']
+            logging.debug('security key from path: %s' % (http_key))
+            http_path = http_path.split(http_key+'/')[1]
+            logging.debug('path to sign: %s' % (http_path))
+            # replacing '/' with '_' & '+' with '-'
+            # details https://github.com/thumbor/thumbor/issues/597
+            signed_path = signed_url(str(http_key),str(http_path)).replace('/','_').replace('+','-')
+            logging.debug('signed path: %s' % (signed_path))
+            http_path = '/' + signed_path + '/' + http_path
+            logging.debug('signed_url: %s' % (http_path))
+        except Exception as error:
+            logging.error('generating signed url error: %s' % (error))
+    return http_path
+
+
+def rewrite(http_path):
+    if str(os.environ.get('REWRITE_ENABLED')).upper() == 'YES':
+        http_path = lambda_rewrite.match_patterns(http_path)
+    return http_path
+
+def gen_body(ctype, content):
+    """
+    Convert image to base64 to be sent as body response.
+    """
+    try:
+        format_ = ctype[ctype.find('/')+1:]
+        supported = ['jpeg', 'png', 'gif']
+        if format_ not in supported:
+            None
+        return base64.b64encode(content)
+    except Exception as error:
+        logging.error('gen_body error: %s' % (error))
+        logging.error('gen_body trace: %s' % traceback.format_exc())
+        return None
+
+def send_metrics(event, result, start_time):
+    """
+    Send anonymous usage metrics to AWS.
+    """
+    t = threading.Thread(
+        target=lambda_metrics.send_data,
+        args=(event, result, start_time, )
+    )
+    t.start()
+    return t
+
+##############################################################################
+# server methods
+#
 def run_server(application, context):
     server = HTTPServer(application)
     define(
@@ -93,7 +188,6 @@ def run_server(application, context):
     server.add_socket(socket)
     server.start(1)
 
-
 def stop_thumbor():
     return None
     tornado.ioloop.IOLoop.instance().stop()
@@ -102,8 +196,10 @@ def stop_thumbor():
     except OSError as error:
         logging.error('stop_thumbor error: %s' % (error))
 
-
 def start_thumbor():
+    """
+    Runs thumbor server with the specified arguments.
+    """
     try:
         server_parameters = ServerParameters(
             port=8888,
@@ -111,10 +207,12 @@ def start_thumbor():
             config_path=None,
             keyfile=False,
             log_level=log_level,
-            app_class='thumbor.app.ThumborServiceApp')
+            app_class='thumbor.app.ThumborServiceApp',
+            use_environment=True)
         global config
-        config = get_config(thumbor_config_path)
-        config.allow_environment_variables()
+        # SO-SIH-167 - 08/08/2018 - Allowing environment variable
+        # Passing environment variable flag to server parameters
+        config = get_config(thumbor_config_path, server_parameters.use_environment)
         configure_log(config, server_parameters.log_level)
         importer = get_importer(config)
         os.environ["PATH"] += os.pathsep + '/var/task'
@@ -137,13 +235,11 @@ def start_thumbor():
         logging.error('start_thumbor error: %s' % (error))
         logging.error('start_thumbor trace: %s' % traceback.format_exc())
 
-
 def start_server():
     t = threading.Thread(target=start_thumbor)
     t.daemon = True
     t.start()
     return t
-
 
 def restart_server():
     threads = threading.enumerate()
@@ -154,29 +250,9 @@ def restart_server():
             t.join()
     start_server()
 
-
-def auto_webp(original_request, request_headers):
-    headers = {'Accept':'*/*'}
-    vary = bool(strtobool(str(config.AUTO_WEBP)))
-    if vary:
-        if original_request.get('headers'):
-            if original_request['headers'].get('Accept'):
-                request_headers['Accept'] = original_request['headers']['Accept']
-    return vary, request_headers
-
-
-def allow_unsafe_url(http_path):
-    if bool(strtobool(str(config.ALLOW_UNSAFE_URL))):
-        http_path = '/unsafe' + http_path
-    return http_path
-
-
-def rewrite(http_path):
-    if str(os.environ.get('REWRITE_ENABLED')).upper() == 'YES':
-        http_path = lambda_rewrite.match_patterns(http_path)
-    return http_path
-
-
+##############################################################################
+# request processing methods
+#
 def is_thumbor_down():
      if not os.path.exists(thumbor_socket):
          start_server()
@@ -201,23 +277,40 @@ def is_thumbor_down():
          return response_formater(status_code='502')
      return False, session
 
-
 def request_thumbor(original_request, session):
+    """
+    Uses requests_unixsocket to send http
+    requests over unix domain socket/thumbor.
+    """
+    logging.debug('original_request: %s' % (json.dumps(original_request)))
     http_path = original_request['path']
-    http_path = rewrite(http_path);
-    http_path = allow_unsafe_url(http_path)
+    logging.debug('original_request path: %s' % (http_path))
+    try:
+        http_path = rewrite(http_path);
+        logging.debug('http path after rewrite: %s' % (http_path))
+        http_path = true_url(http_path)
+    except Exception as error:
+        logging.error('invalid http path: %s' % (error))
     request_headers = {}
     vary, request_headers = auto_webp(original_request, request_headers)
     return session.get(unix_path + http_path, headers=request_headers), vary
 
-
 def process_thumbor_responde(thumbor_response, vary):
      if thumbor_response.status_code != 200:
-         return response_formater(status_code=response.status_code)
+         return response_formater(status_code=thumbor_response.status_code)
      if vary:
          vary = thumbor_response.headers['vary']
      content_type = thumbor_response.headers['content-type']
      body = gen_body(content_type, thumbor_response.content)
+     # SO-SIH-173 - 08/20/2018 - Lambda payload limit
+     # Lambda limits to 6MB of response payload
+     # https://docs.aws.amazon.com/lambda/latest/dg/limits.html
+     content_length = int(thumbor_response.headers['content-length'])
+     logging.debug('content length: %s' % (content_length))
+     if (content_length > 6000000):
+        return response_formater(status_code='500',
+                                 body={'message': 'body size is too long'},
+                                 )
      if body is None:
          return response_formater(status_code='500',
                                   cache_control='no-cache,no-store')
@@ -231,7 +324,6 @@ def process_thumbor_responde(thumbor_response, vary):
                               vary=vary
                               )
 
-
 def call_thumbor(original_request):
     thumbor_down, session = is_thumbor_down()
     if thumbor_down:
@@ -239,30 +331,10 @@ def call_thumbor(original_request):
     thumbor_response, vary = request_thumbor(original_request, session)
     return process_thumbor_responde(thumbor_response, vary)
 
-
-def gen_body(ctype, content):
-    '''Convert image to base64 to be sent as body response. '''
-    try:
-        format_ = ctype[ctype.find('/')+1:]
-        supported = ['jpeg', 'png', 'gif']
-        if format_ not in supported:
-            None
-        return base64.b64encode(content)
-    except Exception as error:
-        logging.error('gen_body error: %s' % (error))
-        logging.error('gen_body trace: %s' % traceback.format_exc())
-        return None
-
-
-def send_metrics(event, result, start_time):
-    t = threading.Thread(
-        target=lambda_metrics.send_data,
-        args=(event, result, start_time, )
-    )
-    t.start()
-    return t
-
 def lambda_handler(event, context):
+    """
+    Main event handler, calls thumbor with received event.
+    """
     try:
         start_time = timeit.default_timer()
         global log_level
@@ -274,6 +346,7 @@ def lambda_handler(event, context):
                             ]:
             log_level = 'ERROR'
         logging.getLogger().setLevel(log_level)
+
         if event['requestContext']['httpMethod'] != 'GET' and\
            event['requestContext']['httpMethod'] != 'HEAD':
             return response_formater(status_code=405)

@@ -18,12 +18,10 @@
 import unittest
 import os
 from image_handler.lambda_rewrite import match_patterns
-from test.test_support import EnvironmentVarGuard
 
 
 class match_patterns_test_case(unittest.TestCase):
     def setUp(self):
-        self.env = EnvironmentVarGuard()
         value = (
             r"["
             r"(r'^/([a])/([0-9a-f]+)-(zoom)\.([a-zA-Z0-9]+)$',"
@@ -56,18 +54,16 @@ class match_patterns_test_case(unittest.TestCase):
             r"r'/fit-in/47x47/raw/\2.\4')"
             "]"
         )
-        self.env.set('REWRITE_PATTERNS', value)
-
+        os.environ['REWRITE_PATTERNS'] = value
     def test_is_five_prime(self):
-        with self.env:
-            expected = (
-                r"/fit-in/650x650/raw"
-                r"/4fff89be6cca5cf00afe8062a54796fa.jpg"
-                )
-            self.assertEqual(
-                match_patterns("/b/4fff89be6cca5cf00afe8062a54796fa-zoom.jpg"),
-                expected
+        expected = (
+            r"/fit-in/650x650/raw"
+            r"/4fff89be6cca5cf00afe8062a54796fa.jpg"
             )
+        self.assertEqual(
+            match_patterns("/b/4fff89be6cca5cf00afe8062a54796fa-zoom.jpg"),
+            expected
+        )
 
 if __name__ == '__main__':
     unittest.main()

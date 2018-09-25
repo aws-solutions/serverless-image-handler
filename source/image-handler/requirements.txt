@@ -1,1 +1,0 @@
-https://github.com/thumbor/thumbor-plugins/archive/master.zip
