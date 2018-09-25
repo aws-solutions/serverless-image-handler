@@ -76,7 +76,7 @@ def response_formater(status_code='400',
 
     if int(status_code) != 200:
         api_response['body'] = json.dumps(body)
-        api_response['Cache-Control'] = cache_control
+        api_response['headers']['Cache-Control'] = cache_control
     else:
         api_response['body'] = body
         api_response['isBase64Encoded'] = 'true'
