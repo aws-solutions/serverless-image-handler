@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: >-
@@ -49,6 +50,32 @@ Parameters:
       access to your API.
     Default: '*'
     Type: String
+  AllowUnsafeUrl:
+    Description: >-
+      Will this service allow unsafe URLs? If not, supply a security key.
+      See https://github.com/thumbor/thumbor/wiki/Security for details.
+    Default: 'Yes'
+    Type: String
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+  SecurityKey:
+    Description: ->
+      This is the key used to generate a hash-based message authentication code
+      and is required if unsafe URLs are not permitted.
+      See https://github.com/thumbor/thumbor/wiki/Security for details.
+      See also https://crypto.stackexchange.com/questions/35476/how-long-should-a-hmac-cryptographic-key-be
+      for recommendations around key content and length.
+    Default: 'unsafekey'
+    Type: String
+  EnableHttpLoader:
+    Description: >-
+      Will this service enable the HTTP image loader?
+    Default: 'No'
+    Type: String
+    AllowedValues:
+      - 'Yes'
+      - 'No'
   LambdaLogRetention:
     Description: Retain Lambda CloudWatch Logs by days.
     Type: Number
@@ -110,6 +137,9 @@ Metadata:
           - OriginS3BucketRegion
           - EnableCors
           - CorsOrig
+          - AllowUnsafeUrl
+          - SecurityKey
+          - EnableHttpLoader
           - LambdaLogRetention
       - Label:
           default: Image Handler UI Configuration
@@ -126,6 +156,12 @@ Metadata:
         default: Enable CORS?
       CorsOrig:
         default: CORS Origin
+      AllowUnsafeUrl:
+        default: Allow unsafe URLs?
+      SecurityKey:
+        default: Security Key (required if unsafe URLs are not allowed)
+      EnableHttpLoader:
+        default: Enable HTTP image loader
       LambdaLogRetention:
         default: Lambda Log Retention
       DeployUI:
@@ -359,6 +395,9 @@ Resources:
           REKOGNITION_REGION: us-east-1
           ENABLE_CORS: !Ref EnableCors
           CORS_ORIGIN: !Ref CorsOrig
+          ALLOW_UNSAFE_URL: !Ref AllowUnsafeUrl
+          SECURITY_KEY: !Ref SecurityKey
+          TC_AWS_ENABLE_HTTP_LOADER: !Ref EnableHttpLoader
           SEND_ANONYMOUS_DATA: !FindInMap
             - Send
             - AnonymousUsage
@@ -775,3 +814,9 @@ Outputs:
   CorsOrigin:
     Description: 'If enabled, allow CORS from this origin.'
     Value: !Ref CorsOrig
+  AllowUnsafeUrl:
+    Description: 'If enabled, allow Thumbor unsafe URL.'
+    Value: !Ref AllowUnsafeUrl
+  SecurityKey:
+    Description: 'Thumbor security key for safe URLs.'
+    Value: !Ref SecurityKey
