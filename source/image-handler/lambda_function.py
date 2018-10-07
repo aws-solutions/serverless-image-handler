@@ -299,7 +299,7 @@ def process_thumbor_response(thumbor_response, vary):
      if thumbor_response.status_code != 200:
          return response_formater(status_code=thumbor_response.status_code)
      if vary:
-         vary = thumbor_response.headers['vary']
+         vary = 'Accept'
      content_type = thumbor_response.headers['content-type']
      body = gen_body(content_type, thumbor_response.content)
      # SO-SIH-173 - 08/20/2018 - Lambda payload limit
