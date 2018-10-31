@@ -1,0 +1,9 @@
+version: '2.1'
+
+services:
+
+  py:
+    build: .
+    volumes:
+      - .:/app
+

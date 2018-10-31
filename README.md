@@ -13,6 +13,14 @@ sudo  pip install --upgrade setuptools
 sudo pip install --upgrade virtualenv
 ```
 
+## Building Lambda Package With Docker
+
+If you are not running centos you can build using the supplied docker file.
+
+docker-compose build
+docker-compose run --rm py bash
+./build-s3-dist-docker.sh source-bucket-base-name
+
 ## Building Lambda Package
 ```bash
 cd deployment
