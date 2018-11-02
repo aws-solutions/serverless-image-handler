@@ -77,7 +77,7 @@ def response_formater(status_code='400',
             api_response['headers']['Access-Control-Allow-Origin'] = os.environ.get('CORS_ORIGIN')
         # If CORS_ORIGIN contains commas (multiple origins)
         if re.match(r"[,]", str(os.environ.get('CORS_ORIGIN'))):
-            origins = os.environ.get('CORS_ORIGIN')).split(",")
+            origins = os.environ.get('CORS_ORIGIN').split(",")
             for i in range(len(origins)) :
                 current_origin = origins[i].strip()
                 if original_request['headers'].get('Origin') == current_origin:
