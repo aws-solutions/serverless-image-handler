@@ -61,6 +61,7 @@ def response_formater(status_code='400',
                       expires='',
                       etag='',
                       date='',
+                      request_origin='',
                       vary=False
                       ):
 
@@ -72,7 +73,32 @@ def response_formater(status_code='400',
     }
 
     if str(os.environ.get('ENABLE_CORS')).upper() == "YES":
-        api_response['headers']['Access-Control-Allow-Origin'] = os.environ.get('CORS_ORIGIN')
+        cors_origin = str(os.environ.get('CORS_ORIGIN')).lower()
+        logging.info('api cors enabled using origin(s): %s' % cors_origin)
+        # If CORS_ORIGIN contains no commas or '*' (single origin)
+        if re.match(r"^http[://A-Za-z0-9.-]+$|^\*$", cors_origin):
+            api_response['headers']['Access-Control-Allow-Origin'] = os.environ.get('CORS_ORIGIN').lower()
+            logging.debug('api origin hard set: %s' % cors_origin)
+        # If CORS_ORIGIN contains commas (multiple origins)
+        elif re.search(r"[,]", cors_origin):
+            logging.debug('api multiple origins detected: %s' % cors_origin)
+            origins = cors_origin.split(",")
+            for i in range(len(origins)):
+                current_origin = origins[i].strip()
+                logging.debug('api origin trying match: %s' % current_origin)
+                if request_origin == current_origin:
+                    # Found a match
+                    api_response['headers']['Access-Control-Allow-Origin'] = current_origin
+                    logging.debug('api origin match found: %s' % current_origin)
+                    break
+            else:
+                # No match - set the first origin found in the list; will cause a CORS failure
+                api_response['headers']['Access-Control-Allow-Origin'] = origins[0].strip()
+                logging.debug('api origin mismatch: %s' % request_origin)
+        else:
+            # Set the raw CORS_ORIGIN in the response as a measure of last resort (previous behavior)
+            api_response['headers']['Access-Control-Allow-Origin'] = os.environ.get('CORS_ORIGIN').lower()
+            logging.debug('api using default origin of: %s' % cors_origin)
 
     if int(status_code) != 200:
         api_response['body'] = json.dumps(body)
@@ -286,7 +312,7 @@ def request_thumbor(original_request, session):
     http_path = original_request['path']
     logging.debug('original_request path: %s' % (http_path))
     try:
-        http_path = rewrite(http_path);
+        http_path = rewrite(http_path)
         logging.debug('http path after rewrite: %s' % (http_path))
         http_path = true_url(http_path)
     except Exception as error:
@@ -295,9 +321,11 @@ def request_thumbor(original_request, session):
     vary, request_headers = auto_webp(original_request, request_headers)
     return session.get(unix_path + http_path, headers=request_headers), vary
 
-def process_thumbor_responde(thumbor_response, vary):
+def process_thumbor_responde(thumbor_response, vary, request_origin):
      if thumbor_response.status_code != 200:
-         return response_formater(status_code=thumbor_response.status_code)
+         return response_formater(status_code=thumbor_response.status_code,
+                                 request_origin=request_origin
+                                 )
      if vary:
          vary = thumbor_response.headers['vary']
      content_type = thumbor_response.headers['content-type']
@@ -310,10 +338,13 @@ def process_thumbor_responde(thumbor_response, vary):
      if (content_length > 6000000):
         return response_formater(status_code='500',
                                  body={'message': 'body size is too long'},
+                                 request_origin=request_origin
                                  )
      if body is None:
          return response_formater(status_code='500',
-                                  cache_control='no-cache,no-store')
+                                  cache_control='no-cache,no-store',
+                                  request_origin=request_origin
+                                  )
      return response_formater(status_code='200',
                               body=body,
                               cache_control=thumbor_response.headers['Cache-Control'],
@@ -321,15 +352,17 @@ def process_thumbor_responde(thumbor_response, vary):
                               expires=thumbor_response.headers['Expires'],
                               etag=thumbor_response.headers['Etag'],
                               date=thumbor_response.headers['Date'],
+                              request_origin=request_origin,
                               vary=vary
                               )
 
 def call_thumbor(original_request):
+    uppercased_headers = dict((k.upper(), v) for k,v in original_request['headers'].iteritems())
     thumbor_down, session = is_thumbor_down()
     if thumbor_down:
         return thumbor_down
     thumbor_response, vary = request_thumbor(original_request, session)
-    return process_thumbor_responde(thumbor_response, vary)
+    return process_thumbor_responde(thumbor_response, vary, uppercased_headers.get('ORIGIN'))
 
 def lambda_handler(event, context):
     """
@@ -347,9 +380,13 @@ def lambda_handler(event, context):
             log_level = 'ERROR'
         logging.getLogger().setLevel(log_level)
 
+        uppercased_headers = dict((k.upper(), v) for k,v in event['headers'].iteritems())
+
         if event['requestContext']['httpMethod'] != 'GET' and\
            event['requestContext']['httpMethod'] != 'HEAD':
-            return response_formater(status_code=405)
+            return response_formater(status_code=405,
+                                     request_origin=uppercased_headers.get('ORIGIN')
+                                     )
         result = call_thumbor(event)
         if str(os.environ.get('SEND_ANONYMOUS_DATA')).upper() == 'YES':
             send_metrics(event, result, start_time)
@@ -358,4 +395,6 @@ def lambda_handler(event, context):
         logging.error('lambda_handler error: %s' % (error))
         logging.error('lambda_handler trace: %s' % traceback.format_exc())
         return response_formater(status_code='500',
-                                 cache_control='no-cache,no-store')
+                                 cache_control='no-cache,no-store',
+                                 request_origin=uppercased_headers.get('ORIGIN')
+                                 )

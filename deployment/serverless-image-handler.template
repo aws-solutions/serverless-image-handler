@@ -43,10 +43,10 @@ Parameters:
       - 'No'
   CorsOrig:
     Description: >-
-      This value will be returned by the API in the Access-Control-Allow-Origin
+      These value(s) will be returned by the API in the Access-Control-Allow-Origin
       header. A star (*) value will support any origin. We recommend specifying
       a specific origin (e.g. http://example.domain) to restrict cross-site
-      access to your API.
+      access to your API. Multiple origins can be provided when seperated by commas.
     Default: '*'
     Type: String
   LambdaLogRetention:
@@ -475,8 +475,9 @@ Resources:
             # SO-SIH-161 - 07/26/2018 - Improving CF hit rate
             # Allow CF to use same version for different Accept header values
             # https://github.com/awslabs/serverless-image-handler/issues/32
-            # Headers:
-            #   - Accept
+            Headers:
+            #  - Accept
+              - Origin
             QueryString: 'false'
             Cookies:
               Forward: none
