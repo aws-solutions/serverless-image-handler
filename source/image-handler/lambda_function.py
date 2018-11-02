@@ -72,7 +72,21 @@ def response_formater(status_code='400',
     }
 
     if str(os.environ.get('ENABLE_CORS')).upper() == "YES":
-        api_response['headers']['Access-Control-Allow-Origin'] = os.environ.get('CORS_ORIGIN')
+        # If CORS_ORIGIN contains no commas (single origin)
+        if re.match(r"^[A-Za-z0-9.-]+$", str(os.environ.get('CORS_ORIGIN'))):
+            api_response['headers']['Access-Control-Allow-Origin'] = os.environ.get('CORS_ORIGIN')
+        # If CORS_ORIGIN contains commas (multiple origins)
+        if re.match(r"[,]", str(os.environ.get('CORS_ORIGIN'))):
+            origins = os.environ.get('CORS_ORIGIN')).split(",")
+            for i in range(len(origins)) :
+                if original_request['headers'].get('Origin') == origins[i]:
+                    api_response['headers']['Access-Control-Allow-Origin'] = origins[i]
+                    logging.debug('api origin match: %s' % origins[i])
+                    break
+            else
+                # Set the first origin header in the list, which will cause a CORS mismatch failure client-side
+                api_response['headers']['Access-Control-Allow-Origin'] = origins[0]
+                logging.debug('api origin mismatch: %s' % original_request['headers'].get('Origin'))
 
     if int(status_code) != 200:
         api_response['body'] = json.dumps(body)
