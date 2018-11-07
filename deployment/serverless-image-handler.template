@@ -46,7 +46,7 @@ Parameters:
       These value(s) will be returned by the API in the Access-Control-Allow-Origin
       header. A star (*) value will support any origin. We recommend specifying
       a specific origin (e.g. http://example.domain) to restrict cross-site
-      access to your API. Multiple values can be provided when seperated by commas.
+      access to your API. Multiple origins can be provided when seperated by commas.
     Default: '*'
     Type: String
   LambdaLogRetention:
