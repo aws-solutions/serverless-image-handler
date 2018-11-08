@@ -111,9 +111,6 @@ def DeployImageHandlerUI(deploy_config):
                     if filename.endswith('.gif'):
                         extraArgs.update({"ContentType": "image/gif"})
                     s3.upload_file(Filename=local_path, Bucket=deploy_config['UIBucket'], Key=s3_path, ExtraArgs=extraArgs)
-                    # Make files publically accessible if requested during CFN launch
-                    if deploy_config['UIPublicRead'] == "Yes":
-                        s3.put_object_acl(ACL='public-read', Bucket=deploy_config['UIBucket'], Key=s3_path)
     except Exception as e:
         log.error("Error uploading UI. Error: %s", e)
         raise
@@ -131,7 +128,6 @@ def DeleteImageHandlerUI(deploy_config):
             s3.delete_object(Bucket=deploy_config['UIBucket'], Key=s3object['Key'])
         log.info("Deleting %s/%s", deploy_config['UIBucket'], deploy_config['UIPrefix'])
         s3.delete_object(Bucket=deploy_config['UIBucket'], Key=deploy_config['UIPrefix'])
-
     except Exception as e:
         log.error("Error deleting UI. Error: %s", e)
         raise

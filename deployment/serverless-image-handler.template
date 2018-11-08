@@ -92,14 +92,6 @@ Parameters:
       -- for example 'serverless-image-handler-ui/'
     AllowedPattern: '^(?!/)[a-zA-Z][a-zA-Z0-9-]+/$'
 
-  UIPublicRead:
-    Description: Should the UI be configured for public (anonymous) access?
-    Type: String
-    Default: 'Yes'
-    AllowedValues:
-      - 'Yes'
-      - 'No'
-
 Metadata:
   'AWS::CloudFormation::Interface':
     ParameterGroups:
@@ -116,7 +108,6 @@ Metadata:
         Parameters:
           - DeployUI
           - UIDestPrefix
-          - UIPublicRead
     ParameterLabels:
       OriginS3Bucket:
         default: Origin S3 Bucket
@@ -132,8 +123,6 @@ Metadata:
         default: Deploy UI?
       UIDestPrefix:
         default: UI Prefix
-      UIPublicRead:
-        default: Make UI Public?
 
 Mappings:
   Send:
@@ -171,40 +160,41 @@ Mappings:
       Bucket: %%BUCKET_NAME%%
       Key: serverless-image-handler/%%VERSION%%/serverless-image-handler-ui.zip
     FindReplace:
-      DomainName: '%%CloudFrontDomainName%%'
-      S3URL: '%%S3URL%%'
+      DomainName: '%%APIEndpoint%%'
+      CloudFrontURL: '%%CloudFrontURL%%'
       Deliminator: '|'
   S3EndPointMap:
     us-east-1:
-      endpoint: 'https://s3.amazonaws.com'
+      endpoint: 's3.amazonaws.com'
     us-east-2:
-      endpoint: 'https://s3.us-east-2.amazonaws.com'
+      endpoint: 's3.us-east-2.amazonaws.com'
     us-west-1:
-      endpoint: 'https://s3-us-west-1.amazonaws.com'
+      endpoint: 's3-us-west-1.amazonaws.com'
     us-west-2:
-      endpoint: 'https://s3-us-west-2.amazonaws.com'
+      endpoint: 's3-us-west-2.amazonaws.com'
     ca-central-1:
-      endpoint: 'https://s3.ca-central-1.amazonaws.com'
+      endpoint: 's3.ca-central-1.amazonaws.com'
     eu-west-1:
-      endpoint: 'https://s3-eu-west-1.amazonaws.com'
+      endpoint: 's3-eu-west-1.amazonaws.com'
     eu-central-1:
-      endpoint: 'https://s3.eu-central-1.amazonaws.com'
+      endpoint: 's3.eu-central-1.amazonaws.com'
     eu-west-2:
-      endpoint: 'https://s3.eu-west-2.amazonaws.com'
+      endpoint: 's3.eu-west-2.amazonaws.com'
     eu-west-3:
-      endpoint: 'https://s3.eu-west-3.amazonaws.com'
+      endpoint: 's3.eu-west-3.amazonaws.com'
     ap-northeast-1:
-      endpoint: 'https://s3-ap-northeast-1.amazonaws.com'
+      endpoint: 's3-ap-northeast-1.amazonaws.com'
     ap-northeast-2:
-      endpoint: 'https://s3.ap-northeast-2.amazonaws.com'
+      endpoint: 's3.ap-northeast-2.amazonaws.com'
     ap-southeast-1:
-      endpoint: 'https://s3-ap-southeast-1.amazonaws.com'
+      endpoint: 's3-ap-southeast-1.amazonaws.com'
     ap-southeast-2:
-      endpoint: 'https://s3-ap-southeast-2.amazonaws.com'
+      endpoint: 's3-ap-southeast-2.amazonaws.com'
     ap-south-1:
-      endpoint: 'https://s3.ap-south-1.amazonaws.com'
+      endpoint: 's3.ap-south-1.amazonaws.com'
     sa-east-1:
-      endpoint: 'https://s3-sa-east-1.amazonaws.com'
+      endpoint: 's3-sa-east-1.amazonaws.com'
+
 
 Conditions:
   AutoDeployUI: !Equals
@@ -212,9 +202,39 @@ Conditions:
     - 'Yes'
 
 Resources:
+  # demo bucket
+  DemoWebsiteBucket:
+    Condition: AutoDeployUI
+    Type: AWS::S3::Bucket
+    Properties:
+        WebsiteConfiguration:
+            IndexDocument: "index.html"
+            ErrorDocument: "index.html"
+
+  DemoWebsiteBucketPolicy:
+    Condition: AutoDeployUI
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+        Bucket: !Sub ${DemoWebsiteBucket}
+        PolicyDocument:
+            Statement:
+                -
+                    Action:
+                        - "s3:GetObject"
+                    Effect: "Allow"
+                    Resource:
+                        Fn::Join:
+                            - ""
+                            -
+                                - "arn:aws:s3:::"
+                                -
+                                    Ref: "DemoWebsiteBucket"
+                                - "/*"
+                    Principal:
+                        CanonicalUser: !Sub ${ImageHandlerOAI.S3CanonicalUserId}
+  # SO-SIH-175 - 08/28/2018 - Missing header
+  # https://github.com/awslabs/serverless-image-handler/issues/33
   ImageHandlerS3Policy:
-    DependsOn:
-      - ImageHandlerRole
     Type: 'AWS::IAM::Policy'
     Properties:
       PolicyName: !Join
@@ -229,16 +249,18 @@ Resources:
           - Effect: Allow
             Action:
               - 's3:GetObject'
-            Resource: !Join
-              - ''
-              - - 'arn:aws:s3:::'
-                - !Ref OriginS3Bucket
-                - /*
+              - 's3:ListBucket'
+            Resource:
+              !If
+                - AutoDeployUI
+                - - !Sub arn:aws:s3:::${DemoWebsiteBucket}/*
+                  - !Sub arn:aws:s3:::${DemoWebsiteBucket}
+                - - !Sub arn:aws:s3:::${OriginS3Bucket}/*
+                  - !Sub arn:aws:s3:::${OriginS3Bucket}
+
   # SO-SIH-163 - 07/25/2018 Rekognition IAM permission
   # Read only permission added to support Rekognition
   ImageHandlerRekogPolicy:
-    DependsOn:
-      - ImageHandlerRole
     Type: 'AWS::IAM::Policy'
     Metadata:
       cfn_nag:
@@ -260,8 +282,6 @@ Resources:
               - rekognition:DetectFaces
             Resource: '*'
   ImageHandlerLogPolicy:
-    DependsOn:
-      - ImageHandlerRole
     Type: 'AWS::IAM::Policy'
     Properties:
       PolicyName: !Join
@@ -303,11 +323,6 @@ Resources:
         - - !Ref 'AWS::StackName'
           - Role
   ImageHandlerFunction:
-    DependsOn:
-      - ImageHandlerRole
-      - ImageHandlerLogPolicy
-      - ImageHandlerS3Policy
-      - CreateUniqueID
     Type: 'AWS::Lambda::Function'
     Properties:
       Code:
@@ -348,12 +363,28 @@ Resources:
         - Description
       Environment:
         Variables:
-          TC_AWS_LOADER_BUCKET: !Ref OriginS3Bucket
-          TC_AWS_ENDPOINT: !FindInMap
-            - S3EndPointMap
-            - !Ref OriginS3BucketRegion
-            - endpoint
-          TC_AWS_REGION: !Ref OriginS3BucketRegion
+          TC_AWS_LOADER_BUCKET: !If
+          - AutoDeployUI
+          - !Ref DemoWebsiteBucket # change for customer bucket
+          - !Ref OriginS3Bucket
+          TC_AWS_ENDPOINT: !If # s3 endpoint for bucket
+          - AutoDeployUI
+          - !Sub
+            - https://${s3domain}
+            - s3domain: !FindInMap
+              - S3EndPointMap
+              - !Ref AWS::Region
+              - endpoint
+          - !Sub
+            - https://${s3domain}
+            - s3domain: !FindInMap
+              - S3EndPointMap
+              - !Ref OriginS3BucketRegion
+              - endpoint
+          TC_AWS_REGION: !If
+          - AutoDeployUI
+          - !Ref AWS::Region
+          - !Ref OriginS3BucketRegion
           # SO-SIH-155 - 07/16/2018 - Rekognition integration
           # Adding env variable for AWS Rekognition
           REKOGNITION_REGION: us-east-1
@@ -367,9 +398,10 @@ Resources:
             - CreateUniqueID
             - UUID
           LOG_LEVEL: INFO
+          ALLOW_UNSAFE_URL: True
   ImageHandlerLogGroup:
+    DeletionPolicy: Retain
     Type: 'AWS::Logs::LogGroup'
-    DependsOn: ImageHandlerFunction
     Properties:
       RetentionInDays: !Ref LambdaLogRetention
       LogGroupName: !Join
@@ -384,6 +416,11 @@ Resources:
   ImageHandlerApi:
     Type: 'AWS::ApiGateway::RestApi'
     Properties:
+      EndpointConfiguration:
+        Types: !If
+        - AutoDeployUI
+        - - EDGE
+        - - REGIONAL
       Body:
         swagger: '2.0'
         info:
@@ -443,17 +480,25 @@ Resources:
           - ':'
           - !Ref ImageHandlerApi
           - /*/*/*
+
+  ImageHandlerOAI:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Condition: AutoDeployUI
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: serverless image handler OAI
+
   ImageHandlerDistribution:
     Type: 'AWS::CloudFront::Distribution'
     Properties:
       DistributionConfig:
-        Origins:
-          - DomainName: !Join
-              - ''
-              - - !Ref ImageHandlerApi
-                - .execute-api.
-                - !Ref 'AWS::Region'
-                - .amazonaws.com
+        Origins: !If
+        - AutoDeployUI
+        - - DomainName: !Sub ${DemoWebsiteBucket}.s3.${AWS::Region}.amazonaws.com
+            Id: !Sub S3-${DemoWebsiteBucket}
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${ImageHandlerOAI}
+        - - DomainName: !Sub ${ImageHandlerApi}.execute-api.${AWS::Region}.amazonaws.com
             Id: !Ref ImageHandlerApi
             OriginPath: /image
             CustomOriginConfig:
@@ -463,14 +508,17 @@ Resources:
                 - TLSv1
                 - TLSv1.1
                 - TLSv1.2
-        Enabled: 'true'
+        Enabled: True
         HttpVersion: http2
-        Comment: Image Resize Distribution
+        Comment: Image Handler Distribution
         DefaultCacheBehavior:
           AllowedMethods:
             - GET
             - HEAD
-          TargetOriginId: !Ref ImageHandlerApi
+          TargetOriginId: !If
+          - AutoDeployUI
+          - !Sub S3-${DemoWebsiteBucket}
+          - !Sub ${ImageHandlerApi}
           ForwardedValues:
             # SO-SIH-161 - 07/26/2018 - Improving CF hit rate
             # Allow CF to use same version for different Accept header values
@@ -493,6 +541,7 @@ Resources:
           - ErrorCode: 504
             ErrorCachingMinTTL: 10
         PriceClass: PriceClass_All
+
   CustomResourceRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -527,6 +576,7 @@ Resources:
                 - ':log-group:/aws/lambda/*'
   CustomResourceDeployPolicy:
     Type: 'AWS::IAM::Policy'
+    Condition: AutoDeployUI
     Properties:
       Roles:
         - !Ref CustomResourceRole
@@ -555,26 +605,13 @@ Resources:
             Action:
               - 's3:DeleteObject'
               - 's3:PutObject'
-              - 's3:PutObjectAcl'
-            Resource: !Join
-              - ''
-              - - 'arn:aws:s3:::'
-                - !Ref OriginS3Bucket
-                - /
-                - !Ref UIDestPrefix
-                - '*'
-          - Effect: Allow
-            Action:
               - 's3:ListBucket'
-            Resource: !Join
-              - ''
-              - - 'arn:aws:s3:::'
-                - !Ref OriginS3Bucket
+            Resource:
+              - !Sub arn:aws:s3:::${DemoWebsiteBucket}/*
+              - !Sub arn:aws:s3:::${DemoWebsiteBucket}
+
   CustomResource:
     Type: 'AWS::Lambda::Function'
-    DependsOn:
-      - CustomResourceLoggingPolicy
-      - CustomResourceDeployPolicy
     Properties:
       Code:
         S3Bucket: !Join
@@ -617,10 +654,7 @@ Resources:
           LOG_LEVEL: INFO
   CreateUniqueID:
     Type: 'Custom::LoadLambda'
-    DependsOn:
-      - CustomResourceLoggingPolicy
-      - CustomResourceDeployPolicy
-      - CustomResource
+    DependsOn: CustomResourceLoggingPolicy
     Properties:
       ServiceToken: !GetAtt
         - CustomResource
@@ -632,7 +666,6 @@ Resources:
     DependsOn:
       - CustomResourceLoggingPolicy
       - CustomResourceDeployPolicy
-      - CustomResource
     Condition: AutoDeployUI
     Properties:
       ServiceToken: !GetAtt
@@ -654,16 +687,18 @@ Resources:
             - Key
           - ''','
           - '''UIBucket'' : '''
-          - !Ref OriginS3Bucket
+          - !Ref DemoWebsiteBucket
           - ''', '
           - '''UIBucketRegion'' : '''
-          - !Ref OriginS3BucketRegion
+          - !Ref AWS::Region
           - ''', '
           - '''UIPrefix'' : '''
           - !Ref UIDestPrefix
           - ''', '
-          - '''UIPublicRead'' : '''
-          - !Ref UIPublicRead
+          # SO-SIH-181 - 10/23/2018 - Remove public read
+          # Sending CloudFront OAI in event
+          - '''CloudFrontOAI'' : '''
+          - !Sub ${ImageHandlerOAI.S3CanonicalUserId}
           - ''', '
           - '''FindReplace'' : '''
           - !FindInMap
@@ -674,24 +709,22 @@ Resources:
             - UI
             - FindReplace
             - Deliminator
-          - !GetAtt
-            - ImageHandlerDistribution
-            - DomainName
+          # SO-SIH-182 - 10/17/2019 - removing CFN fronting API
+          # removing CloudFront and directly calling API endpoint
+          - !Ref ImageHandlerApi
+          - .execute-api.
+          - !Ref 'AWS::Region'
+          - .amazonaws.com/image
           - ','
           - !FindInMap
             - UI
             - FindReplace
-            - S3URL
+            - CloudFrontURL
           - !FindInMap
             - UI
             - FindReplace
             - Deliminator
-          - !FindInMap
-            - S3EndPointMap
-            - !Ref OriginS3BucketRegion
-            - endpoint
-          - /
-          - !Ref OriginS3Bucket
+          - !Sub https://${ImageHandlerDistribution.DomainName}
           - /
           - !Ref UIDestPrefix
           - ''', '
@@ -704,10 +737,6 @@ Resources:
           - '}'
   SendingData:
     Type: 'Custom::LoadLambda'
-    DependsOn:
-      - CustomResourceLoggingPolicy
-      - CustomResourceDeployPolicy
-      - CustomResource
     Properties:
       ServiceToken: !GetAtt
         - CustomResource
@@ -733,9 +762,6 @@ Resources:
           - '''DeployUI'': '''
           - !Ref DeployUI
           - ''','
-          - '''UIPublicRead'': '''
-          - !Ref UIPublicRead
-          - ''','
           - '''SendAnonymousData'': '''
           - !FindInMap
             - Send
@@ -745,26 +771,16 @@ Resources:
           - '}'
           - '}'
 Outputs:
-  SolutionUI:
-    Description: 'If enabled, the URL for the UI.'
-    Value: !Sub
-      - '${S3Url}/${Bucket}/${Prefix}index.html'
-      - S3Url: !FindInMap
-          - S3EndPointMap
-          - !Ref OriginS3BucketRegion
-          - endpoint
-        Bucket: !Ref OriginS3Bucket
-        Prefix: !Ref UIDestPrefix
-  CloudFrontURL:
-    Description: URL for new CloudFront distribution
-    Value: !Sub
-      - 'https://${Domain}'
-      - Domain: !GetAtt
-          - ImageHandlerDistribution
-          - DomainName
-  CloudFrontSampleRequest:
+  DemoUI:
+    Condition: AutoDeployUI
+    Description: URL for the demo UI
+    Value: !Sub https://${ImageHandlerDistribution.DomainName}/${UIDestPrefix}index.html
+  SampleRequest:
     Description: Sample URL calling origin image key through CloudFront
-    Value: !Sub
+    Value: !If
+    - AutoDeployUI
+    - Change DeployUI to 'No' to get sample request for your images
+    - !Sub
       - 'https://${Domain}/fit-in/100x100/image-name.jpg'
       - Domain: !GetAtt
           - ImageHandlerDistribution
