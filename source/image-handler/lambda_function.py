@@ -55,7 +55,7 @@ unix_path = 'http+unix://%2Ftmp%2Fthumbor'
 # helper methods
 #
 def response_formater(status_code='400',
-                      body={'message': 'error'},
+                      body={'message': 'error, please check lambda logs'},
                       cache_control='max-age=120,public',
                       content_type='application/json',
                       expires='',
@@ -74,9 +74,14 @@ def response_formater(status_code='400',
     if str(os.environ.get('ENABLE_CORS')).upper() == "YES":
         api_response['headers']['Access-Control-Allow-Origin'] = os.environ.get('CORS_ORIGIN')
 
+    # SO-SIH-175 - 08/28/2018 - Missing header
+    # Adding missing header to response
+    # https://github.com/awslabs/serverless-image-handler/pull/34
+    # https://github.com/awslabs/serverless-image-handler/pull/60
     if int(status_code) != 200:
         api_response['body'] = json.dumps(body)
-        api_response['Cache-Control'] = cache_control
+        api_response['headers']['Cache-Control'] = cache_control
+        api_response['isBase64Encoded'] = 'false'
     else:
         api_response['body'] = body
         api_response['isBase64Encoded'] = 'true'
@@ -120,26 +125,6 @@ def true_url(http_path):
     """
     if bool(strtobool(str(config.ALLOW_UNSAFE_URL))):
         http_path = '/unsafe' + http_path
-    else:
-        try:
-            unsafe_or_key = r'(?:(?:(?P<unsafe>unsafe)|(?P<key>.+?))/)?'
-            reg = ['/?']
-            reg.append(unsafe_or_key)
-            reg = re.compile(''.join(reg))
-            result = reg.match(http_path)
-            result = result.groupdict()
-            http_key = result['key']
-            logging.debug('security key from path: %s' % (http_key))
-            http_path = http_path.split(http_key+'/')[1]
-            logging.debug('path to sign: %s' % (http_path))
-            # replacing '/' with '_' & '+' with '-'
-            # details https://github.com/thumbor/thumbor/issues/597
-            signed_path = signed_url(str(http_key),str(http_path)).replace('/','_').replace('+','-')
-            logging.debug('signed path: %s' % (signed_path))
-            http_path = '/' + signed_path + '/' + http_path
-            logging.debug('signed_url: %s' % (http_path))
-        except Exception as error:
-            logging.error('generating signed url error: %s' % (error))
     return http_path
 
 

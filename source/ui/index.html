@@ -40,23 +40,23 @@
 
                 <div class="col-lg-12">
                     <a class="thumbnail" href="#">
-                        <img class="img-responsive" src="%%S3URL%%img/aws-logo.png" alt="">
+                        <img class="img-responsive" src="%%CloudFrontURL%%img/aws-logo.png" alt="">
                     </a><br />
                     <a class="thumbnail" href="#">
-                        <img class="img-responsive" src="%%S3URL%%img/balloon.jpg" alt="">
+                        <img class="img-responsive" src="%%CloudFrontURL%%img/balloon.jpg" alt="">
                     </a><br />
                     <a class="thumbnail" href="#">
-                        <img class="img-responsive" src="%%S3URL%%img/planet.jpg" alt="">
+                        <img class="img-responsive" src="%%CloudFrontURL%%img/planet.jpg" alt="">
                     </a><br />
                     <a class="thumbnail" href="#">
-                        <img class="img-responsive" src="%%S3URL%%img/face.jpg" alt="">
+                        <img class="img-responsive" src="%%CloudFrontURL%%img/face.jpg" alt="">
                     </a><br />
                     <a class="thumbnail" href="#">
-                        <img class="img-responsive" src="%%S3URL%%img/face2.jpg" alt="">
+                        <img class="img-responsive" src="%%CloudFrontURL%%img/face2.jpg" alt="">
                     </a>
                     <br />
                     <a class="thumbnail" href="#">
-                        <img class="img-responsive" src="%%S3URL%%img/multiface.jpg" alt="">
+                        <img class="img-responsive" src="%%CloudFrontURL%%img/multiface.jpg" alt="">
                     </a>
                 </div>
             </div>
@@ -70,7 +70,7 @@
               <div class="row">
                 <div class="form-group col-lg-12">
                     <label for="image-url">Image Url:</label>
-                    <input class="form-control" type="text" name="image-url" id="image-url" placeholder="Select one of the images in the left panel" value="%%S3URL%%img/multiface.jpg">
+                    <input class="form-control" type="text" name="image-url" id="image-url" placeholder="Select one of the images in the left panel" value="%%CloudFrontURL%%img/multiface.jpg">
                 </div>
               </div>
               <div class="row">
@@ -208,7 +208,7 @@
                 <div class="form-group col-lg-12">
                   <input class="checkbox-inline" type="checkbox" id="watermark_checkbox" checked>
                   <label for="watermark">Watermark:</label>
-                  <input class="form-control" type="text" name="watermark_url" id="watermark_url" placeholder="http://example.com/watermark.png,x,y,d" value="%%S3URL%%img/aws-logo-watermark.png,75,0,0">
+                  <input class="form-control" type="text" name="watermark_url" id="watermark_url" placeholder="http://example.com/watermark.png,x,y,d" value="%%CloudFrontURL%%img/aws-logo-watermark.png,75,0,0">
                 </div>
               </div>
               <div class="row">
@@ -243,13 +243,13 @@
 
 <script>
     createUrl = {
-        baseUrl: "https://%%CloudFrontDomainName%%",
+        baseUrl: "https://%%APIEndpoint%%",
 
         resize: function(imageOriginalUrl, resizeW, resizeH, security_key, fit_in, smart_crop, filter) {
 
             imageUrlParts = imageOriginalUrl.split('?')[0].split('/');
 
-            imageName = imageUrlParts[4] + '/' + imageUrlParts[5] + '/' + imageUrlParts[6];
+            imageName = imageUrlParts[3] + '/' + imageUrlParts[4] + '/' + imageUrlParts[5];
             url = this.baseUrl + security_key + fit_in + '/' + resizeW + 'x' + resizeH + smart_crop + filter + '/' + imageName;
 
             return url;
