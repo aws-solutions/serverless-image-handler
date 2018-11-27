@@ -120,26 +120,6 @@ def true_url(http_path):
     """
     if bool(strtobool(str(config.ALLOW_UNSAFE_URL))):
         http_path = '/unsafe' + http_path
-    else:
-        try:
-            unsafe_or_key = r'(?:(?:(?P<unsafe>unsafe)|(?P<key>.+?))/)?'
-            reg = ['/?']
-            reg.append(unsafe_or_key)
-            reg = re.compile(''.join(reg))
-            result = reg.match(http_path)
-            result = result.groupdict()
-            http_key = result['key']
-            logging.debug('security key from path: %s' % (http_key))
-            http_path = http_path.split(http_key+'/')[1]
-            logging.debug('path to sign: %s' % (http_path))
-            # replacing '/' with '_' & '+' with '-'
-            # details https://github.com/thumbor/thumbor/issues/597
-            signed_path = signed_url(str(http_key),str(http_path)).replace('/','_').replace('+','-')
-            logging.debug('signed path: %s' % (signed_path))
-            http_path = '/' + signed_path + '/' + http_path
-            logging.debug('signed_url: %s' % (http_path))
-        except Exception as error:
-            logging.error('generating signed url error: %s' % (error))
     return http_path
 
 
