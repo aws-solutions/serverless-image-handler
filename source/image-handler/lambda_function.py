@@ -36,8 +36,8 @@ from distutils.util import strtobool
 import json
 from hashlib import sha1
 import hmac
-import base64
 import re
+import boto3
 from requests.compat import quote
 
 from tornado.httpserver import HTTPServer
@@ -46,6 +46,16 @@ from tornado.options import options, define
 
 from thumbor.context import ServerParameters
 from thumbor.server import *
+
+
+# Decrypt envar SECURITY_KEY_KMS as SECURITY_KEY
+if os.environ.get('SECURITY_KEY_KMS',False):
+  kms_client = boto3.client('kms')
+  ciphertext = base64.b64decode(os.environ.get('SECURITY_KEY_KMS'));
+
+  os.environ['SECURITY_KEY'] = kms_client.decrypt(
+    CiphertextBlob=ciphertext
+  )['Plaintext']
 
 thumbor_config_path = '/var/task/image_handler/thumbor.conf'
 thumbor_socket = '/tmp/thumbor'
