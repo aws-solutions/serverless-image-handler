@@ -65,7 +65,7 @@ def response_formater(status_code='400',
                       ):
 
     api_response = {
-        'statusCode': status_code,
+        'statusCode': int(status_code),
         'headers': {
             'Content-Type': content_type
         }
@@ -79,12 +79,14 @@ def response_formater(status_code='400',
     # https://github.com/awslabs/serverless-image-handler/pull/34
     # https://github.com/awslabs/serverless-image-handler/pull/60
     if int(status_code) != 200:
+        api_response['statusDescription'] = status_code
         api_response['body'] = json.dumps(body)
         api_response['headers']['Cache-Control'] = cache_control
-        api_response['isBase64Encoded'] = 'false'
+        api_response['isBase64Encoded'] = False
     else:
+        api_response['statusDescription'] = '200 OK'
         api_response['body'] = body
-        api_response['isBase64Encoded'] = 'true'
+        api_response['isBase64Encoded'] = True
         api_response['headers']['Expires'] = expires
         api_response['headers']['Etag'] = etag
         api_response['headers']['Cache-Control'] = cache_control
@@ -332,8 +334,8 @@ def lambda_handler(event, context):
             log_level = 'ERROR'
         logging.getLogger().setLevel(log_level)
 
-        if event['requestContext']['httpMethod'] != 'GET' and\
-           event['requestContext']['httpMethod'] != 'HEAD':
+        if event['httpMethod'] != 'GET' and\
+           event['httpMethod'] != 'HEAD':
             return response_formater(status_code=405)
         result = call_thumbor(event)
         if str(os.environ.get('SEND_ANONYMOUS_DATA')).upper() == 'YES':
