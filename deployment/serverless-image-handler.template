@@ -322,6 +322,8 @@ Resources:
         - ''
         - - !Ref 'AWS::StackName'
           - Role
+          - '-'
+          - !Ref 'AWS::Region'
   ImageHandlerFunction:
     Type: 'AWS::Lambda::Function'
     Properties:
