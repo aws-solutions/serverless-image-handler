@@ -280,7 +280,7 @@ def request_thumbor(original_request, session):
     vary, request_headers = auto_webp(original_request, request_headers)
     return session.get(unix_path + http_path, headers=request_headers), vary
 
-def process_thumbor_responde(thumbor_response, vary):
+def process_thumbor_response(thumbor_response, vary):
      if thumbor_response.status_code != 200:
          return response_formater(status_code=thumbor_response.status_code)
      if vary:
@@ -314,7 +314,7 @@ def call_thumbor(original_request):
     if thumbor_down:
         return thumbor_down
     thumbor_response, vary = request_thumbor(original_request, session)
-    return process_thumbor_responde(thumbor_response, vary)
+    return process_thumbor_response(thumbor_response, vary)
 
 def lambda_handler(event, context):
     """
