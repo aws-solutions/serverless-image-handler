@@ -1,793 +1,678 @@
-AWSTemplateFormatVersion: 2010-09-09
-
-Description: >-
-  (SO0023) - Serverless Image Handler: This template creates a CloudFront
-  distribution and an AWS API Gateway to provide an easy-to-use image
-  manipulation API based on Thumbor. Template Version 2
-
-Parameters:
-  OriginS3Bucket:
-    Description: S3 bucket that will source your images.
-    Default: original-images-bucket-name
-    Type: String
-    ConstraintDescription: Must be a valid S3 Bucket.
-    MinLength: '1'
-    MaxLength: '64'
-    AllowedPattern: '[a-zA-Z][a-zA-Z0-9-.]*'
-  OriginS3BucketRegion:
-    Description: S3 bucket Region that will source your images.
-    Default: us-east-1
-    Type: String
-    AllowedValues:
-      - ap-south-1
-      - ap-northeast-1
-      - ap-northeast-2
-      - ap-southeast-1
-      - ap-southeast-2
-      - ca-central-1
-      - eu-central-1
-      - eu-west-1
-      - eu-west-2
-      - eu-west-3
-      - sa-east-1
-      - us-east-1
-      - us-east-2
-      - us-west-1
-      - us-west-2
-  EnableCors:
-    Description: Will this API require Cross-Origin Resource Sharing (CORS) support?
-    Default: 'No'
-    Type: String
-    AllowedValues:
-      - 'Yes'
-      - 'No'
-  CorsOrig:
-    Description: >-
-      This value will be returned by the API in the Access-Control-Allow-Origin
-      header. A star (*) value will support any origin. We recommend specifying
-      a specific origin (e.g. http://example.domain) to restrict cross-site
-      access to your API.
-    Default: '*'
-    Type: String
-  LambdaLogRetention:
-    Description: Retain Lambda CloudWatch Logs by days.
-    Type: Number
-    Default: 1
-    AllowedValues:
-      - 1
-      - 3
-      - 5
-      - 7
-      - 14
-      - 30
-      - 60
-      - 90
-      - 120
-      - 150
-      - 180
-      - 365
-      - 400
-      - 545
-      - 731
-      - 1827
-      - 3653
-
-  DeployUI:
-    Description: >-
-      Do you want to deploy a demo Serverless Image Handler UI to your original
-      images bucket?
-    Type: String
-    Default: 'Yes'
-    AllowedValues:
-      - 'Yes'
-      - 'No'
-
-  UIDestPrefix:
-    Description: Prefix for UI files in S3 bucket (currently only supports one folder)
-    Type: String
-    Default: serverless-image-handler-ui/
-    ConstraintDescription: >-
-      Prefix must contains letters, numbers, or dashes and end with a forward
-      slash (/); it cannot start with a forward slash or contain a forward slash
-      -- for example 'serverless-image-handler-ui/'
-    AllowedPattern: '^(?!/)[a-zA-Z][a-zA-Z0-9-]+/$'
-
-Metadata:
-  'AWS::CloudFormation::Interface':
-    ParameterGroups:
-      - Label:
-          default: Image Handler API Configuration
-        Parameters:
-          - OriginS3Bucket
-          - OriginS3BucketRegion
-          - EnableCors
-          - CorsOrig
-          - LambdaLogRetention
-      - Label:
-          default: Image Handler UI Configuration
-        Parameters:
-          - DeployUI
-          - UIDestPrefix
-    ParameterLabels:
-      OriginS3Bucket:
-        default: Origin S3 Bucket
-      OriginS3BucketRegion:
-        default: Origin S3 Bucket Region
-      EnableCors:
-        default: Enable CORS?
-      CorsOrig:
-        default: CORS Origin
-      LambdaLogRetention:
-        default: Lambda Log Retention
-      DeployUI:
-        default: Deploy UI?
-      UIDestPrefix:
-        default: UI Prefix
-
-Mappings:
-  Send:
-    AnonymousUsage:
-      Data: 'Yes'
-  Function:
-    ImageHandler:
-      # SO-SIH-153 - 07/16/2018 - Build fixes
-      # Adding variables for S3 bucket and versions
-      S3Bucket: %%BUCKET_NAME%%
-      S3Key: serverless-image-handler/%%VERSION%%/serverless-image-handler.zip
-      Name: serverless-image-handler
-      Handler: image_handler/lambda_function.lambda_handler
-      Description: >-
-        Serverless Image Handler: This function is invoked by the
-        serverless-image-handler API Gateway to manipulate images with Thumbor.
-      Runtime: python2.7
-      Timeout: '10'
-      MemorySize: '1536'
-    CustomResource:
-      S3Bucket: %%BUCKET_NAME%%
-      S3Key: >-
-        serverless-image-handler/%%VERSION%%/serverless-image-handler-custom-resource.zip
-      Name: serverless-image-handler-custom-resource
-      Handler: image_handler_custom_resource/cfn_custom_resource.lambda_handler
-      Description: >-
-        Serverless Image Handler: CloudFormation custom resource function
-        invoked during CloudFormation create, update, and delete stack
-        operations.
-      Runtime: python2.7
-      Timeout: '60'
-      MemorySize: '128'
-  UI:
-    Src:
-      Bucket: %%BUCKET_NAME%%
-      Key: serverless-image-handler/%%VERSION%%/serverless-image-handler-ui.zip
-    FindReplace:
-      DomainName: '%%APIEndpoint%%'
-      CloudFrontURL: '%%CloudFrontURL%%'
-      Deliminator: '|'
-  S3EndPointMap:
-    us-east-1:
-      endpoint: 's3.amazonaws.com'
-    us-east-2:
-      endpoint: 's3.us-east-2.amazonaws.com'
-    us-west-1:
-      endpoint: 's3-us-west-1.amazonaws.com'
-    us-west-2:
-      endpoint: 's3-us-west-2.amazonaws.com'
-    ca-central-1:
-      endpoint: 's3.ca-central-1.amazonaws.com'
-    eu-west-1:
-      endpoint: 's3-eu-west-1.amazonaws.com'
-    eu-central-1:
-      endpoint: 's3.eu-central-1.amazonaws.com'
-    eu-west-2:
-      endpoint: 's3.eu-west-2.amazonaws.com'
-    eu-west-3:
-      endpoint: 's3.eu-west-3.amazonaws.com'
-    ap-northeast-1:
-      endpoint: 's3-ap-northeast-1.amazonaws.com'
-    ap-northeast-2:
-      endpoint: 's3.ap-northeast-2.amazonaws.com'
-    ap-southeast-1:
-      endpoint: 's3-ap-southeast-1.amazonaws.com'
-    ap-southeast-2:
-      endpoint: 's3-ap-southeast-2.amazonaws.com'
-    ap-south-1:
-      endpoint: 's3.ap-south-1.amazonaws.com'
-    sa-east-1:
-      endpoint: 's3-sa-east-1.amazonaws.com'
-
-
-Conditions:
-  AutoDeployUI: !Equals
-    - !Ref DeployUI
-    - 'Yes'
-
-Resources:
-  # demo bucket
-  DemoWebsiteBucket:
-    Condition: AutoDeployUI
-    Type: AWS::S3::Bucket
-    Properties:
-        WebsiteConfiguration:
-            IndexDocument: "index.html"
-            ErrorDocument: "index.html"
-
-  DemoWebsiteBucketPolicy:
-    Condition: AutoDeployUI
-    Type: "AWS::S3::BucketPolicy"
-    Properties:
-        Bucket: !Sub ${DemoWebsiteBucket}
-        PolicyDocument:
-            Statement:
-                -
-                    Action:
-                        - "s3:GetObject"
-                    Effect: "Allow"
-                    Resource:
-                        Fn::Join:
-                            - ""
-                            -
-                                - "arn:aws:s3:::"
-                                -
-                                    Ref: "DemoWebsiteBucket"
-                                - "/*"
-                    Principal:
-                        CanonicalUser: !Sub ${ImageHandlerOAI.S3CanonicalUserId}
-  # SO-SIH-175 - 08/28/2018 - Missing header
-  # https://github.com/awslabs/serverless-image-handler/issues/33
-  ImageHandlerS3Policy:
-    Type: 'AWS::IAM::Policy'
-    Properties:
-      PolicyName: !Join
-        - ''
-        - - !Ref 'AWS::StackName'
-          - S3ReadPolicy
-      Roles:
-        - !Ref ImageHandlerRole
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Action:
-              - 's3:GetObject'
-              - 's3:ListBucket'
-            Resource:
-              !If
-                - AutoDeployUI
-                - - !Sub arn:aws:s3:::${DemoWebsiteBucket}/*
-                  - !Sub arn:aws:s3:::${DemoWebsiteBucket}
-                - - !Sub arn:aws:s3:::${OriginS3Bucket}/*
-                  - !Sub arn:aws:s3:::${OriginS3Bucket}
-
-  # SO-SIH-163 - 07/25/2018 Rekognition IAM permission
-  # Read only permission added to support Rekognition
-  ImageHandlerRekogPolicy:
-    Type: 'AWS::IAM::Policy'
-    Metadata:
-      cfn_nag:
-        rules_to_suppress:
-        - id: W12
-          reason: Allow resource:* for ReadOnly DetectFace action
-    Properties:
-      PolicyName: !Join
-        - ''
-        - - !Ref 'AWS::StackName'
-          - RekognitionReadPolicy
-      Roles:
-        - !Ref ImageHandlerRole
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Action:
-              - rekognition:DetectFaces
-            Resource: '*'
-  ImageHandlerLogPolicy:
-    Type: 'AWS::IAM::Policy'
-    Properties:
-      PolicyName: !Join
-        - ''
-        - - !Ref 'AWS::StackName'
-          - LogPolicy
-      Roles:
-        - !Ref ImageHandlerRole
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Action:
-              - 'logs:CreateLogGroup'
-              - 'logs:CreateLogStream'
-              - 'logs:PutLogEvents'
-            Resource: !Join
-              - ''
-              - - 'arn:aws:logs:'
-                - !Ref 'AWS::Region'
-                - ':'
-                - !Ref 'AWS::AccountId'
-                - ':log-group:/aws/lambda/*'
-  ImageHandlerRole:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - 'sts:AssumeRole'
-      Path: /
-      RoleName: !Join
-        - ''
-        - - !Ref 'AWS::StackName'
-          - Role
-  ImageHandlerFunction:
-    Type: 'AWS::Lambda::Function'
-    Properties:
-      Code:
-        S3Bucket: !Join
-          - ''
-          - - !FindInMap
-              - Function
-              - ImageHandler
-              - S3Bucket
-            - '-'
-            - !Ref 'AWS::Region'
-        S3Key: !FindInMap
-          - Function
-          - ImageHandler
-          - S3Key
-      MemorySize: !FindInMap
-        - Function
-        - ImageHandler
-        - MemorySize
-      Handler: !FindInMap
-        - Function
-        - ImageHandler
-        - Handler
-      Role: !GetAtt
-        - ImageHandlerRole
-        - Arn
-      Timeout: !FindInMap
-        - Function
-        - ImageHandler
-        - Timeout
-      Runtime: !FindInMap
-        - Function
-        - ImageHandler
-        - Runtime
-      Description: !FindInMap
-        - Function
-        - ImageHandler
-        - Description
-      Environment:
-        Variables:
-          TC_AWS_LOADER_BUCKET: !If
-          - AutoDeployUI
-          - !Ref DemoWebsiteBucket # change for customer bucket
-          - !Ref OriginS3Bucket
-          TC_AWS_ENDPOINT: !If # s3 endpoint for bucket
-          - AutoDeployUI
-          - !Sub
-            - https://${s3domain}
-            - s3domain: !FindInMap
-              - S3EndPointMap
-              - !Ref AWS::Region
-              - endpoint
-          - !Sub
-            - https://${s3domain}
-            - s3domain: !FindInMap
-              - S3EndPointMap
-              - !Ref OriginS3BucketRegion
-              - endpoint
-          TC_AWS_REGION: !If
-          - AutoDeployUI
-          - !Ref AWS::Region
-          - !Ref OriginS3BucketRegion
-          # SO-SIH-155 - 07/16/2018 - Rekognition integration
-          # Adding env variable for AWS Rekognition
-          REKOGNITION_REGION: us-east-1
-          ENABLE_CORS: !Ref EnableCors
-          CORS_ORIGIN: !Ref CorsOrig
-          SEND_ANONYMOUS_DATA: !FindInMap
-            - Send
-            - AnonymousUsage
-            - Data
-          UUID: !GetAtt
-            - CreateUniqueID
-            - UUID
-          LOG_LEVEL: INFO
-          ALLOW_UNSAFE_URL: True
-  ImageHandlerLogGroup:
-    DeletionPolicy: Retain
-    Type: 'AWS::Logs::LogGroup'
-    Properties:
-      RetentionInDays: !Ref LambdaLogRetention
-      LogGroupName: !Join
-        - ''
-        - - /aws/lambda/
-          - !Ref ImageHandlerFunction
-  ImageHandlerApiDeployment:
-    Type: 'AWS::ApiGateway::Deployment'
-    Properties:
-      RestApiId: !Ref ImageHandlerApi
-      StageName: image
-  ImageHandlerApi:
-    Type: 'AWS::ApiGateway::RestApi'
-    Properties:
-      EndpointConfiguration:
-        Types: !If
-        - AutoDeployUI
-        - - EDGE
-        - - REGIONAL
-      Body:
-        swagger: '2.0'
-        info:
-          version: '2017-01-27T21:44:58Z'
-          title: ImageHandler
-        basePath: /image
-        schemes:
-          - https
-        paths:
-          '/{proxy+}':
-            x-amazon-apigateway-any-method:
-              produces:
-                - application/json
-              parameters:
-                - name: proxy
-                  in: path
-                  required: true
-                  type: string
-              responses: {}
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: '200'
-                uri: !Join
-                  - ''
-                  - - 'arn:aws:apigateway:'
-                    - !Ref 'AWS::Region'
-                    - ':'
-                    - 'lambda:path/2015-03-31/functions/'
-                    - !GetAtt
-                      - ImageHandlerFunction
-                      - Arn
-                    - /invocations
-                passthroughBehavior: when_no_match
-                httpMethod: POST
-                cacheNamespace: xh7gp9
-                cacheKeyParameters:
-                  - method.request.path.proxy
-                contentHandling: CONVERT_TO_TEXT
-                type: aws_proxy
-        x-amazon-apigateway-binary-media-types:
-          - '*/*'
-  ImageHandlerPermission:
-    Type: 'AWS::Lambda::Permission'
-    Properties:
-      Action: 'lambda:InvokeFunction'
-      FunctionName: !GetAtt
-        - ImageHandlerFunction
-        - Arn
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Join
-        - ''
-        - - 'arn:aws:execute-api:'
-          - !Ref 'AWS::Region'
-          - ':'
-          - !Ref 'AWS::AccountId'
-          - ':'
-          - !Ref ImageHandlerApi
-          - /*/*/*
-
-  ImageHandlerOAI:
-    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
-    Condition: AutoDeployUI
-    Properties:
-      CloudFrontOriginAccessIdentityConfig:
-        Comment: serverless image handler OAI
-
-  ImageHandlerDistribution:
-    Type: 'AWS::CloudFront::Distribution'
-    Properties:
-      DistributionConfig:
-        Origins: !If
-        - AutoDeployUI
-        - - DomainName: !Sub ${DemoWebsiteBucket}.s3.${AWS::Region}.amazonaws.com
-            Id: !Sub S3-${DemoWebsiteBucket}
-            S3OriginConfig:
-              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${ImageHandlerOAI}
-        - - DomainName: !Sub ${ImageHandlerApi}.execute-api.${AWS::Region}.amazonaws.com
-            Id: !Ref ImageHandlerApi
-            OriginPath: /image
-            CustomOriginConfig:
-              HTTPSPort: '443'
-              OriginProtocolPolicy: https-only
-              OriginSSLProtocols:
-                - TLSv1
-                - TLSv1.1
-                - TLSv1.2
-        Enabled: True
-        HttpVersion: http2
-        Comment: Image Handler Distribution
-        DefaultCacheBehavior:
-          AllowedMethods:
-            - GET
-            - HEAD
-          TargetOriginId: !If
-          - AutoDeployUI
-          - !Sub S3-${DemoWebsiteBucket}
-          - !Sub ${ImageHandlerApi}
-          ForwardedValues:
-            # SO-SIH-161 - 07/26/2018 - Improving CF hit rate
-            # Allow CF to use same version for different Accept header values
-            # https://github.com/awslabs/serverless-image-handler/issues/32
-            # Headers:
-            #   - Accept
-            QueryString: 'false'
-            Cookies:
-              Forward: none
-          ViewerProtocolPolicy: https-only
-        CustomErrorResponses:
-          - ErrorCode: 500
-            ErrorCachingMinTTL: 10
-          - ErrorCode: 501
-            ErrorCachingMinTTL: 10
-          - ErrorCode: 502
-            ErrorCachingMinTTL: 10
-          - ErrorCode: 503
-            ErrorCachingMinTTL: 10
-          - ErrorCode: 504
-            ErrorCachingMinTTL: 10
-        PriceClass: PriceClass_All
-
-  CustomResourceRole:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: 'sts:AssumeRole'
-      Path: /
-  CustomResourceLoggingPolicy:
-    Type: 'AWS::IAM::Policy'
-    Properties:
-      Roles:
-        - !Ref CustomResourceRole
-      PolicyName: Image_Handler_Custom_Resource_Logging_Policy
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Action:
-              - 'logs:CreateLogGroup'
-              - 'logs:CreateLogStream'
-              - 'logs:PutLogEvents'
-            Resource: !Join
-              - ''
-              - - 'arn:aws:logs:'
-                - !Ref 'AWS::Region'
-                - ':'
-                - !Ref 'AWS::AccountId'
-                - ':log-group:/aws/lambda/*'
-  CustomResourceDeployPolicy:
-    Type: 'AWS::IAM::Policy'
-    Condition: AutoDeployUI
-    Properties:
-      Roles:
-        - !Ref CustomResourceRole
-      PolicyName: Image_Handler_Custom_Resource_S3_Deploy_Policy
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Action:
-              - 's3:GetObject'
-            Resource: !Join
-              - ''
-              - - 'arn:aws:s3:::'
-                - !FindInMap
-                  - UI
-                  - Src
-                  - Bucket
-                - '-'
-                - !Ref 'AWS::Region'
-                - /
-                - !FindInMap
-                  - UI
-                  - Src
-                  - Key
-          - Effect: Allow
-            Action:
-              - 's3:DeleteObject'
-              - 's3:PutObject'
-              - 's3:ListBucket'
-            Resource:
-              - !Sub arn:aws:s3:::${DemoWebsiteBucket}/*
-              - !Sub arn:aws:s3:::${DemoWebsiteBucket}
-
-  CustomResource:
-    Type: 'AWS::Lambda::Function'
-    Properties:
-      Code:
-        S3Bucket: !Join
-          - ''
-          - - !FindInMap
-              - Function
-              - CustomResource
-              - S3Bucket
-            - '-'
-            - !Ref 'AWS::Region'
-        S3Key: !FindInMap
-          - Function
-          - CustomResource
-          - S3Key
-      MemorySize: !FindInMap
-        - Function
-        - CustomResource
-        - MemorySize
-      Handler: !FindInMap
-        - Function
-        - CustomResource
-        - Handler
-      Role: !GetAtt
-        - CustomResourceRole
-        - Arn
-      Timeout: !FindInMap
-        - Function
-        - CustomResource
-        - Timeout
-      Runtime: !FindInMap
-        - Function
-        - CustomResource
-        - Runtime
-      Description: !FindInMap
-        - Function
-        - CustomResource
-        - Description
-      Environment:
-        Variables:
-          LOG_LEVEL: INFO
-  CreateUniqueID:
-    Type: 'Custom::LoadLambda'
-    DependsOn: CustomResourceLoggingPolicy
-    Properties:
-      ServiceToken: !GetAtt
-        - CustomResource
-        - Arn
-      Region: !Ref 'AWS::Region'
-      CreateUniqueID: 'true'
-  DeployingUI:
-    Type: 'Custom::LoadLambda'
-    DependsOn:
-      - CustomResourceLoggingPolicy
-      - CustomResourceDeployPolicy
-    Condition: AutoDeployUI
-    Properties:
-      ServiceToken: !GetAtt
-        - CustomResource
-        - Arn
-      DeployUI: !Join
-        - ''
-        - - '{ ''UISourceURL'' : '''
-          - !FindInMap
-            - UI
-            - Src
-            - Bucket
-          - '-'
-          - !Ref 'AWS::Region'
-          - /
-          - !FindInMap
-            - UI
-            - Src
-            - Key
-          - ''','
-          - '''UIBucket'' : '''
-          - !Ref DemoWebsiteBucket
-          - ''', '
-          - '''UIBucketRegion'' : '''
-          - !Ref AWS::Region
-          - ''', '
-          - '''UIPrefix'' : '''
-          - !Ref UIDestPrefix
-          - ''', '
-          # SO-SIH-181 - 10/23/2018 - Remove public read
-          # Sending CloudFront OAI in event
-          - '''CloudFrontOAI'' : '''
-          - !Sub ${ImageHandlerOAI.S3CanonicalUserId}
-          - ''', '
-          - '''FindReplace'' : '''
-          - !FindInMap
-            - UI
-            - FindReplace
-            - DomainName
-          - !FindInMap
-            - UI
-            - FindReplace
-            - Deliminator
-          # SO-SIH-182 - 10/17/2019 - removing CFN fronting API
-          # removing CloudFront and directly calling API endpoint
-          - !Ref ImageHandlerApi
-          - .execute-api.
-          - !Ref 'AWS::Region'
-          - .amazonaws.com/image
-          - ','
-          - !FindInMap
-            - UI
-            - FindReplace
-            - CloudFrontURL
-          - !FindInMap
-            - UI
-            - FindReplace
-            - Deliminator
-          - !Sub https://${ImageHandlerDistribution.DomainName}
-          - /
-          - !Ref UIDestPrefix
-          - ''', '
-          - '''Deliminator'' : '''
-          - !FindInMap
-            - UI
-            - FindReplace
-            - Deliminator
-          - ''''
-          - '}'
-  SendingData:
-    Type: 'Custom::LoadLambda'
-    Properties:
-      ServiceToken: !GetAtt
-        - CustomResource
-        - Arn
-      SendAnonymousData: !Join
-        - ''
-        - - '{ ''UUID'' : '''
-          - !GetAtt
-            - CreateUniqueID
-            - UUID
-          - ''', '
-          - '''Data'': {'
-          - '''Version'' : ''2'', '
-          - '''ApiRegion'': '''
-          - !Ref 'AWS::Region'
-          - ''','
-          - '''LogRetention'': '''
-          - !Ref LambdaLogRetention
-          - ''','
-          - '''OriginS3BucketRegion'': '''
-          - !Ref OriginS3BucketRegion
-          - ''','
-          - '''DeployUI'': '''
-          - !Ref DeployUI
-          - ''','
-          - '''SendAnonymousData'': '''
-          - !FindInMap
-            - Send
-            - AnonymousUsage
-            - Data
-          - ''''
-          - '}'
-          - '}'
-Outputs:
-  DemoUI:
-    Condition: AutoDeployUI
-    Description: URL for the demo UI
-    Value: !Sub https://${ImageHandlerDistribution.DomainName}/${UIDestPrefix}index.html
-  SampleRequest:
-    Description: Sample URL calling origin image key through CloudFront
-    Value: !If
-    - AutoDeployUI
-    - Change DeployUI to 'No' to get sample request for your images
-    - !Sub
-      - 'https://${Domain}/fit-in/100x100/image-name.jpg'
-      - Domain: !GetAtt
-          - ImageHandlerDistribution
-          - DomainName
-  CorsEnabled:
-    Description: Was CORS support enabled?
-    Value: !Ref EnableCors
-  CorsOrigin:
-    Description: 'If enabled, allow CORS from this origin.'
-    Value: !Ref CorsOrig
+{ 
+    "AWSTemplateFormatVersion": "2010-09-09", 
+    "Description": "(SO0023) - Serverless Image Handler: This template deploys and configures a serverless architecture that is optimized for dynamic image manipulation and delivery at low latency and cost. Leverages SharpJS for image processing. Template version 4.", 
+    "Parameters": { 
+        "CorsEnabled" : { 
+            "Description" : "Would you like to enable Cross-Origin Resource Sharing (CORS) for the image handler API? Select 'Yes' if so.", 
+            "Default" : "No", 
+            "Type" : "String", 
+            "AllowedValues" : [ "Yes", "No" ] 
+        }, 
+        "CorsOrigin" : { 
+            "Description" : "If you selected 'Yes' above, please specify an origin value here. A wildcard (*) value will support any origin. We recommend specifying an origin (i.e. https://example.domain) to restrict cross-site access to your API.", 
+            "Default" : "*", 
+            "Type" : "String" 
+        }, 
+        "SourceBuckets" : { 
+            "Description" : "(Required) List the buckets (comma-separated) within your account that contain original image files. If you plan to use Thumbor or Custom image requests with this solution, the source bucket for those requests will be the first bucket listed in this field.", 
+            "Default" : "defaultBucket, bucketNo2, bucketNo3, ...", 
+            "Type" : "String",
+            "AllowedPattern" : ".+"
+        }, 
+        "DeployDemoUI" : { 
+            "Description" : "Would you like to deploy a demo UI to explore the features and capabilities of this solution? This will create an additional Amazon S3 bucket and Amazon CloudFront distribution in your account.", 
+            "Default" : "Yes", 
+            "Type" : "String", 
+            "AllowedValues" : [ "Yes", "No" ] 
+        }, 
+        "LogRetentionPeriod" : { 
+            "Description" : "This solution automatically logs events to Amazon CloudWatch. Select the amount of time for CloudWatch logs from this solution to be retained (in days).", 
+            "Default" : 1, 
+            "Type" : "Number", 
+            "AllowedValues" : [ 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653 ] 
+        } 
+    }, 
+    "Metadata": { 
+        "AWS::CloudFormation::Interface": { 
+            "ParameterGroups": [ 
+                { 
+                    "Label": { "default": "CORS Options" }, 
+                    "Parameters": [ "CorsEnabled", "CorsOrigin" ] 
+                }, 
+                { 
+                    "Label": { "default": "Image Sources" }, 
+                    "Parameters": [ "SourceBuckets" ] 
+                }, 
+                { 
+                    "Label": { "default": "Demo UI" }, 
+                    "Parameters": [ "DeployDemoUI" ] 
+                }, 
+                { 
+                    "Label": { "default": "Event Logging" }, 
+                    "Parameters": [ "LogRetentionPeriod" ] 
+                } 
+            ] 
+        } 
+    }, 
+    "Conditions": { 
+        "DeployDemoUICondition": { "Fn::Equals": [ { "Ref": "DeployDemoUI" }, "Yes" ] }, 
+        "EnableCorsCondition" : { "Fn::Equals": [ { "Ref": "CorsEnabled" }, "Yes" ] } 
+    }, 
+    "Mappings": { 
+        "Send": {
+            "AnonymousUsage": {
+                "Data": "Yes"
+            }
+        },
+        "SourceCode": { 
+            "General": { 
+                "S3Bucket": "%%BUCKET_NAME%%", 
+                "KeyPrefix": "serverless-image-handler/%%VERSION%%" 
+            } 
+        } 
+    }, 
+    "Resources": { 
+        "ImageHandlerDistribution": { 
+            "Type": "AWS::CloudFront::Distribution", 
+            "Properties": { 
+                "DistributionConfig": { 
+                    "Origins": [{ 
+                        "DomainName": { "Fn::Sub": "${ImageHandlerApi}.execute-api.${AWS::Region}.amazonaws.com" }, 
+                        "Id": { "Ref": "ImageHandlerApi" }, 
+                        "OriginPath": "/image",
+                        "CustomOriginConfig": { 
+                            "HTTPSPort": 443, 
+                            "OriginProtocolPolicy": "https-only", 
+                            "OriginSSLProtocols": [ "TLSv1", "TLSv1.1", "TLSv1.2" ] 
+                        } 
+                    }], 
+                    "Enabled": true, 
+                    "HttpVersion": "http2", 
+                    "Comment": "Image handler distribution", 
+                    "DefaultCacheBehavior": { 
+                        "AllowedMethods": [ "GET", "HEAD" ], 
+                        "TargetOriginId": { "Fn::Sub": "${ImageHandlerApi}" }, 
+                        "ForwardedValues": { 
+                            "QueryString": false, 
+                            "Headers": [ "Origin" ],
+                            "Cookies": { "Forward": "none" } 
+                        }, 
+                        "ViewerProtocolPolicy": "https-only" 
+                    }, 
+                    "CustomErrorResponses": [ 
+                        { 
+                            "ErrorCode": 500, 
+                            "ErrorCachingMinTTL": 10 
+                        }, 
+                        { 
+                            "ErrorCode": 501, 
+                            "ErrorCachingMinTTL": 10 
+                        }, 
+                        { 
+                            "ErrorCode": 502, 
+                            "ErrorCachingMinTTL": 10 
+                        }, 
+                        { 
+                            "ErrorCode": 503, 
+                            "ErrorCachingMinTTL": 10 
+                        }, 
+                        { 
+                            "ErrorCode": 504, 
+                            "ErrorCachingMinTTL": 10 
+                        } 
+                    ], 
+                    "PriceClass": "PriceClass_All"
+                } 
+            },
+            "Metadata": {
+                "cfn_nag": {
+                    "rules_to_suppress": [
+                        {
+                            "id": "W10",
+                            "reason": "This CloudFront Distribution does not require access logging. API calls and image operations
+                            are logged to CloudWatch with custom reporting."
+                        }
+                    ]
+                }
+            }
+        }, 
+        "ImageHandlerApi": { 
+            "Type": "AWS::ApiGateway::RestApi", 
+            "Properties": { 
+                "EndpointConfiguration": { 
+                    "Types" : [ "REGIONAL" ] 
+                }, 
+                "Body": { 
+                    "swagger": "2.0", 
+                    "info": { 
+                        "version": "2017-01-27T21:44:58Z", 
+                        "title": "ServerlessImageHandler" 
+                    }, 
+                    "basePath": "/image", 
+                    "schemes": [ "https" ], 
+                    "paths": { 
+                        "/{proxy+}": { 
+                            "x-amazon-apigateway-any-method": { 
+                                "produces": [ "application/json" ], 
+                                "parameters": [ 
+                                    { 
+                                        "name": "proxy", 
+                                        "in": "path", 
+                                        "required": true, 
+                                        "type": "string" 
+                                    } 
+                                ], 
+                                "responses": {}, 
+                                "x-amazon-apigateway-integration": { 
+                                    "responses": { 
+                                        "default": { "statusCode": "200" } 
+                                    }, 
+                                    "uri": { 
+                                        "Fn::Join": [ 
+                                            "", 
+                                            [ 
+                                                "arn:aws:apigateway:", 
+                                                { 
+                                                    "Ref": "AWS::Region" 
+                                                }, 
+                                                ":", 
+                                                "lambda:path/2015-03-31/functions/", 
+                                                { 
+                                                    "Fn::GetAtt": [ 
+                                                        "ImageHandlerFunction", 
+                                                        "Arn" 
+                                                    ] 
+                                                }, 
+                                                "/invocations" 
+                                            ] 
+                                        ] 
+                                    }, 
+                                    "passthroughBehavior": "when_no_match", 
+                                    "httpMethod": "POST", 
+                                    "cacheNamespace": "xh7gp9", 
+                                    "cacheKeyParameters": [ "method.request.path.proxy" ], 
+                                    "contentHandling": "CONVERT_TO_TEXT", 
+                                    "type": "aws_proxy" 
+                                } 
+                            } 
+                        } 
+                    }, 
+                    "x-amazon-apigateway-binary-media-types": [ 
+                        "*/*" 
+                    ] 
+                } 
+            } 
+        }, 
+        "ImageHandlerApiDeployment": { 
+            "Type": "AWS::ApiGateway::Deployment", 
+            "Properties": { 
+                "RestApiId": { "Ref": "ImageHandlerApi" }, 
+                "StageName": "image" 
+            } 
+        }, 
+        "ImageHandlerFunction": { 
+            "Type": "AWS::Lambda::Function", 
+            "Properties": { 
+                "Description": "Serverless Image Handler - Function for performing image edits and manipulations.", 
+                "Handler": "index.handler", 
+                "Role": { "Fn::GetAtt": [ "ImageHandlerFunctionRole", "Arn" ] }, 
+                "Code": { 
+                    "S3Bucket" : { "Fn::Join": [ "-", [{ "Fn::FindInMap": [ "SourceCode", "General", "S3Bucket" ]}, { "Ref": "AWS::Region" }]]}, 
+                    "S3Key" : "serverless-image-handler/%%VERSION%%/image-handler.zip" 
+                }, 
+                "Runtime": "nodejs8.10", 
+                "MemorySize": 1024,
+                "Timeout": 30,
+                "Environment" : { 
+                    "Variables" : { 
+                        "CORS_ENABLED" : {  
+                            "Ref" : "CorsEnabled"  
+                        }, 
+                        "CORS_ORIGIN" : {  
+                            "Ref" : "CorsOrigin"  
+                        }, 
+                        "SOURCE_BUCKETS" : { 
+                            "Ref" : "SourceBuckets" 
+                        }, 
+                        "REWRITE_MATCH_PATTERN" : "", 
+                        "REWRITE_SUBSTITUTION" : "" 
+                    } 
+                } 
+            } 
+        }, 
+        "ImageHandlerFunctionRole": { 
+            "Type": "AWS::IAM::Role", 
+            "Properties": { 
+                "AssumeRolePolicyDocument": { 
+                    "Version": "2012-10-17", 
+                    "Statement": [ 
+                        { 
+                            "Effect": "Allow", 
+                            "Principal": { 
+                                "Service": [ "lambda.amazonaws.com" ] 
+                            }, 
+                            "Action": [ "sts:AssumeRole" ] 
+                        } 
+                    ] 
+                }, 
+                "Path": "/", 
+                "RoleName": { 
+                    "Fn::Join": [ 
+                        "", [ { "Ref": "AWS::StackName" }, "ImageHandlerFunctionRole", "-", {"Ref": "AWS::Region"} ] ] 
+                } 
+            },
+            "Metadata": {
+                "cfn_nag": {
+                    "rules_to_suppress": [
+                        {
+                            "id": "W28",
+                            "reason": "Resource name validated and found to pose no risk to updates that require 
+                            replacement of this resource."
+                        }
+                    ]
+                }
+            }  
+        }, 
+        "ImageHandlerPolicy" : { 
+            "Type" : "AWS::IAM::Policy", 
+            "Properties" : {  
+                "PolicyDocument" : { 
+                    "Version": "2012-10-17", 
+                    "Statement": [ 
+                        { 
+                            "Effect": "Allow", 
+                            "Action": [ 
+                                "logs:CreateLogStream", 
+                                "logs:CreateLogGroup", 
+                                "logs:PutLogEvents" 
+                            ], 
+                            "Resource": { "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*" } 
+                        }, 
+                        { 
+                            "Effect": "Allow", 
+                            "Action": [ 
+                                "s3:GetObject", 
+                                "s3:PutObject", 
+                                "s3:ListBucket" 
+                            ], 
+                            "Resource": [ 
+                                "arn:aws:s3:::*" 
+                            ] 
+                        }, 
+                        { 
+                            "Effect": "Allow", 
+                            "Action": [ 
+                                "rekognition:DetectFaces"
+                            ], 
+                            "Resource": [ 
+                                "*" 
+                            ] 
+                        }  
+                    ] 
+                }, 
+                "PolicyName" : { "Fn::Join": [ "", [ { "Ref": "AWS::StackName" }, "ImageHandlerPolicy" ] ] }, 
+                "Roles" : [ { "Ref": "ImageHandlerFunctionRole" }] 
+            },
+            "Metadata": {
+                "cfn_nag": {
+                    "rules_to_suppress": [
+                        {
+                            "id": "F3",
+                            "reason": "The rekognition:DetectFaces action requires the wildcard ('*') resource identifier to function properly. Supporting documentation
+                            available at (https://docs.aws.amazon.com/rekognition/latest/dg/using-identity-based-policies.html) and 
+                            (https://docs.aws.amazon.com/rekognition/latest/dg/api-permissions-reference.html)."
+                        },
+                        {
+                            "id": "W12",
+                            "reason": "The ImageHandlerPolicy provides access to all Amazon S3 buckets within the user's account to enable sourcing image files from 
+                            multiple origins."
+                        }
+                    ]
+                }
+            }
+        }, 
+        "ImageHandlerPermission": { 
+            "Type": "AWS::Lambda::Permission", 
+            "Properties": { 
+                "Action": "lambda:InvokeFunction", 
+                "FunctionName": { 
+                    "Fn::GetAtt": ["ImageHandlerFunction","Arn"] 
+                }, 
+                "Principal": "apigateway.amazonaws.com", 
+                "SourceArn": { 
+                    "Fn::Join": [ 
+                        "", 
+                        [ 
+                            "arn:aws:execute-api:", 
+                            { 
+                                "Ref": "AWS::Region" 
+                            }, 
+                            ":", 
+                            { 
+                                "Ref": "AWS::AccountId" 
+                            }, 
+                            ":", 
+                            { 
+                                "Ref": "ImageHandlerApi" 
+                            }, 
+                            "/*/*/*" 
+                        ] 
+                    ] 
+                } 
+            } 
+        }, 
+        "ImageHandlerLogGroup": { 
+            "Type": "AWS::Logs::LogGroup", 
+            "Properties": { 
+                "LogGroupName": { "Fn::Join": ["/", ["/aws/lambda", { "Ref" : "ImageHandlerFunction" }]]}, 
+                "RetentionInDays": { "Ref" : "LogRetentionPeriod" } 
+            } 
+        }, 
+        "DemoBucket": { 
+            "Type": "AWS::S3::Bucket", 
+            "Condition": "DeployDemoUICondition", 
+            "DeletionPolicy": "Retain", 
+            "Properties": { 
+                "BucketEncryption": {
+                    "ServerSideEncryptionConfiguration": [
+                        { "ServerSideEncryptionByDefault": { "SSEAlgorithm": "AES256" } }
+                    ]
+                },
+                "WebsiteConfiguration": { 
+                    "IndexDocument": "index.html", 
+                    "ErrorDocument": "index.html" 
+                }, 
+                "AccessControl": "Private",  
+                "PublicAccessBlockConfiguration": {  
+                    "BlockPublicAcls": true,  
+                    "BlockPublicPolicy": true,  
+                    "IgnorePublicAcls": true,  
+                    "RestrictPublicBuckets": true  
+                }
+            },
+            "Metadata": {
+                "cfn_nag": {
+                    "rules_to_suppress": [
+                        {
+                            "id": "W35",
+                            "reason": "This S3 bucket does not require access logging. API calls and image operations
+                            are logged to CloudWatch with custom reporting."
+                        }
+                    ]
+                }
+            }   
+        }, 
+        "DemoBucketPolicy": { 
+            "Type": "AWS::S3::BucketPolicy", 
+            "Condition": "DeployDemoUICondition", 
+            "Properties": { 
+                "Bucket": { "Ref": "DemoBucket" }, 
+                "PolicyDocument": { 
+                    "Statement": [ 
+                        { 
+                            "Action": [ "s3:GetObject" ], 
+                            "Effect": "Allow", 
+                            "Resource": { 
+                                "Fn::Join": [ 
+                                    "", 
+                                    [ 
+                                        "arn:aws:s3:::", 
+                                        { "Ref": "DemoBucket" }, 
+                                        "/*" 
+                                    ] 
+                                ] 
+                            }, 
+                            "Principal": { 
+                                "CanonicalUser": { 
+                                    "Fn::GetAtt": [ 
+                                        "DemoOriginAccessIdentity", 
+                                        "S3CanonicalUserId" 
+                                    ] 
+                                } 
+                            } 
+                        } 
+                    ] 
+                } 
+            } 
+        }, 
+        "DemoOriginAccessIdentity": { 
+            "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity", 
+            "Condition": "DeployDemoUICondition", 
+            "Properties": { 
+                "CloudFrontOriginAccessIdentityConfig": { 
+                    "Comment": { 
+                        "Fn::Sub": "access-identity-${DemoBucket}" 
+                    } 
+                } 
+            } 
+        }, 
+        "DemoDistribution": { 
+            "Type": "AWS::CloudFront::Distribution", 
+            "Condition": "DeployDemoUICondition", 
+            "Properties": { 
+                "DistributionConfig": { 
+                    "Comment": "Website distribution for solution", 
+                    "Origins": [ 
+                        { 
+                            "Id": "S3-solution-website", 
+                            "DomainName": { "Fn::Sub": "${DemoBucket}.s3.${AWS::Region}.amazonaws.com" }, 
+                            "S3OriginConfig": { 
+                                "OriginAccessIdentity": { "Fn::Sub": "origin-access-identity/cloudfront/${DemoOriginAccessIdentity}" } 
+                            } 
+                        } 
+                    ], 
+                    "DefaultCacheBehavior": { 
+                        "TargetOriginId": "S3-solution-website", 
+                        "AllowedMethods": [ "GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE" ], 
+                        "CachedMethods": [ "GET", "HEAD", "OPTIONS" ], 
+                        "ForwardedValues": { 
+                            "QueryString": false
+                        }, 
+                        "ViewerProtocolPolicy": "redirect-to-https" 
+                    }, 
+                    "IPV6Enabled": true, 
+                    "ViewerCertificate": { "CloudFrontDefaultCertificate": true }, 
+                    "Enabled": true, 
+                    "HttpVersion": "http2"
+                } 
+            },
+            "Metadata": {
+                "cfn_nag": {
+                    "rules_to_suppress": [
+                        {
+                            "id": "W10",
+                            "reason": "This CloudFront Distribution does not require access logging. API calls and image operations
+                            are logged to CloudWatch with custom reporting."
+                        }
+                    ]
+                }
+            } 
+        }, 
+        "CustomResourceFunction": { 
+            "Type": "AWS::Lambda::Function", 
+            "Properties": { 
+                "Code": { 
+                    "S3Bucket": { "Fn::Join": [ "-", [{ "Fn::FindInMap": [ "SourceCode", "General", "S3Bucket" ]}, { "Ref": "AWS::Region" }]]}, 
+                    "S3Key": "serverless-image-handler/%%VERSION%%/custom-resource.zip" 
+                }, 
+                "Timeout": 30, 
+                "Runtime": "nodejs8.10", 
+                "Role": { "Fn::GetAtt": [ "CustomResourceRole", "Arn" ] }, 
+                "Handler": "index.handler"
+            } 
+        }, 
+        "CustomResourceRole": { 
+            "Type": "AWS::IAM::Role", 
+            "Properties": { 
+                "AssumeRolePolicyDocument": { 
+                    "Version": "2012-10-17", 
+                    "Statement": [ 
+                        { 
+                            "Effect": "Allow", 
+                            "Principal": { 
+                                "Service": [ "lambda.amazonaws.com" ] 
+                            }, 
+                            "Action": [ "sts:AssumeRole" ] 
+                        } 
+                    ] 
+                }, 
+                "Path": "/", 
+                "RoleName": { 
+                    "Fn::Join": [ 
+                        "", [ { "Ref": "AWS::StackName" }, "CustomResourceRole", "-", {"Ref": "AWS::Region"} ] ]
+                } 
+            },
+            "Metadata": {
+                "cfn_nag": {
+                    "rules_to_suppress": [
+                        {
+                            "id": "W28",
+                            "reason": "Resource name validated and found to pose no risk to updates that require replacement 
+                            of this resource."
+                        }
+                    ]
+                }
+            }
+        }, 
+        "CustomResourcePolicy" : { 
+            "Type" : "AWS::IAM::Policy", 
+            "Properties" : {  
+                "PolicyDocument" : { 
+                    "Version": "2012-10-17", 
+                    "Statement": [ 
+                        { 
+                            "Effect": "Allow", 
+                            "Action": [ 
+                                "logs:CreateLogStream", 
+                                "logs:CreateLogGroup", 
+                                "logs:PutLogEvents" 
+                            ], 
+                            "Resource": { "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*" } 
+                        }, 
+                        { 
+                            "Effect": "Allow", 
+                            "Action": [ 
+                                "s3:GetObject", 
+                                "s3:PutObject", 
+                                "s3:ListBucket"
+                            ], 
+                            "Resource": [ 
+                                "arn:aws:s3:::*" 
+                            ] 
+                        }
+                    ] 
+                }, 
+                "PolicyName" : { "Fn::Join": [ "", [ { "Ref": "AWS::StackName" }, "CustomResourcePolicy" ] ] }, 
+                "Roles" : [ { "Ref": "CustomResourceRole" } ] 
+            },
+            "Metadata": {
+                "cfn_nag": {
+                    "rules_to_suppress": [
+                        {
+                            "id": "W12",
+                            "reason": "The CustomResourcePolicy requires the * resource to validate that input from the SourceBuckets template parameter matches 
+                            existing buckets within the user's account."
+                        }
+                    ]
+                }
+            }
+        }, 
+        "CustomResourceCopyS3": { 
+            "Type": "Custom::CustomResource", 
+            "Condition" : "DeployDemoUICondition", 
+            "Properties": { 
+                "ServiceToken": { "Fn::GetAtt" : [ "CustomResourceFunction", "Arn" ]}, 
+                "Region": { "Ref" : "AWS::Region" }, 
+                "manifestKey": { "Fn::Join": [ "/", [ { "Fn::FindInMap": [ "SourceCode", "General", "KeyPrefix" ]}, "demo-ui-manifest.json" ]]}, 
+                "sourceS3Bucket": { "Fn::Join": [ "-", [{ "Fn::FindInMap": [ "SourceCode", "General", "S3Bucket" ]}, { "Ref": "AWS::Region" }]]}, 
+                "sourceS3key": { "Fn::Join": ["/", [{ "Fn::FindInMap": [ "SourceCode", "General", "KeyPrefix" ]}, "demo-ui" ]]}, 
+                "destS3Bucket": { "Ref" : "DemoBucket" }, 
+                "version": "%%VERSION%%", 
+                "customAction": "copyS3assets" 
+            },
+            "DependsOn": [ "CustomResourcePolicy", "CustomResourceRole" ]
+        }, 
+        "CustomResourceConfig": { 
+            "Type": "Custom::CustomResource", 
+            "Condition" : "DeployDemoUICondition", 
+            "Properties": { 
+                "ServiceToken": { "Fn::GetAtt" : [ "CustomResourceFunction", "Arn" ]}, 
+                "Region": { "Ref" : "AWS::Region" }, 
+                "configItem" : { 
+                    "apiEndpoint" : { "Fn::Sub" : "https://${ImageHandlerDistribution.DomainName}" }
+                } ,
+                "destS3Bucket" : { "Ref" : "DemoBucket" },
+                "destS3key" : "demo-ui-config.js",
+                "customAction": "putConfigFile" 
+            },
+            "DependsOn": [ "CustomResourcePolicy", "CustomResourceRole" ]
+        }, 
+        "CustomResourceLogGroup": { 
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": { 
+                "LogGroupName": { "Fn::Join": ["/", ["/aws/lambda", { "Ref" : "CustomResourceFunction" }]]}, 
+                "RetentionInDays": { "Ref" : "LogRetentionPeriod" } 
+            } 
+        },
+        "CustomResourceUuid": {
+            "Type": "Custom::CustomResource",
+            "Properties": {
+                "ServiceToken": { "Fn::GetAtt": ["CustomResourceFunction", "Arn"] },
+                "Region": [{ "Ref": "AWS::Region" }],
+                "customAction": "createUuid"
+            },
+            "DependsOn": [ "CustomResourcePolicy", "CustomResourceRole" ]
+        },
+        "CustomResourceAnonymousMetric": {
+            "Type": "Custom::CustomResource",
+            "Properties": {
+                "ServiceToken": {"Fn::GetAtt": ["CustomResourceFunction", "Arn"]},
+                "Region": [{ "Ref": "AWS::Region" }],
+                "solutionId": "SO0023",
+                "UUID": {"Fn::GetAtt": ["CustomResourceUuid", "UUID"]},
+                "version": "4.0",
+                "anonymousData": {"Fn::FindInMap": ["Send", "AnonymousUsage", "Data"]},
+                "customAction": "sendMetric"
+            },
+            "DependsOn": [ "CustomResourcePolicy", "CustomResourceRole" ]
+        },
+        "CustomResourceCheckSourceBuckets": {
+            "Type": "Custom::CustomResource",
+            "Properties": {
+                "ServiceToken": { "Fn::GetAtt": ["CustomResourceFunction", "Arn"] },
+                "Region": [{ "Ref": "AWS::Region" }],
+                "customAction": "checkSourceBuckets",
+                "sourceBuckets": { "Ref": "SourceBuckets" }
+            },
+            "DependsOn": [ "CustomResourcePolicy", "CustomResourceRole" ]
+        }
+    }, 
+    "Outputs" : { 
+        "ApiEndpoint" : { 
+            "Description" : "Link to API endpoint for sending image requests to.", 
+            "Value" : { "Fn::Sub" : "https://${ImageHandlerDistribution.DomainName}" } 
+        }, 
+        "DemoUrl" : { 
+            "Condition" : "DeployDemoUICondition", 
+            "Description" : "Link to the demo user interface for the solution.", 
+            "Value" : { "Fn::Sub" : "https://${DemoDistribution.DomainName}/index.html" } 
+        }, 
+        "SourceBuckets" : { 
+            "Description" : "Amazon S3 bucket location containing original image files.", 
+            "Value" : { "Ref" : "SourceBuckets"} 
+        }, 
+        "CorsEnabled" : {  
+            "Description" : "Indicates whether Cross-Origin Resource Sharing (CORS) has been enabled for the image handler API.", 
+            "Value" : { "Ref" : "CorsEnabled" } 
+        }, 
+        "CorsOrigin" : {  
+            "Condition" : "EnableCorsCondition", 
+            "Description" : "Origin value returned in the Access-Control-Allow-Origin header of image handler API responses.", 
+            "Value" : { "Ref" : "CorsOrigin" } 
+        }, 
+        "LogRetentionPeriod" : { 
+            "Description" : "Number of days for event logs from Lambda to be retained in CloudWatch.", 
+            "Value" : { "Ref" : "LogRetentionPeriod" } 
+        } 
+    } 
+} 

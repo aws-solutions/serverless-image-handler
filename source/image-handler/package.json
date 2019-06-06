@@ -1,0 +1,29 @@
+{
+  "name": "image-handler",
+  "description": "A Lambda function for performing on-demand image edits and manipulations.",
+  "main": "index.js",
+  "author": {
+    "name": "aws-solutions-builder"
+  },
+  "version": "4.0.0",
+  "private": true,
+  "license": "ISC",
+  "dependencies": {
+    "mocha": "^6.1.4",
+    "sharp": "^0.21.3",
+    "sinon": "^7.3.2",
+    "nyc": "^14.0.0"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.437.0",
+    "aws-sdk-mock": "^4.4.0"
+  },
+  "scripts": {
+    "pretest": "npm install",
+    "test": "nyc --reporter=html --reporter=text mocha",
+    "build:init": "rm -rf package-lock.json && rm -rf dist && rm -rf node_modules",
+    "build:zip": "zip -rq image-handler.zip . -x template.yml",
+    "build:dist": "mkdir dist && mv image-handler.zip dist/",
+    "build": "npm run build:init && npm install --production && npm run build:zip && npm run build:dist"
+  }
+}
