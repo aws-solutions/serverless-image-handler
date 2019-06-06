@@ -1,0 +1,24 @@
+{
+    "name": "usage-metrics",
+    "version": "0.0.1",
+    "description": "Usage metrics is an auxiliary class to capture metrics pertinent for feedback on the solution",
+    "author": {
+        "name": "aws-solutions-builder"
+    },
+    "private": true,
+    "main": "metrics.common.js",
+    "dependencies": {
+    },
+    "devDependencies": {
+        "aws-sdk": "*",
+        "chai": "*",
+        "sinon": "*",
+        "sinon-chai": "*",
+        "mocha": "*",
+        "aws-sdk-mock": "*",
+        "npm-run-all": "*"
+    },
+    "scripts": {
+        "test": "mocha *.spec.js"
+    }
+}

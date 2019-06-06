@@ -1,0 +1,40 @@
+{
+    "name": "ui-framework-helper",
+    "description": "UI Framework custom resource helper Lambda function",
+    "main": "index.js",
+    "author": {
+        "name": "aws-solutions-builder"
+    },
+    "version": "0.0.1",
+    "private": true,
+    "dependencies": {
+        "moment": "^2.24.0",
+        "node-uuid": "^1.4.8",
+        "password-generator": "*",
+        "underscore": "*",
+        "usage-metrics": "file:lib/usage-metrics/"
+    },
+    "devDependencies": {
+        "aws-sdk": "*",
+        "chai": "*",
+        "sinon": "*",
+        "sinon-chai": "*",
+        "mocha": "*",
+        "aws-sdk-mock": "*",
+        "npm-run-all": "*"
+    },
+    "scripts": {
+        "pretest": "npm install",
+        "test": "mocha lib/*.spec.js",
+        "build:init": "rm -rf dist && rm -rf node_modules",
+        "build:zip": "zip -rq custom-resource.zip .",
+        "build:dist": "mkdir dist && mv custom-resource.zip dist/",
+        "build": "npm run build:init && npm install --production && npm run build:zip && npm run build:dist"
+    },
+    "bundledDependencies": [
+        "moment",
+        "underscore",
+        "password-generator",
+        "node-uuid"
+    ]
+}
