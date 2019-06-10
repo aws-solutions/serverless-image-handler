@@ -1,0 +1,13 @@
+{
+    "name": "manifest-generator",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Helper utility to create data lake site manifest for deployment",
+    "main": "app.js",
+    "author": {
+        "name": "aws-solutions-builder"
+    },
+    "dependencies": {
+        "minimist": "*"
+    }
+}
