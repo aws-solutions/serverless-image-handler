@@ -35,7 +35,7 @@ cd serverless-image-handler/deployment
 
 * Now build the distributable
 ```bash
-sudo ./build-s3-dist.sh $DIST_OUTPUT_BUCKET $VERSION
+sudo ./build-s3-dist.sh $DIST_OUTPUT_BUCKET $TEMPLATE_OUTPUT_BUCKET $VERSION
 ```
 
 * Deploy the distributable to an Amazon S3 bucket in your account. Note: you must have the AWS Command Line Interface installed.
