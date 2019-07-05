@@ -23,7 +23,7 @@ describe('setup()', function() {
             the ImageRequest object with the proper values`, async function() {
             // Arrange
             const event = {
-                path : '/eyJidWNrZXQiOiJ2YWxpZEJ1Y2tldCIsImtleSI6InZhbGlkS2V5IiwiZWRpdHMiOnsiZ3JheXNjYWxlIjp0cnVlfX0='
+                path : '/eyJidWNrZXQiOiJ2YWxpZEJ1Y2tldCIsImtleSI6InZhbGlkS2V5IiwiZWRpdHMiOnsiZ3JheXNjYWxlIjp0cnVlfSwib3V0cHV0Rm9ybWF0IjoianBlZyJ9'
             }
             process.env = {
                 SOURCE_BUCKETS : "validBucket, validBucket2"
@@ -45,6 +45,7 @@ describe('setup()', function() {
                 bucket: 'validBucket',
                 key: 'validKey',
                 edits: { grayscale: true },
+                outputFormat: 'jpeg',
                 originalImage: Buffer.from('SampleImageContent\n')
             }
             // Assert

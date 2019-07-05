@@ -26,6 +26,11 @@ class ImageRequest {
             this.bucket = this.parseImageBucket(event, this.requestType);
             this.key = this.parseImageKey(event, this.requestType);
             this.edits = this.parseImageEdits(event, this.requestType);
+
+            if (this.requestType === 'Default') {
+              this.outputFormat = this.decodeRequest(event).outputFormat;
+            }
+
             this.originalImage = await this.getOriginalImage(this.bucket, this.key)
             return Promise.resolve(this);
         } catch (err) {

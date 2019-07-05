@@ -1,2 +1,4 @@
 # System Files
 **/.DS_Store
+deployment/{dist
+deployment/manifest-generator
