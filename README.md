@@ -22,7 +22,6 @@ export VERSION=my-version # version number for the customized code
 ```
 _Note:_ You would have to create 2 buckets, one named 'my-bucket-name' and another regional bucket named 'my-bucket-name-<aws_region>'; aws_region is where you are testing the customized solution. Also, the assets  in bucket should be publicly accessible.
 
-```
 * Clone the github repo
 ```bash
 git clone https://github.com/awslabs/serverless-image-handler.git
