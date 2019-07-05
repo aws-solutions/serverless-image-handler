@@ -51,6 +51,16 @@ _Note:_ In the above example, the solution template will expect the source code 
 https://s3.amazonaws.com/my-bucket-name/serverless-image-handler/my-version/serverless-image-handler.template
 ```
 
+### Docker
+If you have docker installed, you can build the distributable as well as run the unit tests with the following command from the root of the repository:
+
+```
+docker run --rm -it \
+           -v $PWD:/development \
+           -w /development \
+           amazonlinux:2018.03 ./package.sh $DIST_OUTPUT_BUCKET $TEMPLATE_OUTPUT_BUCKET $VERSION
+```
+
 Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 Licensed under the Amazon Software License (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
