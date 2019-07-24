@@ -14,7 +14,7 @@
 const ThumborMapping = require('./thumbor-mapping');
 
 class ImageRequest {
-    
+
     /**
      * Initializer function for creating a new image request, used by the image
      * handler to perform image modifications.
@@ -137,8 +137,11 @@ class ImageRequest {
             return decoded.key;
         } else if (requestType === "Thumbor" || requestType === "Custom") {
             // Parse the key from the end of the path
-            const key = (event["path"]).split("/");
-            return key[key.length - 1];
+            //const key = (event["path"]).split("/");
+            //return key[key.length - 1];
+
+            //Arpee: Support serving images under s3 subdirectories
+            return decodeURIComponent(event["path"].replace(/\/\d+x\d+/,'').substring(1));
         } else {
             // Return an error for all other conditions
             throw ({
@@ -160,8 +163,8 @@ class ImageRequest {
         const path = event["path"];
         // ----
         const matchDefault = new RegExp(/^(\/?)([0-9a-zA-Z+\/]{4})*(([0-9a-zA-Z+\/]{2}==)|([0-9a-zA-Z+\/]{3}=))?$/);
-        const matchThumbor = new RegExp(/^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(.+jpg|.+png|.+webp|.+tiff|.+jpeg)$/);
-        const matchCustom = new RegExp(/(\/?)(.*)(jpg|png|webp|tiff|jpeg)/);
+        const matchThumbor = new RegExp(/^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(.+jpg|.+png|.+webp|.+tiff|.+jpeg)$/i);
+        const matchCustom = new RegExp(/(\/?)(.*)(jpg|png|webp|tiff|jpeg)/i);
         const definedEnvironmentVariables = (
             (process.env.REWRITE_MATCH_PATTERN !== "") && 
             (process.env.REWRITE_SUBSTITUTION !== "") && 
