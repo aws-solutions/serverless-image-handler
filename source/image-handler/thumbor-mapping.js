@@ -34,6 +34,7 @@ class ThumborMapping {
             const edit = edits[i];
             if (edit === ('fit-in')) {
                 this.edits.resize = {};
+                this.edits.resize.fit = "inside"
                 this.sizingMethod = edit;
             } 
             else if (edit.includes('x')) {
