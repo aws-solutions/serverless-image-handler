@@ -31,7 +31,7 @@ class ThumborMapping {
         const filetype = (this.path.split('.'))[(this.path.split('.')).length - 1];
 
         //Process the Dimenions
-        const dimPath = this.path.match(/\d+x\d+/g);
+        const dimPath = this.path.match(/[^\/]\d+x\d+/g);
         if (dimPath) {
             const dims = dimPath[0].split('x');
             // Set only if the dimensions provided are valid
