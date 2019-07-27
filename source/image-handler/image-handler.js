@@ -42,7 +42,7 @@ class ImageHandler {
      * @param {Object} edits - The edits to be made to the original image.  
      */  
     async applyEdits(originalImage, edits) {  
-        const image = sharp(originalImage);  
+        const image = sharp(originalImage, { failOnError: false }).rotate();
         const keys = Object.keys(edits);  
         const values = Object.values(edits);  
         // Apply the image edits  
