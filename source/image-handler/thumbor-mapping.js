@@ -29,21 +29,31 @@ class ThumborMapping {
         this.path = event.path;
         const edits = this.path.split('/');
         const filetype = (this.path.split('.'))[(this.path.split('.')).length - 1];
+
+        //Process the Dimenions
+        const dimPath = this.path.match(/\d+x\d+/g);
+        if (dimPath) {
+            const dims = dimPath[0].split('x');
+            // Set only if the dimensions provided are valid
+            if (isNaN(dims[0]) == false && isNaN(dims[1]) == false ){
+                this.edits.resize = {};
+                // Assign dimenions from the first match only to avoid parsing dimension from image file names
+                this.edits.resize.width = Number(dims[0]);
+                this.edits.resize.height = Number(dims[1]);
+
+            }
+        }
+
         // Parse the image path
         for (let i = 0; i < edits.length; i++) {
             const edit = edits[i];
             if (edit === ('fit-in')) {
-                this.edits.resize = {};
+                if (this.edits.resize === undefined) {
+                    this.edits.resize = {};
+                }
                 this.edits.resize.fit = 'inside'
                 this.sizingMethod = edit;
-            } 
-            else if (edit.includes('x')) {
-                this.edits.resize = {};
-                const dims = edit.split('x');
-                this.edits.resize.width = Number(dims[0]);
-                this.edits.resize.height = Number(dims[1]);
-            } 
-            if (edit.includes('filters:')) {
+            } else if (edit.includes('filters:')) {
                 this.mapFilter(edit, filetype);
             }
         }

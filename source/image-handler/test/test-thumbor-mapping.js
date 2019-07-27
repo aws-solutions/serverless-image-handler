@@ -30,12 +30,13 @@ describe('process()', function() {
             thumborMapping.process(event);
             // Assert
             const expectedResult = {
-                edits: { 
+                edits: {
+                    grayscale: true,
                     resize: {
                         width: 200,
-                        height: 300
-                    },
-                    grayscale: true
+                        height: 300,
+                        fit: 'inside'
+                    }
                 }
             };
             assert.deepEqual(thumborMapping.edits, expectedResult.edits);
@@ -628,7 +629,7 @@ describe('mapFilter()', function() {
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { 
+                edits: {
                     rotate: 0
                 }
             };
