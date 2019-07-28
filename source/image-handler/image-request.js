@@ -141,7 +141,7 @@ class ImageRequest {
             //return key[key.length - 1];
 
             //Arpee: Support serving images under s3 subdirectories
-            return decodeURIComponent(event["path"].replace(/\d+x\d+|\/filters[:-][^/;]+|\/fit-in\/+|^\/+/g,'').replace(/^\//,''));
+            return decodeURIComponent(event["path"].replace(/\d+x\d+\/|filters[:-][^/;]+|\/fit-in\/+|^\/+/g,'').replace(/^\/+/,''));
         } else {
             // Return an error for all other conditions
             throw ({
