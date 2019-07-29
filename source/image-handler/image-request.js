@@ -70,7 +70,7 @@ class ImageRequest {
             if (decoded.bucket !== undefined) {
                 // Check the provided bucket against the whitelist
                 const sourceBuckets = this.getAllowedSourceBuckets();
-                if (sourceBuckets.includes(decoded.bucket)) {
+                if (sourceBuckets.includes(decoded.bucket) || decoded.bucket.match(new RegExp('^' + sourceBuckets[0] + '$'))) {
                     return decoded.bucket;
                 } else {
                     throw ({
