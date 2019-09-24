@@ -1,13 +1,19 @@
 { 
     "AWSTemplateFormatVersion": "2010-09-09", 
     "Description": "(SO0023) - Serverless Image Handler: This template deploys and configures a serverless architecture that is optimized for dynamic image manipulation and delivery at low latency and cost. Leverages SharpJS for image processing. Template version 4.", 
-    "Parameters": { 
+    "Parameters": {
+        "AutoWebP" : {
+            "Description" : "Would you like to enable automatic WebP based on accept headers? Select 'Yes' if so.",
+            "Default" : "No",
+            "Type" : "String",
+            "AllowedValues" : [ "Yes", "No" ]
+        },
         "CorsEnabled" : { 
             "Description" : "Would you like to enable Cross-Origin Resource Sharing (CORS) for the image handler API? Select 'Yes' if so.", 
             "Default" : "No", 
             "Type" : "String", 
             "AllowedValues" : [ "Yes", "No" ] 
-        }, 
+        },
         "CorsOrigin" : { 
             "Description" : "If you selected 'Yes' above, please specify an origin value here. A wildcard (*) value will support any origin. We recommend specifying an origin (i.e. https://example.domain) to restrict cross-site access to your API.", 
             "Default" : "*", 
@@ -224,7 +230,10 @@
                 "MemorySize": 1024,
                 "Timeout": 30,
                 "Environment" : { 
-                    "Variables" : { 
+                    "Variables" : {
+                        "AUTO_WEBP" : {
+                            "Ref" : "AutoWebP"
+                        },
                         "CORS_ENABLED" : {  
                             "Ref" : "CorsEnabled"  
                         }, 

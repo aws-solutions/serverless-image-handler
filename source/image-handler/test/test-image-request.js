@@ -644,4 +644,79 @@ describe('getAllowedSourceBuckets()', function() {
             });
         });
     });
-})
+});
+
+// ----------------------------------------------------------------------------
+// getOutputFormat()
+// ----------------------------------------------------------------------------
+describe('getOutputFormat()', function () {
+    describe('001/AcceptsHeaderIncludesWebP', function () {
+        it(`Should pass if it returns "webp" for an accepts header which includes webp`, function () {
+            // Arrange
+            process.env = {
+                AUTO_WEBP: true
+            };
+            const event = {
+                headers: {
+                    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3"
+                }
+            };
+            // Act
+            const imageRequest = new ImageRequest();
+            var result = imageRequest.getOutputFormat(event);
+            // Assert
+            assert.deepEqual(result, "webp");
+        });
+    });
+    describe('002/AcceptsHeaderDoesNotIncludeWebP', function () {
+        it(`Should pass if it returns null for an accepts header which does not include webp`, function () {
+            // Arrange
+            process.env = {
+                AUTO_WEBP: true
+            };
+            const event = {
+                headers: {
+                    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/apng,*/*;q=0.8,application/signed-exchange;v=b3"
+                }
+            };
+            // Act
+            const imageRequest = new ImageRequest();
+            var result = imageRequest.getOutputFormat(event);
+            // Assert
+            assert.deepEqual(result, null);
+        });
+    });
+    describe('003/AutoWebPDisabled', function () {
+        it(`Should pass if it returns null when AUTO_WEBP is disabled with accepts header including webp`, function () {
+            // Arrange
+            process.env = {
+                AUTO_WEBP: false
+            };
+            const event = {
+                headers: {
+                    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3"
+                }
+            };
+            // Act
+            const imageRequest = new ImageRequest();
+            var result = imageRequest.getOutputFormat(event);
+            // Assert
+            assert.deepEqual(result, null);
+        });
+    });
+    describe('004/AutoWebPUnset', function () {
+        it(`Should pass if it returns null when AUTO_WEBP is not set with accepts header including webp`, function () {
+            // Arrange
+            const event = {
+                headers: {
+                    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3"
+                }
+            };
+            // Act
+            const imageRequest = new ImageRequest();
+            var result = imageRequest.getOutputFormat(event);
+            // Assert
+            assert.deepEqual(result, null);
+        });
+    });
+});
