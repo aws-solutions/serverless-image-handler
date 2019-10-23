@@ -22,9 +22,12 @@ exports.handler = async (event) => {
         const request = await imageRequest.setup(event);
         console.log(request);
         const processedRequest = await imageHandler.process(request);
+        const headers = getResponseHeaders();
+        headers["Expires"] = request.Expires;
+        headers["Last-Modified"] = request.LastModified;
         const response = {
             "statusCode": 200,
-            "headers" : getResponseHeaders(),
+            "headers" : headers,
             "body": processedRequest,
             "isBase64Encoded": true
         }
