@@ -49,9 +49,28 @@ class ImageHandler {
         for (let i = 0; i < keys.length; i++) {  
             const key = keys[i];  
             const value = values[i];  
-            if (key === 'overlayWith') {  
-                const overlay = await this.getOverlayImage(value.bucket, value.key);  
-                image.overlayWith(overlay, value.options);  
+            if (key === 'composite') {
+                let overlay = await this.getOverlayImage(value.bucket, value.key);
+                // Using composite the overlay has to be the same size
+                // as the image. Therefore, fetch the metadata of the
+                // image so we can determine how we should resize the
+                // overlay.
+                let metadata = await image.metadata();
+
+                // If a resize is also requested just set the metadata
+                // width and height to the requested resize.
+                if (keys.includes('resize')) {
+                    metadata.width = edits.resize.width;
+                    metadata.height = edits.resize.height;
+                }
+                
+                // Resize the overlay image
+                let overlayResize = await sharp(overlay).resize(metadata.width, metadata.height).toBuffer();
+                
+                values.input = overlayResize;
+
+                // Composite the image with the overlay
+                image.composite([ values ]);
             } else if (key === 'smartCrop') { 
                 const options = value;
                 const imageBuffer = await image.toBuffer();
