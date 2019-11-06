@@ -53,7 +53,7 @@ class ImageRequest {
         }
         catch(err) {
             return Promise.reject({
-                status: 500,
+                status: ("NoSuchKey" == err.code) ? 404 : 500,
                 code: err.code,
                 message: err.message
             })
