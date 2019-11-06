@@ -27,6 +27,12 @@ To serve the images another Amazon S3  bucket is necessary. Make sure that the `
 
 To deploy the code distributable has to be uploaded to the deployment buckets. It is recommended to have the AWS Command Line Interface installed to do this.
 
+### Required packages
+
+* nodejs version 8.10
+* npm
+* zip
+
 # Installation
 
 ### Building customized distributable
