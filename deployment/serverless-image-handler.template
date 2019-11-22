@@ -2,6 +2,12 @@
     "AWSTemplateFormatVersion": "2010-09-09", 
     "Description": "(SO0023) - Serverless Image Handler: This template deploys and configures a serverless architecture that is optimized for dynamic image manipulation and delivery at low latency and cost. Leverages SharpJS for image processing. Template version 4.", 
     "Parameters": { 
+        "CacheControl" : { 
+            "Description" : "The value of the Cache-Control header to return", 
+            "Default" : "public max-age=3600", 
+            "Type" : "String", 
+            "AllowedPattern" : ".+"
+        }, 
         "CorsEnabled" : { 
             "Description" : "Would you like to enable Cross-Origin Resource Sharing (CORS) for the image handler API? Select 'Yes' if so.", 
             "Default" : "No", 
@@ -225,6 +231,9 @@
                 "Timeout": 30,
                 "Environment" : { 
                     "Variables" : { 
+                        "CACHE_CONTROL" : {  
+                            "Ref" : "CacheControl"  
+                        }, 
                         "CORS_ENABLED" : {  
                             "Ref" : "CorsEnabled"  
                         }, 
@@ -660,6 +669,10 @@
         "SourceBuckets" : { 
             "Description" : "Amazon S3 bucket location containing original image files.", 
             "Value" : { "Ref" : "SourceBuckets"} 
+        }, 
+        "CacheControl" : {  
+            "Description" : "The value of the Cache-Control header returned by the image handler API.", 
+            "Value" : { "Ref" : "CacheControl" } 
         }, 
         "CorsEnabled" : {  
             "Description" : "Indicates whether Cross-Origin Resource Sharing (CORS) has been enabled for the image handler API.", 

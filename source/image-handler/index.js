@@ -52,7 +52,8 @@ const getResponseHeaders = (isErr) => {
         "Access-Control-Allow-Methods": "GET",
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
         "Access-Control-Allow-Credentials": true,
-        "Content-Type": "image"
+        "Content-Type": "image",
+        "Cache-Control": process.env.CACHE_CONTROL || "public max-age=3600",
     }
     if (corsEnabled) {
         headers["Access-Control-Allow-Origin"] = process.env.CORS_ORIGIN;
