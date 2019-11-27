@@ -1,0 +1,23 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 10
+      
+  pre_build:
+    commands:
+      - cd source/image-handler
+      - npm test
+      - cd - 
+
+  build:
+    commands:
+      - cd deployment
+      - ./build-s3-dist.sh $DIST_OUTPUT_BUCKET $VERSION
+
+  post_build:
+    commands:
+      - aws s3 cp ./dist/ s3://$DIST_OUTPUT_BUCKET-$REGION/serverless-image-handler/$VERSION/ --recursive --exclude "*" --include "*.zip"
+      - aws s3 cp ./dist/serverless-image-handler.template s3://$TEMPLATE_OUTPUT_BUCKET/serverless-image-handler/$VERSION/
+
