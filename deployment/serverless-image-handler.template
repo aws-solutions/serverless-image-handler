@@ -226,7 +226,7 @@
                     "S3Bucket" : { "Fn::Join": [ "-", [{ "Fn::FindInMap": [ "SourceCode", "General", "S3Bucket" ]}, { "Ref": "AWS::Region" }]]}, 
                     "S3Key" : "serverless-image-handler/%%VERSION%%/image-handler.zip" 
                 }, 
-                "Runtime": "nodejs8.10", 
+                "Runtime": "nodejs10.x", 
                 "MemorySize": 1024,
                 "Timeout": 30,
                 "Environment" : { 
@@ -505,7 +505,7 @@
                     "S3Key": "serverless-image-handler/%%VERSION%%/custom-resource.zip" 
                 }, 
                 "Timeout": 30, 
-                "Runtime": "nodejs8.10", 
+                "Runtime": "nodejs10.x", 
                 "Role": { "Fn::GetAtt": [ "CustomResourceRole", "Arn" ] }, 
                 "Handler": "index.handler"
             } 
