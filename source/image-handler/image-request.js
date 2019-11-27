@@ -194,7 +194,7 @@ class ImageRequest {
         if (path !== undefined) {
             const splitPath = path.split("/");
             const encoded = splitPath[splitPath.length - 1];
-            const toBuffer = new Buffer(decodeURIComponent(encoded), 'base64');
+            const toBuffer = new Buffer(encoded, 'base64');
             try {
                 return JSON.parse(toBuffer.toString('ascii'));
             } catch (e) {
