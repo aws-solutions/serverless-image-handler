@@ -14,7 +14,7 @@ phases:
   build:
     commands:
       - cd deployment
-      - ./build-s3-dist.sh $DIST_OUTPUT_BUCKET $VERSION
+      - ./build-s3-dist.sh $DIST_OUTPUT_BUCKET $TEMPLATE_OUTPUT_BUCKET $VERSION
 
   post_build:
     commands:
