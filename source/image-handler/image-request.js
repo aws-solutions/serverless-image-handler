@@ -1,12 +1,12 @@
 /*********************************************************************************************************************
  *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
- *  Licensed under the Amazon Software License (the "License"). You may not use this file except in compliance        *
+ *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
  *                                                                                                                    *
- *      http://aws.amazon.com/asl/                                                                                    *
+ *      http://www.apache.org/licenses/LICENSE-2.0                                                                    *
  *                                                                                                                    *
- *  or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES *
+ *  or in the 'license' file accompanying this file. This file is distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES *
  *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
@@ -14,7 +14,7 @@
 const ThumborMapping = require('./thumbor-mapping');
 
 class ImageRequest {
-    
+
     /**
      * Initializer function for creating a new image request, used by the image
      * handler to perform image modifications.
@@ -151,7 +151,7 @@ class ImageRequest {
 
     /**
      * Determines how to handle the request being made based on the URL path
-     * prefix to the image request. Categorizes a request as either "image" 
+     * prefix to the image request. Categorizes a request as either "image"
      * (uses the Sharp library), "thumbor" (uses Thumbor mapping), or "custom"
      * (uses the rewrite function).
      * @param {Object} event - Lambda request body.
@@ -163,9 +163,9 @@ class ImageRequest {
         const matchThumbor = new RegExp(/^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(.+jpg|.+png|.+webp|.+tiff|.+jpeg)$/);
         const matchCustom = new RegExp(/(\/?)(.*)(jpg|png|webp|tiff|jpeg)/);
         const definedEnvironmentVariables = (
-            (process.env.REWRITE_MATCH_PATTERN !== "") && 
-            (process.env.REWRITE_SUBSTITUTION !== "") && 
-            (process.env.REWRITE_MATCH_PATTERN !== undefined) && 
+            (process.env.REWRITE_MATCH_PATTERN !== "") &&
+            (process.env.REWRITE_SUBSTITUTION !== "") &&
+            (process.env.REWRITE_MATCH_PATTERN !== undefined) &&
             (process.env.REWRITE_SUBSTITUTION !== undefined)
         );
         // ----
@@ -214,7 +214,7 @@ class ImageRequest {
     }
 
     /**
-     * Returns a formatted image source bucket whitelist as specified in the 
+     * Returns a formatted image source bucket whitelist as specified in the
      * SOURCE_BUCKETS environment variable of the image handler Lambda
      * function. Provides error handling for missing/invalid values.
      */

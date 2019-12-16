@@ -1,2 +1,26 @@
+# compiled output
+**/dist
+**/global-s3-assets
+**/regional-s3-assets
+**/open-source
+**/.zip
+**/tmp
+**/out-tsc
+
+# dependencies
+**/node_modules
+
+# test assets
+**/coverage
+**/.nyc_output
+
+# misc
+**/npm-debug.log
+**/testem.log
+**/package-lock.json
+**/.vscode/settings.json
+demo-ui-config.js
+
 # System Files
 **/.DS_Store
+**/.vscode
