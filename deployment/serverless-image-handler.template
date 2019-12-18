@@ -8,7 +8,7 @@
             "Type" : "String", 
             "AllowedValues" : [ "Yes", "No" ] 
         }, 
-        "CorsOrigin" : { 
+        "CorsOrigin" : {
             "Description" : "If you selected 'Yes' above, please specify an origin value here. A wildcard (*) value will support any origin. We recommend specifying an origin (i.e. https://example.domain) to restrict cross-site access to your API.", 
             "Default" : "*", 
             "Type" : "String" 
@@ -220,7 +220,7 @@
                     "S3Bucket" : { "Fn::Join": [ "-", [{ "Fn::FindInMap": [ "SourceCode", "General", "S3Bucket" ]}, { "Ref": "AWS::Region" }]]}, 
                     "S3Key" : "serverless-image-handler/%%VERSION%%/image-handler.zip" 
                 }, 
-                "Runtime": "nodejs8.10", 
+                "Runtime": "nodejs12.x",
                 "MemorySize": 1024,
                 "Timeout": 30,
                 "Environment" : { 
@@ -496,7 +496,7 @@
                     "S3Key": "serverless-image-handler/%%VERSION%%/custom-resource.zip" 
                 }, 
                 "Timeout": 30, 
-                "Runtime": "nodejs8.10", 
+                "Runtime": "nodejs12.x",
                 "Role": { "Fn::GetAtt": [ "CustomResourceRole", "Arn" ] }, 
                 "Handler": "index.handler"
             } 
@@ -675,4 +675,4 @@
             "Value" : { "Ref" : "LogRetentionPeriod" } 
         } 
     } 
-} 
+}

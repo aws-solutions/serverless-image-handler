@@ -24,10 +24,10 @@ class ImageHandler {
         const originalImage = request.originalImage; 
         const edits = request.edits; 
         if (edits !== undefined) { 
-            const modifiedImage = await this.applyEdits(originalImage, edits); 
+            const modifiedImage = await this.applyEdits(originalImage, edits);
             if (request.outputFormat !== undefined) {  
                 await modifiedImage.toFormat(request.outputFormat);  
-            }  
+            }
             const bufferImage = await modifiedImage.toBuffer();  
             return bufferImage.toString('base64'); 
         } else { 
@@ -41,7 +41,13 @@ class ImageHandler {
      * @param {Buffer} originalImage - The original image.  
      * @param {Object} edits - The edits to be made to the original image.  
      */  
-    async applyEdits(originalImage, edits) {  
+    async applyEdits(originalImage, edits) {
+        
+        if (edits.resize === undefined) {
+            edits.resize = {};
+            edits.resize.fit = "inside";
+        }
+
         const image = sharp(originalImage, { failOnError: false }).rotate();
         const keys = Object.keys(edits);  
         const values = Object.values(edits);  
