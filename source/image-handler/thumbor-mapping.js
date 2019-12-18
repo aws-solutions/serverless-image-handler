@@ -37,10 +37,12 @@ class ThumborMapping {
             // Set only if the dimensions provided are valid
             if (isNaN(dims[0]) == false && isNaN(dims[1]) == false ){
                 this.edits.resize = {};
-                // Assign dimenions from the first match only to avoid parsing dimension from image file names
-                this.edits.resize.width = Number(dims[0]);
-                this.edits.resize.height = Number(dims[1]);
-
+                this.edits.resize.fit = 'inside'
+                if (this.edits.resize.width == undefined && this.edits.resize.height == undefined) {
+                    // Assign dimenions from the first match only to avoid parsing dimension from image file names
+                    this.edits.resize.width = Number(dims[0]);
+                    this.edits.resize.height = Number(dims[1]);
+                }
             }
         }
 
