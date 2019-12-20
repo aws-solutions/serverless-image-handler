@@ -46,14 +46,18 @@ class ImageRequest {
         const request = s3.getObject(imageLocation).promise();
         try {
             const originalImage = await request;
-            this.ContentType = originalImage.ContentType;
+            if (originalImage.ContentType) {
+                this.ContentType = originalImage.ContentType;
+            }
             if (originalImage.Expires) {
-              this.Expires = new Date(originalImage.Expires).toUTCString();
+                this.Expires = new Date(originalImage.Expires).toUTCString();
             }
             if (originalImage.LastModified) {
-              this.LastModified = new Date(originalImage.LastModified).toUTCString();
+                this.LastModified = new Date(originalImage.LastModified).toUTCString();
             }
-            this.CacheControl = originalImage.CacheControl;
+            if (originalImage.CacheControl) {
+                this.CacheControl = originalImage.CacheControl;
+            }
             return Promise.resolve(originalImage.Body);
         }
         catch(err) {
