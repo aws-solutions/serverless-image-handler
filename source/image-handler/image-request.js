@@ -47,8 +47,12 @@ class ImageRequest {
         try {
             const originalImage = await request;
             this.ContentType = originalImage.ContentType;
-            this.Expires = new Date(originalImage.Expires).toUTCString();
-            this.LastModified = new Date(originalImage.LastModified).toUTCString();
+            if (originalImage.Expires) {
+              this.Expires = new Date(originalImage.Expires).toUTCString();
+            }
+            if (originalImage.LastModified) {
+              this.LastModified = new Date(originalImage.LastModified).toUTCString();
+            }
             this.CacheControl = originalImage.CacheControl;
             return Promise.resolve(originalImage.Body);
         }
