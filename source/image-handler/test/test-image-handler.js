@@ -1,12 +1,12 @@
 /*********************************************************************************************************************
  *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
- *  Licensed under the Amazon Software License (the "License"). You may not use this file except in compliance        *
+ *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
  *                                                                                                                    *
- *      http://aws.amazon.com/asl/                                                                                    *
+ *      http://www.apache.org/licenses/LICENSE-2.0                                                                    *
  *                                                                                                                    *
- *  or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES *
+ *  or in the 'license' file accompanying this file. This file is distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES *
  *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
@@ -112,7 +112,7 @@ describe('process()', function() {
 // ----------------------------------------------------------------------------
 describe('applyEdits()', function() {
     describe('001/standardEdits', function() {
-        it(`Should pass if a series of standard edits are provided to the 
+        it(`Should pass if a series of standard edits are provided to the
             function`, async function() {
             // Arrange
             const originalImage = Buffer.from('sampleImageContent');
@@ -154,10 +154,8 @@ describe('applyEdits()', function() {
             // Assert
             const imageHandler = new ImageHandler();
             await imageHandler.applyEdits(originalImage, edits).then((result) => {
-                assert.deepEqual(result.options.overlay.buffer, originalImage);
-            }).catch((err) => {
-                console.log(err)
-            })
+                assert.deepEqual(result.options.input.buffer, originalImage);
+            });
         });
     });
     describe('003/smartCrop', function() {
@@ -169,12 +167,12 @@ describe('applyEdits()', function() {
             const rekognition = require('aws-sdk/clients/rekognition');
             const detectFaces = rekognition.prototype.detectFaces = sinon.stub();
             detectFaces.returns({
-                promise: () => { return { 
+                promise: () => { return {
                     FaceDetails: [{
                         BoundingBox: {
-                            Height: 0.18, 
-                            Left: 0.55, 
-                            Top: 0.33, 
+                            Height: 0.18,
+                            Left: 0.55,
+                            Top: 0.33,
                             Width: 0.23
                         }
                     }]
@@ -201,7 +199,7 @@ describe('applyEdits()', function() {
         });
     });
     describe('004/smartCrop/paddingOutOfBoundsError', function() {
-        it(`Should pass if an excessive padding value is passed to the 
+        it(`Should pass if an excessive padding value is passed to the
             smartCrop filter`, async function() {
             // Arrange
             const sinon = require('sinon');
@@ -209,12 +207,12 @@ describe('applyEdits()', function() {
             const rekognition = require('aws-sdk/clients/rekognition');
             const detectFaces = rekognition.prototype.detectFaces = sinon.stub();
             detectFaces.returns({
-                promise: () => { return { 
+                promise: () => { return {
                     FaceDetails: [{
                         BoundingBox: {
-                            Height: 0.18, 
-                            Left: 0.55, 
-                            Top: 0.33, 
+                            Height: 0.18,
+                            Left: 0.55,
+                            Top: 0.33,
                             Width: 0.23
                         }
                     }]
@@ -241,7 +239,7 @@ describe('applyEdits()', function() {
         });
     });
     describe('005/smartCrop/boundingBoxError', function() {
-        it(`Should pass if an excessive faceIndex value is passed to the 
+        it(`Should pass if an excessive faceIndex value is passed to the
             smartCrop filter`, async function() {
             // Arrange
             const sinon = require('sinon');
@@ -249,12 +247,12 @@ describe('applyEdits()', function() {
             const rekognition = require('aws-sdk/clients/rekognition');
             const detectFaces = rekognition.prototype.detectFaces = sinon.stub();
             detectFaces.returns({
-                promise: () => { return { 
+                promise: () => { return {
                     FaceDetails: [{
                         BoundingBox: {
-                            Height: 0.18, 
-                            Left: 0.55, 
-                            Top: 0.33, 
+                            Height: 0.18,
+                            Left: 0.55,
+                            Top: 0.33,
                             Width: 0.23
                         }
                     }]
@@ -281,7 +279,7 @@ describe('applyEdits()', function() {
         });
     });
     describe('006/smartCrop/faceIndexUndefined', function() {
-        it(`Should pass if a faceIndex value of undefined is passed to the 
+        it(`Should pass if a faceIndex value of undefined is passed to the
             smartCrop filter`, async function() {
             // Arrange
             const sinon = require('sinon');
@@ -289,12 +287,12 @@ describe('applyEdits()', function() {
             const rekognition = require('aws-sdk/clients/rekognition');
             const detectFaces = rekognition.prototype.detectFaces = sinon.stub();
             detectFaces.returns({
-                promise: () => { return { 
+                promise: () => { return {
                     FaceDetails: [{
                         BoundingBox: {
-                            Height: 0.18, 
-                            Left: 0.55, 
-                            Top: 0.33, 
+                            Height: 0.18,
+                            Left: 0.55,
+                            Top: 0.33,
                             Width: 0.23
                         }
                     }]
@@ -324,7 +322,7 @@ describe('applyEdits()', function() {
 // ----------------------------------------------------------------------------
 describe('getOverlayImage()', function() {
     describe('001/validParameters', function() {
-        it(`Should pass if the proper bucket name and key are supplied, 
+        it(`Should pass if the proper bucket name and key are supplied,
             simulating an image file that can be retrieved`, async function() {
             // Arrange
             const S3 = require('aws-sdk/clients/s3');
@@ -343,18 +341,18 @@ describe('getOverlayImage()', function() {
         });
     });
     describe('002/imageDoesNotExist', async function() {
-        it(`Should throw an error if an invalid bucket or key name is provided, 
+        it(`Should throw an error if an invalid bucket or key name is provided,
             simulating a non-existant overlay image`, async function() {
             // Arrange
             const S3 = require('aws-sdk/clients/s3');
             const sinon = require('sinon');
             const getObject = S3.prototype.getObject = sinon.stub();
             getObject.withArgs({Bucket: 'invalidBucket', Key: 'invalidKey'}).returns({
-                promise: () => { 
+                promise: () => {
                     return Promise.reject({
                         code: 500,
                         message: 'SimulatedInvalidParameterException'
-                    }) 
+                    })
                 }
             });
             // Act
@@ -374,13 +372,13 @@ describe('getOverlayImage()', function() {
 // ----------------------------------------------------------------------------
 describe('getCropArea()', function() {
     describe('001/validParameters', function() {
-        it(`Should pass if the crop area can be calculated using a series of 
+        it(`Should pass if the crop area can be calculated using a series of
             valid inputs/parameters`, function() {
             // Arrange
             const boundingBox = {
-                Height: 0.18, 
-                Left: 0.55, 
-                Top: 0.33, 
+                Height: 0.18,
+                Left: 0.55,
+                Top: 0.33,
                 Width: 0.23
             };
             const options = { padding: 20 };
@@ -395,7 +393,7 @@ describe('getCropArea()', function() {
             const expectedResult = {
                 left: 90,
                 top: 112,
-                width: 86, 
+                width: 86,
                 height: 112
             }
             assert.deepEqual(result, expectedResult);
@@ -409,21 +407,21 @@ describe('getCropArea()', function() {
 // ----------------------------------------------------------------------------
 describe('getBoundingBox()', function() {
     describe('001/validParameters', function() {
-        it(`Should pass if the proper parameters are passed to the function`, 
+        it(`Should pass if the proper parameters are passed to the function`,
             async function() {
             // Arrange
             const sinon = require('sinon');
             const rekognition = require('aws-sdk/clients/rekognition');
             const detectFaces = rekognition.prototype.detectFaces = sinon.stub();
-            // ---- 
+            // ----
             const imageBytes = Buffer.from('TestImageData');
             detectFaces.withArgs({Image: {Bytes: imageBytes}}).returns({
-                promise: () => { return { 
+                promise: () => { return {
                     FaceDetails: [{
                         BoundingBox: {
-                            Height: 0.18, 
-                            Left: 0.55, 
-                            Top: 0.33, 
+                            Height: 0.18,
+                            Left: 0.55,
+                            Top: 0.33,
                             Width: 0.23
                         }
                     }]
@@ -437,27 +435,27 @@ describe('getBoundingBox()', function() {
             const result = await imageHandler.getBoundingBox(currentImage, faceIndex);
             // Assert
             const expectedResult = {
-                Height: 0.18, 
-                Left: 0.55, 
-                Top: 0.33, 
+                Height: 0.18,
+                Left: 0.55,
+                Top: 0.33,
                 Width: 0.23
             };
             assert.deepEqual(result, expectedResult);
         });
     });
     describe('002/errorHandling', function() {
-        it(`Should simulate an error condition returned by Rekognition`, 
+        it(`Should simulate an error condition returned by Rekognition`,
             async function() {
             // Arrange
             const rekognition = require('aws-sdk/clients/rekognition');
             const sinon = require('sinon');
             const detectFaces = rekognition.prototype.detectFaces = sinon.stub();
             detectFaces.returns({
-                promise: () => { 
+                promise: () => {
                     return Promise.reject({
                         code: 500,
                         message: 'SimulatedError'
-                    }) 
+                    })
                 }
             })
             // ----

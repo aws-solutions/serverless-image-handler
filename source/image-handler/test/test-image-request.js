@@ -1,12 +1,12 @@
 /*********************************************************************************************************************
  *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
- *  Licensed under the Amazon Software License (the "License"). You may not use this file except in compliance        *
+ *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
  *                                                                                                                    *
- *      http://aws.amazon.com/asl/                                                                                    *
+ *      http://www.apache.org/licenses/LICENSE-2.0                                                                    *
  *                                                                                                                    *
- *  or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES *
+ *  or in the 'license' file accompanying this file. This file is distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES *
  *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
@@ -112,7 +112,7 @@ describe('setup()', function() {
                 requestType: 'Custom',
                 bucket: 'allowedBucket001',
                 key: 'custom-image.jpg',
-                edits: { 
+                edits: {
                     grayscale: true,
                     rotate: 90
                 },
@@ -154,7 +154,7 @@ describe('setup()', function() {
 // ----------------------------------------------------------------------------
 describe('getOriginalImage()', function() {
     describe('001/imageExists', function() {
-        it(`Should pass if the proper bucket name and key are supplied, 
+        it(`Should pass if the proper bucket name and key are supplied,
             simulating an image file that can be retrieved`, async function() {
             // Arrange
             const S3 = require('aws-sdk/clients/s3');
@@ -173,18 +173,18 @@ describe('getOriginalImage()', function() {
         });
     });
     describe('002/imageDoesNotExist', async function() {
-        it(`Should throw an error if an invalid bucket or key name is provided, 
+        it(`Should throw an error if an invalid bucket or key name is provided,
             simulating a non-existant original image`, async function() {
             // Arrange
             const S3 = require('aws-sdk/clients/s3');
             const sinon = require('sinon');
             const getObject = S3.prototype.getObject = sinon.stub();
             getObject.withArgs({Bucket: 'invalidBucket', Key: 'invalidKey'}).returns({
-                promise: () => { 
+                promise: () => {
                     return Promise.reject({
                         code: 500,
                         message: 'SimulatedInvalidParameterException'
-                    }) 
+                    })
                 }
             });
             // Act
@@ -245,7 +245,7 @@ describe('parseImageBucket()', function() {
     });
     describe('003/defaultRequestType/bucketNotSpecifiedInRequest', function() {
         it(`Should pass if the image request does not contain a source bucket
-            but SOURCE_BUCKETS contains at least one bucket that can be 
+            but SOURCE_BUCKETS contains at least one bucket that can be
             used as a default`, function() {
             // Arrange
             const event = {
@@ -263,7 +263,7 @@ describe('parseImageBucket()', function() {
         });
     });
     describe('004/thumborRequestType', function() {
-        it(`Should pass if there is at least one SOURCE_BUCKET specified that can 
+        it(`Should pass if there is at least one SOURCE_BUCKET specified that can
             be used as the default for Thumbor requests`, function() {
             // Arrange
             const event = {
@@ -281,7 +281,7 @@ describe('parseImageBucket()', function() {
         });
     });
     describe('005/customRequestType', function() {
-        it(`Should pass if there is at least one SOURCE_BUCKET specified that can 
+        it(`Should pass if there is at least one SOURCE_BUCKET specified that can
             be used as the default for Custom requests`, function() {
             // Arrange
             const event = {
@@ -299,7 +299,7 @@ describe('parseImageBucket()', function() {
         });
     });
     describe('006/invalidRequestType', function() {
-        it(`Should pass if there is at least one SOURCE_BUCKET specified that can 
+        it(`Should pass if there is at least one SOURCE_BUCKET specified that can
             be used as the default for Custom requests`, function() {
             // Arrange
             const event = {
@@ -346,7 +346,7 @@ describe('parseImageEdits()', function() {
         });
     });
     describe('002/thumborRequestType', function() {
-        it(`Should pass if the proper result is returned for a sample thumbor- 
+        it(`Should pass if the proper result is returned for a sample thumbor-
             type image request`, function() {
             // Arrange
             const event = {
@@ -364,7 +364,7 @@ describe('parseImageEdits()', function() {
         });
     });
     describe('003/customRequestType', function() {
-        it(`Should pass if the proper result is returned for a sample custom- 
+        it(`Should pass if the proper result is returned for a sample custom-
             type image request`, function() {
             // Arrange
             const event = {
@@ -553,7 +553,7 @@ describe('parseRequestType()', function() {
 // ----------------------------------------------------------------------------
 describe('decodeRequest()', function() {
     describe('001/validRequestPathSpecified', function() {
-        it(`Should pass if a valid base64-encoded path has been specified`, 
+        it(`Should pass if a valid base64-encoded path has been specified`,
             function() {
             // Arrange
             const event = {
@@ -571,7 +571,7 @@ describe('decodeRequest()', function() {
         });
     });
     describe('002/invalidRequestPathSpecified', function() {
-        it(`Should throw an error if a valid base64-encoded path has not been specified`, 
+        it(`Should throw an error if a valid base64-encoded path has not been specified`,
             function() {
             // Arrange
             const event = {
@@ -590,7 +590,7 @@ describe('decodeRequest()', function() {
         });
     });
     describe('003/noPathSpecified', function() {
-        it(`Should throw an error if no path is specified at all`, 
+        it(`Should throw an error if no path is specified at all`,
             function() {
             // Arrange
             const event = {}
