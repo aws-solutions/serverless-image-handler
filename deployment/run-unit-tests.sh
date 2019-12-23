@@ -1,7 +1,6 @@
-# Navigate into the source folder
-cd ..
-cd source
+#!/bin/bash
 
-# Run the Jasmine test suite
-cd image-handler
+set -e
+
+cd ../source/image-handler
 npm test

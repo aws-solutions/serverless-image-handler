@@ -1,23 +1,22 @@
 Serverless Image Handler
+
 Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-Licensed under the Amazon Software License (the "License"). You may not use this file except
-in compliance with the License. A copy of the License is located at http://aws.amazon.com/asl/
-or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied. See the License for the
-specific language governing permissions and limitations under the License.
 
 **********************
 THIRD PARTY COMPONENTS
 **********************
 This software includes third party software subject to the following copyrights:
 
-AWS SDK under the Apache License Version 2.0
-uuid under the Massachusetts Institute of Technology (MIT) license
-sharp under the Apache License Version 2.0
-sinon under the BSD 3-Clause license
+aws-sdk under the Apache License Version 2.0
+aws-sdk-mock under the Apache License Version 2.0
+Bootstrap under the Massachusetts Institute of Technology (MIT) license
 chai under the Massachusetts Institute of Technology (MIT) license
-sinon-chai under the BSD 2-Clause license
+minimist under the Massachusetts Institute of Technology (MIT) license
 mocha under the Massachusetts Institute of Technology (MIT) license
+moment under the Massachusetts Institute of Technology (MIT) license
+npm-run-all under the Massachusetts Institute of Technology (MIT) license
 nyc under the ISC license
-
-The licenses for these third party components are included in LICENSE.txt
+sharp under the Apache License Version 2.0
+sinon under the BSD-3-Clause license
+sinon-chai under the BSD-2-Clause license
+uuid under the Massachusetts Institute of Technology (MIT) license

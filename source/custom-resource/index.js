@@ -1,12 +1,12 @@
 /*********************************************************************************************************************
  *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
- *  Licensed under the Amazon Software License (the "License"). You may not use this file except in compliance        *
+ *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
  *                                                                                                                    *
- *      http://aws.amazon.com/asl/                                                                                    *
+ *      http://www.apache.org/licenses/LICENSE-2.0                                                                    *
  *                                                                                                                    *
- *  or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES *
+ *  or in the 'license' file accompanying this file. This file is distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES *
  *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
@@ -21,7 +21,7 @@ const url = require('url');
 const moment = require('moment');
 const S3Helper = require('./lib/s3-helper.js');
 const UsageMetrics = require('./lib/usage-metrics');
-const UUID = require('node-uuid');
+const uuidv4 = require('uuid/v4');
 
 /**
  * Request handler.
@@ -104,7 +104,7 @@ exports.handler = (event, context, callback) => {
         } else if (event.ResourceProperties.customAction === 'createUuid') {
             responseStatus = 'SUCCESS';
             responseData = {
-                UUID: UUID.v4()
+                UUID: uuidv4()
             };
             sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
 
@@ -139,16 +139,11 @@ exports.handler = (event, context, callback) => {
                 _usageMetrics.sendAnonymousMetric(_metric).then((data) => {
                     console.log(data);
                     console.log('Annonymous metrics successfully sent.');
-                    responseStatus = 'SUCCESS';
-                    responseData = {};
-                    sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
                 }).catch((err) => {
-                    responseData = {
-                        Error: 'Sending anonymous launch metric failed'
-                    };
-                    console.log([responseData.Error, ':\n', err].join(''));
-                    sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
+                    console.log(`Sending anonymous launch metric failed: ${err}`);
                 });
+
+                sendResponse(event, callback, context.logStreamName, 'SUCCESS', {});
             } else {
                 sendResponse(event, callback, context.logStreamName, 'SUCCESS');
             }
@@ -205,7 +200,7 @@ exports.handler = (event, context, callback) => {
                 console.log(responseData.Error);
                 sendResponse(event, callback, context.logStreamName, responseStatus, responseData, responseData.Error);
             });
-            
+
         } else {
             sendResponse(event, callback, context.logStreamName, 'SUCCESS');
         }
@@ -216,10 +211,10 @@ exports.handler = (event, context, callback) => {
  * Sends a response to the pre-signed S3 URL
  */
 let sendResponse = function(event, callback, logStreamName, responseStatus, responseData, customReason) {
-        
+
     const defaultReason = `See the details in CloudWatch Log Stream: ${logStreamName}`;
     const reason = (customReason !== undefined) ? customReason : defaultReason;
-    
+
     const responseBody = JSON.stringify({
         Status: responseStatus,
         Reason: reason,
