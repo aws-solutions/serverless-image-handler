@@ -9,8 +9,9 @@
     "private": true,
     "dependencies": {
         "moment": "^2.24.0",
-        "uuid": "^3.3.3",
-        "usage-metrics": "file:lib/usage-metrics/"
+        "sharp": "^0.23.4",
+        "usage-metrics": "file:lib/usage-metrics/",
+        "uuid": "^3.3.3"
     },
     "devDependencies": {
         "aws-sdk": "*",
@@ -31,7 +32,8 @@
     },
     "bundledDependencies": [
         "moment",
-        "uuid"
+        "uuid",
+        "sharp"
     ],
     "license": "Apache-2.0"
 }
