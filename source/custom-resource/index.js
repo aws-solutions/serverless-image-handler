@@ -32,11 +32,10 @@ const uuidv4 = require('uuid/v4');
  * Request handler.
  */
 exports.handler = (event, context, callback) => {
-    console.log('Received event:', JSON.stringify(event, null, 2));
-    console.log('Received event context:', context);
-    console.log('Received event.RequestType:', event.RequestType);
-    console.log('Received event.Records[0]:', event.Records[0]);
-    if(event.Records[0]['eventName'] == "ObjectCreated:Put" && event.Records[0].s3.object.key.endsWith('/tiles')){
+    console.log('Received key:', event.Records[0].s3.object.key);
+
+    if(event.Records[0]['eventName'] == "ObjectCreated:Put" &&
+        event.Records[0].s3.object.key.endsWith('/tiles/')){
         tileImage(event.Records[0].s3.bucket.name, event.Records[0].s3.object.key);
         if(event.ResponseURL) {
             sendResponse(event, callback, context.logStreamName, 'SUCCESS');
@@ -64,12 +63,10 @@ let tileImage = async function(bucket, key) {
         const originalImage = await getOriginalImage(bucket, key);
         const image = sharp(originalImage);
         const tiles = image.png().tile({
-            size: 512,
             layout: 'zoomify'
           }).toFile('/tmp/tiled.dz', function(err, info) {
             console.log('error', err);
-            // console.log('info', info);
-            upload_recursive_dir('/tmp/tiled', bucket, key);
+            upload_recursive_dir('/tmp/tiled/', bucket, key);
             // console.log('successfully uploaded tiled images');
         });
     }
@@ -140,15 +137,14 @@ let downloadImage = async function(bucket, key){
 let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key) {
     fs.readdir(base_tmpdir, function(err, filenames) {
         if (err) {
+          console.log(err, err.stack); // an error occurred
           return;
         }
         filenames.forEach(function(filename) {
-            console.log('filename', filename);
-            let curr_file = '/' + filename;
-            let local_temp_path = base_tmpdir + curr_file;
-            let destS3key = s3_key + curr_file;
+            let local_temp_path = base_tmpdir + filename;
+            let destS3key = s3_key + filename;
             if (fs.lstatSync(local_temp_path).isDirectory()) {
-                upload_recursive_dir(local_temp_path, destS3Bucket, destS3key);
+                upload_recursive_dir(local_temp_path + '/', destS3Bucket, destS3key + '/');
             } else if(filename.endsWith('.xml') || filename.endsWith('.png')) {
                 fs.readFile(local_temp_path, function (err, file) {
                     if (err) console.log(err, err.stack); // an error occurred
