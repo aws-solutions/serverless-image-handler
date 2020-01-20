@@ -65,9 +65,11 @@ let tileImage = async function(bucket, key) {
         const tiles = image.png().tile({
             layout: 'zoomify'
           }).toFile('/tmp/tiled.dz', function(err, info) {
-            console.log('error', err);
-            upload_recursive_dir('/tmp/tiled/', bucket, key);
-            // console.log('successfully uploaded tiled images');
+            if (err) console.log(err, err.stack);
+            Promise.all(upload_recursive_dir('/tmp/tiled/', bucket, key, [])).then(function(err, data) {
+                       if (err) console.log(err, err.stack); // an error occurred
+                     });
+            console.log('successfully uploaded tiled images');
         });
     }
     catch(err) {
@@ -134,7 +136,7 @@ let downloadImage = async function(bucket, key){
 }
 
 
-let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key) {
+let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key, promises) {
     fs.readdir(base_tmpdir, function(err, filenames) {
         if (err) {
           console.log(err, err.stack); // an error occurred
@@ -144,7 +146,7 @@ let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key) {
             let local_temp_path = base_tmpdir + filename;
             let destS3key = s3_key + filename;
             if (fs.lstatSync(local_temp_path).isDirectory()) {
-                upload_recursive_dir(local_temp_path + '/', destS3Bucket, destS3key + '/');
+                upload_recursive_dir(local_temp_path + '/', destS3Bucket, destS3key + '/', promises);
             } else if(filename.endsWith('.xml') || filename.endsWith('.png')) {
                 fs.readFile(local_temp_path, function (err, file) {
                     if (err) console.log(err, err.stack); // an error occurred
@@ -153,15 +155,12 @@ let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key) {
                         Key: destS3key,
                         Body: file
                     }
-                    s3.putObject(params, function(err, data) {
-                       if (err) console.log(err, err.stack); // an error occurred
-                       else     console.log(data);           // successful response
-                     });
+                    promises.push(s3.putObject(params));
                 });
-
             }
         });
     });
+    return promises;
 }
 
 /**
