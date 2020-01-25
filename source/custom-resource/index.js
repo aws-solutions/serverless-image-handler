@@ -73,7 +73,7 @@ let tileImage = async function(bucket, key) {
                 console.log(err, err.stack);
             } else {
                 console.log('successfully tiled images ' + tmp_location);
-                Promise.all(upload_recursive_dir(tmp_location + 'tiled/', bucket, key, [])
+                await Promise.all(upload_recursive_dir(tmp_location + 'tiled/', bucket, key, [])
                     ).then(function(err, data) {
                         if (err) console.log(err, err.stack); // an error occurred
                     }).catch(function(exception) {
@@ -145,7 +145,7 @@ let downloadImage = async function(bucket, key){
 }
 
 
-let upload_recursive_dir = async function(base_tmpdir, destS3Bucket, s3_key, promises) {
+let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key, promises) {
     fs.readdir(base_tmpdir, function(err, filenames) {
         if (err) {
           console.log(err, err.stack); // an error occurred
@@ -164,7 +164,7 @@ let upload_recursive_dir = async function(base_tmpdir, destS3Bucket, s3_key, pro
                         Key: destS3key,
                         Body: file
                     }
-                    console.log("pushing params", params)
+                    console.log("pushing params", params['KEY'])
                     promises.push(s3.putObject(params).promise());
                 });
             }
