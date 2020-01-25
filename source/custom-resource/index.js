@@ -155,7 +155,7 @@ let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key, promises)
             let local_temp_path = base_tmpdir + filename;
             let destS3key = s3_key + filename;
             if (fs.lstatSync(local_temp_path).isDirectory()) {
-                upload_recursive_dir(local_temp_path + '/', destS3Bucket, destS3key + '/', promises);
+                promises = upload_recursive_dir(local_temp_path + '/', destS3Bucket, destS3key + '/', promises);
             } else if(filename.endsWith('.xml') || filename.endsWith('.png')) {
                 fs.readFile(local_temp_path, function (err, file) {
                     if (err) console.log(err, err.stack); // an error occurred
