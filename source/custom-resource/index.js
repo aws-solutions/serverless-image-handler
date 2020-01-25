@@ -59,20 +59,27 @@ exports.handler = (event, context, callback) => {
  * @return {Promise} - The original image or an error.
  */
 let tileImage = async function(bucket, key) {
+    const imagesLocation = key.split('/tiles')[0]
+    const uniq_key = imagesLocation.split('/').pop()
+    const tmp_location = '/tmp/' + uniq_key
+
     try {
-        const originalImage = await getOriginalImage(bucket, key);
+        const originalImage = await getOriginalImage(bucket, imagesLocation);
         const image = sharp(originalImage);
         const tiles = image.png().tile({
             layout: 'zoomify'
-          }).toFile('/tmp/tiled.dz', function(err, info) {
-            if (err) console.log(err, err.stack);
-            Promise.all(upload_recursive_dir('/tmp/tiled/', bucket, key, [])).then(function(err, data) {
-                       if (err) console.log(err, err.stack); // an error occurred
-                     });
-            console.log('successfully uploaded tiled images');
+          }).toFile(tmp_location + 'tiled.dz', function(err, info) {
+            if (err) {
+                console.log(err, err.stack);
+            } else {
+                console.log('successfully tiled images ' + tmp_location);
+                Promise.all(upload_recursive_dir(tmp_location + 'tiled/', bucket, key, [])).then(function(err, data) {
+                           if (err) console.log(err, err.stack); // an error occurred
+                         });
+                console.log('successfully uploaded tiled images');
+            }
         });
-    }
-    catch(err) {
+    } catch(err) {
         return Promise.reject({
             status: 500,
             code: err.code,
@@ -88,8 +95,7 @@ let tileImage = async function(bucket, key) {
  * @param {String} key - The key name corresponding to the image.
  * @return {Promise} - The original image or an error.
  */
-let getOriginalImage = async function(bucket, tilesKey) {
-    const imagesLocation = tilesKey.split('/tiles')[0]
+let getOriginalImage = async function(bucket, imagesLocation) {
     let images = await getImageObjects(bucket, imagesLocation);
     let originalObject = images.find(isOriginal);
     console.log('originalObject filename', originalObject.Key);
@@ -155,7 +161,7 @@ let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key, promises)
                         Key: destS3key,
                         Body: file
                     }
-                    promises.push(s3.putObject(params));
+                    promises.push(s3.putObject(params).promise());
                 });
             }
         });
