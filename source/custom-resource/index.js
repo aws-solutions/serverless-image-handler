@@ -163,7 +163,7 @@ let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key, promises)
                         Key: destS3key,
                         Body: file
                     }
-                    console.log("pushing params", params['KEY'])
+                    // console.log("pushing params", params['KEY'])
                     promises.push(s3.putObject(params).promise());
                 });
             }
