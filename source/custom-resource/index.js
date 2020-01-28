@@ -145,7 +145,7 @@ let downloadImage = async function(bucket, key){
 
 
 let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key, promises) {
-    fs.readdir(base_tmpdir, function(err, filenames) {
+    fs.readdirSync(base_tmpdir, function(err, filenames) {
         if (err) {
           console.log(err, err.stack); // an error occurred
           return;
@@ -163,7 +163,6 @@ let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key, promises)
                         Key: destS3key,
                         Body: file
                     }
-                    // console.log("pushing params", params['KEY'])
                     promises.push(s3.putObject(params).promise());
                 });
             }
