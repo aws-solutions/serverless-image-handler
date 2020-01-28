@@ -145,30 +145,25 @@ let downloadImage = async function(bucket, key){
 
 
 let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key, promises) {
-    fs.readdirSync(base_tmpdir, function(err, filenames) {
-        if (err) {
-          console.log('readdirSync err', err); // an error occurred
-          return;
+    let files = fs.readdirSync(base_tmpdir);
+
+    files.forEach(function (filename) {
+        let local_temp_path = base_tmpdir + filename;
+        let destS3key = s3_key + filename;
+        if (fs.lstatSync(local_temp_path).isDirectory()) {
+            promises = upload_recursive_dir(local_temp_path + '/', destS3Bucket, destS3key + '/', promises);
+        } else if(filename.endsWith('.xml') || filename.endsWith('.png')) {
+            fs.readFile(local_temp_path, function (err, file) {
+              if (err) console.log('readFile err', err); // an error occurred // an error occurred
+              let params = {
+                Bucket: destS3Bucket,
+                Key: destS3key,
+                Body: file
+              }
+              promises.push(s3.putObject(params).promise());
+            });
         }
-        filenames.forEach(function(filename) {
-            let local_temp_path = base_tmpdir + filename;
-            let destS3key = s3_key + filename;
-            if (fs.lstatSync(local_temp_path).isDirectory()) {
-                promises = upload_recursive_dir(local_temp_path + '/', destS3Bucket, destS3key + '/', promises);
-            } else if(filename.endsWith('.xml') || filename.endsWith('.png')) {
-                fs.readFile(local_temp_path, function (err, file) {
-                    if (err) console.log('readFile err', err); // an error occurred // an error occurred
-                    let params = {
-                        Bucket: destS3Bucket,
-                        Key: destS3key,
-                        Body: file
-                    }
-                    promises.push(s3.putObject(params).promise());
-                });
-            }
-        });
     });
-    console.log("num files: ", promises.length);
     return promises;
 }
 
