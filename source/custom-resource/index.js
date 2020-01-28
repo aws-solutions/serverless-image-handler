@@ -23,10 +23,6 @@ const s3 = new S3();
 const sharp = require('sharp');
 const https = require('https');
 const url = require('url');
-const moment = require('moment');
-const S3Helper = require('./lib/s3-helper.js');
-const UsageMetrics = require('./lib/usage-metrics');
-const uuidv4 = require('uuid/v4');
 
 /**
  * Request handler.
