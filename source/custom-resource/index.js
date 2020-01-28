@@ -73,8 +73,8 @@ let tileImage = async function(bucket, key) {
                 console.log('err', err);
             } else {
                 console.log('successfully tiled images ' + tmp_location);
-                Promise.all(upload_recursive_dir(tmp_location + 'tiled/', bucket, key, [])).then(function(err, data) {
-                        if (err) console.log('err', err);// an error occurred
+                Promise.all(upload_recursive_dir(tmp_location + 'tiled/', bucket, key, [])).then(function(errs, data) {
+                        if (errs.length) console.log('errors ', errs);// an error occurred
                         console.log('successfully uploaded tiled images');
                     }).catch(function(exception) {
                         console.log('caught exception', exception);
