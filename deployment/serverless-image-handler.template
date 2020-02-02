@@ -57,7 +57,11 @@
     "Conditions": {
         "DeployDemoUICondition": { "Fn::Equals": [ { "Ref": "DeployDemoUI" }, "Yes" ] },
         "EnableCorsCondition" : { "Fn::Equals": [ { "Ref": "CorsEnabled" }, "Yes" ] },
-        "IsChinaRegion": { "Fn::Equals": [ {"Ref": "AWS::Partition"}, "aws-cn" ] }
+        "IsChinaRegionCondition": { "Fn::Equals": [ {"Ref": "AWS::Partition"}, "aws-cn" ] },
+        "DeployAOICondition": { "Fn::And": [ 
+            { "Fn::Not": [ { "Fn::Equals": [ {"Ref": "AWS::Partition"}, "aws-cn" ] } ] },
+            { "Fn::Equals": [ { "Ref": "DeployDemoUI" }, "Yes" ] }
+        ] }
     },
     "Mappings": {
         "Send": {
@@ -116,7 +120,7 @@
                     "Origins": [{
                         "DomainName": {
                             "Fn::If": [
-                                "IsChinaRegion",
+                                "IsChinaRegionCondition",
                                 { "Fn::Sub": "${ImageHandlerApi}.execute-api.${AWS::Region}.amazonaws.com.cn" },
                                 { "Fn::Sub": "${ImageHandlerApi}.execute-api.${AWS::Region}.amazonaws.com" }
                             ]
@@ -169,7 +173,7 @@
                         "IncludeCookies": false,
                         "Bucket": {
                             "Fn::If": [
-                                "IsChinaRegion",
+                                "IsChinaRegionCondition",
                                 { "Fn::GetAtt": ["Logs", "RegionalDomainName"] },
                                 { "Fn::GetAtt": ["Logs", "DomainName"] }
                             ]
@@ -259,7 +263,11 @@
                     "Types" : [ "REGIONAL" ]
                 },
                 "Parameters": {
-                    "endpointConfigurationTypes": "REGIONAL"
+                    "Fn::If": [
+                        "IsChinaRegionCondition",
+                        { "endpointConfigurationTypes": "REGIONAL" },
+                        { "Ref": "AWS::NoValue" }
+                    ]
                 },
                 "Body": {
                     "swagger": "2.0",
@@ -550,10 +558,10 @@
                 },
                 "AccessControl": "Private",
                 "PublicAccessBlockConfiguration": {
-                    "BlockPublicAcls": true,
-                    "BlockPublicPolicy": true,
-                    "IgnorePublicAcls": true,
-                    "RestrictPublicBuckets": true
+                    "BlockPublicAcls": { "Fn::If": [ "IsChinaRegionCondition", false, true ] },
+                    "BlockPublicPolicy": { "Fn::If": [ "IsChinaRegionCondition", false, true ] },
+                    "IgnorePublicAcls": { "Fn::If": [ "IsChinaRegionCondition", false, true ] },
+                    "RestrictPublicBuckets": { "Fn::If": [ "IsChinaRegionCondition", false, true ] }
                 }
             },
             "Metadata": {
@@ -569,7 +577,7 @@
         },
         "DemoBucketPolicy": {
             "Type": "AWS::S3::BucketPolicy",
-            "Condition": "DeployDemoUICondition",
+            "Condition": "DeployAOICondition",
             "Properties": {
                 "Bucket": { "Ref": "DemoBucket" },
                 "PolicyDocument": {
@@ -605,7 +613,7 @@
         },
         "DemoOriginAccessIdentity": {
             "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
-            "Condition": "DeployDemoUICondition",
+            "Condition": "DeployAOICondition",
             "Properties": {
                 "CloudFrontOriginAccessIdentityConfig": {
                     "Comment": {
@@ -623,9 +631,17 @@
                     "Origins": [
                         {
                             "Id": "S3-solution-website",
-                            "DomainName": { "Fn::Sub": "${DemoBucket}.s3.${AWS::Region}.amazonaws.com" },
+                            "DomainName": { "Fn::If": [
+                                "IsChinaRegionCondition",
+                                { "Fn::Sub": "${DemoBucket}.s3.${AWS::Region}.amazonaws.com.cn" },
+                                { "Fn::Sub": "${DemoBucket}.s3.${AWS::Region}.amazonaws.com" }
+                            ]},
                             "S3OriginConfig": {
-                                "OriginAccessIdentity": { "Fn::Sub": "origin-access-identity/cloudfront/${DemoOriginAccessIdentity}" }
+                                "OriginAccessIdentity": { "Fn::If": [
+                                    "IsChinaRegionCondition",
+                                    "",
+                                    { "Fn::Sub": "origin-access-identity/cloudfront/${DemoOriginAccessIdentity}" }
+                                ] }
                             }
                         }
                     ],
@@ -636,16 +652,24 @@
                         "ForwardedValues": {
                             "QueryString": false
                         },
-                        "ViewerProtocolPolicy": "redirect-to-https"
+                        "ViewerProtocolPolicy": { "Fn::If": [
+                            "IsChinaRegionCondition",
+                            "allow-all",
+                            "redirect-to-https"
+                        ]}
                     },
-                    "IPV6Enabled": true,
+                    "IPV6Enabled": { "Fn::If": [ "IsChinaRegionCondition", false, true ] },
                     "ViewerCertificate": { "CloudFrontDefaultCertificate": true },
                     "Enabled": true,
                     "HttpVersion": "http2",
                     "Logging": {
                         "IncludeCookies": false,
                         "Bucket": {
-                            "Fn::GetAtt": ["Logs", "DomainName"]
+                            "Fn::If": [
+                                "IsChinaRegionCondition",
+                                { "Fn::GetAtt": ["Logs", "RegionalDomainName"] },
+                                { "Fn::GetAtt": ["Logs", "DomainName"] }
+                            ]
                         },
                         "Prefix": "demo-cf-logs/"
                     }
@@ -747,6 +771,7 @@
                             "Action": [
                                 "s3:GetObject",
                                 "s3:PutObject",
+                                "s3:PutObjectACL",
                                 "s3:ListBucket"
                             ],
                             "Resource": [
@@ -791,7 +816,13 @@
                 "ServiceToken": { "Fn::GetAtt" : [ "CustomResourceFunction", "Arn" ]},
                 "Region": { "Ref" : "AWS::Region" },
                 "configItem" : {
-                    "apiEndpoint" : { "Fn::Sub" : "https://${ImageHandlerDistribution.DomainName}" }
+                    "apiEndpoint" : { 
+                        "Fn::If": [
+                            "IsChinaRegionCondition",
+                            { "Fn::Sub": "https://${ImageHandlerApi}.execute-api.${AWS::Region}.amazonaws.com.cn/image" },
+                            { "Fn::Sub" : "https://${ImageHandlerDistribution.DomainName}" }
+                        ]
+                    }
                 } ,
                 "destS3Bucket" : { "Ref" : "DemoBucket" },
                 "destS3key" : "demo-ui-config.js",

@@ -95,6 +95,11 @@ class s3Helper {
                 Body: _content
             };
 
+            // China region does not support CloudFront AOI
+            if (process.env.AWS_REGION.startsWith('cn-')) {
+                params.ACL = "public-read"
+            }
+
             let s3 = new AWS.S3({
                 signatureVersion: 'v4'
             });
@@ -182,6 +187,12 @@ class s3Helper {
                 params.Metadata = {
                     'Content-Type': params.ContentType
                 };
+
+                // China region does not support CloudFront AOI
+                if (process.env.AWS_REGION.startsWith('cn-')) {
+                    params.ACL = "public-read"
+                }
+
                 console.log(params);
                 let s3 = new AWS.S3({
                     signatureVersion: 'v4'
