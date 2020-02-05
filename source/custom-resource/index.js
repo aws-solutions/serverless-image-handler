@@ -74,6 +74,9 @@ let tileImage = async function(bucket, key) {
                         console.log('successfully uploaded tiled images');
                     }).catch(function(exception) {
                         console.log('caught exception', exception);
+                    }).finally(function() {
+                        deleteFolderRecursive(tmp_location + 'tiled/');
+                        console.log('successfully deleted tmp files');
                     });;
             }
         });
@@ -162,6 +165,21 @@ let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key, promises)
     });
     return promises;
 }
+
+let deleteFolderRecursive = function (directory_path) {
+    if (fs.existsSync(directory_path)) {
+        console.log('removing folder: ', directory_path);
+        fs.readdirSync(directory_path).forEach(function (file, index) {
+            var currentPath = path.join(directory_path, file);
+            if (fs.lstatSync(currentPath).isDirectory()) {
+                deleteFolderRecursive(currentPath);
+            } else {
+                fs.unlinkSync(currentPath); // delete file
+            }
+        });
+        fs.rmdirSync(directory_path); // delete directories
+    }
+};
 
 /**
  * Sends a response to the pre-signed S3 URL
