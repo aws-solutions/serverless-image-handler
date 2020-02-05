@@ -21,7 +21,7 @@ class ImageHandler {
      * @param {ImageRequest} request - An ImageRequest object.
      */
     async process(request) {
-        const originalImage = request.originalImage;
+        const originalImage = request.originalImage.Body;
         const edits = request.edits;
         if (edits !== undefined) {
             const modifiedImage = await this.applyEdits(originalImage, edits);

@@ -27,7 +27,7 @@ describe('process()', function() {
             const getObject = S3.prototype.getObject = sinon.stub();
             getObject.returns({
                 promise: () => { return {
-                  Body: new Buffer('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
+                  Body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
                 }}
             })
             // ----
@@ -39,13 +39,13 @@ describe('process()', function() {
                     grayscale: true,
                     flip: true
                 },
-                originalImage: new Buffer('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
+                originalImage: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
             }
             // Act
             const imageHandler = new ImageHandler();
             const result = await imageHandler.process(request);
             // Assert
-            assert.deepEqual((request.originalImage !== result), true);
+            assert.deepEqual((request.originalImage.Body !== result), true);
         });
     });
     describe('002/withToFormat', function() {
@@ -57,7 +57,7 @@ describe('process()', function() {
             const getObject = S3.prototype.getObject = sinon.stub();
             getObject.returns({
                 promise: () => { return {
-                  Body: new Buffer('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
+                  Body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
                 }}
             })
             // ----
@@ -70,13 +70,13 @@ describe('process()', function() {
                     grayscale: true,
                     flip: true
                 },
-                originalImage: new Buffer('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
+                originalImage: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
             }
             // Act
             const imageHandler = new ImageHandler();
             const result = await imageHandler.process(request);
             // Assert
-            assert.deepEqual((request.originalImage !== result), true);
+            assert.deepEqual((request.originalImage.Body !== result), true);
         });
     });
     describe('003/noEditsSpecified', function() {
@@ -88,7 +88,7 @@ describe('process()', function() {
             const getObject = S3.prototype.getObject = sinon.stub();
             getObject.returns({
                 promise: () => { return {
-                  Body: new Buffer('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
+                  Body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
                 }}
             })
             // ----
@@ -96,7 +96,7 @@ describe('process()', function() {
                 requestType: "default",
                 bucket: "sample-bucket",
                 key: "sample-image-001.jpg",
-                originalImage: new Buffer('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
+                originalImage: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
             }
             // Act
             const imageHandler = new ImageHandler();
@@ -179,7 +179,7 @@ describe('applyEdits()', function() {
                 }}
             })
             // Act
-            const originalImage = new Buffer('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+            const originalImage = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
             const edits = {
                 smartCrop: {
                     faceIndex: 0,
@@ -219,7 +219,7 @@ describe('applyEdits()', function() {
                 }}
             })
             // Act
-            const originalImage = new Buffer('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+            const originalImage = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
             const edits = {
                 smartCrop: {
                     faceIndex: 0,
@@ -259,7 +259,7 @@ describe('applyEdits()', function() {
                 }}
             })
             // Act
-            const originalImage = new Buffer('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+            const originalImage = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
             const edits = {
                 smartCrop: {
                     faceIndex: 10,
@@ -299,7 +299,7 @@ describe('applyEdits()', function() {
                 }}
             })
             // Act
-            const originalImage = new Buffer('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+            const originalImage = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
             const edits = {
                 smartCrop: true
             }

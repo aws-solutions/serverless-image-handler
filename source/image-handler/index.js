@@ -20,11 +20,11 @@ exports.handler = async (event) => {
     const imageHandler = new ImageHandler();
     try {
         const request = await imageRequest.setup(event);
-        console.log(request);
+        console.log("request.key", request.key);
         const processedRequest = await imageHandler.process(request);
         const response = {
             "statusCode": 200,
-            "headers" : getResponseHeaders(),
+            "headers" : getResponseHeaders(false, request.originalImage.Etag. request.originalImage.LastModified),
             "body": processedRequest,
             "isBase64Encoded": true
         }
@@ -33,7 +33,7 @@ exports.handler = async (event) => {
         console.log(err);
         const response = {
             "statusCode": err.status,
-            "headers" : getResponseHeaders(true),
+            "headers" : getResponseHeaders(true, undefined, undefined),
             "body": JSON.stringify(err),
             "isBase64Encoded": false
         }
@@ -46,7 +46,7 @@ exports.handler = async (event) => {
  * or error condition.
  * @param {boolean} isErr - has an error been thrown?
  */
-const getResponseHeaders = (isErr) => {
+const getResponseHeaders = (isErr, eTag, lastModified) => {
     const corsEnabled = (process.env.CORS_ENABLED === "Yes");
     const headers = {
         "Access-Control-Allow-Methods": "GET",
@@ -54,6 +54,12 @@ const getResponseHeaders = (isErr) => {
         "Access-Control-Allow-Credentials": true,
         "Content-Type": "image"
     }
+
+    if(eTag !== undefined && lastModified !== undefined) {
+        headers['Etag'] = eTag
+        headers['Last-Modified'] = lastModified}
+    }
+
     const setCacheControl = (
             (process.env.CACHE_CONTROL !== "") &&
             (process.env.CACHE_CONTROL !== undefined)

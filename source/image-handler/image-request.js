@@ -46,7 +46,7 @@ class ImageRequest {
         const request = s3.getObject(imageLocation).promise();
         try {
             const originalImage = await request;
-            return Promise.resolve(originalImage.Body);
+            return Promise.resolve(originalImage);
         }
         catch(err) {
             return Promise.reject({
@@ -199,7 +199,7 @@ class ImageRequest {
         if (path !== undefined) {
             const splitPath = path.split("/");
             const encoded = splitPath[splitPath.length - 1];
-            const toBuffer = new Buffer(encoded, 'base64');
+            const toBuffer = Buffer.from(encoded, 'base64');
             try {
                 return JSON.parse(toBuffer.toString('ascii'));
             } catch (e) {
