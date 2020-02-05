@@ -157,7 +157,12 @@ class ImageRequest {
      * @param {Object} event - Lambda request body.
     */
     parseRequestType(event) {
-        const path = event["path"];
+        let path = event["path"];
+
+        if (process.env.TRUNCATE_PATH_PREFIX !== undefined) {
+            // Allows cloudfront to be shared by adding a prefix/* to behaviour
+            path = path.replace(process.env.TRUNCATE_PATH_PREFIX, '')
+        }
         // ----
         const matchDefault = new RegExp(/^(\/?)([0-9a-zA-Z+\/]{4})*(([0-9a-zA-Z+\/]{2}==)|([0-9a-zA-Z+\/]{3}=))?$/);
         const matchThumbor = new RegExp(/^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(.+jpg|.+png|.+webp|.+tiff|.+jpeg)$/);
