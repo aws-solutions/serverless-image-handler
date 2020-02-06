@@ -30,6 +30,12 @@
             "Default" : 1,
             "Type" : "Number",
             "AllowedValues" : [ 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653 ]
+        },
+        "AutoWebP" : {
+            "Description" : "Would you like to enable automatic WebP based on accept headers? Select 'Yes' if so.",
+            "Default" : "No",
+            "Type" : "String",
+            "AllowedValues" : [ "Yes", "No" ]
         }
     },
     "Metadata": {
@@ -74,6 +80,7 @@
     "Resources": {
         "Logs": {
             "DeletionPolicy": "Retain",
+            "UpdateReplacePolicy": "Retain",
             "Type": "AWS::S3::Bucket",
             "Properties": {
                 "AccessControl": "LogDeliveryWrite",
@@ -130,7 +137,7 @@
                         "TargetOriginId": { "Fn::Sub": "${ImageHandlerApi}" },
                         "ForwardedValues": {
                             "QueryString": false,
-                            "Headers": [ "Origin" ],
+                            "Headers": [ "Origin", "Accept" ],
                             "Cookies": { "Forward": "none" }
                         },
                         "ViewerProtocolPolicy": "https-only"
@@ -310,6 +317,7 @@
         },
         "ImageHandlerApiDeployment": {
             "Type": "AWS::ApiGateway::Deployment",
+            "DependsOn": "ApiAccountConfig",
             "Properties": {
                 "RestApiId": { "Ref": "ImageHandlerApi" },
                 "StageName": "image",
@@ -371,6 +379,9 @@
                 "Timeout": 30,
                 "Environment" : {
                     "Variables" : {
+                        "AUTO_WEBP" : {
+                            "Ref" : "AutoWebP"
+                        },
                         "CORS_ENABLED" : {
                             "Ref" : "CorsEnabled"
                         },
@@ -514,6 +525,7 @@
             "Type": "AWS::S3::Bucket",
             "Condition": "DeployDemoUICondition",
             "DeletionPolicy": "Retain",
+            "UpdateReplacePolicy": "Retain",
             "Properties": {
                 "BucketEncryption": {
                     "ServerSideEncryptionConfiguration": [

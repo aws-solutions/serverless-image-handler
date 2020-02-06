@@ -17,7 +17,6 @@
 
 'use strict';
 
-let moment = require('moment');
 let AWS = require('aws-sdk');
 const fs = require('fs');
 
@@ -75,7 +74,6 @@ class s3Helper {
         console.log(`Attempting to save content blob destination location: ${destS3Bucket}/${destS3key}`);
         console.log(JSON.stringify(content));
 
-        let _self = this;
         return new Promise((resolve, reject) => {
             let _content = `'use strict';\n\nconst appVariables = {\n`;
 

@@ -218,7 +218,7 @@ let sendResponse = function(event, callback, logStreamName, responseStatus, resp
     const responseBody = JSON.stringify({
         Status: responseStatus,
         Reason: reason,
-        PhysicalResourceId: logStreamName,
+        PhysicalResourceId: event.LogicalResourceId,
         StackId: event.StackId,
         RequestId: event.RequestId,
         LogicalResourceId: event.LogicalResourceId,

@@ -11,6 +11,9 @@
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
 
+const Color = require('color');
+const ColorName = require('color-name');
+
 class ThumborMapping {
 
     // Constructor
@@ -29,23 +32,37 @@ class ThumborMapping {
         this.path = event.path;
         const edits = this.path.split('/');
         const filetype = (this.path.split('.'))[(this.path.split('.')).length - 1];
+
+        // Process the Dimensions
+        const dimPath = this.path.match(/[^\/]\d+x\d+/g);
+        if (dimPath) {
+            const dims = dimPath[0].split('x');
+            // Set only if the dimensions provided are valid
+            if (!isNaN(dims[0]) && !isNaN(dims[1])) {
+                this.edits.resize = {};
+                this.edits.resize.fit = 'fill';
+
+                // Assign dimenions from the first match only to avoid parsing dimension from image file names
+                this.edits.resize.width = Number(dims[0]);
+                this.edits.resize.height = Number(dims[1]);
+            }
+        }
+
         // Parse the image path
         for (let i = 0; i < edits.length; i++) {
             const edit = edits[i];
             if (edit === ('fit-in')) {
-                this.edits.resize = {};
+                if (this.edits.resize === undefined) {
+                    this.edits.resize = {};
+                }
+
+                this.edits.resize.fit = 'inside';
                 this.sizingMethod = edit;
-            }
-            else if (edit.includes('x')) {
-                this.edits.resize = {};
-                const dims = edit.split('x');
-                this.edits.resize.width = Number(dims[0]);
-                this.edits.resize.height = Number(dims[1]);
-            }
-            if (edit.includes('filters:')) {
+            } else if (edit.includes('filters:')) {
                 this.mapFilter(edit, filetype);
             }
         }
+
         return this;
     }
 
@@ -61,7 +78,7 @@ class ThumborMapping {
         // Perform the substitution and return
         if (path !== undefined && matchPattern !== undefined && substitution !== undefined) {
             const parsedPath = path.replace(matchPattern, substitution);
-            const output = { path : parsedPath };
+            const output = { path: parsedPath };
             return output;
         } else {
             throw new Error('ThumborMapping::ParseCustomPath::ParsingError');
@@ -80,10 +97,13 @@ class ThumborMapping {
         let value = matched[2];
         // Find the proper filter
         if (key === ('autojpg')) {
-            this.edits.toFormat = 'jpg';
+            this.edits.toFormat = 'jpeg';
         }
         else if (key === ('background_color')) {
-            this.edits.flatten = { background: value };
+            if (!ColorName[value]) {
+                value = `#${value}`
+            }
+            this.edits.flatten = { background: Color(value).object() };
         }
         else if (key === ('blur')) {
             const val = value.split(',');
@@ -95,7 +115,7 @@ class ThumborMapping {
             let matrix = [];
             strMatrix.forEach(function(str) {
                 matrix.push(Number(str));
-            })
+            });
             const matrixWidth = arr[1];
             let matrixHeight = 0;
             let counter = 0;
@@ -120,11 +140,14 @@ class ThumborMapping {
             if (this.edits.resize === undefined) {
                 this.edits.resize = {};
             }
-            this.edits.resize.background = value;
+            if (!ColorName[value]) {
+                value = `#${value}`
+            }
+            this.edits.resize.background = Color(value).object();
         }
         else if (key === ('format')) {
-            const formattedValue = value.replace(/[^0-9a-z]/gi, '');
-            const acceptedValues = ['jpeg', 'gif', 'jpg', 'webp', 'png'];
+            const formattedValue = value.replace(/[^0-9a-z]/gi, '').replace(/jpg/i, 'jpeg');
+            const acceptedValues = ['heic', 'heif', 'jpeg', 'png', 'raw', 'tiff', 'webp'];
             if (acceptedValues.includes(formattedValue)) {
                 this.edits.toFormat = formattedValue;
             }
@@ -136,9 +159,7 @@ class ThumborMapping {
             if (this.edits.resize === undefined) {
                 this.edits.resize = {};
             }
-            this.edits.resize.fit = "inside"
-            this.edits.resize.width = undefined;
-            this.edits.resize.height = undefined;
+            this.edits.resize.withoutEnlargement = true;
         }
         else if (key === ('proportion')) {
             if (this.edits.resize === undefined) {
@@ -149,7 +170,7 @@ class ThumborMapping {
             this.edits.resize.height = Number(this.edits.resize.height * prop);
         }
         else if (key === ('quality')) {
-            if (filetype === 'jpg') {
+            if (['jpg', 'jpeg'].includes(filetype)) {
                 this.edits.jpeg = { quality: Number(value) }
             } else if (filetype === 'png') {
                 this.edits.png = { quality: Number(value) }
@@ -157,12 +178,14 @@ class ThumborMapping {
                 this.edits.webp = { quality: Number(value) }
             } else if (filetype === 'tiff') {
                 this.edits.tiff = { quality: Number(value) }
+            } else if (filetype === 'heif') {
+                this.edits.heif = { quality: Number(value) }
             }
         }
         else if (key === ('rgb')) {
             const percentages = value.split(',');
             const values = [];
-            percentages.forEach(function(percentage) {
+            percentages.forEach(function (percentage) {
                 const parsedPercentage = Number(percentage);
                 const val = 255 * (parsedPercentage / 100);
                 values.push(val);
@@ -196,6 +219,32 @@ class ThumborMapping {
                 this.edits.resize = {};
             }
             this.edits.resize.fit = "inside"
+        }
+        else if (key === ('watermark')) {
+            const options = value.replace(/\s+/g, '').split(',');
+            const bucket = options[0];
+            const key = options[1];
+            const xPos = options[2];
+            const yPos = options[3];
+            const alpha = options[4];
+            const wRatio = options[5];
+            const hRatio = options[6];
+
+            this.edits.overlayWith = {
+                bucket,
+                key,
+                alpha,
+                wRatio,
+                hRatio,
+                options: {}
+            }
+            const allowedPosPattern = /^(100|[1-9]?[0-9]|-(100|[1-9][0-9]?))p$/;
+            if (allowedPosPattern.test(xPos) || !isNaN(xPos)) {
+                this.edits.overlayWith.options['left'] = xPos;
+            }
+            if (allowedPosPattern.test(yPos) || !isNaN(yPos)) {
+                this.edits.overlayWith.options['top'] = yPos;
+            }
         }
         else {
             return undefined;

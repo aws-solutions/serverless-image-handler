@@ -33,7 +33,8 @@ describe('process()', function() {
                 edits: {
                     resize: {
                         width: 200,
-                        height: 300
+                        height: 300,
+                        fit: 'inside'
                     },
                     grayscale: true
                 }
@@ -121,7 +122,7 @@ describe('mapFilter()', function() {
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { toFormat: 'jpg' }
+                edits: { toFormat: 'jpeg' }
             };
             assert.deepEqual(thumborMapping, expectedResult);
         });
@@ -130,14 +131,14 @@ describe('mapFilter()', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:background_color()`, function() {
             // Arrange
-            const edit = 'filters:background_color(#ffff)';
+            const edit = 'filters:background_color(ffff)';
             const filetype = 'jpg';
             // Act
             const thumborMapping = new ThumborMapping();
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { flatten: { background: '#ffff' }}
+                edits: { flatten: { background: {r: 255, g: 255, b: 255}}}
             };
             assert.deepEqual(thumborMapping, expectedResult);
         });
@@ -214,14 +215,14 @@ describe('mapFilter()', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:fill()`, function() {
             // Arrange
-            const edit = 'filters:fill(#fff)';
+            const edit = 'filters:fill(fff)';
             const filetype = 'jpg';
             // Act
             const thumborMapping = new ThumborMapping();
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { resize: { background: '#fff' }}
+                edits: { resize: { background: { r: 255, g: 255, b: 255 } }}
             };
             assert.deepEqual(thumborMapping, expectedResult);
         });
@@ -231,7 +232,7 @@ describe('mapFilter()', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:fill()`, function() {
             // Arrange
-            const edit = 'filters:fill(#fff)';
+            const edit = 'filters:fill(fff)';
             const filetype = 'jpg';
             // Act
             const thumborMapping = new ThumborMapping();
@@ -239,7 +240,7 @@ describe('mapFilter()', function() {
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { resize: { background: '#fff' }}
+                edits: { resize: { background: { r: 255, g: 255, b: 255 } }}
             };
             assert.deepEqual(thumborMapping, expectedResult);
         });
@@ -289,9 +290,7 @@ describe('mapFilter()', function() {
             const expectedResult = {
                 edits: {
                     resize: {
-                        fit: 'inside',
-                        height: undefined,
-                        width: undefined
+                        withoutEnlargement: true
                     }
                 }
             };
@@ -306,15 +305,18 @@ describe('mapFilter()', function() {
             const filetype = 'jpg';
             // Act
             const thumborMapping = new ThumborMapping();
-            thumborMapping.edits.resize = {};
+            thumborMapping.edits.resize = {
+                height: 400,
+                width: 300
+            };
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
                 edits: {
                     resize: {
-                        fit: 'inside',
-                        height: undefined,
-                        width: undefined
+                        height: 400,
+                        width: 300,
+                        withoutEnlargement: true
                     }
                 }
             };
@@ -443,7 +445,27 @@ describe('mapFilter()', function() {
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
-    describe('019/quality/other', function() {
+    describe('019/quality/heif', function() {
+        it(`Should pass if the filter is successfully translated from
+            Thumbor:quality()`, function() {
+            // Arrange
+            const edit = 'filters:quality(50)';
+            const filetype = 'heif';
+            // Act
+            const thumborMapping = new ThumborMapping();
+            thumborMapping.mapFilter(edit, filetype);
+            // Assert
+            const expectedResult = {
+                edits: {
+                    heif: {
+                        quality: 50
+                    }
+                }
+            };
+            assert.deepEqual(thumborMapping, expectedResult);
+        });
+    });
+    describe('020/quality/other', function() {
         it(`Should return undefined if an unsupported file type is provided`,
             function() {
             // Arrange
@@ -459,7 +481,7 @@ describe('mapFilter()', function() {
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
-    describe('020/rgb', function() {
+    describe('021/rgb', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:rgb()`, function() {
             // Arrange
@@ -481,7 +503,7 @@ describe('mapFilter()', function() {
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
-    describe('021/rotate', function() {
+    describe('022/rotate', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:rotate()`, function() {
             // Arrange
@@ -499,7 +521,7 @@ describe('mapFilter()', function() {
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
-    describe('022/sharpen', function() {
+    describe('023/sharpen', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:sharpen()`, function() {
             // Arrange
@@ -517,7 +539,7 @@ describe('mapFilter()', function() {
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
-    describe('023/stretch/default', function() {
+    describe('024/stretch/default', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:stretch()`, function() {
             // Arrange
@@ -535,7 +557,7 @@ describe('mapFilter()', function() {
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
-    describe('024/stretch/resizeDefined', function() {
+    describe('025/stretch/resizeDefined', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:stretch()`, function() {
             // Arrange
@@ -554,7 +576,7 @@ describe('mapFilter()', function() {
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
-    describe('025/stretch/sizingMethodUndefined', function() {
+    describe('026/stretch/sizingMethodUndefined', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:stretch()`, function() {
             // Arrange
@@ -575,7 +597,7 @@ describe('mapFilter()', function() {
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
-    describe('026/stretch/sizingMethodNotFitIn', function() {
+    describe('027/stretch/sizingMethodNotFitIn', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:stretch()`, function() {
             // Arrange
@@ -596,7 +618,7 @@ describe('mapFilter()', function() {
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
-    describe('027/stretch/sizingMethodFitIn', function() {
+    describe('028/stretch/sizingMethodFitIn', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:stretch()`, function() {
             // Arrange
@@ -617,7 +639,7 @@ describe('mapFilter()', function() {
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
-    describe('028/strip_exif', function() {
+    describe('029/strip_exif', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:strip_exif()`, function() {
             // Arrange
@@ -635,7 +657,7 @@ describe('mapFilter()', function() {
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
-    describe('029/strip_icc', function() {
+    describe('030/strip_icc', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:strip_icc()`, function() {
             // Arrange
@@ -653,7 +675,7 @@ describe('mapFilter()', function() {
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
-    describe('030/upscale', function() {
+    describe('031/upscale', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:upscale()`, function() {
             // Arrange
@@ -673,7 +695,7 @@ describe('mapFilter()', function() {
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
-    describe('031/upscale/resizeNotUndefined', function() {
+    describe('032/upscale/resizeNotUndefined', function() {
         it(`Should pass if the filter is successfully translated from
             Thumbor:upscale()`, function() {
             // Arrange
@@ -694,7 +716,116 @@ describe('mapFilter()', function() {
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
-    describe('032/elseCondition', function() {
+    describe('032/watermark/positionDefined', function() {
+        it(`Should pass if the filter is successfully translated from
+            Thumbor:watermark()`, function() {
+            // Arrange
+            const edit = 'filters:watermark(bucket,key,100,100,0)';
+            const filetype = 'jpg';
+            // Act
+            const thumborMapping = new ThumborMapping();
+            thumborMapping.mapFilter(edit, filetype);
+            // Assert
+            const expectedResult = {
+                edits: {
+                    overlayWith: {
+                        bucket: 'bucket',
+                        key: 'key',
+                        alpha: '0',
+                        wRatio: undefined,
+                        hRatio: undefined,
+                        options: {
+                            left: '100',
+                            top: '100'
+                        }
+                    }
+                }
+            };
+            assert.deepEqual(thumborMapping, expectedResult);
+        });
+    });
+    describe('033/watermark/positionDefinedByPercentile', function() {
+        it(`Should pass if the filter is successfully translated from
+            Thumbor:watermark()`, function() {
+            // Arrange
+            const edit = 'filters:watermark(bucket,key,50p,30p,0)';
+            const filetype = 'jpg';
+            // Act
+            const thumborMapping = new ThumborMapping();
+            thumborMapping.mapFilter(edit, filetype);
+            // Assert
+            const expectedResult = {
+                edits: {
+                    overlayWith: {
+                        bucket: 'bucket',
+                        key: 'key',
+                        alpha: '0',
+                        wRatio: undefined,
+                        hRatio: undefined,
+                        options: {
+                            left: '50p',
+                            top: '30p'
+                        }
+                    }
+                }
+            };
+            assert.deepEqual(thumborMapping, expectedResult);
+        });
+    });
+    describe('034/watermark/positionDefinedWrong', function() {
+        it(`Should pass if the filter is successfully translated from
+            Thumbor:watermark()`, function() {
+            // Arrange
+            const edit = 'filters:watermark(bucket,key,x,x,0)';
+            const filetype = 'jpg';
+            // Act
+            const thumborMapping = new ThumborMapping();
+            thumborMapping.mapFilter(edit, filetype);
+            // Assert
+            const expectedResult = {
+                edits: {
+                    overlayWith: {
+                        bucket: 'bucket',
+                        key: 'key',
+                        alpha: '0',
+                        wRatio: undefined,
+                        hRatio: undefined,
+                        options: {}
+                    }
+                }
+            };
+            assert.deepEqual(thumborMapping, expectedResult);
+        });
+    });
+    describe('035/watermark/ratioDefined', function() {
+        it(`Should pass if the filter is successfully translated from
+            Thumbor:watermark()`, function() {
+            // Arrange
+            const edit = 'filters:watermark(bucket,key,100,100,0,10,10)';
+            const filetype = 'jpg';
+            // Act
+            const thumborMapping = new ThumborMapping();
+            thumborMapping.mapFilter(edit, filetype);
+            // Assert
+            const expectedResult = {
+                edits: {
+                    overlayWith: {
+                        bucket: 'bucket',
+                        key: 'key',
+                        alpha: '0',
+                        wRatio: '10',
+                        hRatio: '10',
+                        options: {
+                            left: '100',
+                            top: '100'
+                        }
+                    }
+                }
+            };
+            assert.deepEqual(thumborMapping, expectedResult);
+        });
+    });
+    describe('036/elseCondition', function() {
         it(`Should pass if undefined is returned for an unsupported filter`,
             function() {
             // Arrange
