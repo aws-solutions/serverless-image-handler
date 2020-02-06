@@ -45,6 +45,7 @@ describe('setup()', function() {
                 bucket: 'validBucket',
                 key: 'validKey',
                 edits: { grayscale: true },
+                headers: [],
                 originalImage: Buffer.from('SampleImageContent\n')
             }
             // Assert
@@ -78,6 +79,7 @@ describe('setup()', function() {
                 bucket: 'allowedBucket001',
                 key: 'test-image-001.jpg',
                 edits: { grayscale: true },
+                headers: [],
                 originalImage: Buffer.from('SampleImageContent\n')
             }
             // Assert
@@ -116,6 +118,7 @@ describe('setup()', function() {
                     grayscale: true,
                     rotate: 90
                 },
+                headers: [],
                 originalImage: Buffer.from('SampleImageContent\n')
             }
             // Assert
@@ -645,3 +648,27 @@ describe('getAllowedSourceBuckets()', function() {
         });
     });
 })
+
+// ----------------------------------------------------------------------------
+// parseImageHeaders()
+// ----------------------------------------------------------------------------
+describe('parseImageHeaders()', function() {
+    describe('001/defaultCustomHeaders', function () {
+        it(`Should pass if the proper result is returned for a sample base64-
+            encoded image request`, function () {
+            // Arrange
+            const event = {
+                path: '/eyJoZWFkZXJzIjpbeyJrZXkiOiAiQ2FjaGUtQ29udHJvbCIsICJ2YWx1ZSI6ICJtYXgtYWdlPTMxNTM2MDAwLHB1YmxpYyJ9XX0='
+            }
+            // Act
+            const imageRequest = new ImageRequest();
+            const result = imageRequest.parseImageHeaders(event, 'Default');
+            // Assert
+            const expectedResult = [{
+                key: "Cache-Control",
+                value: 'max-age=31536000,public'
+            }]
+            assert.deepEqual(result, expectedResult);
+        });
+    });
+});

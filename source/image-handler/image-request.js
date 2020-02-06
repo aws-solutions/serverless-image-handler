@@ -26,7 +26,8 @@ class ImageRequest {
             this.bucket = this.parseImageBucket(event, this.requestType);
             this.key = this.parseImageKey(event, this.requestType);
             this.edits = this.parseImageEdits(event, this.requestType);
-            this.originalImage = await this.getOriginalImage(this.bucket, this.key)
+            this.originalImage = await this.getOriginalImage(this.bucket, this.key);
+            this.headers = this.parseImageHeaders(event, this.requestType);
             return Promise.resolve(this);
         } catch (err) {
             return Promise.reject(err);
@@ -122,6 +123,22 @@ class ImageRequest {
                 message: 'The edits you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance.'
             });
         }
+    }
+
+    /**
+     * Parses the headers to be sent with the response
+     * @param {String} event - Lambda request body.
+     * @param {String} requestType - Image handler request type.
+     */
+    parseImageHeaders(event, requestType) {
+        if (requestType === "Default") {
+            const decoded = this.decodeRequest(event);
+            if (decoded.headers !== undefined) {
+                return decoded.headers;
+            }
+        }
+
+        return [];
     }
 
     /**
