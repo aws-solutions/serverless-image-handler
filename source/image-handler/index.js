@@ -20,11 +20,12 @@ exports.handler = async (event) => {
     const imageHandler = new ImageHandler();
     try {
         const request = await imageRequest.setup(event);
-        console.log("request.key", request.key);
+        let etag = request.originalImage.ETag;
+        let lastModified = request.originalImage.LastModified;
         const processedRequest = await imageHandler.process(request);
         const response = {
             "statusCode": 200,
-            "headers" : getResponseHeaders(false, request.originalImage.Etag. request.originalImage.LastModified),
+            "headers" : getResponseHeaders(false, etag, lastModified),
             "body": processedRequest,
             "isBase64Encoded": true
         }
@@ -55,9 +56,12 @@ const getResponseHeaders = (isErr, eTag, lastModified) => {
         "Content-Type": "image"
     }
 
-    if(eTag !== undefined && lastModified !== undefined) {
+    if(lastModified !== undefined) {
+        headers['Last-Modified'] = lastModified
+    }
+
+    if(eTag !== undefined) {
         headers['Etag'] = eTag
-        headers['Last-Modified'] = lastModified}
     }
 
     const setCacheControl = (
