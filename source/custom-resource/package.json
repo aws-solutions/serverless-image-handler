@@ -9,9 +9,7 @@
     "private": true,
     "dependencies": {
         "moment": "^2.24.0",
-        "node-uuid": "^1.4.8",
-        "password-generator": "*",
-        "underscore": "*",
+        "uuid": "^3.3.3",
         "usage-metrics": "file:lib/usage-metrics/"
     },
     "devDependencies": {
@@ -33,8 +31,7 @@
     },
     "bundledDependencies": [
         "moment",
-        "underscore",
-        "password-generator",
-        "node-uuid"
-    ]
+        "uuid"
+    ],
+    "license": "Apache-2.0"
 }

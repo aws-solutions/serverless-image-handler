@@ -1,12 +1,12 @@
 /*********************************************************************************************************************
  *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
  *                                                                                                                    *
- *  Licensed under the Amazon Software License (the "License"). You may not use this file except in compliance        *
+ *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
  *  with the License. A copy of the License is located at                                                             *
  *                                                                                                                    *
- *      http://aws.amazon.com/asl/                                                                                    *
+ *      http://www.apache.org/licenses/LICENSE-2.0                                                                    *
  *                                                                                                                    *
- *  or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES *
+ *  or in the 'license' file accompanying this file. This file is distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES *
  *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
  *  and limitations under the License.                                                                                *
  *********************************************************************************************************************/
@@ -23,7 +23,7 @@ describe('setup()', function() {
             the ImageRequest object with the proper values`, async function() {
             // Arrange
             const event = {
-                path : '/eyJidWNrZXQiOiJ2YWxpZEJ1Y2tldCIsImtleSI6InZhbGlkS2V5IiwiZWRpdHMiOnsiZ3JheXNjYWxlIjp0cnVlfX0='
+                path : '/eyJidWNrZXQiOiJ2YWxpZEJ1Y2tldCIsImtleSI6InZhbGlkS2V5IiwiZWRpdHMiOnsiZ3JheXNjYWxlIjp0cnVlfSwib3V0cHV0Rm9ybWF0IjoianBlZyJ9'
             }
             process.env = {
                 SOURCE_BUCKETS : "validBucket, validBucket2"
@@ -34,7 +34,7 @@ describe('setup()', function() {
             const getObject = S3.prototype.getObject = sinon.stub();
             getObject.withArgs({Bucket: 'validBucket', Key: 'validKey'}).returns({
                 promise: () => { return {
-                  Body: Buffer.from('SampleImageContent\n')
+                    Body: Buffer.from('SampleImageContent\n')
                 }}
             })
             // Act
@@ -45,7 +45,10 @@ describe('setup()', function() {
                 bucket: 'validBucket',
                 key: 'validKey',
                 edits: { grayscale: true },
-                originalImage: Buffer.from('SampleImageContent\n')
+                outputFormat: 'jpeg',
+                originalImage: Buffer.from('SampleImageContent\n'),
+                CacheControl: 'max-age=31536000,public',
+                ContentType: 'image/jpeg'
             }
             // Assert
             assert.deepEqual(imageRequest, expectedResult);
@@ -67,7 +70,7 @@ describe('setup()', function() {
             const getObject = S3.prototype.getObject = sinon.stub();
             getObject.withArgs({Bucket: 'allowedBucket001', Key: 'test-image-001.jpg'}).returns({
                 promise: () => { return {
-                  Body: Buffer.from('SampleImageContent\n')
+                    Body: Buffer.from('SampleImageContent\n')
                 }}
             })
             // Act
@@ -78,7 +81,9 @@ describe('setup()', function() {
                 bucket: 'allowedBucket001',
                 key: 'test-image-001.jpg',
                 edits: { grayscale: true },
-                originalImage: Buffer.from('SampleImageContent\n')
+                originalImage: Buffer.from('SampleImageContent\n'),
+                CacheControl: 'max-age=31536000,public',
+                ContentType: 'image'
             }
             // Assert
             assert.deepEqual(imageRequest, expectedResult);
@@ -102,6 +107,10 @@ describe('setup()', function() {
             const getObject = S3.prototype.getObject = sinon.stub();
             getObject.withArgs({Bucket: 'allowedBucket001', Key: 'custom-image.jpg'}).returns({
                 promise: () => { return {
+                  CacheControl: 'max-age=300,public',
+                  ContentType: 'custom-type',
+                  Expires: 'Tue, 24 Dec 2019 13:46:28 GMT',
+                  LastModified: 'Sat, 19 Dec 2009 16:30:47 GMT',
                   Body: Buffer.from('SampleImageContent\n')
                 }}
             })
@@ -112,11 +121,15 @@ describe('setup()', function() {
                 requestType: 'Custom',
                 bucket: 'allowedBucket001',
                 key: 'custom-image.jpg',
-                edits: { 
+                edits: {
                     grayscale: true,
                     rotate: 90
                 },
-                originalImage: Buffer.from('SampleImageContent\n')
+                originalImage: Buffer.from('SampleImageContent\n'),
+                CacheControl: 'max-age=300,public',
+                ContentType: 'custom-type',
+                Expires: 'Tue, 24 Dec 2019 13:46:28 GMT',
+                LastModified: 'Sat, 19 Dec 2009 16:30:47 GMT',
             }
             // Assert
             assert.deepEqual(imageRequest, expectedResult);
@@ -134,7 +147,7 @@ describe('setup()', function() {
             const getObject = S3.prototype.getObject = sinon.stub();
             getObject.withArgs({Bucket: 'validBucket', Key: 'validKey'}).returns({
                 promise: () => { return {
-                  Body: Buffer.from('SampleImageContent\n')
+                    Body: Buffer.from('SampleImageContent\n')
                 }}
             })
             // Act
@@ -154,7 +167,7 @@ describe('setup()', function() {
 // ----------------------------------------------------------------------------
 describe('getOriginalImage()', function() {
     describe('001/imageExists', function() {
-        it(`Should pass if the proper bucket name and key are supplied, 
+        it(`Should pass if the proper bucket name and key are supplied,
             simulating an image file that can be retrieved`, async function() {
             // Arrange
             const S3 = require('aws-sdk/clients/s3');
@@ -162,7 +175,7 @@ describe('getOriginalImage()', function() {
             const getObject = S3.prototype.getObject = sinon.stub();
             getObject.withArgs({Bucket: 'validBucket', Key: 'validKey'}).returns({
                 promise: () => { return {
-                  Body: Buffer.from('SampleImageContent\n')
+                    Body: Buffer.from('SampleImageContent\n')
                 }}
             })
             // Act
@@ -173,18 +186,18 @@ describe('getOriginalImage()', function() {
         });
     });
     describe('002/imageDoesNotExist', async function() {
-        it(`Should throw an error if an invalid bucket or key name is provided, 
+        it(`Should throw an error if an invalid bucket or key name is provided,
             simulating a non-existant original image`, async function() {
             // Arrange
             const S3 = require('aws-sdk/clients/s3');
             const sinon = require('sinon');
             const getObject = S3.prototype.getObject = sinon.stub();
             getObject.withArgs({Bucket: 'invalidBucket', Key: 'invalidKey'}).returns({
-                promise: () => { 
+                promise: () => {
                     return Promise.reject({
-                        code: 500,
-                        message: 'SimulatedInvalidParameterException'
-                    }) 
+                        code: 'NoSuchKey',
+                        message: 'SimulatedException'
+                    })
                 }
             });
             // Act
@@ -192,9 +205,31 @@ describe('getOriginalImage()', function() {
             // Assert
             imageRequest.getOriginalImage('invalidBucket', 'invalidKey').then((result) => {
                 assert.equal(typeof result, Error);
-            }).catch((err) => {
-                console.log(err)
-            })
+                assert.equal(result.status, 404);
+            }).catch((err) => console.log(err));
+        });
+    });
+    describe('003/unknownError', async function() {
+        it(`Should throw an error if an unkown problem happens when getting an object`, async function() {
+            // Arrange
+            const S3 = require('aws-sdk/clients/s3');
+            const sinon = require('sinon');
+            const getObject = S3.prototype.getObject = sinon.stub();
+            getObject.withArgs({Bucket: 'invalidBucket', Key: 'invalidKey'}).returns({
+                promise: () => {
+                    return Promise.reject({
+                        code: 'InternalServerError',
+                        message: 'SimulatedException'
+                    })
+                }
+            });
+            // Act
+            const imageRequest = new ImageRequest();
+            // Assert
+            imageRequest.getOriginalImage('invalidBucket', 'invalidKey').then((result) => {
+                assert.equal(typeof result, Error);
+                assert.equal(result.status, 500);
+            }).catch((err) => console.log(err));
         });
     });
 });
@@ -245,7 +280,7 @@ describe('parseImageBucket()', function() {
     });
     describe('003/defaultRequestType/bucketNotSpecifiedInRequest', function() {
         it(`Should pass if the image request does not contain a source bucket
-            but SOURCE_BUCKETS contains at least one bucket that can be 
+            but SOURCE_BUCKETS contains at least one bucket that can be
             used as a default`, function() {
             // Arrange
             const event = {
@@ -263,7 +298,7 @@ describe('parseImageBucket()', function() {
         });
     });
     describe('004/thumborRequestType', function() {
-        it(`Should pass if there is at least one SOURCE_BUCKET specified that can 
+        it(`Should pass if there is at least one SOURCE_BUCKET specified that can
             be used as the default for Thumbor requests`, function() {
             // Arrange
             const event = {
@@ -281,7 +316,7 @@ describe('parseImageBucket()', function() {
         });
     });
     describe('005/customRequestType', function() {
-        it(`Should pass if there is at least one SOURCE_BUCKET specified that can 
+        it(`Should pass if there is at least one SOURCE_BUCKET specified that can
             be used as the default for Custom requests`, function() {
             // Arrange
             const event = {
@@ -299,7 +334,7 @@ describe('parseImageBucket()', function() {
         });
     });
     describe('006/invalidRequestType', function() {
-        it(`Should pass if there is at least one SOURCE_BUCKET specified that can 
+        it(`Should pass if there is at least one SOURCE_BUCKET specified that can
             be used as the default for Custom requests`, function() {
             // Arrange
             const event = {
@@ -346,7 +381,7 @@ describe('parseImageEdits()', function() {
         });
     });
     describe('002/thumborRequestType', function() {
-        it(`Should pass if the proper result is returned for a sample thumbor- 
+        it(`Should pass if the proper result is returned for a sample thumbor-
             type image request`, function() {
             // Arrange
             const event = {
@@ -364,7 +399,7 @@ describe('parseImageEdits()', function() {
         });
     });
     describe('003/customRequestType', function() {
-        it(`Should pass if the proper result is returned for a sample custom- 
+        it(`Should pass if the proper result is returned for a sample custom-
             type image request`, function() {
             // Arrange
             const event = {
@@ -553,7 +588,7 @@ describe('parseRequestType()', function() {
 // ----------------------------------------------------------------------------
 describe('decodeRequest()', function() {
     describe('001/validRequestPathSpecified', function() {
-        it(`Should pass if a valid base64-encoded path has been specified`, 
+        it(`Should pass if a valid base64-encoded path has been specified`,
             function() {
             // Arrange
             const event = {
@@ -571,7 +606,7 @@ describe('decodeRequest()', function() {
         });
     });
     describe('002/invalidRequestPathSpecified', function() {
-        it(`Should throw an error if a valid base64-encoded path has not been specified`, 
+        it(`Should throw an error if a valid base64-encoded path has not been specified`,
             function() {
             // Arrange
             const event = {
@@ -590,7 +625,7 @@ describe('decodeRequest()', function() {
         });
     });
     describe('003/noPathSpecified', function() {
-        it(`Should throw an error if no path is specified at all`, 
+        it(`Should throw an error if no path is specified at all`,
             function() {
             // Arrange
             const event = {}
@@ -644,4 +679,79 @@ describe('getAllowedSourceBuckets()', function() {
             });
         });
     });
-})
+});
+
+// ----------------------------------------------------------------------------
+// getOutputFormat()
+// ----------------------------------------------------------------------------
+describe('getOutputFormat()', function () {
+    describe('001/AcceptsHeaderIncludesWebP', function () {
+        it(`Should pass if it returns "webp" for an accepts header which includes webp`, function () {
+            // Arrange
+            process.env = {
+                AUTO_WEBP: true
+            };
+            const event = {
+                headers: {
+                    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3"
+                }
+            };
+            // Act
+            const imageRequest = new ImageRequest();
+            var result = imageRequest.getOutputFormat(event);
+            // Assert
+            assert.deepEqual(result, 'webp');
+        });
+    });
+    describe('002/AcceptsHeaderDoesNotIncludeWebP', function () {
+        it(`Should pass if it returns null for an accepts header which does not include webp`, function () {
+            // Arrange
+            process.env = {
+                AUTO_WEBP: true
+            };
+            const event = {
+                headers: {
+                    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/apng,*/*;q=0.8,application/signed-exchange;v=b3"
+                }
+            };
+            // Act
+            const imageRequest = new ImageRequest();
+            var result = imageRequest.getOutputFormat(event);
+            // Assert
+            assert.deepEqual(result, null);
+        });
+    });
+    describe('003/AutoWebPDisabled', function () {
+        it(`Should pass if it returns null when AUTO_WEBP is disabled with accepts header including webp`, function () {
+            // Arrange
+            process.env = {
+                AUTO_WEBP: false
+            };
+            const event = {
+                headers: {
+                    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3"
+                }
+            };
+            // Act
+            const imageRequest = new ImageRequest();
+            var result = imageRequest.getOutputFormat(event);
+            // Assert
+            assert.deepEqual(result, null);
+        });
+    });
+    describe('004/AutoWebPUnset', function () {
+        it(`Should pass if it returns null when AUTO_WEBP is not set with accepts header including webp`, function () {
+            // Arrange
+            const event = {
+                headers: {
+                    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3"
+                }
+            };
+            // Act
+            const imageRequest = new ImageRequest();
+            var result = imageRequest.getOutputFormat(event);
+            // Assert
+            assert.deepEqual(result, null);
+        });
+    });
+});
