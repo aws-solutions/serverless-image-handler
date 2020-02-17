@@ -15,7 +15,7 @@ phases:
     commands:
       - cd deployment
       - export VERSION=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}
-      - ./build-s3-dist.sh $DIST_OUTPUT_BUCKET $TEMPLATE_OUTPUT_BUCKET $VERSION
+      - ./build-s3-dist.sh $DIST_OUTPUT_BUCKET serverless-image-handler $VERSION
 
   post_build:
     commands:
