@@ -19,6 +19,6 @@ phases:
 
   post_build:
     commands:
-      - aws s3 cp ./dist/ s3://$DIST_OUTPUT_BUCKET-$REGION/serverless-image-handler/$VERSION/ --recursive --exclude "*" --include "*.zip" --acl public-read
-      - aws s3 cp ./dist/serverless-image-handler.template s3://$TEMPLATE_OUTPUT_BUCKET/serverless-image-handler/$VERSION/ --acl public-read
+      - aws s3 cp ./regional-s3-assets/ s3://$DIST_OUTPUT_BUCKET-$REGION/serverless-image-handler/$VERSION/ --recursive --exclude "*" --include "*.zip" --acl public-read
+      - aws s3 cp ./regional-s3-assets/serverless-image-handler.template s3://$TEMPLATE_OUTPUT_BUCKET/serverless-image-handler/$VERSION/ --acl public-read
 
