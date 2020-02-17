@@ -377,48 +377,6 @@
                 "Runtime": "nodejs12.x",
                 "MemorySize": 1024,
                 "Timeout": 30,
-<<<<<<< HEAD
-                "Environment" : { 
-                    "Variables" : { 
-                        "CACHE_CONTROL" : {  
-                            "Ref" : "CacheControl"  
-                        }, 
-                        "CORS_ENABLED" : {  
-                            "Ref" : "CorsEnabled"  
-                        }, 
-                        "CORS_ORIGIN" : {  
-                            "Ref" : "CorsOrigin"  
-                        }, 
-                        "SOURCE_BUCKETS" : { 
-                            "Ref" : "SourceBuckets" 
-                        }, 
-                        "REWRITE_MATCH_PATTERN" : "", 
-                        "REWRITE_SUBSTITUTION" : "" 
-                    } 
-                } 
-            } 
-        }, 
-        "ImageHandlerFunctionRole": { 
-            "Type": "AWS::IAM::Role", 
-            "Properties": { 
-                "AssumeRolePolicyDocument": { 
-                    "Version": "2012-10-17", 
-                    "Statement": [ 
-                        { 
-                            "Effect": "Allow", 
-                            "Principal": { 
-                                "Service": [ "lambda.amazonaws.com" ] 
-                            }, 
-                            "Action": [ "sts:AssumeRole" ] 
-                        } 
-                    ] 
-                }, 
-                "Path": "/", 
-                "RoleName": { 
-                    "Fn::Join": [ 
-                        "", [ { "Ref": "AWS::StackName" }, "ImageHandlerFunctionRole", "-", {"Ref": "AWS::Region"} ] ] 
-                } 
-=======
                 "Environment" : {
                     "Variables" : {
                         "AUTO_WEBP" : {
@@ -459,7 +417,6 @@
                     "Fn::Join": [
                         "", [ { "Ref": "AWS::StackName" }, "ImageHandlerFunctionRole", "-", {"Ref": "AWS::Region"} ] ]
                 }
->>>>>>> upstream/master
             },
             "Metadata": {
                 "cfn_nag": {
@@ -866,42 +823,6 @@
             },
             "DependsOn": [ "CustomResourcePolicy", "CustomResourceRole" ]
         }
-<<<<<<< HEAD
-    }, 
-    "Outputs" : { 
-        "ApiEndpoint" : { 
-            "Description" : "Link to API endpoint for sending image requests to.", 
-            "Value" : { "Fn::Sub" : "https://${ImageHandlerDistribution.DomainName}" } 
-        }, 
-        "DemoUrl" : { 
-            "Condition" : "DeployDemoUICondition", 
-            "Description" : "Link to the demo user interface for the solution.", 
-            "Value" : { "Fn::Sub" : "https://${DemoDistribution.DomainName}/index.html" } 
-        }, 
-        "SourceBuckets" : { 
-            "Description" : "Amazon S3 bucket location containing original image files.", 
-            "Value" : { "Ref" : "SourceBuckets"} 
-        }, 
-        "CacheControl" : {  
-            "Description" : "The value of the Cache-Control header returned by the image handler API.", 
-            "Value" : { "Ref" : "CacheControl" } 
-        }, 
-        "CorsEnabled" : {  
-            "Description" : "Indicates whether Cross-Origin Resource Sharing (CORS) has been enabled for the image handler API.", 
-            "Value" : { "Ref" : "CorsEnabled" } 
-        }, 
-        "CorsOrigin" : {  
-            "Condition" : "EnableCorsCondition", 
-            "Description" : "Origin value returned in the Access-Control-Allow-Origin header of image handler API responses.", 
-            "Value" : { "Ref" : "CorsOrigin" } 
-        }, 
-        "LogRetentionPeriod" : { 
-            "Description" : "Number of days for event logs from Lambda to be retained in CloudWatch.", 
-            "Value" : { "Ref" : "LogRetentionPeriod" } 
-        } 
-    } 
-} 
-=======
     },
     "Outputs" : {
         "ApiEndpoint" : {
@@ -932,4 +853,3 @@
         }
     }
 }
->>>>>>> upstream/master
