@@ -287,7 +287,7 @@ class ImageRequest {
     * @param {Object} event - The request body.
     */
     getOutputFormat(event) {
-        const autoWebP = process.env.AUTO_WEBP;
+        const autoWebP = (process.env.AUTO_WEBP === "Yes");
         if (autoWebP && event.headers.Accept && event.headers.Accept.includes('image/webp')) {
             return 'webp';
         } else if (this.requestType === 'Default') {
