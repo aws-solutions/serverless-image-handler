@@ -161,6 +161,20 @@ describe('setup()', function() {
             })
         });
     });
+    describe('005/encodingWithSlashRequest', function () {
+        it(`should read image requests with base64 encoding having slash`, function () {
+            const event = {
+                path : 'eyJidWNrZXQiOiJlbGFzdGljYmVhbnN0YWxrLXVzLWVhc3QtMi0wNjY3ODQ4ODU1MTgiLCJrZXkiOiJlbnYtcHJvZC9nY2MvbGFuZGluZ3BhZ2UvMV81N19TbGltTl9MaWZ0LUNvcnNldC1Gb3ItTWVuLVNOQVAvYXR0YWNobWVudHMvZmZjMWYxNjAtYmQzOC00MWU4LThiYWQtZTNhMTljYzYxZGQzX1/Ys9mE2YrZhSDZhNmK2YHYqiAoMikuanBnIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo0ODAsImZpdCI6ImNvdmVyIn19fQ=='
+            }
+            // Act
+            const imageRequest = new ImageRequest();
+            const result = imageRequest.parseImageKey(event, 'Default');
+            // Assert
+            const expectedResult = 'env-prod/gcc/landingpage/1_57_SlimN_Lift-Corset-For-Men-SNAP/attachments/ffc1f160-bd38-41e8-8bad-e3a19cc61dd3__سليم ليفت (2).jpg';
+            assert.deepEqual(result, expectedResult);
+
+        })
+    });
 });
 // ----------------------------------------------------------------------------
 // getOriginalImage()
