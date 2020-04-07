@@ -33,18 +33,32 @@ class ThumborMapping {
         const edits = this.path.split('/');
         const filetype = (this.path.split('.'))[(this.path.split('.')).length - 1];
 
-        // Process the Dimensions
-        const dimPath = this.path.match(/[^\/]\d+x\d+/g);
-        if (dimPath) {
-            const dims = dimPath[0].split('x');
-            // Set only if the dimensions provided are valid
-            if (!isNaN(dims[0]) && !isNaN(dims[1])) {
-                this.edits.resize = {};
-                this.edits.resize.fit = 'fill';
+        const cropPath = this.path.match(/[^\/]\d+x\d+:\d+x\d+/g);
+        if (cropPath) {
+            const dims = cropPath[0].split(':');
+            let firstDim = dims[0].split("x");
+            let secondDim = dims[1].split("x");;
+            if (!isNaN(firstDim[0]) && !isNaN(firstDim[1]) && !isNaN(secondDim[0]) && !isNaN(secondDim[1])) {
+                this.edits.extract = {};
+                this.edits.extract.left = Number(firstDim[0]);
+                this.edits.extract.top = Number(firstDim[1]);
+                this.edits.extract.width = Number(secondDim[0]) - Number(firstDim[0]);
+                this.edits.extract.height = Number(secondDim[1]) - Number(firstDim[1]);
+            }
+        } else {
+            // Process the Dimensions
+            const dimPath = this.path.match(/[^\/]\d+x\d+/g);
+            if (dimPath) {
+                const dims = dimPath[0].split('x');
+                // Set only if the dimensions provided are valid
+                if (!isNaN(dims[0]) && !isNaN(dims[1])) {
+                    this.edits.resize = {};
+                    this.edits.resize.fit = 'fill';
 
-                // Assign dimenions from the first match only to avoid parsing dimension from image file names
-                this.edits.resize.width = Number(dims[0]);
-                this.edits.resize.height = Number(dims[1]);
+                    // Assign dimenions from the first match only to avoid parsing dimension from image file names
+                    this.edits.resize.width = Number(dims[0]);
+                    this.edits.resize.height = Number(dims[1]);
+                }
             }
         }
 
@@ -78,7 +92,9 @@ class ThumborMapping {
         // Perform the substitution and return
         if (path !== undefined && matchPattern !== undefined && substitution !== undefined) {
             const parsedPath = path.replace(matchPattern, substitution);
-            const output = { path: parsedPath };
+            const output = {
+                path: parsedPath
+            };
             return output;
         } else {
             throw new Error('ThumborMapping::ParseCustomPath::ParsingError');
@@ -98,22 +114,21 @@ class ThumborMapping {
         // Find the proper filter
         if (key === ('autojpg')) {
             this.edits.toFormat = 'jpeg';
-        }
-        else if (key === ('background_color')) {
+        } else if (key === ('background_color')) {
             if (!ColorName[value]) {
                 value = `#${value}`
             }
-            this.edits.flatten = { background: Color(value).object() };
-        }
-        else if (key === ('blur')) {
+            this.edits.flatten = {
+                background: Color(value).object()
+            };
+        } else if (key === ('blur')) {
             const val = value.split(',');
             this.edits.blur = (val.length > 1) ? Number(val[1]) : Number(val[0]) / 2;
-        }
-        else if (key === ('convolution')) {
+        } else if (key === ('convolution')) {
             const arr = value.split(',');
             const strMatrix = (arr[0]).split(';');
             let matrix = [];
-            strMatrix.forEach(function(str) {
+            strMatrix.forEach(function (str) {
                 matrix.push(Number(str));
             });
             const matrixWidth = arr[1];
@@ -132,11 +147,9 @@ class ThumborMapping {
                 height: Number(matrixHeight),
                 kernel: matrix
             }
-        }
-        else if (key === ('equalize')) {
+        } else if (key === ('equalize')) {
             this.edits.normalize = "true";
-        }
-        else if (key === ('fill')) {
+        } else if (key === ('fill')) {
             if (this.edits.resize === undefined) {
                 this.edits.resize = {};
             }
@@ -144,45 +157,49 @@ class ThumborMapping {
                 value = `#${value}`
             }
             this.edits.resize.background = Color(value).object();
-        }
-        else if (key === ('format')) {
+        } else if (key === ('format')) {
             const formattedValue = value.replace(/[^0-9a-z]/gi, '').replace(/jpg/i, 'jpeg');
             const acceptedValues = ['heic', 'heif', 'jpeg', 'png', 'raw', 'tiff', 'webp'];
             if (acceptedValues.includes(formattedValue)) {
                 this.edits.toFormat = formattedValue;
             }
-        }
-        else if (key === ('grayscale')) {
+        } else if (key === ('grayscale')) {
             this.edits.grayscale = true;
-        }
-        else if (key === ('no_upscale')) {
+        } else if (key === ('no_upscale')) {
             if (this.edits.resize === undefined) {
                 this.edits.resize = {};
             }
             this.edits.resize.withoutEnlargement = true;
-        }
-        else if (key === ('proportion')) {
+        } else if (key === ('proportion')) {
             if (this.edits.resize === undefined) {
                 this.edits.resize = {};
             }
             const prop = Number(value);
             this.edits.resize.width = Number(this.edits.resize.width * prop);
             this.edits.resize.height = Number(this.edits.resize.height * prop);
-        }
-        else if (key === ('quality')) {
+        } else if (key === ('quality')) {
             if (['jpg', 'jpeg'].includes(filetype)) {
-                this.edits.jpeg = { quality: Number(value) }
+                this.edits.jpeg = {
+                    quality: Number(value)
+                }
             } else if (filetype === 'png') {
-                this.edits.png = { quality: Number(value) }
+                this.edits.png = {
+                    quality: Number(value)
+                }
             } else if (filetype === 'webp') {
-                this.edits.webp = { quality: Number(value) }
+                this.edits.webp = {
+                    quality: Number(value)
+                }
             } else if (filetype === 'tiff') {
-                this.edits.tiff = { quality: Number(value) }
+                this.edits.tiff = {
+                    quality: Number(value)
+                }
             } else if (filetype === 'heif') {
-                this.edits.heif = { quality: Number(value) }
+                this.edits.heif = {
+                    quality: Number(value)
+                }
             }
-        }
-        else if (key === ('rgb')) {
+        } else if (key === ('rgb')) {
             const percentages = value.split(',');
             const values = [];
             percentages.forEach(function (percentage) {
@@ -190,37 +207,34 @@ class ThumborMapping {
                 const val = 255 * (parsedPercentage / 100);
                 values.push(val);
             })
-            this.edits.tint = { r: values[0], g: values[1], b: values[2] };
-        }
-        else if (key === ('rotate')) {
+            this.edits.tint = {
+                r: values[0],
+                g: values[1],
+                b: values[2]
+            };
+        } else if (key === ('rotate')) {
             this.edits.rotate = Number(value);
-        }
-        else if (key === ('sharpen')) {
+        } else if (key === ('sharpen')) {
             const sh = value.split(',');
             const sigma = 1 + Number(sh[1]) / 2;
             this.edits.sharpen = sigma;
-        }
-        else if (key === ('stretch')) {
+        } else if (key === ('stretch')) {
             if (this.edits.resize === undefined) {
                 this.edits.resize = {};
             }
             if (this.sizingMethod === undefined || this.sizingMethod !== 'fit-in') {
                 this.edits.resize.fit = "fill";
             }
-        }
-        else if (key === ('strip_exif')) {
+        } else if (key === ('strip_exif')) {
             this.edits.rotate = 0;
-        }
-        else if (key === ('strip_icc')) {
+        } else if (key === ('strip_icc')) {
             this.edits.rotate = 0;
-        }
-        else if (key === ('upscale')) {
+        } else if (key === ('upscale')) {
             if (this.edits.resize === undefined) {
                 this.edits.resize = {};
             }
             this.edits.resize.fit = "inside"
-        }
-        else if (key === ('watermark')) {
+        } else if (key === ('watermark')) {
             const options = value.replace(/\s+/g, '').split(',');
             const bucket = options[0];
             const key = options[1];
@@ -245,8 +259,7 @@ class ThumborMapping {
             if (allowedPosPattern.test(yPos) || !isNaN(yPos)) {
                 this.edits.overlayWith.options['top'] = yPos;
             }
-        }
-        else {
+        } else {
             return undefined;
         }
     }
