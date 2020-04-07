@@ -54,7 +54,7 @@ exports.handler = async (event) => {
  */
 const getResponseHeaders = (isErr = false, isALB = false) => {
     const corsEnabled = (process.env.CORS_ENABLED === "Yes");
-    let headers = {
+    const headers = {
         "Access-Control-Allow-Methods": "GET",
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
     }
