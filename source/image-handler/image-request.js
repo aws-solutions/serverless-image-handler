@@ -186,7 +186,7 @@ class ImageRequest {
         }
 
         if (requestType === "Thumbor" || requestType === "Custom") {
-            return decodeURIComponent(event["path"].replace(/\d+x\d+\/|filters[:-][^/;]+|\/fit-in\/+|^\/+/g,'').replace(/^\/+/,''));
+            return decodeURIComponent(event["path"].replace(/\d+x\d+:\d+x\d+\/|\d+x\d+\/|filters[:-][^/;]+|\/fit-in\/+|^\/+/g, '').replace(/^\/+/, ''));
         }
 
         // Return an error for all other conditions
