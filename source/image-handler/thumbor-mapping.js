@@ -33,7 +33,7 @@ class ThumborMapping {
         const edits = this.path.split('/');
         const filetype = (this.path.split('.'))[(this.path.split('.')).length - 1];
 
-        const cropPath = this.path.match(/[^\/]\d+x\d+:\d+x\d+/g);
+        const cropPath = this.path.match(/\d+x\d+:\d+x\d+/g);
         if (cropPath) {
             const dims = cropPath[0].split(':');
             let firstDim = dims[0].split("x");
