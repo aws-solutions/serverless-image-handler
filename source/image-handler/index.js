@@ -20,27 +20,27 @@ exports.handler = async (event) => {
     const imageHandler = new ImageHandler();
     try {
         const request = await imageRequest.setup(event);
+        const isALB = event.requestContext && event.requestContext.hasOwnProperty("elb");
         console.log(request);
         const processedRequest = await imageHandler.process(request);
 
-        const headers = getResponseHeaders();
+        const headers = getResponseHeaders(false, true);
         headers["Content-Type"] = request.ContentType;
         headers["Expires"] = request.Expires;
         headers["Last-Modified"] = request.LastModified;
         headers["Cache-Control"] = request.CacheControl;
-
         return {
             "statusCode": 200,
-            "headers" : headers,
+            "isBase64Encoded": true,
+            "headers": headers,
             "body": processedRequest,
-            "isBase64Encoded": true
-        };
+        }
     } catch (err) {
         console.log(err);
 
         return {
             "statusCode": err.status,
-            "headers" : getResponseHeaders(true),
+            "headers": getResponseHeaders(true, isALB),
             "body": JSON.stringify(err),
             "isBase64Encoded": false
         };
@@ -52,12 +52,14 @@ exports.handler = async (event) => {
  * or error condition.
  * @param {boolean} isErr - has an error been thrown?
  */
-const getResponseHeaders = (isErr) => {
+const getResponseHeaders = (isErr = false, isALB = false) => {
     const corsEnabled = (process.env.CORS_ENABLED === "Yes");
-    const headers = {
+    let headers = {
         "Access-Control-Allow-Methods": "GET",
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        "Access-Control-Allow-Credentials": true
+    }
+    if (!isALB) {
+        headers["Access-Control-Allow-Credentials"] = true;
     }
     if (corsEnabled) {
         headers["Access-Control-Allow-Origin"] = process.env.CORS_ORIGIN;
