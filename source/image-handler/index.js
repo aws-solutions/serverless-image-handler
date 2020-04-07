@@ -40,9 +40,9 @@ exports.handler = async (event) => {
 
         return {
             "statusCode": err.status,
+            "isBase64Encoded": false,
             "headers": getResponseHeaders(true, isALB),
             "body": JSON.stringify(err),
-            "isBase64Encoded": false
         };
     }
 }
