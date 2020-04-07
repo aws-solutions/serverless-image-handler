@@ -18,13 +18,12 @@ exports.handler = async (event) => {
     console.log(event);
     const imageRequest = new ImageRequest();
     const imageHandler = new ImageHandler();
+    const isALB = event.requestContext && event.requestContext.hasOwnProperty("elb");
     try {
         const request = await imageRequest.setup(event);
-        const isALB = event.requestContext && event.requestContext.hasOwnProperty("elb");
         console.log(request);
         const processedRequest = await imageHandler.process(request);
-
-        const headers = getResponseHeaders(false, true);
+        const headers = getResponseHeaders(false, isALB);
         headers["Content-Type"] = request.ContentType;
         headers["Expires"] = request.Expires;
         headers["Last-Modified"] = request.LastModified;
