@@ -184,7 +184,7 @@ let deleteFolderRecursive = function (directory_path) {
 /**
  * Sends a response to the pre-signed S3 URL
  */
-let sendResponse = function(url, auth_token, image_number, result) {
+let sendResponse = function(callback_url, auth_token, image_number, result) {
 
     const responseBody = JSON.stringify({
         status: 201,
@@ -193,7 +193,7 @@ let sendResponse = function(url, auth_token, image_number, result) {
     });
 
     console.log('RESPONSE BODY:\n', responseBody);
-    const parsedUrl = url.parse(url);
+    const parsedUrl = url.parse(callback_url);
     const options = {
         hostname: parsedUrl.hostname,
         port: 443,
