@@ -27,24 +27,24 @@ const url = require('url');
 /**
  * Request handler.
  */
-exports.handler = (event, context, callback) => {
-    console.log('Received key:', event.Records[0].s3.object.key);
+exports.handler = (event) => {
+    console.log('!! logging event', event);
 
-    if(event.Records[0]['eventName'] == "ObjectCreated:Put" &&
-        event.Records[0].s3.object.key.endsWith('/tiles/')){
-        tileImage(event.Records[0].s3.bucket.name, event.Records[0].s3.object.key);
-        if(event.ResponseURL) {
-            sendResponse(event, callback, context.logStreamName, 'SUCCESS');
-        }
-    }
+    if(event.Records[0]['eventSource'] == "aws:sqs") {
 
-    if (event.RequestType === 'Create') {
-        console.log('Request type is create');
-    }
+        const requestBody = JSON.parse(event.Records[0]['body']);
+        console.log(requestBody);
+        var s3Key = requestBody['aws_key'];
 
-    if (event.RequestType === 'Update') {
-        console.log('Request type is update');
-        sendResponse(event, callback, context.logStreamName, 'SUCCESS');
+        tileImage(process.env.S3_BUCKET, s3Key);
+
+        console.log('tiled image, send ready');
+
+        sendResponse(
+            requestBody['callback_url'],
+            requestBody['callback_token'],
+            requestBody['image_number'],
+            'ready');
     }
 };
 
@@ -55,7 +55,7 @@ exports.handler = (event, context, callback) => {
  * @return {Promise} - The original image or an error.
  */
 let tileImage = async function(bucket, key) {
-    const imagesLocation = key.split('/tiles')[0]
+    const imagesLocation = key
     const uniq_key = imagesLocation.split('/').pop()
     const tmp_location = '/tmp/' + uniq_key
 
@@ -69,7 +69,7 @@ let tileImage = async function(bucket, key) {
                 console.log('err', err);
             } else {
                 console.log('successfully tiled images ' + tmp_location);
-                Promise.all(upload_recursive_dir(tmp_location + 'tiled/', bucket, key, [])).then(function(errs, data) {
+                Promise.all(upload_recursive_dir(tmp_location + 'tiled/', bucket, key + '/tiles', [])).then(function(errs, data) {
                         if (errs.length) console.log('errors ', errs);// an error occurred
                         console.log('successfully uploaded tiled images');
                     }).catch(function(exception) {
@@ -184,31 +184,25 @@ let deleteFolderRecursive = function (directory_path) {
 /**
  * Sends a response to the pre-signed S3 URL
  */
-let sendResponse = function(event, callback, logStreamName, responseStatus, responseData, customReason) {
-
-    const defaultReason = `See the details in CloudWatch Log Stream: ${logStreamName}`;
-    const reason = (customReason !== undefined) ? customReason : defaultReason;
+let sendResponse = function(url, auth_token, image_number, result) {
 
     const responseBody = JSON.stringify({
-        Status: responseStatus,
-        Reason: reason,
-        PhysicalResourceId: logStreamName,
-        StackId: event.StackId,
-        RequestId: event.RequestId,
-        LogicalResourceId: event.LogicalResourceId,
-        Data: responseData,
+        status: 201,
+        number: image_number,
+        image_status: result
     });
 
     console.log('RESPONSE BODY:\n', responseBody);
-    const parsedUrl = url.parse(event.ResponseURL);
+    const parsedUrl = url.parse(url);
     const options = {
         hostname: parsedUrl.hostname,
         port: 443,
         path: parsedUrl.path,
         method: 'PUT',
         headers: {
-            'Content-Type': '',
+            'Content-Type': 'application/json',
             'Content-Length': responseBody.length,
+            'X-Api-Token': auth_token
         }
     };
 
