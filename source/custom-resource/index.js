@@ -36,8 +36,8 @@ exports.handler = async (event, context, callback) => {
             requestBody['callback_url'],
             requestBody['callback_token'],
             requestBody['image_number'],
-            'ready',
-            context);
+            'ready');
+        return context.logStreamName;
     }
 };
 
@@ -64,8 +64,23 @@ let tileImage = async function(bucket, requestBody) {
                 Promise.all(upload_recursive_dir(tmp_location + 'tiled/', bucket, requestBody['aws_key'] + '/tiles', [])).then(function(errs, data) {
                         // if (errs.length) console.log('errors ', errs);// an error occurred
                         // console.log('successfully uploaded tiled images');
+                        // if (errs.length)  {
+                        //     console.log('errors ', errs);// an error occurred
+                        //     sendResponse(
+                        //         requestBody['callback_url'],
+                        //         requestBody['callback_token'],
+                        //         requestBody['image_number'],
+                        //         'error');
+                        // } else {
+                            // console.log('successfully uploaded tiled images');
+                            sendResponse(
+                                requestBody['callback_url'],
+                                requestBody['callback_token'],
+                                requestBody['image_number'],
+                                'ready');
+                        // }
                     }).catch(function(exception) {
-                        console.error('caught exception', exception);
+                        // console.error('caught exception', exception);
                         sendResponse(
                             requestBody['callback_url'],
                             requestBody['callback_token'],
@@ -78,7 +93,12 @@ let tileImage = async function(bucket, requestBody) {
             }
         });
     } catch(err) {
-        console.error('caught exception', err);
+        // console.error('caught exception', err);
+        sendResponse(
+                requestBody['callback_url'],
+                requestBody['callback_token'],
+                requestBody['image_number'],
+                'error');
         return Promise.reject({
             status: 500,
             code: err.code,
@@ -182,7 +202,7 @@ let deleteFolderRecursive = function (directory_path) {
 /**
  * Sends a response to the pre-signed S3 URL
  */
-let sendResponse = function(callback_url, auth_token, image_number, result, context) {
+let sendResponse = function(callback_url, auth_token, image_number, result) {
 
     const responseBody = JSON.stringify({
         number: image_number,
@@ -208,17 +228,17 @@ let sendResponse = function(callback_url, auth_token, image_number, result, cont
     let body='';
 
     let reqPost =  https.request(options, function(res) {
-        console.log("successful statusCode: ", res.statusCode);
+        console.log("webhook res: ", res.statusCode);
         res.on('data', function (chunk) {
             body += chunk;
         });
         res.on('end', function () {
            // console.log("Result", body.toString());
-           context.succeed("Sucess")
+           // context.succeed("Sucess")
         });
         res.on('error', function () {
           // console.log("Result Error", body.toString());
-          context.done(null, 'FAILURE');
+          // context.done(null, 'FAILURE');
         });
     });
     reqPost.write(responseBody);
