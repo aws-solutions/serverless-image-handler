@@ -62,23 +62,8 @@ let tileImage = async function(bucket, requestBody) {
             } else {
                 // console.log('successfully tiled images ' + tmp_location);
                 Promise.all(upload_recursive_dir(tmp_location + 'tiled/', bucket, requestBody['aws_key'] + '/tiles', [])).then(function(errs, data) {
-                        // if (errs.length) console.log('errors ', errs);// an error occurred
-                        // console.log('successfully uploaded tiled images');
-                        // if (errs.length)  {
-                        //     console.log('errors ', errs);// an error occurred
-                        //     sendResponse(
-                        //         requestBody['callback_url'],
-                        //         requestBody['callback_token'],
-                        //         requestBody['image_number'],
-                        //         'error');
-                        // } else {
-                            // console.log('successfully uploaded tiled images');
-                            sendResponse(
-                                requestBody['callback_url'],
-                                requestBody['callback_token'],
-                                requestBody['image_number'],
-                                'ready');
-                        // }
+                        if (errs.length) console.log('errors ', errs);// an error occurred
+                        console.log('successfully uploaded tiled images');
                     }).catch(function(exception) {
                         // console.error('caught exception', exception);
                         sendResponse(
