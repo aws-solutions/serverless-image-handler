@@ -19,7 +19,7 @@ const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
 const S3 = require('aws-sdk/clients/s3');
-const s3 = new S3();
+const s3 = new S3({region: 'us-east-1'});
 const sharp = require('sharp');
 const https = require('https');
 const url = require('url').URL;
@@ -31,8 +31,7 @@ exports.handler = async (event, context, callback) => {
     // console.log('!! logging event', event);
     if(event.Records[0]['eventSource'] == "aws:sqs") {
         const requestBody = JSON.parse(event.Records[0]['body']);
-        console.log('tiling: ', requestBody['aws_key'])
-        await tileImage(process.env.S3_BUCKET, requestBody, context);
+        tileImage(requestBody, context);
         sendResponse(
             requestBody['callback_url'],
             requestBody['callback_token'],
@@ -44,18 +43,19 @@ exports.handler = async (event, context, callback) => {
 
 /**
  * Gets the original image from an Amazon S3 bucket.
- * @param {String} bucket - The name of the bucket containing the image.
  * @param {String} key - The key name corresponding to the image.
  * @return {Promise} - The original image or an error.
  */
-let tileImage = async function(bucket, requestBody, context) {
+let tileImage = async function(requestBody) {
     const imagesLocation = requestBody['aws_key']
+    console.log('imagesLocation', imagesLocation)
     const uniq_key = imagesLocation.split('/').pop()
     console.log('uniq_key', uniq_key)
     const tmp_location = '/tmp/' + uniq_key
+    console.log('tmp_location', tmp_location)
+
     try {
-        const originalImage = await getOriginalImage(bucket, imagesLocation);
-        console.log('tilling original')
+        const originalImage = await getOriginalImage(imagesLocation);
         const image = sharp(originalImage);
         console.log('sharp tiled')
         const tiles = await image.png()
@@ -64,53 +64,59 @@ let tileImage = async function(bucket, requestBody, context) {
 
         console.log('outputed files sharp tiled', tmp_location + 'tiled.dz');
 
-        Promise.all(upload_recursive_dir(tmp_location + 'tiled/', bucket, imagesLocation + 'tiles/', [])).then(function(errs, data) {
+        await Promise.all(
+            upload_recursive_dir(
+                tmp_location + 'tiled/',
+                imagesLocation + '/tiles/',
+                []
+            )
+        ).then(function(errs, data) {
             if (errs.length) console.log('errors ', errs);// an error occurred
             console.log('successfully uploaded tiled images');
         }).catch(function(exception) {
             console.log('caught exception', exception);
+            sendResponse(
+                requestBody['callback_url'],
+                requestBody['callback_token'],
+                requestBody['image_number'],
+                'error');
+            throw exception;
         }).finally(function() {
             deleteFolderRecursive(tmp_location + 'tiled/');
             console.log('successfully deleted tmp files');
         });
 
     } catch(err) {
-        console.error('caught exception', err);
-        context.done(null, 'FAILURE');
+        console.log('caught exception on ' + uniq_key, err);
         sendResponse(
                 requestBody['callback_url'],
                 requestBody['callback_token'],
                 requestBody['image_number'],
                 'error');
-        return Promise.reject({
-            status: 500,
-            code: err.code,
-            message: err.message
-        })
+        throw err;
     }
 }
 
 
 /**
  * Gets the original image from an Amazon S3 bucket.
- * @param {String} bucket - The name of the bucket containing the image.
  * @param {String} key - The key name corresponding to the image.
  * @return {Promise} - The original image or an error.
  */
-let getOriginalImage = async function(bucket, imagesLocation) {
-    let images = await getImageObjects(bucket, imagesLocation);
+let getOriginalImage = async function(imagesLocation) {
+    let images = await getImageObjects(imagesLocation);
     let originalObject = images.find(isOriginal);
-    console.log('originalObject filename', originalObject.Key);
-    return downloadImage(bucket, originalObject.Key);
+    console.log('found original', originalObject.Key);
+    return downloadImage(originalObject.Key);
 }
 
 function isOriginal(fileObject) {
     return fileObject.Key.includes("/original-");
 }
 
-let getImageObjects = async function(bucket, location) {
+let getImageObjects = async function(location) {
     const request = s3.listObjects({
-        Bucket: bucket,
+        Bucket: process.env.S3_BUCKET,
         Marker: location,
         MaxKeys: 10
     }).promise();
@@ -128,8 +134,8 @@ let getImageObjects = async function(bucket, location) {
     }
 }
 
-let downloadImage = async function(bucket, key){
-    let imageLocation = { Bucket: bucket, Key: key };
+let downloadImage = async function(key){
+    let imageLocation = { Bucket: process.env.S3_BUCKET, Key: key };
     const request = s3.getObject(imageLocation).promise();
     try {
         const originalImage = await request;
@@ -146,24 +152,29 @@ let downloadImage = async function(bucket, key){
 }
 
 
-let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key, promises) {
-    console.log('uploading from ', base_tmpdir)
-    console.log('uploading to', s3_key)
+let upload_recursive_dir = function(base_tmpdir, s3_key, promises) {
+
     let files = fs.readdirSync(base_tmpdir);
-    console.log('uploading files', files)
+    // console.log('uploading files', files)
     files.forEach(function (filename) {
         let local_temp_path = base_tmpdir + filename;
         let destS3key = s3_key + filename;
         if (fs.lstatSync(local_temp_path).isDirectory()) {
-            promises = upload_recursive_dir(local_temp_path + '/', destS3Bucket, destS3key + '/', promises);
+            // console.log('adding dir', local_temp_path);
+            // console.log('adding dir to', destS3key);
+            promises = upload_recursive_dir(
+                local_temp_path + '/',
+                destS3key + '/',
+                promises);
         } else if(filename.endsWith('.xml') || filename.endsWith('.png')) {
             fs.readFile(local_temp_path, function (err, file) {
               if (err) console.log('readFile err', err); // an error occurred // an error occurred
               let params = {
-                Bucket: destS3Bucket,
+                Bucket: process.env.S3_BUCKET,
                 Key: destS3key,
                 Body: file
               }
+              // console.log('bucket ' + process.env.S3_BUCKET + ' key: ', destS3key)
               promises.push(s3.putObject(params).promise());
             });
         }
@@ -198,7 +209,7 @@ let sendResponse = function(callback_url, auth_token, image_number, result) {
 
     // console.log('RESPONSE BODY:\n', responseBody);
     const parsedUrl = new URL(callback_url);
-    // console.log('host', parsedUrl.hostname);
+    console.log('host', parsedUrl.hostname);
     const options = {
         hostname: parsedUrl.hostname,
         port: 443,
@@ -214,7 +225,7 @@ let sendResponse = function(callback_url, auth_token, image_number, result) {
     // console.log('options', options);
     let body='';
 
-    let reqPost =  https.request(options, function(res) {
+    let reqPost = https.request(options, function(res) {
         console.log("webhook res: ", res.statusCode);
         res.on('data', function (chunk) {
             body += chunk;
@@ -229,5 +240,6 @@ let sendResponse = function(callback_url, auth_token, image_number, result) {
         });
     });
     reqPost.write(responseBody);
+    console.log('written', responseBody)
     reqPost.end();
 };
