@@ -31,13 +31,14 @@ exports.handler = async (event, context, callback) => {
     // console.log('!! logging event', event);
     if(event.Records[0]['eventSource'] == "aws:sqs") {
         const requestBody = JSON.parse(event.Records[0]['body']);
-        await tileImage(process.env.S3_BUCKET, requestBody);
+        console.log('tiling: ', requestBody['aws_key'])
+        await tileImage(process.env.S3_BUCKET, requestBody, context);
         sendResponse(
             requestBody['callback_url'],
             requestBody['callback_token'],
             requestBody['image_number'],
             'ready');
-        return context.logStreamName;
+        context.succeed("Sucess");
     }
 };
 
@@ -47,38 +48,44 @@ exports.handler = async (event, context, callback) => {
  * @param {String} key - The key name corresponding to the image.
  * @return {Promise} - The original image or an error.
  */
-let tileImage = async function(bucket, requestBody) {
+let tileImage = async function(bucket, requestBody, context) {
     const imagesLocation = requestBody['aws_key']
     const uniq_key = imagesLocation.split('/').pop()
     const tmp_location = '/tmp/' + uniq_key
     try {
         const originalImage = await getOriginalImage(bucket, imagesLocation);
+        console.log('tilling original')
         const image = sharp(originalImage);
+        console.log('sharp tiled')
         const tiles = image.png().tile({
             layout: 'zoomify'
           }).toFile(tmp_location + 'tiled.dz', function(err, info) {
+            console.log('successfully tiled tmp files', info);
             if (err) {
-                // console.log('err', err);
+                console.log('err', err);
+                context.done(null, 'FAILURE');
             } else {
                 // console.log('successfully tiled images ' + tmp_location);
                 Promise.all(upload_recursive_dir(tmp_location + 'tiled/', bucket, requestBody['aws_key'] + '/tiles', [])).then(function(errs, data) {
                         if (errs.length) console.log('errors ', errs);// an error occurred
                         console.log('successfully uploaded tiled images');
                     }).catch(function(exception) {
-                        // console.error('caught exception', exception);
+                        console.error('caught exception', exception);
                         sendResponse(
                             requestBody['callback_url'],
                             requestBody['callback_token'],
                             requestBody['image_number'],
                             'error');
+                        context.done(null, 'FAILURE');
                     }).finally(function() {
                         deleteFolderRecursive(tmp_location + 'tiled/');
-                        // console.log('successfully deleted tmp files');
+                        console.log('successfully deleted tmp files');
                     });;
             }
         });
     } catch(err) {
-        // console.error('caught exception', err);
+        console.error('caught exception', err);
+        context.done(null, 'FAILURE');
         sendResponse(
                 requestBody['callback_url'],
                 requestBody['callback_token'],
@@ -102,7 +109,7 @@ let tileImage = async function(bucket, requestBody) {
 let getOriginalImage = async function(bucket, imagesLocation) {
     let images = await getImageObjects(bucket, imagesLocation);
     let originalObject = images.find(isOriginal);
-    // console.log('originalObject filename', originalObject.Key);
+    console.log('originalObject filename', originalObject.Key);
     return downloadImage(bucket, originalObject.Key);
 }
 
@@ -121,6 +128,7 @@ let getImageObjects = async function(bucket, location) {
         return Promise.resolve(imageObjects.Contents);
     }
     catch(err) {
+        console.log('failed to getImageObjects', err)
         return Promise.reject({
             status: 500,
             code: err.code,
@@ -137,6 +145,7 @@ let downloadImage = async function(bucket, key){
         return Promise.resolve(originalImage.Body);
     }
     catch(err) {
+        console.log('failed to downloadImage', err)
         return Promise.reject({
             status: 500,
             code: err.code,
@@ -218,11 +227,11 @@ let sendResponse = function(callback_url, auth_token, image_number, result) {
             body += chunk;
         });
         res.on('end', function () {
-           // console.log("Result", body.toString());
+           console.log("Result", body.toString());
            // context.succeed("Sucess")
         });
         res.on('error', function () {
-          // console.log("Result Error", body.toString());
+          console.log("Result Error", body.toString());
           // context.done(null, 'FAILURE');
         });
     });
