@@ -51,38 +51,29 @@ exports.handler = async (event, context, callback) => {
 let tileImage = async function(bucket, requestBody, context) {
     const imagesLocation = requestBody['aws_key']
     const uniq_key = imagesLocation.split('/').pop()
+    console.log('uniq_key', uniq_key)
     const tmp_location = '/tmp/' + uniq_key
     try {
         const originalImage = await getOriginalImage(bucket, imagesLocation);
         console.log('tilling original')
         const image = sharp(originalImage);
         console.log('sharp tiled')
-        const tiles = image.png().tile({
-            layout: 'zoomify'
-          }).toFile(tmp_location + 'tiled.dz', function(err, info) {
-            console.log('successfully tiled tmp files', info);
-            if (err) {
-                console.log('err', err);
-                context.done(null, 'FAILURE');
-            } else {
-                // console.log('successfully tiled images ' + tmp_location);
-                Promise.all(upload_recursive_dir(tmp_location + 'tiled/', bucket, requestBody['aws_key'] + '/tiles', [])).then(function(errs, data) {
-                        if (errs.length) console.log('errors ', errs);// an error occurred
-                        console.log('successfully uploaded tiled images');
-                    }).catch(function(exception) {
-                        console.error('caught exception', exception);
-                        sendResponse(
-                            requestBody['callback_url'],
-                            requestBody['callback_token'],
-                            requestBody['image_number'],
-                            'error');
-                        context.done(null, 'FAILURE');
-                    }).finally(function() {
-                        deleteFolderRecursive(tmp_location + 'tiled/');
-                        console.log('successfully deleted tmp files');
-                    });;
-            }
+        const tiles = await image.png()
+                                .tile({ layout: 'zoomify'})
+                                .toFile(tmp_location + 'tiled.dz')
+
+        console.log('outputed files sharp tiled', tmp_location + 'tiled.dz');
+
+        Promise.all(upload_recursive_dir(tmp_location + 'tiled/', bucket, imagesLocation + 'tiles/', [])).then(function(errs, data) {
+            if (errs.length) console.log('errors ', errs);// an error occurred
+            console.log('successfully uploaded tiled images');
+        }).catch(function(exception) {
+            console.log('caught exception', exception);
+        }).finally(function() {
+            deleteFolderRecursive(tmp_location + 'tiled/');
+            console.log('successfully deleted tmp files');
         });
+
     } catch(err) {
         console.error('caught exception', err);
         context.done(null, 'FAILURE');
@@ -156,8 +147,10 @@ let downloadImage = async function(bucket, key){
 
 
 let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key, promises) {
+    console.log('uploading from ', base_tmpdir)
+    console.log('uploading to', s3_key)
     let files = fs.readdirSync(base_tmpdir);
-
+    console.log('uploading files', files)
     files.forEach(function (filename) {
         let local_temp_path = base_tmpdir + filename;
         let destS3key = s3_key + filename;
@@ -165,7 +158,7 @@ let upload_recursive_dir = function(base_tmpdir, destS3Bucket, s3_key, promises)
             promises = upload_recursive_dir(local_temp_path + '/', destS3Bucket, destS3key + '/', promises);
         } else if(filename.endsWith('.xml') || filename.endsWith('.png')) {
             fs.readFile(local_temp_path, function (err, file) {
-              // if (err) console.log('readFile err', err); // an error occurred // an error occurred
+              if (err) console.log('readFile err', err); // an error occurred // an error occurred
               let params = {
                 Bucket: destS3Bucket,
                 Key: destS3key,
