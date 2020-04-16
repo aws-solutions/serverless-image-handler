@@ -18,8 +18,7 @@
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
-const S3 = require('aws-sdk/clients/s3');
-const s3 = new S3({region: 'us-east-1'});
+const s3 = new AWS.S3();
 const sharp = require('sharp');
 const https = require('https');
 const url = require('url').URL;
@@ -27,17 +26,31 @@ const url = require('url').URL;
 /**
  * Request handler.
  */
-exports.handler = async (event, context, callback) => {
+exports.handler = async (event, context) => {
     // console.log('!! logging event', event);
     if(event.Records[0]['eventSource'] == "aws:sqs") {
         const requestBody = JSON.parse(event.Records[0]['body']);
-        tileImage(requestBody, context);
-        sendResponse(
-            requestBody['callback_url'],
-            requestBody['callback_token'],
-            requestBody['image_number'],
-            'ready');
-        context.succeed("Sucess");
+        console.log('tiling', requestBody)
+        try {
+            let result = await tileImage(requestBody['aws_key']);
+            console.log('tiled image:', result);
+            sendResponse(
+                requestBody['callback_url'],
+                requestBody['callback_token'],
+                requestBody['image_number'],
+                'ready');
+            context.succeed("Success");
+        } catch(err) {
+            console.log('caught exception', err);
+            // console.log('processing:', requestBody);
+            sendResponse(
+                    requestBody['callback_url'],
+                    requestBody['callback_token'],
+                    requestBody['image_number'],
+                    'error');
+            context.done(null, 'FAILURE')
+        }
+
     }
 };
 
@@ -46,55 +59,39 @@ exports.handler = async (event, context, callback) => {
  * @param {String} key - The key name corresponding to the image.
  * @return {Promise} - The original image or an error.
  */
-let tileImage = async function(requestBody) {
-    const imagesLocation = requestBody['aws_key']
+let tileImage = async function(aws_key) {
+    const imagesLocation = aws_key
     console.log('imagesLocation', imagesLocation)
     const uniq_key = imagesLocation.split('/').pop()
     console.log('uniq_key', uniq_key)
     const tmp_location = '/tmp/' + uniq_key
     console.log('tmp_location', tmp_location)
 
-    try {
-        const originalImage = await getOriginalImage(imagesLocation);
-        const image = sharp(originalImage);
-        console.log('sharp tiled')
-        const tiles = await image.png()
-                                .tile({ layout: 'zoomify'})
-                                .toFile(tmp_location + 'tiled.dz')
+    const originalImage = await getOriginalImage(imagesLocation);
+    const image = sharp(originalImage);
+    console.log('sharp tiled')
 
-        console.log('outputed files sharp tiled', tmp_location + 'tiled.dz');
+    const tiles = await image.png()
+                            .tile({ layout: 'zoomify'})
+                            .toFile(tmp_location + 'tiled.dz')
 
-        await Promise.all(
-            upload_recursive_dir(
-                tmp_location + 'tiled/',
-                imagesLocation + '/tiles/',
-                []
-            )
-        ).then(function(errs, data) {
-            if (errs.length) console.log('errors ', errs);// an error occurred
-            console.log('successfully uploaded tiled images');
-        }).catch(function(exception) {
-            console.log('caught exception', exception);
-            sendResponse(
-                requestBody['callback_url'],
-                requestBody['callback_token'],
-                requestBody['image_number'],
-                'error');
-            throw exception;
-        }).finally(function() {
-            deleteFolderRecursive(tmp_location + 'tiled/');
-            console.log('successfully deleted tmp files');
-        });
-
-    } catch(err) {
-        console.log('caught exception on ' + uniq_key, err);
-        sendResponse(
-                requestBody['callback_url'],
-                requestBody['callback_token'],
-                requestBody['image_number'],
-                'error');
-        throw err;
-    }
+    return Promise.all(
+        upload_recursive_dir(
+            tmp_location + 'tiled/',
+            imagesLocation + '/tiles/',
+            []
+        )
+    ).then(function(errs, data) {
+        if (errs.length) console.log('errors ', errs);// an error occurred
+        console.log('successfully uploaded tiled images');
+        return true;
+    }).catch(function(exception) {
+        console.log('throwing exception to be caught above', exception);
+        throw exception;
+    }).finally(function() {
+        deleteFolderRecursive(tmp_location + 'tiled/');
+        console.log('successfully deleted tmp files');
+    });
 }
 
 
@@ -201,13 +198,12 @@ let deleteFolderRecursive = function (directory_path) {
  * Sends a response to the pre-signed S3 URL
  */
 let sendResponse = function(callback_url, auth_token, image_number, result) {
-
-    const responseBody = JSON.stringify({
+    const callbackBody = JSON.stringify({
         number: image_number,
         image_status: result
     });
 
-    // console.log('RESPONSE BODY:\n', responseBody);
+    // console.log('RESPONSE BODY:\n', callbackBody);
     const parsedUrl = new URL(callback_url);
     console.log('host', parsedUrl.hostname);
     const options = {
@@ -217,7 +213,7 @@ let sendResponse = function(callback_url, auth_token, image_number, result) {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
-            'Content-Length': responseBody.length,
+            'Content-Length': callbackBody.length,
             'X-Api-Token': auth_token
         }
     };
@@ -232,14 +228,12 @@ let sendResponse = function(callback_url, auth_token, image_number, result) {
         });
         res.on('end', function () {
            console.log("Result", body.toString());
-           // context.succeed("Sucess")
         });
         res.on('error', function () {
           console.log("Result Error", body.toString());
-          // context.done(null, 'FAILURE');
         });
     });
-    reqPost.write(responseBody);
-    console.log('written', responseBody)
+    reqPost.write(callbackBody);
+    console.log('written', callbackBody)
     reqPost.end();
 };
