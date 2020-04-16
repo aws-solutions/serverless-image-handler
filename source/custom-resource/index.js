@@ -41,7 +41,7 @@ exports.handler = async (event, context) => {
                 message_body['image_number'],
                 'ready', context);
         } catch(err) {
-            console.log('caught exception', err);
+            console.log('caught tiling exception', err);
             return sendCallbackResponse(
                     message_body['callback_url'],
                     message_body['callback_token'],
@@ -61,7 +61,6 @@ let tileImage = async function(message_body) {
     const imagesLocation = message_body['aws_key']
     console.log('imagesLocation', imagesLocation)
     const uniq_key = imagesLocation.split('/').pop()
-    console.log('uniq_key', uniq_key)
     const tmp_location = '/tmp/' + uniq_key
     console.log('tmp_location', tmp_location)
 
@@ -195,10 +194,10 @@ let deleteFolderRecursive = function (directory_path) {
  * Sends a response to the API webhook
  */
 let sendCallbackResponse = function(callback_url, auth_token, image_number, result, context) {
-    console.log('sending to ', callback_url)
+    console.log('sending callback to ', callback_url)
     return axios({
         url: callback_url,
-        timeout: 1000,
+        timeout: 2000,
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -209,7 +208,7 @@ let sendCallbackResponse = function(callback_url, auth_token, image_number, resu
             image_status: result
         }
     }).then(function (response) {
-        console.log('completed callback', response);
+        console.log('callback result sent: ', result)
         if (result == 'ready'){
             return context.succeed("Success");
         } else {
@@ -217,7 +216,7 @@ let sendCallbackResponse = function(callback_url, auth_token, image_number, resu
         }
       })
       .catch(function (error) {
-        console.error('callback failed', error);
+        console.error('API callback failed', error);
         return context.done(null, 'FAILURE');
       });
 };
