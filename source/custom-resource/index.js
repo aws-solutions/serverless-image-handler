@@ -35,14 +35,14 @@ exports.handler = async (event, context) => {
         try {
             await tileImage(message_body);
             console.log('sending callback to Sake');
-            sendCallbackResponse(
+            return sendCallbackResponse(
                 message_body['callback_url'],
                 message_body['callback_token'],
                 message_body['image_number'],
                 'ready', context);
         } catch(err) {
             console.log('caught exception', err);
-            sendCallbackResponse(
+            return sendCallbackResponse(
                     message_body['callback_url'],
                     message_body['callback_token'],
                     message_body['image_number'],
@@ -195,14 +195,13 @@ let deleteFolderRecursive = function (directory_path) {
  * Sends a response to the API webhook
  */
 let sendCallbackResponse = function(callback_url, auth_token, image_number, result, context) {
-
-    axios({
+    console.log('sending to ', callback_url)
+    return axios({
         url: callback_url,
         timeout: 1000,
-        method: 'POST',
+        method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
-            'Content-Length': callbackBody.length,
             'X-Api-Token': auth_token
         },
         data:  {
@@ -211,7 +210,7 @@ let sendCallbackResponse = function(callback_url, auth_token, image_number, resu
         }
     }).then(function (response) {
         console.log('completed callback', response);
-        if (message == 'ready'){
+        if (result == 'ready'){
             return context.succeed("Success");
         } else {
             return context.done(null, 'FAILURE');
