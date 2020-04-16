@@ -20,8 +20,9 @@ const fs = require('fs');
 const path = require('path');
 const s3 = new AWS.S3();
 const sharp = require('sharp');
-const https = require('https');
-const url = require('url').URL;
+// const https = require('https');
+// const url = require('url').URL;
+const axios = require('axios');
 
 /**
  * Request handler.
@@ -194,47 +195,30 @@ let deleteFolderRecursive = function (directory_path) {
  * Sends a response to the API webhook
  */
 let sendCallbackResponse = function(callback_url, auth_token, image_number, result, context) {
-    const callbackBody = JSON.stringify({
-        number: image_number,
-        image_status: result
-    });
 
-    const parsedUrl = new URL(callback_url);
-    const options = {
-        hostname: parsedUrl.hostname,
-        port: 443,
-        path: '/webhooks/tiled_images',
-        method: 'PUT',
+    axios({
+        url: callback_url,
+        timeout: 1000,
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Content-Length': callbackBody.length,
             'X-Api-Token': auth_token
+        },
+        data:  {
+            number: image_number,
+            image_status: result
         }
-    };
-
-    let reqPost = https.request(options, function(res) {
-        console.log("webhook statusCode: ", res.statusCode);
-
-        res.on('data', function (chunk) {
-            console.log('data chunk:', chunk);
-        });
-
-    });
-
-    reqPost.on('error', function (err) {
-      console.error("Result Error", err);
-      context.done(null, 'FAILURE');
-    });
-
-    reqPost.on('end', function () {
-        console.log('sent: ', callbackBody);
+    }).then(function (response) {
+        console.log('completed callback', response);
         if (message == 'ready'){
-            context.succeed("Success");
+            return context.succeed("Success");
         } else {
-            context.done(null, 'FAILURE');
+            return context.done(null, 'FAILURE');
         }
-    });
-
-    reqPost.write(callbackBody);
-    reqPost.end();
+      })
+      .catch(function (error) {
+        console.error('callback failed', error);
+        return context.done(null, 'FAILURE');
+      });
 };
