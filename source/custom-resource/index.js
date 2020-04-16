@@ -34,20 +34,18 @@ exports.handler = async (event, context) => {
         try {
             await tileImage(message_body);
             console.log('sending callback to Sake');
-            await sendCallbackResponse(
+            sendCallbackResponse(
                 message_body['callback_url'],
                 message_body['callback_token'],
                 message_body['image_number'],
-                'ready');
-            context.succeed("Success");
+                'ready', context);
         } catch(err) {
             console.log('caught exception', err);
-            await sendCallbackResponse(
+            sendCallbackResponse(
                     message_body['callback_url'],
                     message_body['callback_token'],
                     message_body['image_number'],
-                    'error');
-            context.done(null, 'FAILURE');
+                    'error', context);
         }
 
     }
@@ -195,7 +193,7 @@ let deleteFolderRecursive = function (directory_path) {
 /**
  * Sends a response to the API webhook
  */
-let sendCallbackResponse = async function(callback_url, auth_token, image_number, result) {
+let sendCallbackResponse = function(callback_url, auth_token, image_number, result, context) {
     const callbackBody = JSON.stringify({
         number: image_number,
         image_status: result
@@ -221,17 +219,22 @@ let sendCallbackResponse = async function(callback_url, auth_token, image_number
             console.log('data chunk:', chunk);
         });
 
-        res.on('end', function () {
-           console.log("Result", body.toString());
-        });
-
-        res.on('error', function () {
-          console.log("Result Error", body.toString());
-        });
-
     });
 
-    await reqPost.write(callbackBody);
-    console.log('sent: ', callbackBody)
+    reqPost.on('error', function (err) {
+      console.error("Result Error", err);
+      context.done(null, 'FAILURE');
+    });
+
+    reqPost.on('end', function () {
+        console.log('sent: ', callbackBody);
+        if (message == 'ready'){
+            context.succeed("Success");
+        } else {
+            context.done(null, 'FAILURE');
+        }
+    });
+
+    reqPost.write(callbackBody);
     reqPost.end();
 };
