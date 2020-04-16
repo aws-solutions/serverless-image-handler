@@ -29,26 +29,25 @@ const url = require('url').URL;
 exports.handler = async (event, context) => {
     // console.log('!! logging event', event);
     if(event.Records[0]['eventSource'] == "aws:sqs") {
-        const requestBody = JSON.parse(event.Records[0]['body']);
-        console.log('tiling', requestBody)
+        const message_body = JSON.parse(event.Records[0]['body']);
+        console.log('tiling', message_body)
         try {
-            let result = await tileImage(requestBody['aws_key']);
-            console.log('tiled image:', result);
-            sendResponse(
-                requestBody['callback_url'],
-                requestBody['callback_token'],
-                requestBody['image_number'],
+            await tileImage(message_body);
+            console.log('sending callback to Sake');
+            await sendCallbackResponse(
+                message_body['callback_url'],
+                message_body['callback_token'],
+                message_body['image_number'],
                 'ready');
             context.succeed("Success");
         } catch(err) {
             console.log('caught exception', err);
-            // console.log('processing:', requestBody);
-            sendResponse(
-                    requestBody['callback_url'],
-                    requestBody['callback_token'],
-                    requestBody['image_number'],
+            await sendCallbackResponse(
+                    message_body['callback_url'],
+                    message_body['callback_token'],
+                    message_body['image_number'],
                     'error');
-            context.done(null, 'FAILURE')
+            context.done(null, 'FAILURE');
         }
 
     }
@@ -59,8 +58,8 @@ exports.handler = async (event, context) => {
  * @param {String} key - The key name corresponding to the image.
  * @return {Promise} - The original image or an error.
  */
-let tileImage = async function(aws_key) {
-    const imagesLocation = aws_key
+let tileImage = async function(message_body) {
+    const imagesLocation = message_body['aws_key']
     console.log('imagesLocation', imagesLocation)
     const uniq_key = imagesLocation.split('/').pop()
     console.log('uniq_key', uniq_key)
@@ -69,7 +68,7 @@ let tileImage = async function(aws_key) {
 
     const originalImage = await getOriginalImage(imagesLocation);
     const image = sharp(originalImage);
-    console.log('sharp tiled')
+    console.log('split image into local tiles with sharp')
 
     const tiles = await image.png()
                             .tile({ layout: 'zoomify'})
@@ -84,7 +83,6 @@ let tileImage = async function(aws_key) {
     ).then(function(errs, data) {
         if (errs.length) console.log('errors ', errs);// an error occurred
         console.log('successfully uploaded tiled images');
-        return true;
     }).catch(function(exception) {
         console.log('throwing exception to be caught above', exception);
         throw exception;
@@ -195,17 +193,15 @@ let deleteFolderRecursive = function (directory_path) {
 };
 
 /**
- * Sends a response to the pre-signed S3 URL
+ * Sends a response to the API webhook
  */
-let sendResponse = function(callback_url, auth_token, image_number, result) {
+let sendCallbackResponse = async function(callback_url, auth_token, image_number, result) {
     const callbackBody = JSON.stringify({
         number: image_number,
         image_status: result
     });
 
-    // console.log('RESPONSE BODY:\n', callbackBody);
     const parsedUrl = new URL(callback_url);
-    console.log('host', parsedUrl.hostname);
     const options = {
         hostname: parsedUrl.hostname,
         port: 443,
@@ -218,22 +214,24 @@ let sendResponse = function(callback_url, auth_token, image_number, result) {
         }
     };
 
-    // console.log('options', options);
-    let body='';
-
     let reqPost = https.request(options, function(res) {
-        console.log("webhook res: ", res.statusCode);
+        console.log("webhook statusCode: ", res.statusCode);
+
         res.on('data', function (chunk) {
-            body += chunk;
+            console.log('data chunk:', chunk);
         });
+
         res.on('end', function () {
            console.log("Result", body.toString());
         });
+
         res.on('error', function () {
           console.log("Result Error", body.toString());
         });
+
     });
-    reqPost.write(callbackBody);
-    console.log('written', callbackBody)
+
+    await reqPost.write(callbackBody);
+    console.log('sent: ', callbackBody)
     reqPost.end();
 };
