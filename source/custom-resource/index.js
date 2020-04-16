@@ -214,9 +214,5 @@ let sendCallbackResponse = function(callback_url, auth_token, image_number, resu
         } else {
             return context.done(null, 'FAILURE');
         }
-      })
-      .catch(function (error) {
-        console.error('API callback failed', error);
-        return context.done(null, 'FAILURE');
       });
 };
