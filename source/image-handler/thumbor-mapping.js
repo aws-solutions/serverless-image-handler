@@ -30,11 +30,12 @@ class ThumborMapping {
     process(event) {
         // Setup
         this.path = event.path;
-        const edits = this.path.split('/');
+        const edits = this.path.split('/').slice(0, -1)
         const filetype = (this.path.split('.'))[(this.path.split('.')).length - 1];
 
         // Process the Dimensions
-        const dimPath = this.path.match(/[^\/]\d+x\d+/g);
+        const dimPath = edits.join('/').match(/[^\/]\d+x\d+/g)
+
         if (dimPath) {
             const dims = dimPath[0].split('x');
             // Set only if the dimensions provided are valid

@@ -185,8 +185,10 @@ class ImageRequest {
             return decoded.key;
         }
 
-        if (requestType === "Thumbor" || requestType === "Custom") {
-            return decodeURIComponent(event["path"].replace(/\d+x\d+\/|filters[:-][^/;]+|\/fit-in\/+|^\/+/g,'').replace(/^\/+/,''));
+        if (requestType === "Thumbor" || requestType === "Custom") {            
+            const splitPath = event['path'].split('/')
+            const encoded = splitPath[splitPath.length - 1]
+            return decodeURIComponent(encoded)
         }
 
         // Return an error for all other conditions
