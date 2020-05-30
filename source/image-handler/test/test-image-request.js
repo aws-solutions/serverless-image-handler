@@ -59,7 +59,7 @@ describe('setup()', function() {
             the ImageRequest object with the proper values`, async function() {
             // Arrange
             const event = {
-                path : "/filters:grayscale()/test-image-001-300x200.jpg"
+                path : "/filters:grayscale()/uploads%2Ftest-image-001-300x200.jpg"
             }
             process.env = {
                 SOURCE_BUCKETS : "allowedBucket001, allowedBucket002"
@@ -68,7 +68,7 @@ describe('setup()', function() {
             const S3 = require('aws-sdk/clients/s3');
             const sinon = require('sinon');
             const getObject = S3.prototype.getObject = sinon.stub();
-            getObject.withArgs({Bucket: 'allowedBucket001', Key: 'test-image-001-300x200.jpg'}).returns({
+            getObject.withArgs({Bucket: 'allowedBucket001', Key: 'uploads/test-image-001-300x200.jpg'}).returns({
                 promise: () => { return {
                     Body: Buffer.from('SampleImageContent\n')
                 }}
@@ -79,7 +79,7 @@ describe('setup()', function() {
             const expectedResult = {
                 requestType: 'Thumbor',
                 bucket: 'allowedBucket001',
-                key: 'test-image-001-300x200.jpg',
+                key: 'uploads/test-image-001-300x200.jpg',
                 edits: { grayscale: true },
                 originalImage: Buffer.from('SampleImageContent\n'),
                 CacheControl: 'max-age=31536000,public',
