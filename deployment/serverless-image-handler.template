@@ -36,6 +36,11 @@
             "Default" : "No",
             "Type" : "String",
             "AllowedValues" : [ "Yes", "No" ]
+        },
+        "SignatureKey" : {
+            "Description" : "If you would like to use signed URLs, please specify a secret signature key here. Signature key will be used to validate base64 payloads.",
+            "Default" : "",
+            "Type" : "String"
         }
     },
     "Metadata": {
@@ -390,6 +395,9 @@
                         },
                         "SOURCE_BUCKETS" : {
                             "Ref" : "SourceBuckets"
+                        },
+                        "SIGNATURE_KEY": {
+                            "Ref" : "SignatureKey"
                         },
                         "REWRITE_MATCH_PATTERN" : "",
                         "REWRITE_SUBSTITUTION" : ""
@@ -846,6 +854,10 @@
             "Condition" : "EnableCorsCondition",
             "Description" : "Origin value returned in the Access-Control-Allow-Origin header of image handler API responses.",
             "Value" : { "Ref" : "CorsOrigin" }
+        },
+        "SignatureKey" : {
+            "Description" : "Key used to sign URLs.",
+            "Value" : { "Ref" : "SignatureKey" }
         },
         "LogRetentionPeriod" : {
             "Description" : "Number of days for event logs from Lambda to be retained in CloudWatch.",

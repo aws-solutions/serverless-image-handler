@@ -641,6 +641,25 @@ describe('decodeRequest()', function() {
             });
         });
     });
+    describe('004/signedPath', function() {
+        it(`Should throw an error if signature is invalid`, function() {
+            // Arrange
+            process.env = {
+                SIGNATURE_KEY : "mySecretKey"
+            }
+            const path = 'eyJlZGl0cyI6eyJncmF5c2NhbGUiOiJ0cnVlIiwicm90YXRlIjo5MCwiZmxpcCI6InRydWUifX0--invalid-signature'
+            // Act
+            const imageRequest = new ImageRequest();
+            // Assert
+            assert.throws(function() {
+                imageRequest.decodeRequest(event);
+            }, Object, {
+                status: 400,
+                code: 'DecodeRequest::CannotReadPath',
+                message: 'The URL path you provided could not be read. Please ensure that it is properly formed according to the solution documentation.'
+            });
+        });
+    });
 });
 
 // ----------------------------------------------------------------------------
@@ -752,6 +771,89 @@ describe('getOutputFormat()', function () {
             var result = imageRequest.getOutputFormat(event);
             // Assert
             assert.deepEqual(result, null);
+        });
+    });
+});
+
+// ----------------------------------------------------------------------------
+// verifySignature()
+// ----------------------------------------------------------------------------
+
+describe('verifySignature()', function() {
+    describe('001/noSignatureKey', function() {
+        it(`Should pass if a valid base64-encoded path has been specified`, function() {
+            // Arrange
+            const path = 'eyJidWNrZXQiOiJidWNrZXQtbmFtZS1oZXJlIiwia2V5Ijoia2V5LW5hbWUtaGVyZSJ9'
+
+            // Act
+            const imageRequest = new ImageRequest();
+            const result = imageRequest.verifySignature(path);
+
+            // Assert
+            const expectedResult = 'eyJidWNrZXQiOiJidWNrZXQtbmFtZS1oZXJlIiwia2V5Ijoia2V5LW5hbWUtaGVyZSJ9'
+            assert.deepEqual(result, expectedResult);
+        });
+    });
+
+    describe('002/validSignature', function() {
+        it(`Should pass if a valid signature has been specified`, function() {
+            // Arrange
+            process.env = {
+                SIGNATURE_KEY : "mySecretKey"
+            }
+            const path = 'eyJidWNrZXQiOiJidWNrZXQtbmFtZS1oZXJlIiwia2V5Ijoia2V5LW5hbWUtaGVyZSJ9--640b43f6c1fede17c301b23338b4eb4d7d462ce6'
+
+            // Act
+            const imageRequest = new ImageRequest();
+            const result = imageRequest.verifySignature(path);
+
+            // Assert
+            const expectedResult = 'eyJidWNrZXQiOiJidWNrZXQtbmFtZS1oZXJlIiwia2V5Ijoia2V5LW5hbWUtaGVyZSJ9'
+            assert.deepEqual(result, expectedResult);
+        });
+    });
+
+    describe('003/invalidSignature', function() {
+        it(`Should throw an error if an invalid signature has been specified`, function() {
+            // Arrange
+            process.env = {
+                SIGNATURE_KEY : "mySecretKey"
+            }
+            const path = 'eyJlZGl0cyI6eyJncmF5c2NhbGUiOiJ0cnVlIiwicm90YXRlIjo5MCwiZmxpcCI6InRydWUifX0--640b43f6c1fede17c301b23338b4eb4d7d462ce6'
+
+            // Act
+            const imageRequest = new ImageRequest();
+
+            // Assert
+            assert.throws(function() {
+                imageRequest.verifySignature(path);
+            }, Object, {
+                status: 400,
+                code: 'DecodeRequest::InvalidSignature',
+                message: 'The signature you provided could not be verified.'
+            });
+        });
+    });
+
+    describe('004/noSignature', function() {
+        it(`Should throw an error if signature has not been specified`, function() {
+            // Arrange
+            process.env = {
+                SIGNATURE_KEY : "mySecretKey"
+            }
+            const path = 'eyJlZGl0cyI6eyJncmF5c2NhbGUiOiJ0cnVlIiwicm90YXRlIjo5MCwiZmxpcCI6InRydWUifX0'
+
+            // Act
+            const imageRequest = new ImageRequest();
+
+            // Assert
+            assert.throws(function() {
+                imageRequest.verifySignature(path);
+            }, Object, {
+                status: 400,
+                code: 'DecodeRequest::MissingSignature',
+                message: 'The signature is missing.'
+            });
         });
     });
 });

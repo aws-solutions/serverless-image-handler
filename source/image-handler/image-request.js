@@ -207,7 +207,7 @@ class ImageRequest {
     parseRequestType(event) {
         const path = event["path"];
         // ----
-        const matchDefault = new RegExp(/^(\/?)([0-9a-zA-Z+\/]{4})*(([0-9a-zA-Z+\/]{2}==)|([0-9a-zA-Z+\/]{3}=))?$/);
+        const matchDefault = new RegExp(/^(\/?)([0-9a-zA-Z+\/]{4})*(([0-9a-zA-Z+\/]{2}==)|([0-9a-zA-Z+\/]{3}=))?(--([0-9a-zA-Z]{1,}))?$/);
         const matchThumbor = new RegExp(/^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(.+jpg|.+png|.+webp|.+tiff|.+jpeg)$/i);
         const matchCustom = new RegExp(/(\/?)(.*)(jpg|png|webp|tiff|jpeg)/i);
         const definedEnvironmentVariables = (
@@ -242,7 +242,8 @@ class ImageRequest {
         if (path !== undefined) {
             const splitPath = path.split("/");
             const encoded = splitPath[splitPath.length - 1];
-            const toBuffer = Buffer.from(encoded, 'base64');
+            const verifiedPath = this.verifySignature(encoded);
+            const toBuffer = Buffer.from(verifiedPath, 'base64');
             try {
                 // To support European characters, 'ascii' was removed.
                 return JSON.parse(toBuffer.toString());
@@ -296,6 +297,48 @@ class ImageRequest {
         }
 
         return null;
+    }
+
+    /**
+     * Verifies base64 signature, using SIGNATURE_KEY env var. If SIGNATURE_KEY
+     * isn't provided, it doesn't do anything. Returns base64 path without the
+     * signature part.
+     * @param {String} path - base64-encoded URL path.
+     */
+    verifySignature(path) {
+      const signKey = process.env.SIGNATURE_KEY;
+      if (signKey === undefined) {
+        return path;
+      }
+
+      const crypto = require('crypto');
+      const bufferEq = require('buffer-equal-constant-time');
+
+      const splitPath = path.split("--");
+      const base64 = splitPath[0];
+      const providedSignature = splitPath[1];
+
+      if (providedSignature === undefined) {
+        throw ({
+            status: 400,
+            code: 'DecodeRequest::MissingSignature',
+            message: 'The signature is missing.'
+        });
+      }
+
+      const signature = crypto.createHmac("sha1", signKey).update(base64).digest("hex");
+      const signatureBuffer = Buffer.from(signature.toString('base64'));
+      const providedSignatureBuffer = Buffer.from(providedSignature);
+
+      if (bufferEq(signatureBuffer, providedSignatureBuffer)) {
+        return base64;
+      }
+
+      throw ({
+          status: 400,
+          code: 'DecodeRequest::InvalidSignature',
+          message: 'The signature you provided could not be verified.'
+      });
     }
 }
 
