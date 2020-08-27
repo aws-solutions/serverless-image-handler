@@ -12,6 +12,7 @@
  *********************************************************************************************************************/
 
 const ThumborMapping = require('./thumbor-mapping');
+const fetch = require("node-fetch");
 
 class ImageRequest {
 
@@ -26,7 +27,17 @@ class ImageRequest {
             this.bucket = this.parseImageBucket(event, this.requestType);
             this.key = this.parseImageKey(event, this.requestType);
             this.edits = this.parseImageEdits(event, this.requestType);
-            this.originalImage = await this.getOriginalImage(this.bucket, this.key);
+
+            if (!this.key) {
+                const decoded = this.decodeRequest(event);
+                const url = new URL(decoded.sourceImageUrl);
+                this.originalImage = await this.getOriginalImage(this.bucket, url.pathname.replace(/^\/+/g, ''));
+                if (!this.originalImage) {
+                    this.originalImage = await this.getImageFromUrl(event);
+                }
+            } else {
+                this.originalImage = await this.getOriginalImage(this.bucket, this.key);
+            }
 
             /* Decide the output format of the image.
              * 1) If the format is provided, the output format is the provided format.
@@ -97,11 +108,7 @@ class ImageRequest {
 
             return Promise.resolve(originalImage.Body);
         } catch(err) {
-            return Promise.reject({
-                status: ('NoSuchKey' === err.code) ? 404 : 500,
-                code: err.code,
-                message: err.message
-            });
+            return Promise.resolve(null);
         }
     }
 
@@ -170,6 +177,24 @@ class ImageRequest {
                 message: 'The edits you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance.'
             });
         }
+    }
+
+    /**
+     * Get image from url and store it in the store bucket.
+     *
+     * @param event
+     * @returns {Promise<*>}
+     */
+    async getImageFromUrl(event) {
+        const decoded = this.decodeRequest(event);
+        const url = new URL(decoded.sourceImageUrl);
+
+        const res = await fetch(decoded.sourceImageUrl)
+        const buffer = await res.buffer()
+        const S3 = require('aws-sdk/clients/s3');
+        const s3 = new S3();
+        s3.putObject({Bucket: this.bucket, Key: url.pathname.replace(/^\/+/g, ''), Body: buffer}).promise();
+        return buffer;
     }
 
     /**
