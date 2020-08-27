@@ -31,6 +31,7 @@ class ImageRequest {
             if (!this.key) {
                 const decoded = this.decodeRequest(event);
                 const url = new URL(decoded.sourceImageUrl);
+                this.isImageInAllowedDomains(url);
                 this.originalImage = await this.getOriginalImage(this.bucket, url.pathname.replace(/^\/+/g, ''));
                 if (!this.originalImage) {
                     this.originalImage = await this.getImageFromUrl(event);
@@ -176,6 +177,31 @@ class ImageRequest {
                 code: 'ImageEdits::CannotParseEdits',
                 message: 'The edits you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance.'
             });
+        }
+    }
+
+    /**
+     * Is the image from url is in the allowed domains config.
+     * @param url
+     */
+    isImageInAllowedDomains(url) {
+        const allowedDomains = process.env.IMAGE_URL_ALLOWED_DOMAINS;
+        if (allowedDomains === undefined) {
+            throw ({
+                status: 400,
+                code: 'GetAllowedDomainImageUrls::NoAllowedImageUrlDomains',
+                message: 'The IMAGE_URL_ALLOWED_DOMAINS variable could not be read. Please check that it is not empty and contains at least one domain, or multiple domains separated by commas. Spaces can be provided between commas and domains, these will be automatically parsed out when decoding.'
+            });
+        } else {
+            const formatted = allowedDomains.replace(/\s+/g, '');
+            const domains = formatted.split(',');
+            if (!domains.includes(url.hostname)) {
+                throw ({
+                    status: 400,
+                    code: 'NotAllowedDomainImageUrls::NoAllowedDomain',
+                    message: 'The domain of the image url is not allowed please add it to the config IMAGE_URL_ALLOWED_DOMAINS.'
+                });
+            }
         }
     }
 
