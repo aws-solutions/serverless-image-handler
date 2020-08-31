@@ -7,44 +7,84 @@ Published version, additional details and documentation are available here: http
 
 _Note:_ it is recommend to build the application binary on Amazon Linux.
 
-## Building distributable for customization
-* Clone the repository, then make the desired code changes
+## On This Page
+- [Architecture Overview](#architecture-overview)
+- [Creating a custom build](#creating-a-custom-build)
+- [External Contributors](#external-contributors)
+- [License](#license)
+
+## Architecture Overview
+![Architecture](architecture.jpeg)
+
+The AWS CloudFormation template deploys an Amazon CloudFront distribution, Amazon API Gateway REST API, and an AWS Lambda function. Amazon CloudFront provides a caching layer to reduce the cost of image processing and the latency of subsequent image delivery. The Amazon API Gateway provides endpoint resources and triggers the AWS Lambda function. The AWS Lambda function retrieves the image from the customer's Amazon Simple Storage Service (Amazon S3) bucket and uses Sharp to return a modified version of the image to the API Gateway. Additionally, the solution generates a CloudFront domain name that provides cached access to the image handler API.
+
+_**Note**:_ From v5.0, all AWS CloudFormation template resources are created be [AWS CDK](https://aws.amazon.com/cdk/) and [AWS Solutions Constructs](https://aws.amazon.com/solutions/constructs/). Since the AWS CloudFormation template resources have the same logical ID comparing to v4.x, it makes the solution upgradable mostly from v4.x to v5.
+
+## Creating a custom build
+The solution can be deployed through the CloudFormation template available on the solution home page.
+To make changes to the solution, download or clone this repo, update the source code and then run the deployment/build-s3-dist.sh script to deploy the updated Lambda code to an Amazon S3 bucket in your account.
+
+### Prerequisites:
+* [AWS Command Line Interface](https://aws.amazon.com/cli/)
+* Node.js 12.x or later
+
+### 1. Clone the repository
 ```bash
 git clone https://github.com/awslabs/serverless-image-handler.git
 ```
 
-* Run unit tests to make sure added customization passes the tests:
-```
+### 2. Run unit tests for customization
+Run unit tests to make sure added customization passes the tests:
+```bash
 cd ./deployment
 chmod +x ./run-unit-tests.sh
 ./run-unit-tests.sh
 ```
 
-* Create an Amazon S3 Bucket
-```
-aws s3 mb s3://my-bucket-us-east-1 --region us-east-1
+### 3. Declare environment variables
+```bash
+export REGION=aws-region-code # the AWS region to launch the solution (e.g. us-east-1)
+export DIST_OUTPUT_BUCKET=my-bucket-name # bucket where customized code will reside
+export SOLUTION_NAME=my-solution-name # the solution name
+export VERSION=my-version # version number for the customized code
 ```
 
-* Navigate to the deployment folder and build the distributable
+### 4. Create an Amazon S3 Bucket
+The CloudFormation template is configured to pull the Lambda deployment packages from Amazon S3 bucket in the region the template is being launched in. Create a bucket in the desired region with the region name appended to the name of the bucket.
+```bash
+aws s3 mb s3://$DIST_OUTPUT_BUCKET-$REGION --region $REGION
+```
+
+### 5. Create the deployment packages
+Build the distributable:
 ```bash
 chmod +x ./build-s3-dist.sh
-./build-s3-dist.sh my-bucket serverless-image-handler my-version
+./build-s3-dist.sh $DIST_OUTPUT_BUCKET $SOLUTION_NAME $VERSION
 ```
 
-> Note: The build-s3-dist script expects the bucket name as one of its parameters, and this value should not include the region suffix.
-
-* Deploy the distributable to an Amazon S3 bucket in your account (you must have the AWS CLI installed)
+Deploy the distributable to the Amazon S3 bucket in your account:
 ```bash
-aws s3 cp ./regional-s3-assets/ s3://my-bucket-us-east-1/serverless-image-handler/my-version/ --recursive --acl bucket-owner-full-control
+aws s3 sync ./regional-s3-assets/ s3://$DIST_OUTPUT_BUCKET-$REGION/$SOLUTION_NAME/$VERSION/ --recursive --acl bucket-owner-full-control
+aws s3 sync ./global-s3-assets/ s3://$DIST_OUTPUT_BUCKET-$REGION/$SOLUTION_NAME/$VERSION/ --recursive --acl bucket-owner-full-control
 ```
 
-* Get the link of the serverless-image-handler.template uploaded to your Amazon S3 bucket
+### 6. Launch the CloudFormation template.
+* Get the link of the `serverless-image-handler.template` uploaded to your Amazon S3 bucket.
+* Deploy the Serverless Image Handler solution to your account by launching a new AWS CloudFormation stack using the S3 link of the `serverless-image-handler.template`.
 
-* Deploy the Serverless Image Handler solution to your account by launching a new AWS CloudFormation stack using the link of the serverless-image-handler.template
+## External Contributors
+- [@leviwilson](https://github.com/leviwilson) for [#117](https://github.com/awslabs/serverless-image-handler/pull/117)
+- [@rpong](https://github.com/rpong) for [#130](https://github.com/awslabs/serverless-image-handler/pull/130)
+- [@harriswong](https://github.com/harriswong) for [#138](https://github.com/awslabs/serverless-image-handler/pull/138)
+- [@ganey](https://github.com/ganey) for [#139](https://github.com/awslabs/serverless-image-handler/pull/139)
+- [@browniebroke](https://github.com/browniebroke) for [#151](https://github.com/awslabs/serverless-image-handler/pull/151), [#152](https://github.com/awslabs/serverless-image-handler/pull/152)
+- [@john-shaffer](https://github.com/john-shaffer) for [#158](https://github.com/awslabs/serverless-image-handler/pull/158)
+- [@toredash](https://github.com/toredash) for [#174](https://github.com/awslabs/serverless-image-handler/pull/174), [#195](https://github.com/awslabs/serverless-image-handler/pull/195)
+- [@lith-imad](https://github.com/lith-imad) for [#194](https://github.com/awslabs/serverless-image-handler/pull/194)
 
 ***
-
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+## License
+Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

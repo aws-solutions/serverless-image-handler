@@ -5,7 +5,7 @@
     "author": {
         "name": "aws-solutions-builder"
     },
-    "version": "0.0.1",
+    "version": "5.0.0",
     "private": true,
     "dependencies": {
         "moment": "^2.24.0",
@@ -14,12 +14,12 @@
     },
     "devDependencies": {
         "aws-sdk": "*",
-        "chai": "*",
-        "sinon": "*",
-        "sinon-chai": "*",
-        "mocha": "*",
         "aws-sdk-mock": "*",
-        "npm-run-all": "*"
+        "chai": "*",
+        "mocha": "^8.1.1",
+        "npm-run-all": "*",
+        "sinon": "*",
+        "sinon-chai": "*"
     },
     "scripts": {
         "pretest": "npm install",

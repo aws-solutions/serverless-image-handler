@@ -1,0 +1,58 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "ServerlessImageHandler"
+  },
+  "basePath": "/image",
+  "schemes": [ "https" ],
+  "paths": {
+    "/{proxy+}": {
+      "x-amazon-apigateway-any-method": {
+        "produces": [ "application/json" ],
+        "parameters": [
+          {
+            "name": "proxy",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {},
+        "x-amazon-apigateway-integration": {
+          "responses": {
+              "default": { "statusCode": "200" }
+          },
+          "uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:aws:apigateway:",
+                {
+                    "Ref": "AWS::Region"
+                },
+                ":",
+                "lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "ImageHandlerFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          },
+          "passthroughBehavior": "when_no_match",
+          "httpMethod": "POST",
+          "cacheNamespace": "xh7gp9",
+          "cacheKeyParameters": [ "method.request.path.proxy" ],
+          "contentHandling": "CONVERT_TO_TEXT",
+          "type": "aws_proxy"
+        }
+      }
+    }
+  },
+  "x-amazon-apigateway-binary-media-types": [
+    "*/*"
+  ]
+}

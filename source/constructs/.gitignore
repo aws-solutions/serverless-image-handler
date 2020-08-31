@@ -1,0 +1,13 @@
+*.js
+!jest.config.js
+!issue-fixer/index.js
+*.d.ts
+node_modules
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# Parcel build directories
+.cache
+.build

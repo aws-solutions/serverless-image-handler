@@ -15,7 +15,6 @@
 
 console.log('Loading function');
 
-const AWS = require('aws-sdk');
 const https = require('https');
 const url = require('url');
 const moment = require('moment');
@@ -201,6 +200,41 @@ exports.handler = (event, context, callback) => {
                 sendResponse(event, callback, context.logStreamName, responseStatus, responseData, responseData.Error);
             });
 
+        } else if (event.ResourceProperties.customAction === 'createUuid') {
+            responseStatus = 'SUCCESS';
+            responseData = {
+                UUID: uuidv4()
+            };
+            sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
+        } else if (event.ResourceProperties.customAction === 'sendMetric') {
+            responseStatus = 'SUCCESS';
+
+            if (event.ResourceProperties.anonymousData === 'Yes') {
+                let _metric = {
+                    Solution: event.ResourceProperties.solutionId,
+                    UUID: event.ResourceProperties.UUID,
+                    TimeStamp: moment().utc().format('YYYY-MM-DD HH:mm:ss.S'),
+                    Data: {
+                        Version: event.ResourceProperties.version,
+                        Updated: moment().utc().format()
+                    }
+                };
+
+                let _usageMetrics = new UsageMetrics();
+                _usageMetrics.sendAnonymousMetric(_metric).then((data) => {
+                    console.log(data);
+                    console.log('Annonymous metrics successfully sent.');
+                    sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
+                }).catch((err) => {
+                    responseData = {
+                        Error: 'Sending anonymous delete metric failed'
+                    };
+                    console.log([responseData.Error, ':\n', err].join(''));
+                    sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
+                });
+            } else {
+                sendResponse(event, callback, context.logStreamName, 'SUCCESS');
+            }
         } else {
             sendResponse(event, callback, context.logStreamName, 'SUCCESS');
         }

@@ -1,6 +1,6 @@
 Serverless Image Handler
 
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 **********************
 THIRD PARTY COMPONENTS

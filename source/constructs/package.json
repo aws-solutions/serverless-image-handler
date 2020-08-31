@@ -1,0 +1,37 @@
+{
+  "name": "constructs",
+  "description": "Serverless Image Handler Constructs",
+  "version": "5.0.0",
+  "license": "Apache-2.0",
+  "bin": {
+    "constructs": "bin/constructs.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "export BUCKET_NAME=TEST && export SOLUTION_NAME=serverless-image-handler && export VERSION=TEST_VERSION && jest",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@aws-cdk/assert": "1.57.0",
+    "@types/jest": "^26.0.8",
+    "@types/node": "^12.12.53",
+    "aws-cdk": "1.57.0",
+    "jest": "^25.5.4",
+    "ts-jest": "^25.5.1",
+    "ts-node": "^8.10.2",
+    "typescript": "~3.9.6"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-apigateway": "1.57.0",
+    "@aws-cdk/aws-cloudfront": "1.57.0",
+    "@aws-cdk/aws-iam": "1.57.0",
+    "@aws-cdk/aws-lambda": "1.57.0",
+    "@aws-cdk/aws-s3": "1.57.0",
+    "@aws-cdk/core": "1.57.0",
+    "@aws-solutions-constructs/aws-apigateway-lambda": "1.57.0",
+    "@aws-solutions-constructs/aws-cloudfront-apigateway-lambda": "1.57.0",
+    "@aws-solutions-constructs/aws-cloudfront-s3": "1.57.0",
+    "@aws-solutions-constructs/core": "1.57.0"
+  }
+}
