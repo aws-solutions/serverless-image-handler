@@ -48,7 +48,7 @@ export VERSION=$3
 
 cd $source_dir/constructs
 npm install
-npm run build && cdk synth --asset-metadata false --path-metadata false --version-reporting false --json true > serverless-image-handler.json
+npm run build && cdk synth --asset-metadata false --path-metadata false --json true > serverless-image-handler.json
 mv serverless-image-handler.json $template_dist_dir/serverless-image-handler.template
 
 echo "------------------------------------------------------------------------------"
