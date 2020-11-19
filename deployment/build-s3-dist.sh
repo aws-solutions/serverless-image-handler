@@ -76,6 +76,7 @@ cp dist/custom-resource.zip $build_dist_dir/custom-resource.zip
 echo "------------------------------------------------------------------------------"
 echo "Generate the demo-ui manifest document"
 echo "------------------------------------------------------------------------------"
-cd $template_dir/manifest-generator
-npm install
-node app.js --target ../../source/demo-ui --output $build_dist_dir/demo-ui-manifest.json
+cd $source_dir/demo-ui
+manifest=(`find * -type f ! -iname ".DS_Store"`)
+manifest_json=$(IFS=,;printf "%s" "${manifest[*]}")
+echo "{\"files\":[\"$manifest_json\"]}" | sed 's/,/","/g' >> $build_dist_dir/demo-ui-manifest.json

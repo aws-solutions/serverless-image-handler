@@ -1,37 +1,28 @@
 {
-    "name": "ui-framework-helper",
-    "description": "UI Framework custom resource helper Lambda function",
+    "name": "custom-resource",
+    "description": "Serverless Image Handler custom resource",
     "main": "index.js",
     "author": {
         "name": "aws-solutions-builder"
     },
-    "version": "5.0.0",
+    "version": "5.1.0",
     "private": true,
     "dependencies": {
-        "moment": "^2.24.0",
-        "uuid": "^3.3.3",
-        "usage-metrics": "file:lib/usage-metrics/"
+        "axios": "^0.20.0",
+        "uuid": "^8.3.0"
     },
     "devDependencies": {
-        "aws-sdk": "*",
-        "aws-sdk-mock": "*",
-        "chai": "*",
-        "mocha": "^8.1.1",
-        "npm-run-all": "*",
-        "sinon": "*",
-        "sinon-chai": "*"
+        "aws-sdk": "2.712.0",
+        "axios-mock-adapter": "^1.18.2",
+        "jest": "^26.4.2"
     },
     "scripts": {
-        "pretest": "npm install",
-        "test": "mocha lib/*.spec.js",
+        "pretest": "npm run build:init && npm install",
+        "test": "jest test/*.spec.js --coverage --silent",
         "build:init": "rm -rf dist && rm -rf node_modules",
         "build:zip": "zip -rq custom-resource.zip .",
         "build:dist": "mkdir dist && mv custom-resource.zip dist/",
         "build": "npm run build:init && npm install --production && npm run build:zip && npm run build:dist"
     },
-    "bundledDependencies": [
-        "moment",
-        "uuid"
-    ],
     "license": "Apache-2.0"
 }

@@ -1,288 +1,458 @@
-/*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
- *                                                                                                                    *
- *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
- *  with the License. A copy of the License is located at                                                             *
- *                                                                                                                    *
- *      http://www.apache.org/licenses/LICENSE-2.0                                                                    *
- *                                                                                                                    *
- *  or in the 'license' file accompanying this file. This file is distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES *
- *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
- *  and limitations under the License.                                                                                *
- *********************************************************************************************************************/
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
-'use strict';
+const AWS = require('aws-sdk');
+const axios = require('axios');
+const uuid = require('uuid');
 
-console.log('Loading function');
-
-const https = require('https');
-const url = require('url');
-const moment = require('moment');
-const S3Helper = require('./lib/s3-helper.js');
-const UsageMetrics = require('./lib/usage-metrics');
-const uuidv4 = require('uuid/v4');
+const s3 = new AWS.S3();
+const secretsManager = new AWS.SecretsManager();
+const METRICS_ENDPOINT = 'https://metrics.awssolutionsbuilder.com/generic';
 
 /**
  * Request handler.
  */
-exports.handler = (event, context, callback) => {
+exports.handler = async (event, context) => {
     console.log('Received event:', JSON.stringify(event, null, 2));
 
-    let responseStatus = 'FAILED';
-    let responseData = {};
+    const properties = event.ResourceProperties;
+    let response = {
+        status: 'SUCCESS',
+        data: {}
+    };
 
-    if (event.RequestType === 'Delete') {
-        if (event.ResourceProperties.customAction === 'sendMetric') {
-            responseStatus = 'SUCCESS';
-
-            if (event.ResourceProperties.anonymousData === 'Yes') {
-                let _metric = {
-                    Solution: event.ResourceProperties.solutionId,
-                    UUID: event.ResourceProperties.UUID,
-                    TimeStamp: moment().utc().format('YYYY-MM-DD HH:mm:ss.S'),
-                    Data: {
-                        Version: event.ResourceProperties.version,
-                        Deleted: moment().utc().format()
-                    }
-                };
-
-                let _usageMetrics = new UsageMetrics();
-                _usageMetrics.sendAnonymousMetric(_metric).then((data) => {
-                    console.log(data);
-                    console.log('Annonymous metrics successfully sent.');
-                    sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-                }).catch((err) => {
-                    responseData = {
-                        Error: 'Sending anonymous delete metric failed'
+    try {
+        switch (properties.customAction) {
+            case 'sendMetric':
+                if (properties.anonymousData === 'Yes') {
+                    const anonymousProperties = {
+                        SolutionId: properties.solutionId,
+                        UUID: properties.UUID,
+                        Version: properties.version,
+                        EnableSignature: properties.enableSignature,
+                        EnableDefaultFallbackImage: properties.enableDefaultFallbackImage,
+                        Type: event.RequestType
                     };
-                    console.log([responseData.Error, ':\n', err].join(''));
-                    sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-                });
-            } else {
-                sendResponse(event, callback, context.logStreamName, 'SUCCESS');
-            }
 
-        } else {
-            sendResponse(event, callback, context.logStreamName, 'SUCCESS');
+                    response.data = await sendAnonymousUsage(anonymousProperties);
+                }
+                break;
+            case 'putConfigFile':
+                if (['Create', 'Update'].includes(event.RequestType)) {
+                    const { configItem, destS3Bucket, destS3key } = properties;
+                    response.data = await putConfigFile(configItem, destS3Bucket, destS3key);
+                }
+                break;
+            case 'copyS3assets':
+                if (['Create', 'Update'].includes(event.RequestType)) {
+                    const { manifestKey, sourceS3Bucket, sourceS3key, destS3Bucket } = properties;
+                    response.data = await copyAssets(manifestKey, sourceS3Bucket, sourceS3key, destS3Bucket);
+                }
+                break;
+            case 'createUuid':
+                if (['Create', 'Update'].includes(event.RequestType)) {
+                    response.data = { UUID: uuid.v4() };
+                }
+                break;
+            case 'checkSourceBuckets':
+                if (['Create', 'Update'].includes(event.RequestType)) {
+                    const { sourceBuckets } = properties;
+                    response.data = await validateBuckets(sourceBuckets);
+                }
+                break;
+            case 'checkSecretsManager':
+                if (['Create', 'Update'].includes(event.RequestType)) {
+                    const { secretsManagerName, secretsManagerKey } = properties;
+                    response.data = await checkSecretsManager(secretsManagerName, secretsManagerKey);
+                }
+                break;
+            case 'checkFallbackImage':
+                if (['Create', 'Update'].includes(event.RequestType)) {
+                    const { fallbackImageS3Bucket, fallbackImageS3Key } = properties;
+                    response.data = await checkFallbackImage(fallbackImageS3Bucket, fallbackImageS3Key);
+                }
+                break;
+            default:
+                break;
         }
+    } catch (error) {
+        console.error(`Error occurred at ${event.RequestType}::${properties.customAction}`, error);
+        response = {
+          status: 'FAILED',
+          data: {
+            Error: {
+                code: error.code ? error.code : 'CustomResourceError',
+                message: error.message ? error.message : 'Custom resource error occurred.'
+            }
+          }
+        }
+    } finally {
+        await sendResponse(event, context.logStreamName, response);
     }
 
-    if (event.RequestType === 'Create') {
-        if (event.ResourceProperties.customAction === 'putConfigFile') {
-            let _s3Helper = new S3Helper();
-            console.log(event.ResourceProperties.configItem);
-            _s3Helper.putConfigFile(event.ResourceProperties.configItem, event.ResourceProperties.destS3Bucket, event.ResourceProperties.destS3key).then((data) => {
-                responseStatus = 'SUCCESS';
-                responseData = setting;
-                sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-            }).catch((err) => {
-                responseData = {
-                    Error: `Saving config file to ${event.ResourceProperties.destS3Bucket}/${event.ResourceProperties.destS3key} failed`
-                };
-                console.log([responseData.Error, ':\n', err].join(''));
-                sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-            });
-
-        } else if (event.ResourceProperties.customAction === 'copyS3assets') {
-            let _s3Helper = new S3Helper();
-
-            _s3Helper.copyAssets(event.ResourceProperties.manifestKey,
-                event.ResourceProperties.sourceS3Bucket, event.ResourceProperties.sourceS3key,
-                event.ResourceProperties.destS3Bucket).then((data) => {
-                responseStatus = 'SUCCESS';
-                responseData = {};
-                sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-            }).catch((err) => {
-                responseData = {
-                    Error: `Copy of website assets failed`
-                };
-                console.log([responseData.Error, ':\n', err].join(''));
-                sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-            });
-
-        } else if (event.ResourceProperties.customAction === 'createUuid') {
-            responseStatus = 'SUCCESS';
-            responseData = {
-                UUID: uuidv4()
-            };
-            sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-
-        } else if (event.ResourceProperties.customAction === 'checkSourceBuckets') {
-            let _s3Helper = new S3Helper();
-
-            _s3Helper.validateBuckets(event.ResourceProperties.sourceBuckets).then((data) => {
-                responseStatus = 'SUCCESS';
-                responseData = {};
-                sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-            }).catch((err) => {
-                responseData = {
-                    Error: `Could not find the following source bucket(s) in your account: ${err}. Please specify at least one source bucket that exists within your account and try again. If specifying multiple source buckets, please ensure that they are comma-separated.`
-                };
-                console.log(responseData.Error);
-                sendResponse(event, callback, context.logStreamName, responseStatus, responseData, responseData.Error);
-            });
-
-        } else if (event.ResourceProperties.customAction === 'sendMetric') {
-            if (event.ResourceProperties.anonymousData === 'Yes') {
-                let _metric = {
-                    Solution: event.ResourceProperties.solutionId,
-                    UUID: event.ResourceProperties.UUID,
-                    TimeStamp: moment().utc().format('YYYY-MM-DD HH:mm:ss.S'),
-                    Data: {
-                        Version: event.ResourceProperties.version,
-                        Launch: moment().utc().format()
-                    }
-                };
-
-                let _usageMetrics = new UsageMetrics();
-                _usageMetrics.sendAnonymousMetric(_metric).then((data) => {
-                    console.log(data);
-                    console.log('Annonymous metrics successfully sent.');
-                }).catch((err) => {
-                    console.log(`Sending anonymous launch metric failed: ${err}`);
-                });
-
-                sendResponse(event, callback, context.logStreamName, 'SUCCESS', {});
-            } else {
-                sendResponse(event, callback, context.logStreamName, 'SUCCESS');
-            }
-
-        } else {
-            sendResponse(event, callback, context.logStreamName, 'SUCCESS');
-        }
-    }
-
-    if (event.RequestType === 'Update') {
-        if (event.ResourceProperties.customAction === 'copyS3assets') {
-            let _s3Helper = new S3Helper();
-
-            _s3Helper.copyAssets(event.ResourceProperties.manifestKey,
-                event.ResourceProperties.sourceS3Bucket, event.ResourceProperties.sourceS3key,
-                event.ResourceProperties.destS3Bucket).then((data) => {
-                responseStatus = 'SUCCESS';
-                responseData = {};
-                sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-            }).catch((err) => {
-                responseData = {
-                    Error: `Copy of website assets failed`
-                };
-                console.log([responseData.Error, ':\n', err].join(''));
-                sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-            });
-
-        } else if (event.ResourceProperties.customAction === 'putConfigFile') {
-            let _s3Helper = new S3Helper();
-            console.log(event.ResourceProperties.configItem);
-            _s3Helper.putConfigFile(event.ResourceProperties.configItem, event.ResourceProperties.destS3Bucket, event.ResourceProperties.destS3key).then((data) => {
-                responseStatus = 'SUCCESS';
-                responseData = setting;
-                sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-            }).catch((err) => {
-                responseData = {
-                    Error: `Saving config file to ${event.ResourceProperties.destS3Bucket}/${event.ResourceProperties.destS3key} failed`
-                };
-                console.log([responseData.Error, ':\n', err].join(''));
-                sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-            });
-
-        } else if (event.ResourceProperties.customAction === 'checkSourceBuckets') {
-            let _s3Helper = new S3Helper();
-
-            _s3Helper.validateBuckets(event.ResourceProperties.sourceBuckets).then((data) => {
-                responseStatus = 'SUCCESS';
-                responseData = {};
-                sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-            }).catch((err) => {
-                responseData = {
-                    Error: `Could not find the following source bucket(s) in your account: ${err}. Please specify at least one source bucket that exists within your account and try again. If specifying multiple source buckets, please ensure that they are comma-separated.`
-                };
-                console.log(responseData.Error);
-                sendResponse(event, callback, context.logStreamName, responseStatus, responseData, responseData.Error);
-            });
-
-        } else if (event.ResourceProperties.customAction === 'createUuid') {
-            responseStatus = 'SUCCESS';
-            responseData = {
-                UUID: uuidv4()
-            };
-            sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-        } else if (event.ResourceProperties.customAction === 'sendMetric') {
-            responseStatus = 'SUCCESS';
-
-            if (event.ResourceProperties.anonymousData === 'Yes') {
-                let _metric = {
-                    Solution: event.ResourceProperties.solutionId,
-                    UUID: event.ResourceProperties.UUID,
-                    TimeStamp: moment().utc().format('YYYY-MM-DD HH:mm:ss.S'),
-                    Data: {
-                        Version: event.ResourceProperties.version,
-                        Updated: moment().utc().format()
-                    }
-                };
-
-                let _usageMetrics = new UsageMetrics();
-                _usageMetrics.sendAnonymousMetric(_metric).then((data) => {
-                    console.log(data);
-                    console.log('Annonymous metrics successfully sent.');
-                    sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-                }).catch((err) => {
-                    responseData = {
-                        Error: 'Sending anonymous delete metric failed'
-                    };
-                    console.log([responseData.Error, ':\n', err].join(''));
-                    sendResponse(event, callback, context.logStreamName, responseStatus, responseData);
-                });
-            } else {
-                sendResponse(event, callback, context.logStreamName, 'SUCCESS');
-            }
-        } else {
-            sendResponse(event, callback, context.logStreamName, 'SUCCESS');
-        }
-    }
-};
+    return response;
+}
 
 /**
  * Sends a response to the pre-signed S3 URL
+ * @param {object} event - Custom resource event
+ * @param {string} logStreamName - Custom resource log stream name
+ * @param {object} response - Response object { status: "SUCCESS|FAILED", data: any }
  */
-let sendResponse = function(event, callback, logStreamName, responseStatus, responseData, customReason) {
-
-    const defaultReason = `See the details in CloudWatch Log Stream: ${logStreamName}`;
-    const reason = (customReason !== undefined) ? customReason : defaultReason;
+async function sendResponse(event, logStreamName, response) {
+    let reason = `See the details in CloudWatch Log Stream: ${logStreamName}`;
+    if (response.status === 'FAILED') {
+        reason = `[${response.data.Error.code}] ${reason}`;
+    }
 
     const responseBody = JSON.stringify({
-        Status: responseStatus,
+        Status: response.status,
         Reason: reason,
-        PhysicalResourceId: event.LogicalResourceId,
+        PhysicalResourceId: logStreamName,
         StackId: event.StackId,
         RequestId: event.RequestId,
         LogicalResourceId: event.LogicalResourceId,
-        Data: responseData,
+        Data: response.data,
     });
 
-    console.log('RESPONSE BODY:\n', responseBody);
-    const parsedUrl = url.parse(event.ResponseURL);
-    const options = {
-        hostname: parsedUrl.hostname,
-        port: 443,
-        path: parsedUrl.path,
-        method: 'PUT',
+    console.log(`RESPONSE BODY: ${responseBody}`);
+
+    const config = {
         headers: {
             'Content-Type': '',
-            'Content-Length': responseBody.length,
+            'Content-Length': responseBody.length
         }
     };
 
-    const req = https.request(options, (res) => {
-        console.log('STATUS:', res.statusCode);
-        console.log('HEADERS:', JSON.stringify(res.headers));
-        callback(null, 'Successfully sent stack response!');
-    });
+    return await axios.put(event.ResponseURL, responseBody, config);
+}
 
-    req.on('error', (err) => {
-        console.log('sendResponse Error:\n', err);
-        callback(err);
-    });
+/**
+ * Sends anonymous usage.
+ * @param {object} properties - Anonymous properties object { SolutionId: string, UUID: string, Version: String, Type: "Create|Update|Delete" }
+ * @return {Promise} - Promise mesage object
+ */
+async function sendAnonymousUsage(properties) {
+    const config = {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    };
+    const data = {
+        Solution: properties.SolutionId,
+        TimeStamp: `${new Date().toISOString().replace(/T/, ' ')}`,
+        UUID: properties.UUID,
+        Version: properties.Version,
+        Data: {
+            Region: process.env.AWS_REGION,
+            Type: properties.Type,
+            EnableSignature: properties.EnableSignature,
+            EnableDefaultFallbackImage: properties.EnableDefaultFallbackImage
+        }
+    };
 
-    req.write(responseBody);
-    req.end();
-};
+    try {
+        await axios.post(METRICS_ENDPOINT, data, config);
+        return {
+            Message: 'Anonymous data was sent successfully.',
+            Data: data
+        };
+    } catch (error) {
+        console.error('Error to send anonymous usage.');
+        return {
+            Message: 'Anonymous data was sent failed.',
+            Data: data
+        };
+    }
+}
+
+/**
+ * Checks if AWS Secrets Manager secret is valid.
+ * @param {string} secretName AWS Secrets Manager secret name
+ * @param {string} secretKey AWS Secrets Manager secret's key name
+ * @return {Promise} ARN of the AWS Secrets Manager secret
+ */
+async function checkSecretsManager(secretName, secretKey) {
+    if (!secretName || secretName.replace(/\s/g, '') === '') {
+        throw {
+            code: 'SecretNotProvided',
+            message: 'You need to provide AWS Secrets Manager secert.'
+        };
+    }
+    if (!secretKey || secretKey.replace(/\s/g, '') === '') {
+        throw {
+            code: 'SecretKeyNotProvided',
+            message: 'You need to provide AWS Secrets Manager secert key.'
+        };
+    }
+
+    const retryCount = 3;
+    let arn = '';
+
+    for (let retry = 1; retry <= retryCount; retry++) {
+        try {
+            const response = await secretsManager.getSecretValue({ SecretId: secretName }).promise();
+            const secretString = JSON.parse(response.SecretString);
+
+            if (secretString[secretKey] === undefined) {
+                throw {
+                    code: 'SecretKeyNotFound',
+                    message: `AWS Secrets Manager secret requries ${secretKey} key.`
+                };
+            }
+
+            arn = response.ARN;
+            break;
+        } catch (error) {
+            if (retry === retryCount) {
+                console.error(`AWS Secrets Manager secret or signature might not exist: ${secretName}/${secretKey}`);
+                throw error;
+            } else {
+                console.log('Waiting for retry...');
+                await sleep(retry);
+            }
+        }
+    }
+
+    return {
+        Message: 'Secrets Manager validated.',
+        ARN: arn
+    };
+}
+
+/**
+ * Puts the config file into S3 bucket.
+ * @param {string} config The config of the config file
+ * @param {string} bucket Bucket to put the config file
+ * @param {string} objectKey The config file key
+ * @return {Promise} Result of the putting config file
+ */
+async function putConfigFile(config, bucket, objectKey) {
+    console.log(`Attempting to save content blob destination location: ${bucket}/${objectKey}`);
+    console.log(JSON.stringify(config, null, 2));
+
+    let content = `'use strict';\n\nconst appVariables = {\nCONTENT\n};`;
+    let stringBuilder = [];
+
+    for (let key in config) {
+        stringBuilder.push(`${key}: '${config[key]}'`);
+    }
+    content = stringBuilder.length > 0 ? content.replace('CONTENT', stringBuilder.join(',\n')) : content.replace('CONTENT', '');
+
+    const retryCount = 3;
+    const params = {
+        Bucket: bucket,
+        Body: content,
+        Key: objectKey,
+        ContentType: getContentType(objectKey)
+    };
+
+    for (let retry = 1; retry <= retryCount; retry++) {
+        try {
+            await s3.putObject(params).promise();
+            break;
+        } catch (error) {
+            if (retry === retryCount || error.code !== 'AccessDenied') {
+                console.error(`Error creating ${bucket}/${objectKey} content`, error);
+                throw {
+                    code: 'ConfigFileCreationFailure',
+                    message: `Saving config file to ${bucket}/${objectKey} failed.`
+                };
+            } else {
+                console.log('Waiting for retry...');
+                await sleep(retry);
+            }
+        }
+    }
+
+    return {
+        Message: 'Config file uploaded.',
+        Content: content
+    };
+}
+
+/**
+ * Copies assets from the source S3 bucket to the destination S3 bucket.
+ * @param {string} manifestKey Assets manifest key
+ * @param {string} sourceS3Bucket Source S3 bucket
+ * @param {string} sourceS3prefix Source S3 prefix
+ * @param {string} destS3Bucket Destination S3 bucket
+ * @return {Promise} The result of copying assets
+ */
+async function copyAssets(manifestKey, sourceS3Bucket, sourceS3prefix, destS3Bucket) {
+    console.log(`source bucket: ${sourceS3Bucket}`);
+    console.log(`source prefix: ${sourceS3prefix}`);
+    console.log(`destination bucket: ${destS3Bucket}`);
+
+    const retryCount = 3;
+    let manifest = {};
+
+    // Download manifest
+    for (let retry = 1; retry <= retryCount; retry++) {
+        try {
+            const params = {
+                Bucket: sourceS3Bucket,
+                Key: manifestKey
+            };
+            const response = await s3.getObject(params).promise();
+            manifest = JSON.parse(response.Body.toString());
+
+            break;
+        } catch (error) {
+            if (retry === retryCount || error.code !== 'AccessDenied') {
+                console.error('Error occurred while getting manifest file.', error);
+                throw {
+                    code: 'GetManifestFailure',
+                    message: 'Copy of website assets failed.'
+                };
+            } else {
+                console.log('Waiting for retry...');
+                await sleep(retry);
+            }
+        }
+    }
+
+    // Copy asset files
+    let promises = [];
+    try {
+        for (let filename of manifest.files) {
+            const params = {
+                Bucket: destS3Bucket,
+                CopySource: `${sourceS3Bucket}/${sourceS3prefix}/${filename}`,
+                Key: filename,
+                ContentType: getContentType(filename)
+            };
+            promises.push(s3.copyObject(params).promise());
+        }
+
+        if (promises.length > 0) {
+            await Promise.all(promises);
+        }
+
+        return {
+            Message: 'Copy assets completed.',
+            Manifest: manifest
+        };
+    } catch (error) {
+        console.error('Error occurred while copying assets.', error);
+        throw {
+            code: 'CopyAssetsFailure',
+            message: 'Copy of website assets failed.'
+        };
+    }
+}
+
+/**
+ * Gets content type by file name.
+ * @param {string} filename - File name
+ * @return {string} - Content type
+ */
+function getContentType(filename) {
+    let contentType = '';
+    if (filename.endsWith('.html')) {
+        contentType = 'text/html';
+    } else if (filename.endsWith('.css')) {
+        contentType = 'text/css';
+    } else if (filename.endsWith('.png')) {
+        contentType = 'image/png';
+    } else if (filename.endsWith('.svg')) {
+        contentType = 'image/svg+xml';
+    } else if (filename.endsWith('.jpg')) {
+        contentType = 'image/jpeg';
+    } else if (filename.endsWith('.js')) {
+        contentType = 'application/javascript';
+    } else {
+        contentType = 'binary/octet-stream';
+    }
+    return contentType;
+}
+
+/**
+ * Validates if buckets exist in the account.
+ * @param {string} buckets Comma-separated bucket names
+ * @return {Promise} The result of validation
+ */
+async function validateBuckets(buckets) {
+    buckets = buckets.replace(/\s/g, '');
+    console.log(`Attempting to check if the following buckets exist: ${buckets}`);
+    const checkBuckets = buckets.split(',');
+    const errorBuckets = [];
+
+    for (let bucket of checkBuckets) {
+        const params = { Bucket: bucket };
+        try {
+            await s3.headBucket(params).promise();
+            console.log(`Found bucket: ${bucket}`);
+        } catch (error) {
+            console.error(`Could not find bucket: ${bucket}`);
+            console.error(error);
+            errorBuckets.push(bucket);
+        }
+    }
+
+    if (errorBuckets.length === 0) {
+        return { Message: 'Buckets validated.' };
+    } else {
+        throw {
+            code: 'BucketNotFound',
+            message: `Could not find the following source bucket(s) in your account: ${errorBuckets.join(',')}. Please specify at least one source bucket that exists within your account and try again. If specifying multiple source buckets, please ensure that they are comma-separated.`
+        };
+    }
+}
+
+/**
+ *
+ * @param {string} bucket - Bucket name to check if key exists
+ * @param {string} key - Key to check if it exists in the bucket
+ * @return {Promise} The result of validation
+ */
+async function checkFallbackImage(bucket, key) {
+    if (!bucket || bucket.replace(/\s/g, '') === '') {
+        throw {
+            code: 'S3BucketNotProvided',
+            message: 'You need to provide the default fallback image bucket.'
+        };
+    }
+    if (!key || key.replace(/\s/g, '') === '') {
+        throw {
+            code: 'S3KeyNotProvided',
+            message: 'You need to provide the default fallback image object key.'
+        };
+    }
+
+    const retryCount = 3;
+    let data = {};
+
+    for (let retry = 1; retry <= retryCount; retry++) {
+        try {
+            data = await s3.headObject({ Bucket: bucket, Key: key }).promise();
+            break;
+        } catch (error) {
+            if (retry === retryCount || !['AccessDenied', 'Forbidden'].includes(error.code)) {
+                console.error(`Either the object does not exist or you don't have permission to access the object: ${bucket}/${key}`);
+                throw {
+                    code: 'FallbackImageError',
+                    message: `Either the object does not exist or you don't have permission to access the object: ${bucket}/${key}`
+                };
+            } else {
+                console.log('Waiting for retry...');
+                await sleep(retry);
+            }
+        }
+    }
+
+    return {
+        Message: 'The default fallback image validated.',
+        Data: data
+    };
+}
+
+/**
+ * Sleeps for some seconds.
+ * @param {number} retry - Retry count
+ * @return {Promise} - Sleep promise
+ */
+async function sleep(retry) {
+    const retrySeconds = Number(process.env.RETRY_SECONDS);
+    return new Promise(resolve => setTimeout(resolve, retrySeconds * 1000 * retry));
+}

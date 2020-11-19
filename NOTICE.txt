@@ -1,6 +1,5 @@
 Serverless Image Handler
-
-Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 **********************
 THIRD PARTY COMPONENTS
@@ -8,17 +7,12 @@ THIRD PARTY COMPONENTS
 This software includes third party software subject to the following copyrights:
 
 aws-sdk under the Apache License Version 2.0
-aws-sdk-mock under the Apache License Version 2.0
-Bootstrap under the Massachusetts Institute of Technology (MIT) license
-chai under the Massachusetts Institute of Technology (MIT) license
-minimist under the Massachusetts Institute of Technology (MIT) license
-mocha under the Massachusetts Institute of Technology (MIT) license
-moment under the Massachusetts Institute of Technology (MIT) license
-npm-run-all under the Massachusetts Institute of Technology (MIT) license
-nyc under the ISC license
-sharp under the Apache License Version 2.0
-sinon under the BSD-3-Clause license
-sinon-chai under the BSD-2-Clause license
-uuid under the Massachusetts Institute of Technology (MIT) license
+axios under the Massachusetts Institute of Technology (MIT) license
+axios-mock-adapter under the Massachusetts Institute of Technology (MIT) license
+bootstrap under the Massachusetts Institute of Technology (MIT) license
 color under the Massachusetts Institute of Technology (MIT) license
 color-name under the Massachusetts Institute of Technology (MIT) license
+jest under the Massachusetts Institute of Technology (MIT) license
+mocha under the Massachusetts Institute of Technology (MIT) license
+sharp under the Apache License Version 2.0
+uuid under the Massachusetts Institute of Technology (MIT) license

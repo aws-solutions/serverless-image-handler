@@ -1,59 +1,81 @@
-/*********************************************************************************************************************
- *  Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
- *                                                                                                                    *
- *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
- *  with the License. A copy of the License is located at                                                             *
- *                                                                                                                    *
- *      http://www.apache.org/licenses/LICENSE-2.0                                                                    *
- *                                                                                                                    *
- *  or in the 'license' file accompanying this file. This file is distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES *
- *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
- *  and limitations under the License.                                                                                *
- *********************************************************************************************************************/
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
-const AWS = require('aws-sdk');
 const sharp = require('sharp');
 
 class ImageHandler {
+    constructor(s3, rekognition) {
+        this.s3 = s3;
+        this.rekognition = rekognition;
+    }
 
     /**
      * Main method for processing image requests and outputting modified images.
      * @param {ImageRequest} request - An ImageRequest object.
      */
     async process(request) {
+        let returnImage = '';
         const originalImage = request.originalImage;
         const edits = request.edits;
-        if (edits !== undefined) {
-            const modifiedImage = await this.applyEdits(originalImage, edits);
+
+        if (edits !== undefined && Object.keys(edits).length > 0) {
+            let image = null;
+            const keys = Object.keys(edits);
+
+            if (keys.includes('rotate') && edits.rotate === null) {
+                image = sharp(originalImage, { failOnError: false });
+            } else {
+                const metadata = await sharp(originalImage, { failOnError: false }).metadata();
+                if (metadata.orientation) {
+                    image = sharp(originalImage, { failOnError: false }).withMetadata({ orientation: metadata.orientation });
+                } else {
+                    image = sharp(originalImage, { failOnError: false }).withMetadata();
+                }
+            }
+
+            const modifiedImage = await this.applyEdits(image, edits);
             if (request.outputFormat !== undefined) {
                 modifiedImage.toFormat(request.outputFormat);
             }
             const bufferImage = await modifiedImage.toBuffer();
-            return bufferImage.toString('base64');
+            returnImage = bufferImage.toString('base64');
         } else {
-            return originalImage.toString('base64');
+            returnImage = originalImage.toString('base64');
         }
+
+        // If the converted image is larger than Lambda's payload hard limit, throw an error.
+        const lambdaPayloadLimit = 6 * 1024 * 1024;
+        if (returnImage.length > lambdaPayloadLimit) {
+            throw {
+                status: '413',
+                code: 'TooLargeImageException',
+                message: 'The converted image is too large to return.'
+            };
+        }
+
+        return returnImage;
     }
 
     /**
      * Applies image modifications to the original image based on edits
      * specified in the ImageRequest.
-     * @param {Buffer} originalImage - The original image.
+     * @param {Sharp} image - The original sharp image.
      * @param {object} edits - The edits to be made to the original image.
      */
-    async applyEdits(originalImage, edits) {
+    async applyEdits(image, edits) {
         if (edits.resize === undefined) {
             edits.resize = {};
             edits.resize.fit = 'inside';
+        } else {
+            if (edits.resize.width) edits.resize.width = Number(edits.resize.width);
+            if (edits.resize.height) edits.resize.height = Number(edits.resize.height);
         }
-
-        const image = sharp(originalImage, { failOnError: false });
-        const metadata = await image.metadata();
 
         // Apply the image edits
         for (const editKey in edits) {
             const value = edits[editKey];
             if (editKey === 'overlayWith') {
+                const metadata = await image.metadata();
                 let imageMetadata = metadata;
                 if (edits.resize) {
                     let imageBuffer = await image.toBuffer();
@@ -106,17 +128,18 @@ class ImageHandler {
                 image.composite(params);
             } else if (editKey === 'smartCrop') {
                 const options = value;
+                const metadata = await image.metadata();
                 const imageBuffer = await image.toBuffer();
                 const boundingBox = await this.getBoundingBox(imageBuffer, options.faceIndex);
                 const cropArea = this.getCropArea(boundingBox, options, metadata);
                 try {
-                    image.extract(cropArea)
+                    image.extract(cropArea);
                 } catch (err) {
-                    throw ({
+                    throw {
                         status: 400,
                         code: 'SmartCrop::PaddingOutOfBounds',
                         message: 'The padding value you provided exceeds the boundaries of the original image. Please try choosing a smaller value or applying padding via Sharp for greater specificity.'
-                    });
+                    };
                 }
             } else {
                 image[editKey](value);
@@ -137,11 +160,10 @@ class ImageHandler {
      * @param {object} sourceImageMetadata - The metadata of the source image.
      */
     async getOverlayImage(bucket, key, wRatio, hRatio, alpha, sourceImageMetadata) {
-        const s3 = new AWS.S3();
         const params = { Bucket: bucket, Key: key };
         try {
             const { width, height } = sourceImageMetadata;
-            const overlayImage = await s3.getObject(params).promise();
+            const overlayImage = await this.s3.getObject(params).promise();
             let resize = {
                 fit: 'inside'
             }
@@ -196,10 +218,10 @@ class ImageHandler {
         const padding = (options.padding !== undefined) ? parseFloat(options.padding) : 0;
         // Calculate the smart crop area
         const cropArea = {
-            left : parseInt((boundingBox.Left*metadata.width)-padding),
-            top : parseInt((boundingBox.Top*metadata.height)-padding),
-            width : parseInt((boundingBox.Width*metadata.width)+(padding*2)),
-            height : parseInt((boundingBox.Height*metadata.height)+(padding*2)),
+            left : parseInt((boundingBox.Left * metadata.width) - padding),
+            top : parseInt((boundingBox.Top * metadata.height) - padding),
+            width : parseInt((boundingBox.Width * metadata.width) + (padding * 2)),
+            height : parseInt((boundingBox.Height * metadata.height) + (padding * 2)),
         }
         // Return the crop area
         return cropArea;
@@ -212,14 +234,13 @@ class ImageHandler {
      * confidence decreases for detected faces within the image.
      */
     async getBoundingBox(imageBuffer, faceIndex) {
-        const rekognition = new AWS.Rekognition();
         const params = { Image: { Bytes: imageBuffer }};
         const faceIdx = (faceIndex !== undefined) ? faceIndex : 0;
         try {
-            const response = await rekognition.detectFaces(params).promise();
+            const response = await this.rekognition.detectFaces(params).promise();
             return response.FaceDetails[faceIdx].BoundingBox;
         } catch (err) {
-            console.log(err);
+            console.error(err);
             if (err.message === "Cannot read property 'BoundingBox' of undefined") {
                 throw {
                     status: 400,

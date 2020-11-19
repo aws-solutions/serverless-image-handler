@@ -1,11 +1,11 @@
 **_Important Notice:_**
-Due to a [change in the AWS Lambda execution environment](https://aws.amazon.com/blogs/compute/upcoming-updates-to-the-aws-lambda-execution-environment/), Serverless Image Handler v3 deployments are functionally broken. To address the issue we have released [minor version update v3.1.1](https://solutions-reference.s3.amazonaws.com/serverless-image-handler/v3.1.1/serverless-image-handler.template). We recommend all users of v3 to run cloudformation stack update with v3.1.1. Additionally, we suggest you to look at v4 of the solution and migrate to v4 if it addresses all of your use cases.
+Due to a [change in the AWS Lambda execution environment](https://aws.amazon.com/blogs/compute/upcoming-updates-to-the-aws-lambda-execution-environment/), Serverless Image Handler v3 deployments are functionally broken. To address the issue we have released [minor version update v3.1.1](https://solutions-reference.s3.amazonaws.com/serverless-image-handler/v3.1.1/serverless-image-handler.template). We recommend all users of v3 to run cloudformation stack update with v3.1.1. Additionally, we suggest you to look at v5 of the solution and migrate to v5 if it addresses all of your use cases.
 
 # AWS Serverless Image Handler Lambda wrapper for SharpJS
 A solution to dynamically handle images on the fly, utilizing Sharp (https://sharp.pixelplumbing.com/en/stable/).
 Published version, additional details and documentation are available here: https://aws.amazon.com/solutions/serverless-image-handler/
 
-_Note:_ it is recommend to build the application binary on Amazon Linux.
+_Note:_ it is recommended to build the application binary on Amazon Linux.
 
 ## On This Page
 - [Architecture Overview](#architecture-overview)
@@ -14,7 +14,7 @@ _Note:_ it is recommend to build the application binary on Amazon Linux.
 - [License](#license)
 
 ## Architecture Overview
-![Architecture](architecture.jpeg)
+![Architecture](architecture.png)
 
 The AWS CloudFormation template deploys an Amazon CloudFront distribution, Amazon API Gateway REST API, and an AWS Lambda function. Amazon CloudFront provides a caching layer to reduce the cost of image processing and the latency of subsequent image delivery. The Amazon API Gateway provides endpoint resources and triggers the AWS Lambda function. The AWS Lambda function retrieves the image from the customer's Amazon Simple Storage Service (Amazon S3) bucket and uses Sharp to return a modified version of the image to the API Gateway. Additionally, the solution generates a CloudFront domain name that provides cached access to the image handler API.
 
@@ -81,19 +81,11 @@ aws s3 sync ./global-s3-assets/ s3://$DIST_OUTPUT_BUCKET-$REGION/$SOLUTION_NAME/
 - [@john-shaffer](https://github.com/john-shaffer) for [#158](https://github.com/awslabs/serverless-image-handler/pull/158)
 - [@toredash](https://github.com/toredash) for [#174](https://github.com/awslabs/serverless-image-handler/pull/174), [#195](https://github.com/awslabs/serverless-image-handler/pull/195)
 - [@lith-imad](https://github.com/lith-imad) for [#194](https://github.com/awslabs/serverless-image-handler/pull/194)
+- [@pch](https://github.com/pch) for [#227](https://github.com/awslabs/serverless-image-handler/pull/227)
+- [@atrope](https://github.com/atrope) for [#201](https://github.com/awslabs/serverless-image-handler/pull/201)
+- [@bretto36](https://github.com/bretto36) for [#182](https://github.com/awslabs/serverless-image-handler/pull/182)
 
 ***
 ## License
-Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.<br />
+SPDX-License-Identifier: Apache-2.0

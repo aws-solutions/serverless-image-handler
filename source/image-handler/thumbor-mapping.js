@@ -1,15 +1,5 @@
-/*********************************************************************************************************************
- *  Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.                                           *
- *                                                                                                                    *
- *  Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance    *
- *  with the License. A copy of the License is located at                                                             *
- *                                                                                                                    *
- *      http://www.apache.org/licenses/LICENSE-2.0                                                                    *
- *                                                                                                                    *
- *  or in the 'license' file accompanying this file. This file is distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES *
- *  OR CONDITIONS OF ANY KIND, express or implied. See the License for the specific language governing permissions    *
- *  and limitations under the License.                                                                                *
- *********************************************************************************************************************/
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 const Color = require('color');
 const ColorName = require('color-name');
@@ -29,14 +19,17 @@ class ThumborMapping {
     process(event) {
         // Setup
         this.path = event.path;
-        const edits = this.path.split('/');
+        let edits = this.path.match(/filters:[^\)]+/g);
+        if (!edits) {
+            edits = [];
+        }
         const filetype = (this.path.split('.'))[(this.path.split('.')).length - 1];
 
         // Process the Dimensions
-        const dimPath = this.path.match(/[^\/](\d+x\d+)|(0x\d+)/g);
+        const dimPath = this.path.match(/\/((\d+x\d+)|(0x\d+))\//g);
         if (dimPath) {
             // Assign dimenions from the first match only to avoid parsing dimension from image file names
-            const dims = dimPath[0].split('x');
+            const dims = dimPath[0].replace(/\//g, '').split('x');
             const width = Number(dims[0]);
             const height = Number(dims[1]);
 
@@ -53,18 +46,18 @@ class ThumborMapping {
             }
         }
 
+        // fit-in filter
+        if (this.path.includes('fit-in')) {
+            if (this.edits.resize === undefined) {
+                this.edits.resize = {};
+            }
+            this.edits.resize.fit = 'inside';
+        }
+
         // Parse the image path
         for (let i = 0; i < edits.length; i++) {
-            const edit = edits[i];
-            if (edit === ('fit-in')) {
-                if (this.edits.resize === undefined) {
-                    this.edits.resize = {};
-                }
-
-                this.edits.resize.fit = 'inside';
-            } else if (edit.includes('filters:')) {
-                this.mapFilter(edit, filetype);
-            }
+            const edit = `${edits[i]})`;
+            this.mapFilter(edit, filetype);
         }
 
         return this;
@@ -74,16 +67,28 @@ class ThumborMapping {
      * Enables users to migrate their current image request model to the SIH solution,
      * without changing their legacy application code to accomodate new image requests.
      * @param {string} path - The URL path extracted from the web request.
+     * @return {object} - The parsed path using the match pattern and the substitution.
      */
     parseCustomPath(path) {
         // Setup from the environment variables
         const matchPattern = process.env.REWRITE_MATCH_PATTERN;
         const substitution = process.env.REWRITE_SUBSTITUTION;
+
         // Perform the substitution and return
         if (path !== undefined && matchPattern !== undefined && substitution !== undefined) {
-            const parsedPath = path.replace(matchPattern, substitution);
-            const output = { path: parsedPath };
-            return output;
+            let parsedPath = '';
+
+            if (typeof(matchPattern) === 'string') {
+                const patternStrings = matchPattern.split('/');
+                const flags = patternStrings.pop();
+                const parsedPatternString = matchPattern.slice(1, matchPattern.length - 1 - flags.length);
+                const regExp = new RegExp(parsedPatternString, flags);
+                parsedPath = path.replace(regExp, substitution);
+            } else {
+                parsedPath = path.replace(matchPattern, substitution);
+            }
+
+            return { path: parsedPath };
         } else {
             throw new Error('ThumborMapping::ParseCustomPath::ParsingError');
         }
@@ -102,18 +107,15 @@ class ThumborMapping {
         // Find the proper filter
         if (editKey === ('autojpg')) {
             this.edits.toFormat = 'jpeg';
-        }
-        else if (editKey === ('background_color')) {
+        } else if (editKey === ('background_color')) {
             if (!ColorName[value]) {
                 value = `#${value}`
             }
             this.edits.flatten = { background: Color(value).object() };
-        }
-        else if (editKey === ('blur')) {
+        } else if (editKey === ('blur')) {
             const val = value.split(',');
             this.edits.blur = (val.length > 1) ? Number(val[1]) : Number(val[0]) / 2;
-        }
-        else if (editKey === ('convolution')) {
+        } else if (editKey === ('convolution')) {
             const arr = value.split(',');
             const strMatrix = (arr[0]).split(';');
             let matrix = [];
@@ -136,11 +138,9 @@ class ThumborMapping {
                 height: Number(matrixHeight),
                 kernel: matrix
             }
-        }
-        else if (editKey === ('equalize')) {
+        } else if (editKey === ('equalize')) {
             this.edits.normalize = "true";
-        }
-        else if (editKey === ('fill')) {
+        } else if (editKey === ('fill')) {
             if (this.edits.resize === undefined) {
                 this.edits.resize = {};
             }
@@ -149,32 +149,27 @@ class ThumborMapping {
             }
             this.edits.resize.fit = 'contain';
             this.edits.resize.background = Color(value).object();
-        }
-        else if (editKey === ('format')) {
+        } else if (editKey === ('format')) {
             const formattedValue = value.replace(/[^0-9a-z]/gi, '').replace(/jpg/i, 'jpeg');
             const acceptedValues = ['heic', 'heif', 'jpeg', 'png', 'raw', 'tiff', 'webp'];
             if (acceptedValues.includes(formattedValue)) {
                 this.edits.toFormat = formattedValue;
             }
-        }
-        else if (editKey === ('grayscale')) {
+        } else if (editKey === ('grayscale')) {
             this.edits.grayscale = true;
-        }
-        else if (editKey === ('no_upscale')) {
+        } else if (editKey === ('no_upscale')) {
             if (this.edits.resize === undefined) {
                 this.edits.resize = {};
             }
             this.edits.resize.withoutEnlargement = true;
-        }
-        else if (editKey === ('proportion')) {
+        } else if (editKey === ('proportion')) {
             if (this.edits.resize === undefined) {
                 this.edits.resize = {};
             }
             const prop = Number(value);
             this.edits.resize.width = Number(this.edits.resize.width * prop);
             this.edits.resize.height = Number(this.edits.resize.height * prop);
-        }
-        else if (editKey === ('quality')) {
+        } else if (editKey === ('quality')) {
             if (['jpg', 'jpeg'].includes(filetype)) {
                 this.edits.jpeg = { quality: Number(value) }
             } else if (filetype === 'png') {
@@ -186,8 +181,7 @@ class ThumborMapping {
             } else if (filetype === 'heif') {
                 this.edits.heif = { quality: Number(value) }
             }
-        }
-        else if (editKey === ('rgb')) {
+        } else if (editKey === ('rgb')) {
             const percentages = value.split(',');
             const values = [];
             percentages.forEach(function (percentage) {
@@ -196,16 +190,13 @@ class ThumborMapping {
                 values.push(val);
             })
             this.edits.tint = { r: values[0], g: values[1], b: values[2] };
-        }
-        else if (editKey === ('rotate')) {
+        } else if (editKey === ('rotate')) {
             this.edits.rotate = Number(value);
-        }
-        else if (editKey === ('sharpen')) {
+        } else if (editKey === ('sharpen')) {
             const sh = value.split(',');
             const sigma = 1 + Number(sh[1]) / 2;
             this.edits.sharpen = sigma;
-        }
-        else if (editKey === ('stretch')) {
+        } else if (editKey === ('stretch')) {
             if (this.edits.resize === undefined) {
                 this.edits.resize = {};
             }
@@ -214,20 +205,14 @@ class ThumborMapping {
             if (this.edits.resize.fit !== 'inside') {
                 this.edits.resize.fit = 'fill';
             }
-        }
-        else if (editKey === ('strip_exif')) {
-            this.edits.rotate = 0;
-        }
-        else if (editKey === ('strip_icc')) {
-            this.edits.rotate = 0;
-        }
-        else if (editKey === ('upscale')) {
+        } else if (editKey === ('strip_exif') || editKey === ('strip_icc')) {
+            this.edits.rotate = null;
+        } else if (editKey === ('upscale')) {
             if (this.edits.resize === undefined) {
                 this.edits.resize = {};
             }
             this.edits.resize.fit = "inside"
-        }
-        else if (editKey === ('watermark')) {
+        } else if (editKey === ('watermark')) {
             const options = value.replace(/\s+/g, '').split(',');
             const bucket = options[0];
             const key = options[1];
@@ -252,8 +237,7 @@ class ThumborMapping {
             if (allowedPosPattern.test(yPos) || !isNaN(yPos)) {
                 this.edits.overlayWith.options['top'] = yPos;
             }
-        }
-        else {
+        } else {
             return undefined;
         }
     }

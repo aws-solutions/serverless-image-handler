@@ -5,23 +5,24 @@
   "author": {
     "name": "aws-solutions-builder"
   },
-  "version": "5.0.0",
+  "version": "5.1.0",
   "private": true,
   "dependencies": {
-    "sharp": "^0.25.4",
+    "sharp": "^0.26.1",
     "color": "3.1.2",
     "color-name": "1.1.4"
   },
   "devDependencies": {
-    "aws-sdk": "2.631.0",
-    "aws-sdk-mock": "^4.4.0",
-    "mocha": "^6.1.4",
-    "sinon": "^7.3.2",
-    "nyc": "^14.0.0"
+    "aws-sdk": "2.712.0",
+    "aws-sdk-mock": "^5.1.0",
+    "jest": "^26.4.2",
+    "mocha": "^8.1.3",
+    "sinon": "^9.0.3",
+    "nyc": "^15.1.0"
   },
   "scripts": {
     "pretest": "npm run build:init && npm install",
-    "test": "nyc --reporter=html --reporter=text mocha",
+    "test": "jest test/*.spec.js --coverage --silent",
     "build:init": "rm -rf package-lock.json dist/ node_modules/",
     "build:zip": "zip -rq image-handler.zip .",
     "build:dist": "mkdir dist && mv image-handler.zip dist/",

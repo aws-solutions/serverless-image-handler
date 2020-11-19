@@ -15,6 +15,13 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "signature",
+            "in": "query",
+            "description": "Signature of the image",
+            "required": false,
+            "type": "string"
           }
         ],
         "responses": {},

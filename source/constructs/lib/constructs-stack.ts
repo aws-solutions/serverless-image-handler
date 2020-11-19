@@ -50,6 +50,38 @@ export class ConstructsStack extends cdk.Stack {
       default: 'No',
       allowedValues: [ 'Yes', 'No' ]
     });
+    const enableSignatureParameter = new CfnParameter(this, 'EnableSignature', {
+      type: 'String',
+      description: `Would you like to enable the signature? If so, select 'Yes' and provide SecretsManagerSecret and SecretsManagerKey values.`,
+      default: 'No',
+      allowedValues: [ 'Yes', 'No' ]
+    });
+    const secretsManagerParameter = new CfnParameter(this, 'SecretsManagerSecret', {
+      type: 'String',
+      description: 'The name of AWS Secrets Manager secret. You need to create your secret under this name.',
+      default: ''
+    });
+    const secretsManagerKeyParameter = new CfnParameter(this, 'SecretsManagerKey', {
+      type: 'String',
+      description: 'The name of AWS Secrets Manager secret key. You need to create secret key with this key name. The secret value would be used to check signature.',
+      default: ''
+    });
+    const enableDefaultFallbackImageParameter = new CfnParameter(this, 'EnableDefaultFallbackImage', {
+      type: 'String',
+      description: `Would you like to enable the default fallback image? If so, select 'Yes' and provide FallbackImageS3Bucket and FallbackImageS3Key values.`,
+      default: 'No',
+      allowedValues: [ 'Yes', 'No' ]
+    });
+    const fallbackImageS3BucketParameter = new CfnParameter(this, 'FallbackImageS3Bucket', {
+      type: 'String',
+      description: 'The name of the Amazon S3 bucket which contains the default fallback image. e.g. my-fallback-image-bucket',
+      default: ''
+    });
+    const fallbackImageS3KeyParameter = new CfnParameter(this, 'FallbackImageS3Key', {
+      type: 'String',
+      description: 'The name of the default fallback image object key including prefix. e.g. prefix/image.jpg',
+      default: ''
+    });
 
     // CFN descrption
     this.templateOptions.description = `(SO0023) - Serverless Image Handler with aws-solutions-constructs: This template deploys and configures a serverless architecture that is optimized for dynamic image manipulation and delivery at low latency and cost. Leverages SharpJS for image processing. Template version ${VERSION}`;
@@ -76,6 +108,18 @@ export class ConstructsStack extends cdk.Stack {
           {
             Label: { default: 'Event Logging' },
             Parameters: [ logRetentionPeriodParameter.logicalId ]
+          },
+          {
+            Label: { default: 'Image URL Signature (Note: Enabling signature is not compatible with previous image URLs, which could result in broken image links. Please refer to the implementation guide for details: https://docs.aws.amazon.com/solutions/latest/serverless-image-handler/considerations.html)' },
+            Parameters: [ enableSignatureParameter.logicalId, secretsManagerParameter.logicalId, secretsManagerKeyParameter.logicalId ]
+          },
+          {
+            Label: { default: 'Default Fallback Image (Note: Enabling default fallback image returns the default fallback image instead of JSON object when error happens. Please refer to the implementation guide for details: https://docs.aws.amazon.com/solutions/latest/serverless-image-handler/considerations.html)' },
+            Parameters: [ enableDefaultFallbackImageParameter.logicalId, fallbackImageS3BucketParameter.logicalId, fallbackImageS3KeyParameter.logicalId ]
+          },
+          {
+            Label: { default: 'Auto WebP' },
+            Parameters: [ autoWebPParameter.logicalId ]
           }
         ]
       }
@@ -97,7 +141,13 @@ export class ConstructsStack extends cdk.Stack {
       sourceBucketsParameter,
       deployDemoUiParameter,
       logRetentionPeriodParameter,
-      autoWebPParameter
+      autoWebPParameter,
+      enableSignatureParameter,
+      secretsManagerParameter,
+      secretsManagerKeyParameter,
+      enableDefaultFallbackImageParameter,
+      fallbackImageS3BucketParameter,
+      fallbackImageS3KeyParameter
     };
 
     // Serverless Image Handler Construct

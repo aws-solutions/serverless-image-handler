@@ -26,6 +26,12 @@ export interface ServerlessImageHandlerProps {
   readonly deployDemoUiParameter: CfnParameter;
   readonly logRetentionPeriodParameter: CfnParameter;
   readonly autoWebPParameter: CfnParameter;
+  readonly enableSignatureParameter: CfnParameter;
+  readonly secretsManagerParameter: CfnParameter;
+  readonly secretsManagerKeyParameter: CfnParameter;
+  readonly enableDefaultFallbackImageParameter: CfnParameter;
+  readonly fallbackImageS3BucketParameter: CfnParameter;
+  readonly fallbackImageS3KeyParameter: CfnParameter;
 }
 
 /**
@@ -47,7 +53,7 @@ interface CfnNagSuppressRule {
 
 /**
  * Serverless Image Handler Construct using AWS Solutions Constructs patterns and AWS CDK
- * @version 5.0.0
+ * @version 5.1.0
  */
 export class ServerlessImageHandler extends Construct {
   constructor(scope: Construct, id: string, props: ServerlessImageHandlerProps) {
@@ -64,6 +70,16 @@ export class ServerlessImageHandler extends Construct {
         expression: cdk.Fn.conditionEquals(props.corsEnabledParameter.valueAsString, 'Yes')
       });
       enableCorsCondition.overrideLogicalId('EnableCorsCondition');
+
+      const enableSignatureCondition = new cdk.CfnCondition(this, 'EnableSignatureCondition', {
+        expression: cdk.Fn.conditionEquals(props.enableSignatureParameter.valueAsString, 'Yes')
+      });
+      enableSignatureCondition.overrideLogicalId('EnableSignatureCondition');
+
+      const enableDefaultFallbackImageCondition = new cdk.CfnCondition(this, 'EnableDefaultFallbackImageCondition', {
+        expression: cdk.Fn.conditionEquals(props.enableDefaultFallbackImageParameter.valueAsString, 'Yes')
+      });
+      enableDefaultFallbackImageCondition.overrideLogicalId('EnableDefaultFallbackImageCondition');
 
       // ImageHandlerFunctionRole
       const imageHandlerFunctionRole = new cdkIam.Role(this, 'ImageHandlerFunctionRole', {
@@ -134,7 +150,7 @@ export class ServerlessImageHandler extends Construct {
         handler: 'index.handler',
         runtime: cdkLambda.Runtime.NODEJS_12_X,
         timeout: cdk.Duration.seconds(30),
-        memorySize: 256,
+        memorySize: 1024,
         role: imageHandlerFunctionRole,
         environment: {
           AUTO_WEBP: props.autoWebPParameter.valueAsString,
@@ -142,7 +158,13 @@ export class ServerlessImageHandler extends Construct {
           CORS_ORIGIN: props.corsOriginParameter.valueAsString,
           SOURCE_BUCKETS: props.sourceBucketsParameter.valueAsString,
           REWRITE_MATCH_PATTERN: '',
-          REWRITE_SUBSTITUTION: ''
+          REWRITE_SUBSTITUTION: '',
+          ENABLE_SIGNATURE: props.enableSignatureParameter.valueAsString,
+          SECRETS_MANAGER: props.secretsManagerParameter.valueAsString,
+          SECRET_KEY: props.secretsManagerKeyParameter.valueAsString,
+          ENABLE_DEFAULT_FALLBACK_IMAGE: props.enableDefaultFallbackImageParameter.valueAsString,
+          DEFAULT_FALLBACK_IMAGE_BUCKET: props.fallbackImageS3BucketParameter.valueAsString,
+          DEFAULT_FALLBACK_IMAGE_KEY: props.fallbackImageS3KeyParameter.valueAsString
         }
       });
       const cfnImageHandlerFunction = imageHandlerFunction.node.defaultChild as cdkLambda.CfnFunction;
@@ -252,7 +274,8 @@ export class ServerlessImageHandler extends Construct {
           allowedMethods: [ 'GET', 'HEAD' ],
           targetOriginId: apiGateway.restApiId,
           forwardedValues: {
-            queryString: false,
+            queryString: true,
+            queryStringCacheKeys: [ 'signature' ],
             headers: [ 'Origin', 'Accept' ],
             cookies: { forward: 'none' }
           },
@@ -268,7 +291,7 @@ export class ServerlessImageHandler extends Construct {
         priceClass: 'PriceClass_All',
         logging: {
           includeCookies: false,
-          bucket: accessLogBucket.bucketDomainName,
+          bucket: accessLogBucket.bucketRegionalDomainName,
           prefix: 'image-handler-cf-logs/'
         }
       };
@@ -355,7 +378,7 @@ export class ServerlessImageHandler extends Construct {
         httpVersion: 'http2',
         logging: {
           includeCookies: false,
-          bucket: accessLogBucket.bucketDomainName,
+          bucket: accessLogBucket.bucketRegionalDomainName,
           prefix: 'demo-cf-logs/'
         }
       };
@@ -416,9 +439,12 @@ export class ServerlessImageHandler extends Construct {
         ),
         handler: 'index.handler',
         runtime: cdkLambda.Runtime.NODEJS_12_X,
-        timeout: cdk.Duration.seconds(30),
+        timeout: cdk.Duration.seconds(60),
         memorySize: 128,
-        role: customResourceRole
+        role: customResourceRole,
+        environment: {
+          RETRY_SECONDS: '5'
+        }
       });
       const cfnCustomResourceFuction = customResourceFunction.node.defaultChild as cdkLambda.CfnFunction;
       this.addCfnNagSuppressRules(cfnCustomResourceFuction, [
@@ -456,7 +482,7 @@ export class ServerlessImageHandler extends Construct {
       this.createCustomResource('CustomResourceConfig', customResourceFunction, {
         properties: [
           { path: 'Region', value: cdk.Aws.REGION },
-          { path: 'configItem', value: { apiEndpoint: `https://${cloudFrontWebDistribution.domainName}` } },
+          { path: 'configItem', value: { apiEndpoint: `https://${cloudFrontWebDistribution.distributionDomainName}` } },
           { path: 'destS3Bucket', value: demoBucket.bucketName },
           { path: 'destS3key', value: 'demo-ui-config.js' },
           { path: 'customAction', value: 'putConfigFile' },
@@ -482,6 +508,8 @@ export class ServerlessImageHandler extends Construct {
           { path: 'UUID', value: cdk.Fn.getAtt(customResourceUuid.logicalId, 'UUID').toString() },
           { path: 'version', value: VERSION },
           { path: 'anonymousData', value: cdk.Fn.findInMap('Send', 'AnonymousUsage', 'Data') },
+          { path: 'enableSignature', value: props.enableSignatureParameter.valueAsString },
+          { path: 'enableDefaultFallbackImage', value: props.enableDefaultFallbackImageParameter.valueAsString },
           { path: 'customAction', value: 'sendMetric' }
         ],
         dependencies: [ cfnCustomResourceRole, cfnCustomResourcePolicy ]
@@ -494,6 +522,47 @@ export class ServerlessImageHandler extends Construct {
           { path: 'sourceBuckets', value: props.sourceBucketsParameter.valueAsString },
           { path: 'customAction', value: 'checkSourceBuckets' },
         ],
+        dependencies: [ cfnCustomResourceRole, cfnCustomResourcePolicy ]
+      });
+
+      // SecretsManagerPolicy
+      const secretsManagerPolicy = new cdkIam.Policy(this, 'secretsManagerPolicy', {
+        statements: [
+          new cdkIam.PolicyStatement({
+            actions: [
+              'secretsmanager:GetSecretValue'
+            ],
+            resources: [
+              `arn:${cdk.Aws.PARTITION}:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:${props.secretsManagerParameter.valueAsString}*`
+            ]
+          })
+        ]
+      });
+      secretsManagerPolicy.attachToRole(customResourceRole);
+      secretsManagerPolicy.attachToRole(imageHandlerFunctionRole);
+      const cfnSecretsManagerPolicy = secretsManagerPolicy.node.defaultChild as cdkIam.CfnPolicy;
+      cfnSecretsManagerPolicy.cfnOptions.condition = enableSignatureCondition;
+      cfnSecretsManagerPolicy.overrideLogicalId('SecretsManagerPolicy');
+
+      // CustomResourceCheckSecretsManager
+      this.createCustomResource('CustomResourceCheckSecretsManager', customResourceFunction, {
+        properties: [
+          { path: 'customAction', value: 'checkSecretsManager' },
+          { path: 'secretsManagerName', value: props.secretsManagerParameter.valueAsString },
+          { path: 'secretsManagerKey', value: props.secretsManagerKeyParameter.valueAsString }
+        ],
+        condition: enableSignatureCondition,
+        dependencies: [ cfnCustomResourceRole, cfnCustomResourcePolicy, cfnSecretsManagerPolicy ]
+      });
+
+      // CustomResourceCheckFallbackImage
+      this.createCustomResource('CustomResourceCheckFallbackImage', customResourceFunction, {
+        properties: [
+          { path: 'customAction', value: 'checkFallbackImage' },
+          { path: 'fallbackImageS3Bucket', value: props.fallbackImageS3BucketParameter.valueAsString },
+          { path: 'fallbackImageS3Key', value: props.fallbackImageS3KeyParameter.valueAsString }
+        ],
+        condition: enableDefaultFallbackImageCondition,
         dependencies: [ cfnCustomResourceRole, cfnCustomResourcePolicy ]
       });
     } catch (error) {
