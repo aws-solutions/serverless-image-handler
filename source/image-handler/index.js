@@ -33,6 +33,12 @@ exports.handler = async (event) => {
             }
         }
 
+        console.log({
+            statusCode: 200,
+            isBase64Encoded: true,
+            headers : headers
+        })
+
         return {
             statusCode: 200,
             isBase64Encoded: true,
@@ -69,6 +75,12 @@ exports.handler = async (event) => {
         }
 
         if (err.status) {
+            console.log({
+                statusCode: err.status,
+                isBase64Encoded: false,
+                headers : getResponseHeaders(true, isAlb),
+                body: JSON.stringify(err)
+            })
             return {
                 statusCode: err.status,
                 isBase64Encoded: false,

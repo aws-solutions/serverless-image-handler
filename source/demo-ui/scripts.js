@@ -46,6 +46,10 @@ function getPreviewImage() {
     const _smartCrop = $(`#editor-smart-crop`).first().prop("checked");
     const _smartCropIndex = $(`#editor-smart-crop-index`).first().val();
     const _smartCropPadding = $(`#editor-smart-crop-padding`).first().val();
+    const _cropping_left = $(`#editor-cropping-left`).first().val();
+    const _cropping_top = $(`#editor-cropping-top`).first().val();
+    const _cropping_width = $(`#editor-cropping-width`).first().val();
+    const _cropping_height = $(`#editor-cropping-height`).first().val();
     // Setup the edits object
     const _edits = {}
     _edits.resize = {};
@@ -83,7 +87,15 @@ function getPreviewImage() {
         key: keyName,
         edits: _edits
     }
-    if (Object.keys(request.edits).length === 0) { delete request.edits };
+    if (_cropping_left || _cropping_top || _cropping_height || _cropping_width) {
+        request.cropping = {
+            left: Number(_cropping_left),
+            top: Number(_cropping_top),
+            width: Number(_cropping_width),
+            height: Number(_cropping_height)
+        };
+    }
+    if (Object.keys(request.edits).length === 0) { delete request.edits; };
     console.log(request);
     // Setup encoded request
     const str = JSON.stringify(request);

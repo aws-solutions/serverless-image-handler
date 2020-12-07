@@ -171,6 +171,52 @@ describe('setup()', function() {
             expect(imageRequest).toEqual(expectedResult);
         });
     });
+    describe('005/thumborImageRequest/cropping', function() {
+        it('Should pass when a thumbor image request is provided and populate the ImageRequest object with the proper values', async function() {
+            // Arrange
+            const event = {
+                path : "/0x1:200x201/fit-in/300x400/test-image-001.jpg"
+            }
+            process.env = {
+                SOURCE_BUCKETS : "allowedBucket001, allowedBucket002"
+            }
+            // Mock
+            mockAws.getObject.mockImplementationOnce(() => {
+                return {
+                    promise() {
+                        return Promise.resolve({ Body: Buffer.from('SampleImageContent\n') });
+                    }
+                };
+            });
+            // Act
+            const imageRequest = new ImageRequest(s3, secretsManager);
+            await imageRequest.setup(event);
+            const expectedResult = {
+                requestType: 'Thumbor',
+                bucket: 'allowedBucket001',
+                key: 'test-image-001.jpg',
+                edits: {
+                    resize: {
+                        fit: "inside",
+                        width: 300,
+                        height: 400
+                    }
+                },
+                cropping: {
+                    left:0,
+                    top:1,
+                    width: 200,
+                    height:201
+                },
+                originalImage: Buffer.from('SampleImageContent\n'),
+                CacheControl: 'max-age=31536000,public',
+                ContentType: 'image'
+            }
+            // Assert
+            expect(mockAws.getObject).toHaveBeenCalledWith({ Bucket: 'allowedBucket001', Key: 'test-image-001.jpg' });
+            expect(imageRequest).toEqual(expectedResult);
+        });
+    });
     describe('005/customImageRequest', function() {
         it('Should pass when a custom image request is provided and populate the ImageRequest object with the proper values', async function() {
             // Arrange
@@ -986,7 +1032,7 @@ describe('parseRequestType()', function() {
 });
 
 // ----------------------------------------------------------------------------
-// parseImageHaders()
+// parseImageHeaders()
 // ----------------------------------------------------------------------------
 describe('parseImageHaders()', function() {
     it('001/Should return headers if headers are provided for a sample base64-encoded image request', function() {

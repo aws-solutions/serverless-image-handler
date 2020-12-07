@@ -101,9 +101,9 @@ describe('process()', function() {
             } catch (error) {
                 // Assert
                 expect(error).toEqual({
-                    status: '413',
+                    status: 413,
                     code: 'TooLargeImageException',
-                    message: 'The converted image is too large to return.'
+                    message: 'The converted image is too large to return. Actual = 8388608 - max 6291456'
                 });
             }
         });
@@ -180,6 +180,30 @@ describe('process()', function() {
             expect(metadata).not.toHaveProperty('orientation');
         });
     });
+    // describe('008/Cropping', function() {
+    //     it('Should pass if the original image if cropping has same dimensions as original', async function() {
+    //         // Arrange
+    //         let body = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    //         const originalImage = Buffer.from(body, 'base64');
+    //         const request = {
+    //             requestType: "default",
+    //             bucket: "sample-bucket",
+    //             key: "test.jpg",
+    //             cropping: {
+    //                 left: 0,
+    //                 top: 0,
+    //                 width: 1,
+    //                 height: 1
+    //             },
+    //             originalImage: originalImage
+    //         };
+    //         // Act
+    //         const imageHandler = new ImageHandler(s3, rekognition);
+    //         const result = await imageHandler.process(request);
+    //         // Assert
+    //         expect(result).toEqual(body);
+    //     });
+    // });
 });
 
 // ----------------------------------------------------------------------------

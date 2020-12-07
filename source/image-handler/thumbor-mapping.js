@@ -19,19 +19,18 @@ class ThumborMapping {
     process(event) {
         // Setup
         this.path = event.path;
-        let edits = this.path.match(/filters:[^\)]+/g);
+        let edits = this.path.match(/filters:[^)]+/g);
         if (!edits) {
             edits = [];
         }
         const filetype = (this.path.split('.'))[(this.path.split('.')).length - 1];
 
         // Process the Dimensions
-        const dimPath = this.path.match(/\/((\d+x\d+)|(0x\d+))\//g);
+        const dimPath = this.path.match(/\/(\d+)x(\d+)\//);
         if (dimPath) {
-            // Assign dimenions from the first match only to avoid parsing dimension from image file names
-            const dims = dimPath[0].replace(/\//g, '').split('x');
-            const width = Number(dims[0]);
-            const height = Number(dims[1]);
+            // Assign dimensions from the first match only to avoid parsing dimension from image file names
+            const width = Number(dimPath[1]);
+            const height = Number(dimPath[2]);
 
             // Set only if the dimensions provided are valid
             if (!isNaN(width) && !isNaN(height)) {
@@ -52,6 +51,24 @@ class ThumborMapping {
                 this.edits.resize = {};
             }
             this.edits.resize.fit = 'inside';
+        }
+
+        // Parse cropping
+        const cropping = this.path.match(/\/(\d+)x(\d+):(\d+)x(\d+)\//);
+        if (cropping) {
+            const left = Number(cropping[1])
+            const top = Number(cropping[2])
+            const width = Number(cropping[3])
+            const height = Number(cropping[4])
+
+            if (!isNaN(left) && !isNaN(top) && !isNaN(width) && !isNaN(height)) {
+                this.cropping = {
+                    left: left,
+                    top: top,
+                    width: width,
+                    height: height
+                };
+            }
         }
 
         // Parse the image path

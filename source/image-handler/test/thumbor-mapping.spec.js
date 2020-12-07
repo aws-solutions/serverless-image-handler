@@ -157,6 +157,60 @@ describe('process()', function() {
             expect(thumborMapping.edits).toEqual(expectedResult.edits);
         });
     });
+
+// ----------------------------------------------------------------------------
+// parseCropping()
+// ----------------------------------------------------------------------------
+    describe('001/cropping/simpleCropping', function() {
+        it('Should pass if the proper edit translations are applied and in the correct order', function() {
+            // Arrange
+            const event = {
+                path : "/0x1:200x201/test-image-001.jpg"
+            }
+            // Act
+            const thumborMapping = new ThumborMapping();
+            thumborMapping.process(event);
+            // Assert
+            const expectedResult = {
+                cropping: {
+                    left: 0,
+                    top: 1,
+                    width: 200,
+                    height: 201
+                }
+            };
+            expect(thumborMapping.cropping).toEqual(expectedResult.cropping);
+        });
+    })
+    describe('002/cropping/croppingAndResize', function() {
+        it('Should pass if the proper edit translations are applied and in the correct order', function() {
+            // Arrange
+            const event = {
+                path : "/0x1:200x201/fit-in/300x400/test-image-001.jpg"
+            }
+            // Act
+            const thumborMapping = new ThumborMapping();
+            thumborMapping.process(event);
+            // Assert
+            const expectedResult = {
+                edits: {
+                    resize: {
+                        width: 300,
+                        height: 400,
+                        fit: 'inside'
+                    }
+                },
+                cropping: {
+                    left: 0,
+                    top: 1,
+                    width: 200,
+                    height: 201
+                }
+            };
+            expect(thumborMapping.cropping).toEqual(expectedResult.cropping);
+            expect(thumborMapping.edits).toEqual(expectedResult.edits);
+        });
+    });
 });
 
 // ----------------------------------------------------------------------------

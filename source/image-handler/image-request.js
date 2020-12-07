@@ -60,8 +60,10 @@ class ImageRequest {
             this.bucket = this.parseImageBucket(event, this.requestType);
             this.key = this.parseImageKey(event, this.requestType);
             this.edits = this.parseImageEdits(event, this.requestType);
+            this.cropping = this.parseCropping(event, this.requestType)
             this.originalImage = await this.getOriginalImage(this.bucket, this.key);
             this.headers = this.parseImageHeaders(event, this.requestType);
+            this.isAlb = event.requestContext && event.requestContext.hasOwnProperty('elb');
 
             if (!this.headers) {
                 delete this.headers;
@@ -85,6 +87,7 @@ class ImageRequest {
             } else if (outputFormat) {
                 this.outputFormat = outputFormat;
             }
+            console.log("output format = " + this.outputFormat)
 
             // Fix quality for Thumbor and Custom request type if outputFormat is different from quality type.
             if (this.outputFormat) {
@@ -220,6 +223,28 @@ class ImageRequest {
         }
     }
 
+    parseCropping(event, requestType) {
+        if (requestType === 'Default') {
+            const decoded = this.decodeRequest(event);
+            return decoded.cropping;
+        } else if (requestType === 'Thumbor') {
+            const thumborMapping = new ThumborMapping();
+            thumborMapping.process(event);
+            return thumborMapping.cropping;
+        } else if (requestType === 'Custom') {
+            const thumborMapping = new ThumborMapping();
+            const parsedPath = thumborMapping.parseCustomPath(event.path);
+            thumborMapping.process(parsedPath);
+            return thumborMapping.cropping;
+        } else {
+            throw ({
+                status: 400,
+                code: 'Cropping::CannotParseCropping',
+                message: 'The cropping you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance.'
+            })
+        }
+    }
+
     /**
      * Parses the name of the appropriate Amazon S3 key corresponding to the
      * original image.
@@ -250,7 +275,7 @@ class ImageRequest {
                     path = path.replace(matchPattern, substitution);
                 }
             }
-            return decodeURIComponent(path.replace(/\/(\d+x\d+)\/|filters:[^\)]+|\/fit-in+|^\/+/g, '').replace(/\)/g, '').replace(/^\/+/, ''));
+            return decodeURIComponent(path.replace(/\d+x\d+:\d+x\d+|\d+x\d+|filters:[^)]+|fit-in/g, '').replace(/\)/g, '').replace(/^\/+/, ''));
         }
 
         // Return an error for all other conditions
@@ -367,7 +392,13 @@ class ImageRequest {
     */
     getOutputFormat(event) {
         const autoWebP = process.env.AUTO_WEBP;
-        if (autoWebP === 'Yes' && event.headers.Accept && event.headers.Accept.includes('image/webp')) {
+        let accept;
+        if (event.isAlb && event.headers) {
+            accept = event.headers.accept;
+        } else if (event.headers) {
+            accept = event.headers.Accept
+        }
+        if (autoWebP === 'Yes' && accept && accept.includes('image/webp')) {
             return 'webp';
         } else if (this.requestType === 'Default') {
             const decoded = this.decodeRequest(event);
