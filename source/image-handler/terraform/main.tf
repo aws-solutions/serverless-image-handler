@@ -73,7 +73,7 @@ module "lambda" {
     variables = {
 
       # this sets the default output to webp, which
-      AUTO_WEBP = "No"
+      AUTO_WEBP = "Yes"
 
       CORS_ENABLED   = "Yes"
       CORS_ORIGIN    = "*"

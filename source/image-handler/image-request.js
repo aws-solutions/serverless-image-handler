@@ -87,7 +87,6 @@ class ImageRequest {
             } else if (outputFormat) {
                 this.outputFormat = outputFormat;
             }
-            console.log("output format = " + this.outputFormat)
 
             // Fix quality for Thumbor and Custom request type if outputFormat is different from quality type.
             if (this.outputFormat) {
@@ -392,12 +391,7 @@ class ImageRequest {
     */
     getOutputFormat(event) {
         const autoWebP = process.env.AUTO_WEBP;
-        let accept;
-        if (event.isAlb && event.headers) {
-            accept = event.headers.accept;
-        } else if (event.headers) {
-            accept = event.headers.Accept
-        }
+        let accept = event.headers.Accept || event.headers.accept;
         if (autoWebP === 'Yes' && accept && accept.includes('image/webp')) {
             return 'webp';
         } else if (this.requestType === 'Default') {
