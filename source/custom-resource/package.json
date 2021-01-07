@@ -8,7 +8,7 @@
     "version": "5.1.0",
     "private": true,
     "dependencies": {
-        "axios": "^0.20.0",
+        "axios": "^0.21.1",
         "uuid": "^8.3.0"
     },
     "devDependencies": {
