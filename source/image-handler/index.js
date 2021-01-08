@@ -25,9 +25,10 @@ exports.handler = async (event) => {
         headers["Expires"] = request.Expires;
         headers["Last-Modified"] = request.LastModified;
         headers["Cache-Control"] = request.CacheControl;
+        headers["ETag"] = request.ETag;
 
         if (request.headers) {
-            // Apply the custom headers overwritting any that may need overwriting
+            // Apply the custom headers overwriting any that may need overwriting
             for (let key in request.headers) {
                 headers[key] = request.headers[key];
             }

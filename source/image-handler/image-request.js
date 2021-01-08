@@ -145,6 +145,10 @@ class ImageRequest {
                 this.CacheControl = "max-age=31536000,public";
             }
 
+            if (originalImage.ETag) {
+                this.ETag = originalImage.ETag;
+            }
+
             return originalImage.Body;
         } catch(err) {
             throw {
