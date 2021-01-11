@@ -8,6 +8,7 @@ locals {
     map-migrated = "d-server-00fvusu7ux3q9a"
     service      = local.function_name
     source       = "https://github.com/thisismana/${local.function_name}"
+    App          = "Images"
   }
 
 }
@@ -22,6 +23,7 @@ resource "aws_s3_bucket" "this" {
     enabled = true
   }
 }
+
 resource "aws_s3_bucket_object" "function" {
   bucket = aws_s3_bucket.this.id
   etag   = filemd5(local.artifact)
@@ -29,9 +31,9 @@ resource "aws_s3_bucket_object" "function" {
   source = local.artifact
   tags   = local.default_tags
 
-  //  lifecycle {
-  //    ignore_changes = [etag, version_id]
-  //  }
+  lifecycle {
+    ignore_changes = [etag, version_id]
+  }
 }
 resource "aws_lambda_alias" "live" {
   description      = "Alias for the active Lambda version"
@@ -71,27 +73,11 @@ module "lambda" {
   tracing_config_mode       = "Active"
   environment               = {
     variables = {
-
-      # this sets the default output to webp, which
       AUTO_WEBP = "Yes"
-
       CORS_ENABLED   = "Yes"
       CORS_ORIGIN    = "*"
       SOURCE_BUCKETS = aws_s3_bucket.images.bucket
-
-//      ENABLE_DEFAULT_FALLBACK_IMAGE = "No"
-//      DEFAULT_FALLBACK_IMAGE_BUCKET = aws_s3_bucket.images.bucket
-//      DEFAULT_FALLBACK_IMAGE_KEY    = "default.svg"
     }
-    //    CORS_ORIGIN = props.corsOriginParameter.valueAsString,
-    //    REWRITE_MATCH_PATTERN= '',
-    //    REWRITE_SUBSTITUTION= '',
-    //    ENABLE_SIGNATURE= props.enableSignatureParameter.valueAsString,
-    //    SECRETS_MANAGER= props.secretsManagerParameter.valueAsString,
-    //    SECRET_KEY= props.secretsManagerKeyParameter.valueAsString,
-    //    ENABLE_DEFAULT_FALLBACK_IMAGE= props.enableDefaultFallbackImageParameter.valueAsString,
-    //    DEFAULT_FALLBACK_IMAGE_BUCKET= props.fallbackImageS3BucketParameter.valueAsString,
-    //    DEFAULT_FALLBACK_IMAGE_KEY= props.fallbackImageS3KeyParameter.valueAsString
   }
 }
 module "deployment" {

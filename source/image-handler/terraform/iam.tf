@@ -28,12 +28,3 @@ resource "aws_iam_role_policy_attachment" "rekognition" {
   role       = module.lambda.role_name
   policy_arn = aws_iam_policy.rekognition.arn
 }
-
-resource "aws_lambda_permission" "with_alb" {
-  statement_id  = "AllowExecutionFromAlb"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_alias.live.arn
-  principal     = "elasticloadbalancing.amazonaws.com"
-  source_arn    = aws_alb_target_group.this.arn
-}
-

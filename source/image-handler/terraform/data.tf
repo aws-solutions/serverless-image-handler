@@ -6,3 +6,6 @@ data "aws_lambda_function" "log_streaming" {
 data "aws_sns_topic" "notifications" {
   name = "codestar-notifications"
 }
+data "aws_route53_zone" "external" {
+  name = "stroeer.engineering"
+}

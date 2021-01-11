@@ -1,6 +1,7 @@
 resource "aws_apigatewayv2_api" "this" {
   name          = "image handler"
   protocol_type = "HTTP"
+  tags          = local.default_tags
 
   cors_configuration {
     allow_credentials = false
@@ -10,14 +11,12 @@ resource "aws_apigatewayv2_api" "this" {
     expose_headers    = ["*"]
     max_age           = 3600
   }
-
 }
 
 resource "aws_apigatewayv2_route" "this" {
   api_id    = aws_apigatewayv2_api.this.id
   route_key = "GET /{proxy+}"
   target    = "integrations/${aws_apigatewayv2_integration.this.id}"
-
 }
 
 resource "aws_apigatewayv2_integration" "this" {
@@ -60,9 +59,10 @@ resource "aws_apigatewayv2_stage" "prod" {
     deployed_at = timestamp()
   }
   route_settings {
-    route_key              = aws_apigatewayv2_route.this.route_key
-    throttling_burst_limit = 5000
-    throttling_rate_limit  = 10000
+    detailed_metrics_enabled = true
+    route_key                = aws_apigatewayv2_route.this.route_key
+    throttling_burst_limit   = 5000
+    throttling_rate_limit    = 10000
   }
 }
 
