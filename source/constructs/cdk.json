@@ -1,7 +1,0 @@
-{
-  "app": "npx ts-node bin/constructs.ts",
-  "context": {
-    "@aws-cdk/core:enableStackNameDuplicates": "false",
-    "aws-cdk:enableDiffNoFail": "true"
-  }
-}
