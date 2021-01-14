@@ -3,16 +3,28 @@
 # You must provide a value for each of these parameters.
 # ---------------------------------------------------------------------------------------------------------------------
 
+variable "ecr_repository_name" {
+  type        = string
+  description = "Name of the ECR repository for wich a trigger will be created to start the deployment pipeline."
+}
+
 variable "function_name" {
-  description = "Name of the Lambda function to deploy."
+  type        = string
+  description = "The service's name to create the pipeline resources."
 }
 
-variable "s3_bucket" {
-  description = "The S3 bucket location containing the function's deployment package. This bucket will also be used to store CodePipeline artifacts and CloudTrail logs."
+variable "alias_name" {
+  default = "live"
+  description = "Lambda alias"
 }
 
-variable "s3_key" {
-  description = "The S3 key of an object containing the function's deployment package."
+variable "deployment_config_name" {
+  default     = "CodeDeployDefault.LambdaAllAtOnce"
+  description = "The name of the deployment config used in the CodeDeploy deployment group."
+}
+
+variable "tags" {
+  type = map(string)
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -20,9 +32,28 @@ variable "s3_key" {
 # These parameters have reasonable defaults.
 # ---------------------------------------------------------------------------------------------------------------------
 
-variable "alias_name" {
-  default     = "live"
-  description = "Name of the alias to the Lambda function used in the CodeDeploy AppSpec."
+variable "enabled" {
+  default     = true
+  description = "Conditionally enables this module (and all it's ressources)."
+  type        = bool
+}
+
+variable "artifact_bucket" {
+  default     = ""
+  description = "Use an existing bucket for codepipeline artifacts that can be reused for multiple services."
+  type        = string
+}
+
+variable "code_pipeline_role" {
+  default     = ""
+  description = "Use an existing role for codepipeline permissions that can be reused for multiple services."
+  type        = string
+}
+
+variable "code_build_role" {
+  default     = ""
+  description = "Use an existing role for codebuild permissions that can be reused for multiple services."
+  type        = string
 }
 
 variable "codestar_notifications_detail_type" {
@@ -39,16 +70,7 @@ variable "codestar_notifications_event_type_ids" {
 
 variable "codestar_notifications_target_arn" {
   default     = ""
-  description = "ARN of a notification rule target (e.g. a SNS Topic ARN)."
+  description = "Use an existing ARN for a notification rule target (for example, a SNS Topic ARN). Otherwise a separate sns topic for this service will be created."
   type        = string
 }
 
-variable "deployment_config_name" {
-  default     = "CodeDeployDefault.LambdaAllAtOnce"
-  description = "The name of the deployment config used in the CodeDeploy deployment group."
-}
-
-variable "tags" {
-  description = "A mapping of tags to assign to all resources supporting tags."
-  default     = {}
-}
