@@ -44,7 +44,7 @@ invoke :: # invoke the running docker lambda by posting a sample API-GW-Event
 	curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d @source/image-handler/test/sample_event.json
 
 push :: docker_build # build and push the app to production (given sufficient permissions)
-	docker push --all-tags "$(ACCOUNT).dkr.ecr.$(TF_VAR_region).amazonaws.com/image-handler"
+	docker push "$(ACCOUNT).dkr.ecr.$(TF_VAR_region).amazonaws.com/image-handler"
 
 login ::
 	aws --region $(TF_VAR_region) ecr get-login-password | docker login --username AWS --password-stdin $(ACCOUNT).dkr.ecr.$(TF_VAR_region).amazonaws.com
