@@ -395,7 +395,7 @@ class ImageRequest {
     */
     getOutputFormat(event) {
         const autoWebP = process.env.AUTO_WEBP;
-        let accept = event.headers.Accept || event.headers.accept;
+        let accept = (event.headers) ? (event.headers.Accept || event.headers.accept) : [];
         if (autoWebP === 'Yes' && accept && accept.includes('image/webp')) {
             return 'webp';
         } else if (this.requestType === 'Default') {
