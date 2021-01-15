@@ -38,7 +38,7 @@ local :: docker_build # build and run the docker image locally
 	docker run --rm --publish 9000:8080 \
 				--env AUTO_WEBP="Yes" \
 				--env SOURCE_BUCKETS="master-images-$(ACCOUNT)-$(TF_VAR_region)" \
-				image_handler
+				"$(ACCOUNT).dkr.ecr.$(TF_VAR_region).amazonaws.com/image-handler:$(VERSION)"
 
 invoke :: # invoke the running docker lambda by posting a sample API-GW-Event
 	curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d @source/image-handler/test/sample_event.json

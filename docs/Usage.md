@@ -104,7 +104,7 @@ Here is a tl;dr for the most important ones, demonstrated on an image from [the 
 
 will simply output the original image as is 
 ![original](https://di7yufqc6mgnl.cloudfront.net/4k_hdr.jpg)
-https://di7yufqc6mgnl.cloudfront.net/oat.jpg
+https://di7yufqc6mgnl.cloudfront.net/4k_hdr.jpg
 
 ### Resize `/fit-in/${WIDTH}x${HEIGHT}/` 
 
@@ -114,30 +114,36 @@ the original image ratio. You can either set both `WIDTH` and `HEIGHT` or limit 
   `/fit-in/666x0/`
 
 ![resized](https://di7yufqc6mgnl.cloudfront.net/fit-in/666x0/4k_hdr.jpg)
+https://di7yufqc6mgnl.cloudfront.net/fit-in/666x0/4k_hdr.jpg
 
 ### Cropping `/${X}x${Y}:${WIDTH}x${HEIGHT}/`
 
 starting from a `Point(x, y)` cut a rectangle sized `width x height`, without further resizing. 
 
 ![crop](https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/4k_hdr.jpg)
+https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/4k_hdr.jpg
 
 ### Effects `/filters:blur(7)/`
 
 ![crop](https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:blur(7)/4k_hdr.jpg)
+https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:blur(7)/4k_hdr.jpg
 
 ### Effects `/filters:grayscale()/`
 
 ![crop](https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:grayscale()/4k_hdr.jpg)
+https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:grayscale()/4k_hdr.jpg
 
 ### Effects `/filters:quality(0-100)/`
 
 change the quality, [default is 80][output options]
 
 ![crop](https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:quality(1)/4k_hdr.jpg)
+https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:quality(1)/4k_hdr.jpg
 
 ### Effects `/filters:rotate(0-360)/`
 
 ![crop](https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:rotate(180)/4k_hdr.jpg)
+https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:rotate(180)/4k_hdr.jpg
 
 ## Try it out
 
@@ -156,5 +162,5 @@ There are many other images already automatically imported into the image bucket
 [image operations]: https://sharp.pixelplumbing.com/api-operation
 [Serverless Image Handler Filters]: https://docs.aws.amazon.com/solutions/latest/serverless-image-handler/appendix-d.html
 [Demo UI]: https://master-images-053041861227-eu-west-1.s3-eu-west-1.amazonaws.com/index.html
-[img src]: https://wallpapersafari.com/w/pEwDaY
+[img source]: https://wallpapersafari.com/w/pEwDaY
 [peruggia]: github.com/stroeer/peruggia
