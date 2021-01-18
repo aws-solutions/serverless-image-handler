@@ -132,11 +132,11 @@ class ImageRequest {
             }
 
             if (originalImage.Expires) {
-                this.Expires = new Date(originalImage.Expires).toUTCString();
+                this.Expires = new Date(originalImage.Expires);
             }
 
             if (originalImage.LastModified) {
-                this.LastModified = new Date(originalImage.LastModified).toUTCString();
+                this.LastModified = new Date(originalImage.LastModified);
             }
 
             if (originalImage.CacheControl) {

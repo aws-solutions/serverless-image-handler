@@ -19,10 +19,10 @@ exports.handler = async (event) => {
     const request = await imageRequest.setup(event);
     console.log(request);
 
-    if (request.Expires && Date.parse(request.Expires) < new Date()) {
+    if (request.Expires && request.Expires.getTime() < Date.now()) {
       console.log("Expired content was requested: " + request.key)
       let headers = getResponseHeaders(true, isAlb);
-      headers["Cache-Control"] = 'max-age=300,public';
+      headers["Cache-Control"] = 'max-age=600,public';
       return {
         statusCode: 410,
         isBase64Encoded: false,
@@ -33,10 +33,16 @@ exports.handler = async (event) => {
       const processedRequest = await imageHandler.process(request);
       const headers = getResponseHeaders(false, isAlb);
       headers["Content-Type"] = request.ContentType;
-      headers["Expires"] = request.Expires;
-      headers["Last-Modified"] = request.LastModified;
-      headers["Cache-Control"] = request.CacheControl;
       headers["ETag"] = request.ETag;
+      if (request.LastModified) headers["Last-Modified"] = request.LastModified.toUTCString();
+      if (request.Expires) {
+        headers["Expires"] = request.Expires.toUTCString();
+        let seconds_until_expiry = Math.max(31536000, (request.Expires.getTime() - Date.now()));
+        headers["Cache-Control"] = "max-age=" + seconds_until_expiry + ",public";
+      } else {
+        headers["Cache-Control"] = request.CacheControl;
+      }
+
 
       if (request.headers) {
         // Apply the custom headers overwriting any that may need overwriting

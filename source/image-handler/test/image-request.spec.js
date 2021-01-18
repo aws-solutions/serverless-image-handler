@@ -256,8 +256,8 @@ describe('setup()', function() {
                 originalImage: Buffer.from('SampleImageContent\n'),
                 CacheControl: 'max-age=300,public',
                 ContentType: 'custom-type',
-                Expires: 'Tue, 24 Dec 2019 13:46:28 GMT',
-                LastModified: 'Sat, 19 Dec 2009 16:30:47 GMT',
+                Expires: new Date(Date.parse('Tue, 24 Dec 2019 13:46:28 GMT')),
+                LastModified: new Date(Date.parse('Sat, 19 Dec 2009 16:30:47 GMT')),
             }
             // Assert
             expect(mockAws.getObject).toHaveBeenCalledWith({ Bucket: 'allowedBucket001', Key: 'custom-image.jpg' });

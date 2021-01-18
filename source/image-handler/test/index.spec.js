@@ -435,12 +435,60 @@ describe('index', function () {
         'Access-Control-Allow-Credentials': true,
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
-        'Cache-Control': 'max-age=300,public',
+        'Cache-Control': 'max-age=600,public',
       },
       body: '{"message":"HTTP/410. Content test.jpg has expired.","code":"Gone","status":410}'
     };
     // Assert
     expect(mockS3).toHaveBeenNthCalledWith(1, {Bucket: 'source-bucket', Key: 'test.jpg'});
     expect(result).toEqual(expectedResult);
+  })
+  it('009/should set expired header and reduce max-age if content is about to expire', async function () {
+    process.env.CORS_ENABLED = 'Yes';
+    process.env.CORS_ORIGIN = '*';
+
+    const realDateNow = Date.now.bind(global.Date);
+    const dateNowStub = jest.fn(() => 1610958804416);
+    global.Date.now = dateNowStub;
+
+    // Arrange
+    const event = {
+      path: '/test.jpg'
+    };
+    // Mock
+    mockS3.mockReset();
+    mockS3.mockImplementationOnce(() => {
+      return {
+        promise() {
+          return Promise.resolve({
+            Body: mockImage,
+            ContentType: 'image/png',
+            Expires: 'Fri, 24 Dec 2021 14:00:00 GMT',
+            ETag: '"foo"'
+          });
+        }
+      }
+    });
+    // Act
+    const result = await index.handler(event);
+    const expectedResult = {
+      statusCode: 200,
+      isBase64Encoded: true,
+      headers: {
+        'Access-Control-Allow-Methods': 'GET',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Credentials': true,
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'image/png',
+        'Cache-Control': 'max-age=29395595584,public',
+        Expires: 'Fri, 24 Dec 2021 14:00:00 GMT',
+        ETag: '"foo"'
+      },
+      body: mockImage.toString('base64')
+    };
+    // Assert
+    expect(mockS3).toHaveBeenNthCalledWith(1, {Bucket: 'source-bucket', Key: 'test.jpg'});
+    expect(result).toEqual(expectedResult);
+    global.Date.now = realDateNow;
   })
 });
