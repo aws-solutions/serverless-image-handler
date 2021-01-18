@@ -19,7 +19,8 @@ exports.handler = async (event) => {
     const request = await imageRequest.setup(event);
     console.log(request);
 
-    if (request.Expires && request.Expires.getTime() < Date.now()) {
+    let now = Date.now();
+    if (request.Expires && request.Expires.getTime() < now) {
       console.log("Expired content was requested: " + request.key)
       let headers = getResponseHeaders(true, isAlb);
       headers["Cache-Control"] = 'max-age=600,public';
@@ -37,7 +38,7 @@ exports.handler = async (event) => {
       if (request.LastModified) headers["Last-Modified"] = request.LastModified.toUTCString();
       if (request.Expires) {
         headers["Expires"] = request.Expires.toUTCString();
-        let seconds_until_expiry = Math.max(31536000, (request.Expires.getTime() - Date.now()));
+        let seconds_until_expiry = Math.min(31536000, (request.Expires.getTime() - now));
         headers["Cache-Control"] = "max-age=" + seconds_until_expiry + ",public";
       } else {
         headers["Cache-Control"] = request.CacheControl;

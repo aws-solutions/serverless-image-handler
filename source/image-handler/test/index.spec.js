@@ -448,7 +448,10 @@ describe('index', function () {
     process.env.CORS_ORIGIN = '*';
 
     const realDateNow = Date.now.bind(global.Date);
-    const dateNowStub = jest.fn(() => 1610958804416);
+    const date_now_fixture = 1610986782372;
+    const dateNowStub = jest.fn(() => {
+      return date_now_fixture;
+    });
     global.Date.now = dateNowStub;
 
     // Arrange
@@ -463,7 +466,7 @@ describe('index', function () {
           return Promise.resolve({
             Body: mockImage,
             ContentType: 'image/png',
-            Expires: 'Fri, 24 Dec 2021 14:00:00 GMT',
+            Expires: new Date(date_now_fixture + 30628).toUTCString(),
             ETag: '"foo"'
           });
         }
@@ -480,8 +483,8 @@ describe('index', function () {
         'Access-Control-Allow-Credentials': true,
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'image/png',
-        'Cache-Control': 'max-age=29395595584,public',
-        Expires: 'Fri, 24 Dec 2021 14:00:00 GMT',
+        'Cache-Control': 'max-age=30628,public',
+        Expires: new Date(date_now_fixture + 30628).toUTCString(),
         ETag: '"foo"'
       },
       body: mockImage.toString('base64')
@@ -489,6 +492,7 @@ describe('index', function () {
     // Assert
     expect(mockS3).toHaveBeenNthCalledWith(1, {Bucket: 'source-bucket', Key: 'test.jpg'});
     expect(result).toEqual(expectedResult);
+    expect(dateNowStub).toHaveBeenCalled();
     global.Date.now = realDateNow;
   })
 });
