@@ -466,7 +466,7 @@ describe('index', function () {
           return Promise.resolve({
             Body: mockImage,
             ContentType: 'image/png',
-            Expires: new Date(date_now_fixture + 30628).toUTCString(),
+            Expires: new Date(date_now_fixture + 30999).toUTCString(),
             ETag: '"foo"'
           });
         }
@@ -483,8 +483,8 @@ describe('index', function () {
         'Access-Control-Allow-Credentials': true,
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'image/png',
-        'Cache-Control': 'max-age=30628,public',
-        Expires: new Date(date_now_fixture + 30628).toUTCString(),
+        'Cache-Control': 'max-age=30,public',
+        Expires: new Date(date_now_fixture + 30999).toUTCString(),
         ETag: '"foo"'
       },
       body: mockImage.toString('base64')

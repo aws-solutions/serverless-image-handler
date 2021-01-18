@@ -38,7 +38,7 @@ exports.handler = async (event) => {
       if (request.LastModified) headers["Last-Modified"] = request.LastModified.toUTCString();
       if (request.Expires) {
         headers["Expires"] = request.Expires.toUTCString();
-        let seconds_until_expiry = Math.min(31536000, (request.Expires.getTime() - now));
+        let seconds_until_expiry = Math.min(31536000, Math.floor((request.Expires.getTime() - now) / 1000));
         headers["Cache-Control"] = "max-age=" + seconds_until_expiry + ",public";
       } else {
         headers["Cache-Control"] = request.CacheControl;
