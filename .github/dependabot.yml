@@ -8,7 +8,7 @@ updates:
       interval: "weekly"
     reviewers:
       - "stroeer/teams/buzz-end"
-      -
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

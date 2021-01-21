@@ -2,7 +2,6 @@ terraform {
   backend "s3" {
     encrypt        = true
     dynamodb_table = "terraform-lock"
-    key            = "regional/lambda/el-dub-tor/terraform.tfstate"
   }
 
   required_providers {
@@ -12,5 +11,5 @@ terraform {
     }
   }
 
-  required_version = "~> 0.13"
+  required_version = "~> 0.14"
 }
