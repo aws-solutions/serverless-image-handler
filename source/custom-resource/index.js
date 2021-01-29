@@ -4,8 +4,10 @@
 const AWS = require('aws-sdk');
 const axios = require('axios');
 const uuid = require('uuid');
+const crypto = require('crypto');
 
 const s3 = new AWS.S3();
+const s3USEast = new AWS.S3({apiVersion: '2006-03-01', region: 'us-east-1'});
 const secretsManager = new AWS.SecretsManager();
 const METRICS_ENDPOINT = 'https://metrics.awssolutionsbuilder.com/generic';
 
@@ -72,6 +74,15 @@ exports.handler = async (event, context) => {
                     response.data = await checkFallbackImage(fallbackImageS3Bucket, fallbackImageS3Key);
                 }
                 break;
+            case 'createCFLoggingBucket':
+                if(['Create'].includes(event.RequestType)) {
+                    const stackName = properties.stackName;
+                    let bucketPolicyStatement = properties.policy;
+                    const currentDate = new Date();
+                    const bucketSuffix = crypto.createHash('md5').update(properties.bucketSuffix + currentDate.getTime()).digest("hex");
+                    response.data = await createLoggingBucket(stackName, bucketSuffix, bucketPolicyStatement);
+                }
+                break;                
             default:
                 break;
         }
@@ -455,4 +466,69 @@ async function checkFallbackImage(bucket, key) {
 async function sleep(retry) {
     const retrySeconds = Number(process.env.RETRY_SECONDS);
     return new Promise(resolve => setTimeout(resolve, retrySeconds * 1000 * retry));
+}
+
+/**
+ * Creates a bucket with settings for cloudfront logging.
+ * @param {String} stackName - Name of CloudFormation stack
+ * @param {JSON} bucketPolicyStatement - S3 bucket policy statement
+ * @return {Promise} - Bucket name of the created bucket
+ */
+async function createLoggingBucket(stackName, bucketSuffix, bucketPolicyStatement){
+    const bucketParams = {
+        Bucket: `${stackName}-logs-${bucketSuffix.substring(0,8)}`.toLowerCase(),
+        ACL: "log-delivery-write" 
+    };
+
+    //create bucket
+    try{
+        await s3USEast.createBucket(bucketParams).promise()
+        console.log(`Successfully created bucket: ${bucketParams.Bucket}`);
+    } catch(error) {
+        console.error(`Could not create bucket: ${bucketParams.Bucket}`, error);
+        throw error;
+    }
+
+    const encryptionParams = {
+        Bucket: bucketParams.Bucket,
+        ServerSideEncryptionConfiguration: {
+            Rules: [{
+                ApplyServerSideEncryptionByDefault: {
+                    SSEAlgorithm: 'AES256'
+                },
+            },]
+        }
+    };
+
+    //Add encryption to bucket
+    console.log("Adding Encryption...")
+    try {
+        await s3USEast.putBucketEncryption(encryptionParams).promise();
+        console.log(`Successfully enabled encryptoin on bucket: ${bucketParams.Bucket}`);
+    } catch(error) {
+        console.error(`Failed to add encryption to bucket: ${bucketParams.Bucket}`, error);
+        throw error;
+    }
+
+    //Update resource attribute of policy statement
+    bucketPolicyStatement.Resource = `arn:aws:s3:::${bucketParams.Bucket}/*`
+    bucketPolicy = {"Version": "2012-10-17", "Statement":[ bucketPolicyStatement ]};
+
+    //Define policy parameters
+    const policyParams = {
+        Bucket: bucketParams.Bucket,
+        Policy: JSON.stringify(bucketPolicy)
+    };
+
+    //Add Policy to bucket
+    console.log("Adding policy...")
+    try {
+        await s3USEast.putBucketPolicy(policyParams).promise();
+        console.log(`Successfully added policy added to bucket: ${bucketParams.Bucket}`);
+    } catch(error) {
+        console.error(`Failed to add policy to bucket ${bucketParams.Bucket}`, error);
+        throw error;
+    }
+
+    return {bucketName: bucketParams.Bucket};
 }

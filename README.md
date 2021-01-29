@@ -64,8 +64,8 @@ chmod +x ./build-s3-dist.sh
 
 Deploy the distributable to the Amazon S3 bucket in your account:
 ```bash
-aws s3 sync ./regional-s3-assets/ s3://$DIST_OUTPUT_BUCKET-$REGION/$SOLUTION_NAME/$VERSION/ --recursive --acl bucket-owner-full-control
-aws s3 sync ./global-s3-assets/ s3://$DIST_OUTPUT_BUCKET-$REGION/$SOLUTION_NAME/$VERSION/ --recursive --acl bucket-owner-full-control
+aws s3 sync ./regional-s3-assets/ s3://$DIST_OUTPUT_BUCKET-$REGION/$SOLUTION_NAME/$VERSION/ --acl bucket-owner-full-control
+aws s3 sync ./global-s3-assets/ s3://$DIST_OUTPUT_BUCKET-$REGION/$SOLUTION_NAME/$VERSION/ --acl bucket-owner-full-control
 ```
 
 ### 6. Launch the CloudFormation template.
@@ -84,6 +84,7 @@ aws s3 sync ./global-s3-assets/ s3://$DIST_OUTPUT_BUCKET-$REGION/$SOLUTION_NAME/
 - [@pch](https://github.com/pch) for [#227](https://github.com/awslabs/serverless-image-handler/pull/227)
 - [@atrope](https://github.com/atrope) for [#201](https://github.com/awslabs/serverless-image-handler/pull/201)
 - [@bretto36](https://github.com/bretto36) for [#182](https://github.com/awslabs/serverless-image-handler/pull/182)
+- [@makoncline](https://github.com/makoncline) for [#255](https://github.com/awslabs/serverless-image-handler/pull/255)
 
 ***
 ## License

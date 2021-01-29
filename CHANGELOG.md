@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0] - 2021-01-29
+### Added
+- Support for ap-east-1 and me-south-1 regions: [#192](https://github.com/awslabs/serverless-image-handler/issues/192), [#228](https://github.com/awslabs/serverless-image-handler/issues/228), [#232](https://github.com/awslabs/serverless-image-handler/issues/232)
+- Unit tests for custom-resource: `100%` coverage
+- Cloudfront cache policy and origin request policy: [#229](https://github.com/awslabs/serverless-image-handler/issues/229)
+- Circular cropping feature: [#214](https://github.com/awslabs/serverless-image-handler/issues/214), [#216](https://github.com/awslabs/serverless-image-handler/issues/216)
+- Unit tests for image-handler: `100%` coverage
+- Support for files without extension on thumbor requests: [#169](https://github.com/awslabs/serverless-image-handler/issues/169), [#188](https://github.com/awslabs/serverless-image-handler/issues/188)
+- Inappropriate content detection feature: [#243](https://github.com/awslabs/serverless-image-handler/issues/243)
+- Unit tests for image-request: `100%` coverage
+
+### Fixed
+- Graceful failure when no faces are detected using smartCrop and fail on resizing before smartCrop: [#132](https://github.com/awslabs/serverless-image-handler/issues/132), [#133](https://github.com/awslabs/serverless-image-handler/issues/133)
+- Broken SVG returned if no edits specified and Auto-WebP enabled: [#247](https://github.com/awslabs/serverless-image-handler/issues/247)
+- Removed "--recursive" from README.md: [#255](https://github.com/awslabs/serverless-image-handler/pull/255)
+- fixed issue with failure on resize if width or height is float: [#254](https://github.com/awslabs/serverless-image-handler/issues/254)
+
+### Changed 
+- Constructs test template for constructs unit test: `100%` coverage
+
 ## [5.1.0] - 2020-11-19
 ### ⚠ BREAKING CHANGES
 - **Image URL Signature**: When image URL signature is enabled, all URLs including existing URLs should have `signature` query parameter.

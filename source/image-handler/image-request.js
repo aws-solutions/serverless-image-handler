@@ -79,13 +79,15 @@ class ImageRequest {
              * 2) If headers contain "Accept: image/webp", the output format is webp.
              * 3) Use the default image format for the rest of cases.
              */
-            let outputFormat = this.getOutputFormat(event);
-            if (this.edits && this.edits.toFormat) {
-                this.outputFormat = this.edits.toFormat;
-            } else if (outputFormat) {
-                this.outputFormat = outputFormat;
+            if (this.ContentType !== 'image/svg+xml' || this.edits.toFormat || this.outputFormat) {
+                let outputFormat = this.getOutputFormat(event);
+                if (this.edits && this.edits.toFormat) {
+                    this.outputFormat = this.edits.toFormat;
+                } else if (outputFormat) {
+                    this.outputFormat = outputFormat;
+                }
             }
-
+            
             // Fix quality for Thumbor and Custom request type if outputFormat is different from quality type.
             if (this.outputFormat) {
                 const requestType = ['Custom', 'Thumbor'];
@@ -124,7 +126,13 @@ class ImageRequest {
             const originalImage = await this.s3.getObject(imageLocation).promise();
 
             if (originalImage.ContentType) {
-                this.ContentType = originalImage.ContentType;
+                //If using default s3 ContentType infer from hex headers
+                if(originalImage.ContentType === 'binary/octet-stream') {
+                    const imageBuffer = Buffer.from(originalImage.Body);
+                    this.ContentType = this.inferImageType(imageBuffer);
+                } else {
+                    this.ContentType = originalImage.ContentType;
+                }
             } else {
                 this.ContentType = "image";
             }
@@ -142,7 +150,6 @@ class ImageRequest {
             } else {
                 this.CacheControl = "max-age=31536000,public";
             }
-
             return originalImage.Body;
         } catch(err) {
             throw {
@@ -271,7 +278,7 @@ class ImageRequest {
     parseRequestType(event) {
         const path = event["path"];
         const matchDefault = new RegExp(/^(\/?)([0-9a-zA-Z+\/]{4})*(([0-9a-zA-Z+\/]{2}==)|([0-9a-zA-Z+\/]{3}=))?$/);
-        const matchThumbor = new RegExp(/^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(.+jpg|.+png|.+webp|.+tiff|.+jpeg|.+svg)$/i);
+        const matchThumbor = new RegExp(/^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?)(((.(?!(\.[^.\\\/]+$)))*$)|.*(\.jpg$|.\.png$|\.webp$|\.tiff$|\.jpeg$|\.svg$))/i);
         const matchCustom = new RegExp(/(\/?)(.*)(jpg|png|webp|tiff|jpeg|svg)/i);
         const definedEnvironmentVariables = (
             (process.env.REWRITE_MATCH_PATTERN !== "") &&
@@ -280,7 +287,16 @@ class ImageRequest {
             (process.env.REWRITE_SUBSTITUTION !== undefined)
         );
 
-        if (matchDefault.test(path)) {  // use sharp
+        //Check if path is base 64 encoded
+        let isBase64Encoded = true;
+        try {
+            this.decodeRequest(event);
+        } catch(error) {
+            console.error(error);
+            isBase64Encoded = false;
+        } 
+
+        if (matchDefault.test(path) && isBase64Encoded) {  // use sharp
             return 'Default';
         } else if (matchCustom.test(path) && definedEnvironmentVariables) {  // use rewrite function then thumbor mappings
             return 'Custom';
@@ -376,6 +392,28 @@ class ImageRequest {
 
         return null;
     }
+
+    /**
+    * Return the output format depending on first four hex values of an image file.
+    * @param {Buffer} imageBuffer - Image buffer.
+    */
+   inferImageType(imageBuffer) {
+    switch(imageBuffer.toString('hex').substring(0,8).toUpperCase()) {
+        case '89504E47': return 'image/png';
+        case 'FFD8FFDB': return 'image/jpeg';
+        case 'FFD8FFE0': return 'image/jpeg';
+        case 'FFD8FFEE': return 'image/jpeg';
+        case 'FFD8FFE1': return 'image/jpeg';
+        case '52494646': return 'image/webp';
+        case '49492A00': return 'image/tiff';
+        case '4D4D002A': return 'image/tiff';
+        default: throw {
+            status: 500,
+            code: 'RequestTypeError',
+            message: 'The file does not have an extension and the file type could not be inferred. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg). Refer to the documentation for additional guidance on forming image requests.'
+        };   
+    }
+}
 }
 
 // Exports

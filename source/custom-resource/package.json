@@ -5,14 +5,14 @@
     "author": {
         "name": "aws-solutions-builder"
     },
-    "version": "5.1.0",
+    "version": "5.2.0",
     "private": true,
     "dependencies": {
         "axios": "^0.21.1",
         "uuid": "^8.3.0"
     },
     "devDependencies": {
-        "aws-sdk": "2.712.0",
+        "aws-sdk": "2.771.0",
         "axios-mock-adapter": "^1.18.2",
         "jest": "^26.4.2"
     },

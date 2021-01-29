@@ -1,7 +1,7 @@
 {
   "name": "constructs",
   "description": "Serverless Image Handler Constructs",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "license": "Apache-2.0",
   "bin": {
     "constructs": "bin/constructs.js"

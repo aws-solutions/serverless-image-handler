@@ -40,7 +40,11 @@ jest.mock('aws-sdk', () => {
       copyObject: mockS3,
       putObject: mockS3,
       headBucket: mockS3,
-      headObject: mockS3
+      headObject: mockS3,
+      createBucket: mockS3,
+      putBucketEncryption: mockS3,
+      putBucketPolicy: mockS3,
+      waitFor: mockS3
     })),
     SecretsManager: jest.fn(() => ({
       getSecretValue: mockSecretsManager
@@ -720,6 +724,130 @@ describe('index', function() {
       expect(result).toEqual({
         status: 'SUCCESS',
         data: {}
+      });
+    });
+  });
+
+  describe('CreateCustomLoggingBucket', function() {
+    const event = {
+      "RequestType": "Create",
+      "ResponseURL": "/cfn-response",
+      "ResourceProperties": {
+        "customAction": "createCFLoggingBucket",
+        "stackName": "teststack",
+        "bucketSuffix": `teststacktest-region01234567898`,
+        "policy": {
+          "Condition": {
+            "Bool": {
+              "aws:SecureTransport": "false"
+            }
+         },
+          "Action": "*",
+          "Resource": "",
+          "Effect": "Deny",
+          "Principal": "*",
+          "Sid": "HttpsOnly"
+        }
+      }
+    };
+    
+    beforeEach(() => {
+      mockS3.mockReset();
+    });
+
+    it("Should return success and bucket name", async function() {
+
+      mockS3.mockImplementation(() => {
+        return {
+          promise() {
+            
+            return Promise.resolve();
+          }
+        };
+      });
+      const result = await index.handler(event, context);
+      expect(result).toMatchObject({
+        status: 'SUCCESS',
+        data: {bucketName: expect.stringMatching(/^teststack-logs-[a-z0-9]{8}/)}
+      });
+    });
+
+    it("Should return failure when there is an error creating the bucket", async function() {
+      mockS3.mockImplementation(() => {
+        return {
+          promise() {           
+            return Promise.reject({message: "createBucket failed"});
+          }
+        };
+      });
+      const result = await index.handler(event, context);
+      expect(result).toEqual({
+        status: 'FAILED',
+        data: {
+          Error: {
+            code: "CustomResourceError",
+            message: "createBucket failed",
+          }
+        }
+      });
+    });
+
+    it("Should return failure when there is an error enabling encryption on the created bucket", async function() {
+      mockS3.mockImplementationOnce(() => {
+        return {
+          promise() {           
+            return Promise.resolve();
+          }
+        };
+      }).mockImplementationOnce(() => {
+        return {
+          promise() {           
+            return Promise.reject({message: "putBucketEncryption failed"});
+          }
+        };
+      });
+
+      const result = await index.handler(event, context);
+      expect(result).toEqual({
+        status: 'FAILED',
+        data: {
+          Error: {
+            code: "CustomResourceError",
+            message: "putBucketEncryption failed",
+          }
+        }
+      });
+    });
+    it("Should return failure when there is an error applying a policy to the created bucket", async function() {
+      mockS3.mockImplementationOnce(() => {
+        return {
+          promise() {           
+            return Promise.resolve();
+          }
+        };
+      }).mockImplementationOnce(() => {
+        return {
+          promise() {           
+            return Promise.resolve();
+          }
+        };
+      }).mockImplementationOnce(() => {
+        return {
+          promise() {           
+            return Promise.reject({message: "putBucketPolicy failed"});
+          }
+        };
+      });
+
+      const result = await index.handler(event, context);
+      expect(result).toEqual({
+        status: 'FAILED',
+        data: {
+          Error: {
+            code: "CustomResourceError",
+            message: "putBucketPolicy failed",
+          }
+        }
       });
     });
   });
