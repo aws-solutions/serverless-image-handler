@@ -11,6 +11,8 @@ const ImageRequest = require("./image-request.js");
 const ImageHandler = require("./image-handler.js");
 
 exports.handler = async (event) => {
+  logger.registerCloudwatchEvent(event);
+
   logger.log("Cloudwatch Event", event);
   const imageRequest = new ImageRequest(s3, secretsManager);
   const imageHandler = new ImageHandler(s3, rekognition);
