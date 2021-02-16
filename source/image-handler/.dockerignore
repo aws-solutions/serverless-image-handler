@@ -1,1 +1,10 @@
+# Terraform
+terraform
+
+# Testing
+test
+coverage
+**/*.spec.js
+
+# Node
 node_modules
