@@ -13,7 +13,7 @@ const ImageHandler = require("./image-handler.js");
 exports.handler = async (event) => {
   logger.registerCloudwatchEvent(event);
 
-  logger.log("Cloudwatch Event", event);
+  logger.debug("Received Event from ApiGateway", event);
   const imageRequest = new ImageRequest(s3, secretsManager);
   const imageHandler = new ImageHandler(s3, rekognition);
   const isAlb =
@@ -21,13 +21,12 @@ exports.handler = async (event) => {
 
   try {
     const request = await imageRequest.setup(event);
-    logger.log("Image Request", request);
+    logger.info("Image manipulation request", request);
 
     let now = Date.now();
     if (request.Expires && request.Expires.getTime() < now) {
-      logger.log("Expired content was requested: " + request.key);
-      let headers = getResponseHeaders(true, isAlb);
-      headers["Cache-Control"] = "max-age=600,public";
+      logger.warn("Expired content was requested: " + request.key);
+      let headers = getResponseHeaders(410, isAlb);
       return {
         statusCode: 410,
         isBase64Encoded: false,
@@ -40,7 +39,7 @@ exports.handler = async (event) => {
       };
     } else {
       const processedRequest = await imageHandler.process(request);
-      const headers = getResponseHeaders(false, isAlb);
+      const headers = getResponseHeaders(200, isAlb);
       headers["Content-Type"] = request.ContentType;
       headers["ETag"] = request.ETag;
       if (request.LastModified)
@@ -64,7 +63,7 @@ exports.handler = async (event) => {
         }
       }
 
-      logger.log("Lambda return value", {
+      logger.info("Image transformation was successful.", {
         statusCode: 200,
         isBase64Encoded: true,
         headers: headers,
@@ -92,12 +91,12 @@ exports.handler = async (event) => {
         const bucket = process.env.DEFAULT_FALLBACK_IMAGE_BUCKET;
         const objectKey = process.env.DEFAULT_FALLBACK_IMAGE_KEY;
         const defaultFallbackImage = await s3
-          .getObject({ Bucket: bucket, Key: objectKey })
+          .getObject({Bucket: bucket, Key: objectKey})
           .promise();
-        const headers = getResponseHeaders(false, isAlb);
+        const headers = getResponseHeaders(200, isAlb);
         headers["Content-Type"] = defaultFallbackImage.ContentType;
         headers["Last-Modified"] = defaultFallbackImage.LastModified;
-        headers["Cache-Control"] = "max-age=31536000,public";
+        headers["Cache-Control"] = "public, max-age=31536000, immutable";
 
         return {
           statusCode: err.status ? err.status : 500,
@@ -114,23 +113,23 @@ exports.handler = async (event) => {
     }
 
     if (err.status) {
-      logger.log("Lambda return value", {
+      logger.warn("Error occurred during image processing", {
         statusCode: err.status,
         isBase64Encoded: false,
-        headers: getResponseHeaders(true, isAlb),
+        headers: getResponseHeaders(err.status, isAlb),
         body: JSON.stringify(err),
       });
       return {
         statusCode: err.status,
         isBase64Encoded: false,
-        headers: getResponseHeaders(true, isAlb),
+        headers: getResponseHeaders(err.status, isAlb),
         body: JSON.stringify(err),
       };
     } else {
       return {
         statusCode: 500,
         isBase64Encoded: false,
-        headers: getResponseHeaders(true, isAlb),
+        headers: getResponseHeaders(500, isAlb),
         body: JSON.stringify({
           message: "Internal error. Please contact the system administrator.",
           code: "InternalError",
@@ -144,11 +143,11 @@ exports.handler = async (event) => {
 /**
  * Generates the appropriate set of response headers based on a success
  * or error condition.
- * @param {boolean} isErr - has an error been thrown?
+ * @param {number} status_code - has an error been thrown?
  * @param {boolean} isAlb - is the request from ALB?
  * @return {object} - Headers object
  */
-const getResponseHeaders = (isErr = false, isAlb = false) => {
+const getResponseHeaders = (status_code = 200, isAlb = false) => {
   const corsEnabled = process.env.CORS_ENABLED === "Yes";
   const headers = {
     "Access-Control-Allow-Methods": "GET",
@@ -160,8 +159,13 @@ const getResponseHeaders = (isErr = false, isAlb = false) => {
   if (corsEnabled) {
     headers["Access-Control-Allow-Origin"] = process.env.CORS_ORIGIN;
   }
-  if (isErr) {
+  if (200 !== status_code) {
     headers["Content-Type"] = "application/json";
+  }
+  if (status_code >= 400 && status_code < 500) {
+    headers["Cache-Control"] = "public, max-age=7200";
+  } else if (status_code >= 500 && status_code < 600) {
+    headers["Cache-Control"] = "max-age=0, must-revalidate";
   }
   return headers;
 };

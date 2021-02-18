@@ -1,5 +1,13 @@
+function replacer(key, value) {
+  // Filtering out binary image data
+  if (key === 'originalImage') {
+    return undefined;
+  }
+  return value;
+}
+
 const sendMessage = (payload) => {
-  const message = JSON.stringify(createMessage(payload));
+  const message = JSON.stringify(createMessage(payload), replacer);
   process.stdout.write(message + "\n");
 };
 
@@ -11,7 +19,7 @@ function createMessage(payload) {
     message: getMessage(payload),
     mdc: getMdc(payload),
     ...addIfExists("data", getData(payload)),
-    ...addIfExists("exceptions", getExeceptions(payload)),
+    ...addIfExists("exception", getExceptions(payload)),
   };
 }
 
@@ -30,6 +38,7 @@ function getMdc({ event }) {
 
   return {
     path: event.path,
+    accept: event.headers && (event.headers.accept || event.headers.Accept)
   };
 }
 
@@ -43,12 +52,12 @@ function addIfExists(attribute, list) {
   }
 }
 
-function getExeceptions({ args }) {
+function getExceptions({ args }) {
   return args
     .filter((arg) => isException(arg))
     .map(({ message, stack }) => ({
-      message,
-      stack,
+      "exception_message": message,
+      "stacktrace": stack,
     }));
 }
 

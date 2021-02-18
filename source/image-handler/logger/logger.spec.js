@@ -32,19 +32,19 @@ describe("Logger", () => {
   );
 
   it("should send an empty array if no arguments were provided", () => {
-    logger.log();
+    logger.info();
 
     expect(sendMessageSpy).toHaveBeenCalledWith({
-      level: "log",
+      level: "info",
       args: [],
     });
   });
 
   it("should send all arguments", () => {
-    logger.log(TEST_MESSAGE, TEST_DATA, TEST_DATA);
+    logger.info(TEST_MESSAGE, TEST_DATA, TEST_DATA);
 
     expect(sendMessageSpy).toHaveBeenCalledWith({
-      level: "log",
+      level: "info",
       args: [TEST_MESSAGE, TEST_DATA, TEST_DATA],
     });
   });
@@ -52,10 +52,10 @@ describe("Logger", () => {
   it("should include the Cloudwatch event after its registration", () => {
     logger.registerCloudwatchEvent(TEST_CLOUDWATCH_EVENT);
 
-    logger.log(TEST_MESSAGE);
+    logger.info(TEST_MESSAGE);
 
     expect(sendMessageSpy).toHaveBeenCalledWith({
-      level: "log",
+      level: "info",
       args: [TEST_MESSAGE],
       event: TEST_CLOUDWATCH_EVENT,
     });

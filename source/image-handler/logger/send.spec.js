@@ -10,7 +10,7 @@ const TEST_CLOUDWATCH_EVENT = {
   path: "/path/to/image.png",
   eventId: 12345,
 };
-const TEST_EXCEPTION = new Error("THis is an error");
+const TEST_EXCEPTION = new Error("This is an error.");
 
 const TEST_DATE = new Date();
 
@@ -183,7 +183,7 @@ describe("sendMessage", () => {
 
       const { message, stack } = TEST_EXCEPTION;
 
-      expect(getLastMessage().exceptions).toStrictEqual({ message, stack });
+      expect(getLastMessage().exception).toStrictEqual({ "exception_message": message, "stacktrace": stack });
     });
 
     it("should include all exceptions in a list if there are multiple", () => {
@@ -195,9 +195,9 @@ describe("sendMessage", () => {
 
       const { message, stack } = TEST_EXCEPTION;
 
-      expect(getLastMessage().exceptions).toStrictEqual([
-        { message, stack },
-        { message, stack },
+      expect(getLastMessage().exception).toStrictEqual([
+        { "exception_message": message, "stacktrace": stack  },
+        { "exception_message": message, "stacktrace": stack  },
       ]);
     });
   });

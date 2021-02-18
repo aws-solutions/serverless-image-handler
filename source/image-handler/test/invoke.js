@@ -1,13 +1,15 @@
 //import your handler file or main file of Lambda
 const handler = require('../index');
 
+process.env.SOURCE_BUCKETS = "master-images-053041861227-eu-west-1"
+
 //Call your exports function with required params
 //In AWS lambda these are event, content, and callback
 //event and content are JSON object and callback is a function
 //In my example i'm using empty JSON
 handler.handler( {
     "resource": "/n-B44d5hEyGl/ren-is-expired.png",
-    "path": "/n-B44d5hEyGl/ren-is-expired.png",
+    "path": "/fit-in/96x0/GQSyGuVtRUsD/stimpson-stimpy-j-katzwinkel-ein-fetter-einfach-strukturierter-kater-aufnahme-aus-fruehester-kindheit.png",
     "httpMethod": "GET",
     "headers": {
       "Accept": "*/*",

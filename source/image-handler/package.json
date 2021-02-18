@@ -23,7 +23,7 @@
   "scripts": {
     "pretest": "npm run build:init && npm install",
     "test": "jest ./**/*.spec.js --coverage --silent",
-    "build:init": "rm -rf package-lock.json dist/ node_modules/",
+    "build:init": "# rm -rf package-lock.json dist/ node_modules/",
     "build:zip": "zip -rq image-handler.zip .",
     "build:dist": "mkdir dist && mv image-handler.zip dist/",
     "build": "npm run build:init && npm install --arch=x64 --platform=linux --production && npm run build:zip && npm run build:dist"

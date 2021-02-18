@@ -143,6 +143,7 @@ describe('index', function () {
           'Access-Control-Allow-Methods': 'GET',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Allow-Credentials': true,
+          "Cache-Control": "public, max-age=7200",
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -180,6 +181,7 @@ describe('index', function () {
           'Access-Control-Allow-Methods': 'GET',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Allow-Credentials': true,
+          "Cache-Control": "max-age=0, must-revalidate",
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -231,7 +233,7 @@ describe('index', function () {
           'Access-Control-Allow-Credentials': true,
           'Access-Control-Allow-Origin': '*',
           'Content-Type': 'image/png',
-          'Cache-Control': 'max-age=31536000,public',
+          "Cache-Control": "public, max-age=31536000, immutable",
           'Last-Modified': undefined
         },
         body: mockFallbackImage.toString('base64')
@@ -269,6 +271,7 @@ describe('index', function () {
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Allow-Credentials': true,
           'Access-Control-Allow-Origin': '*',
+          "Cache-Control": "public, max-age=7200",
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -310,6 +313,7 @@ describe('index', function () {
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Allow-Credentials': true,
           'Access-Control-Allow-Origin': '*',
+          "Cache-Control": "public, max-age=7200",
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -350,6 +354,7 @@ describe('index', function () {
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Allow-Credentials': true,
           'Access-Control-Allow-Origin': '*',
+          "Cache-Control": "public, max-age=7200",
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -392,7 +397,8 @@ describe('index', function () {
         'Access-Control-Allow-Methods': 'GET',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        "Cache-Control": "public, max-age=7200"
       },
       body: JSON.stringify({
         status: 404,
@@ -404,6 +410,7 @@ describe('index', function () {
     expect(mockS3).toHaveBeenCalledWith({Bucket: 'source-bucket', Key: 'test.jpg'});
     expect(result).toEqual(expectedResult);
   })
+
   it('008/should return HTTP/410 Gone when content is expired', async function () {
     process.env.CORS_ENABLED = 'Yes';
     process.env.CORS_ORIGIN = '*';
@@ -435,7 +442,7 @@ describe('index', function () {
         'Access-Control-Allow-Credentials': true,
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
-        'Cache-Control': 'max-age=600,public',
+        'Cache-Control': 'public, max-age=7200',
       },
       body: '{"message":"HTTP/410. Content test.jpg has expired.","code":"Gone","status":410}'
     };
