@@ -1,6 +1,7 @@
+const ignored_keys = new Set(['requestContext', 'originalImage', 'multiValueHeaders']);
 function replacer(key, value) {
   // Filtering out binary image data
-  if (key === 'originalImage') {
+  if (ignored_keys.has(key)) {
     return undefined;
   }
   return value;
