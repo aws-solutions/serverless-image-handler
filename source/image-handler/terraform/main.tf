@@ -43,7 +43,7 @@ resource "aws_ecr_repository" "this" {
 
 module "lambda" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.9.0"
+  version = "5.9.1"
 
   description                      = "provider of cute kitty pics."
   function_name                    = local.function_name
@@ -70,7 +70,7 @@ module "lambda" {
 
 module "deployment" {
   source     = "moritzzimmer/lambda/aws//modules/deployment"
-  version    = "5.9.0"
+  version    = "5.9.1"
   depends_on = [module.lambda]
 
   alias_name                        = aws_lambda_alias.this.name
