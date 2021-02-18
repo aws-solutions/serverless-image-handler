@@ -17,6 +17,7 @@ function createMessage(payload) {
     "@timestamp": new Date().toISOString(),
     level: payload.level.toUpperCase(),
     message: getMessage(payload),
+    path: payload.event && payload.event.path,
     mdc: getMdc(payload),
     ...addIfExists("data", getData(payload)),
     ...addIfExists("exception", getExceptions(payload)),
@@ -37,7 +38,6 @@ function getMdc({ event }) {
   }
 
   return {
-    path: event.path,
     accept: event.headers && (event.headers.accept || event.headers.Accept)
   };
 }

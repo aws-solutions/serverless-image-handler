@@ -6,8 +6,11 @@ const TEST_DATA = {
   foo: "bar",
   countToTen: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 };
-const TEST_CLOUDWATCH_EVENT = {
+const TEST_API_GATEWAY_EVENT = {
   path: "/path/to/image.png",
+  headers: {
+    accept: 'imgage/webp'
+  },
   eventId: 12345,
 };
 const TEST_EXCEPTION = new Error("This is an error.");
@@ -35,7 +38,7 @@ describe("sendMessage", () => {
     sendMessage({
       level: "log",
       args: [TEST_MESSAGE],
-      event: TEST_CLOUDWATCH_EVENT,
+      event: TEST_API_GATEWAY_EVENT,
     });
 
     expect(stdoutSpy).toHaveBeenCalled();
@@ -99,7 +102,7 @@ describe("sendMessage", () => {
 
   describe("mdc", () => {
     it("should include a warning if no Cloudwatch event was provided", () => {
-      sendMessage({ level: "log", args: [] });
+      sendMessage({level: "log", args: []});
 
       expect(getLastMessage().mdc).toStrictEqual({
         _warning: "No Cloudwatch event was registered.",
@@ -107,17 +110,18 @@ describe("sendMessage", () => {
     });
 
     it("should log the Cloudwatch event path to the image to be processed", () => {
-      sendMessage({ level: "log", args: [], event: TEST_CLOUDWATCH_EVENT });
+      sendMessage({level: "log", args: [], event: TEST_API_GATEWAY_EVENT});
 
+      expect(getLastMessage().path).toStrictEqual(TEST_API_GATEWAY_EVENT.path)
       expect(getLastMessage().mdc).toStrictEqual({
-        path: TEST_CLOUDWATCH_EVENT.path,
+        accept: 'imgage/webp'
       });
     });
   });
 
   describe("data", () => {
     it("should not be present if no data was found in arguments", () => {
-      sendMessage({ level: "log", args: [], event: TEST_CLOUDWATCH_EVENT });
+      sendMessage({level: "log", args: [], event: TEST_API_GATEWAY_EVENT});
 
       expect(getLastMessage().data).not.toBeDefined();
     });
@@ -126,7 +130,7 @@ describe("sendMessage", () => {
       sendMessage({
         level: "log",
         args: [TEST_DATA],
-        event: TEST_CLOUDWATCH_EVENT,
+        event: TEST_API_GATEWAY_EVENT,
       });
 
       expect(getLastMessage().data).toStrictEqual(TEST_DATA);
@@ -136,7 +140,7 @@ describe("sendMessage", () => {
       sendMessage({
         level: "log",
         args: [TEST_DATA, TEST_DATA],
-        event: TEST_CLOUDWATCH_EVENT,
+        event: TEST_API_GATEWAY_EVENT,
       });
 
       expect(getLastMessage().data).toStrictEqual([TEST_DATA, TEST_DATA]);
@@ -146,7 +150,7 @@ describe("sendMessage", () => {
       sendMessage({
         level: "log",
         args: [TEST_MESSAGE, TEST_DATA, TEST_DATA],
-        event: TEST_CLOUDWATCH_EVENT,
+        event: TEST_API_GATEWAY_EVENT,
       });
 
       expect(getLastMessage().data).toStrictEqual([TEST_DATA, TEST_DATA]);
@@ -156,7 +160,7 @@ describe("sendMessage", () => {
       sendMessage({
         level: "log",
         args: [TEST_MESSAGE, TEST_DATA, TEST_EXCEPTION, TEST_DATA],
-        event: TEST_CLOUDWATCH_EVENT,
+        event: TEST_API_GATEWAY_EVENT,
       });
 
       expect(getLastMessage().data).toStrictEqual([TEST_DATA, TEST_DATA]);
@@ -168,7 +172,7 @@ describe("sendMessage", () => {
       sendMessage({
         level: "log",
         args: [TEST_MESSAGE, TEST_DATA, TEST_DATA],
-        event: TEST_CLOUDWATCH_EVENT,
+        event: TEST_API_GATEWAY_EVENT,
       });
 
       expect(getLastMessage().exceptions).not.toBeDefined();
@@ -178,26 +182,26 @@ describe("sendMessage", () => {
       sendMessage({
         level: "log",
         args: [TEST_EXCEPTION],
-        event: TEST_CLOUDWATCH_EVENT,
+        event: TEST_API_GATEWAY_EVENT,
       });
 
-      const { message, stack } = TEST_EXCEPTION;
+      const {message, stack} = TEST_EXCEPTION;
 
-      expect(getLastMessage().exception).toStrictEqual({ "exception_message": message, "stacktrace": stack });
+      expect(getLastMessage().exception).toStrictEqual({"exception_message": message, "stacktrace": stack});
     });
 
     it("should include all exceptions in a list if there are multiple", () => {
       sendMessage({
         level: "log",
         args: [TEST_EXCEPTION, TEST_EXCEPTION],
-        event: TEST_CLOUDWATCH_EVENT,
+        event: TEST_API_GATEWAY_EVENT,
       });
 
-      const { message, stack } = TEST_EXCEPTION;
+      const {message, stack} = TEST_EXCEPTION;
 
       expect(getLastMessage().exception).toStrictEqual([
-        { "exception_message": message, "stacktrace": stack  },
-        { "exception_message": message, "stacktrace": stack  },
+        {"exception_message": message, "stacktrace": stack},
+        {"exception_message": message, "stacktrace": stack},
       ]);
     });
   });
