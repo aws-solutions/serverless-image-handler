@@ -292,7 +292,6 @@ class ImageRequest {
         try {
             this.decodeRequest(event);
         } catch(error) {
-            console.error(error);
             isBase64Encoded = false;
         } 
 
