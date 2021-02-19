@@ -298,7 +298,7 @@ class ImageRequest {
 
         if (matchDefault.test(path) && isBase64Encoded) {  // use sharp
             return 'Default';
-        } else if (matchCustom.test(path) && definedEnvironmentVariables) {  // use rewrite function then thumbor mappings
+        } else if (definedEnvironmentVariables) {  // use rewrite function then thumbor mappings
             return 'Custom';
         } else if (matchThumbor.test(path)) {  // use thumbor mappings
             return 'Thumbor';
