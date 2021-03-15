@@ -8,7 +8,6 @@ locals {
     source       = "https://github.com/stroeer/serverless-image-handler"
     App          = "Images"
   }
-
 }
 
 resource "aws_lambda_alias" "this" {
@@ -43,20 +42,21 @@ resource "aws_ecr_repository" "this" {
 
 module "lambda" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.9.1"
+  version = "5.12.0"
 
-  description                      = "provider of cute kitty pics."
-  function_name                    = local.function_name
-  ignore_external_function_updates = true
-  image_uri                        = "${aws_ecr_repository.this.repository_url}:${var.docker_image_tag}"
-  log_retention_in_days            = 1
-  logfilter_destination_arn        = data.aws_lambda_function.log_streaming.arn
-  memory_size                      = 1024
-  publish                          = true
-  package_type                     = "Image"
-  tags                             = local.default_tags
-  timeout                          = 30
-  tracing_config_mode              = "Active"
+  cloudwatch_lambda_insights_enabled = true
+  description                        = "provider of cute kitty pics."
+  function_name                      = local.function_name
+  ignore_external_function_updates   = true
+  image_uri                          = "${aws_ecr_repository.this.repository_url}:${var.docker_image_tag}"
+  log_retention_in_days              = 1
+  logfilter_destination_arn          = data.aws_lambda_function.log_streaming.arn
+  memory_size                        = 1024
+  publish                            = true
+  package_type                       = "Image"
+  tags                               = local.default_tags
+  timeout                            = 30
+  tracing_config_mode                = "Active"
 
   environment = {
     variables = {
@@ -70,7 +70,7 @@ module "lambda" {
 
 module "deployment" {
   source     = "moritzzimmer/lambda/aws//modules/deployment"
-  version    = "5.9.1"
+  version    = "5.12.0"
   depends_on = [module.lambda]
 
   alias_name                        = aws_lambda_alias.this.name
