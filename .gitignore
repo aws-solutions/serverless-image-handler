@@ -24,3 +24,5 @@ demo-ui-config.js
 # System Files
 **/.DS_Store
 **/.vscode
+
+.aws-sam
