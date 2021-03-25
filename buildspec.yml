@@ -1,0 +1,39 @@
+version: 0.2
+
+env:
+  variables:
+    S3_BUCKET: 410935837022-codebuild-resources-bucket
+
+phases:
+  install:
+    runtime-versions:
+        python: 3.7
+        docker: 19
+    commands:
+      - aws s3 cp --no-progress s3://$S3_ARTIFACT_BUCKET/codebuild/release/install_artifact.zip . && unzip -q install_artifact.zip
+      - . ./codebuild_scripts/build_setup.sh
+      - pip install aws-sam-cli
+
+  pre_build:
+    commands:
+      - |
+        if [ $BNET_CODEBUILD_GIT_BRANCH = $BNET_CODEBUILD_GIT_DEFAULT_BRANCH ]; then
+          . /usr/local/bin/semrel.sh
+        # if this build is from a PR
+        #elif [ $BNET_CODEBUILD_PULL_REQUEST ]; then
+        #  . /usr/local/bin/reviewdog.sh
+        fi
+  build:
+    commands:
+      - |
+        if [ $BNET_CODEBUILD_PUSH_ARTIFACTS_LATEST ]; then
+          make build
+        fi
+  post_build:
+    commands:
+      - |
+        if [ $BNET_CODEBUILD_PUSH_ARTIFACTS_LATEST ]; then
+          make upload
+        fi
+    finally:
+      - /usr/local/bin/check_failed_pushed_artifacts.sh
