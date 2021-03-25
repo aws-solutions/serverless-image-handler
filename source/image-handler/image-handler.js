@@ -103,7 +103,7 @@ class ImageHandler {
                                 left = imageMetadata.width + left - overlayMetadata.width;
                             }
                         }
-                        isNaN(left) ? delete options.left : options.left = left;
+                        isNaN(left) ? delete options.left : options.left = parseInt(left);
                     }
                     if (options.top !== undefined) {
                         let top = options.top;
@@ -120,7 +120,7 @@ class ImageHandler {
                                 top = imageMetadata.height + top - overlayMetadata.height;
                             }
                         }
-                        isNaN(top) ? delete options.top : options.top = top;
+                        isNaN(top) ? delete options.top : options.top = parseInt(top);
                     }
                 }
 
