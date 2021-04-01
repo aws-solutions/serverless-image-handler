@@ -42,7 +42,7 @@ resource "aws_ecr_repository" "this" {
 
 module "lambda" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.12.0"
+  version = "5.12.1"
 
   cloudwatch_lambda_insights_enabled = true
   description                        = "provider of cute kitty pics."
@@ -70,8 +70,7 @@ module "lambda" {
 
 module "deployment" {
   source     = "moritzzimmer/lambda/aws//modules/deployment"
-  version    = "5.12.0"
-  depends_on = [module.lambda]
+  version    = "5.12.1"
 
   alias_name                        = aws_lambda_alias.this.name
   codestar_notifications_target_arn = data.aws_sns_topic.notifications.arn
