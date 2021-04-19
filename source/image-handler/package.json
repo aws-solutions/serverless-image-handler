@@ -8,24 +8,21 @@
   "version": "5.1.0",
   "private": true,
   "dependencies": {
-    "color": "3.1.2",
+    "color": "3.1.3",
     "color-name": "1.1.4",
-    "sharp": "^0.26.3"
+    "sharp": "^0.28.1"
   },
   "devDependencies": {
-    "aws-sdk": "2.712.0",
-    "aws-sdk-mock": "^5.1.0",
+    "aws-sdk": "2.887.0",
     "jest": "^26.4.2",
-    "mocha": "^8.1.3",
-    "nyc": "^15.1.0",
-    "sinon": "^9.0.3"
+    "sinon": "^10.0.0"
   },
   "scripts": {
     "pretest": "npm run build:init && npm install",
     "test": "jest ./**/*.spec.js --coverage --silent",
     "build:init": "# rm -rf package-lock.json dist/ node_modules/",
     "build:zip": "zip -rq image-handler.zip .",
-    "build:dist": "mkdir dist && mv image-handler.zip dist/",
+    "build:dist": "mkdir -p dist && mv image-handler.zip dist/",
     "build": "npm run build:init && npm install --arch=x64 --platform=linux --production && npm run build:zip && npm run build:dist"
   },
   "license": "Apache-2.0"

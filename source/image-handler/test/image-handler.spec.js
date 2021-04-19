@@ -180,30 +180,6 @@ describe('process()', function() {
             expect(metadata).not.toHaveProperty('orientation');
         });
     });
-    // describe('008/Cropping', function() {
-    //     it('Should pass if the original image if cropping has same dimensions as original', async function() {
-    //         // Arrange
-    //         let body = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
-    //         const originalImage = Buffer.from(body, 'base64');
-    //         const request = {
-    //             requestType: "default",
-    //             bucket: "sample-bucket",
-    //             key: "test.jpg",
-    //             cropping: {
-    //                 left: 0,
-    //                 top: 0,
-    //                 width: 1,
-    //                 height: 1
-    //             },
-    //             originalImage: originalImage
-    //         };
-    //         // Act
-    //         const imageHandler = new ImageHandler(s3, rekognition);
-    //         const result = await imageHandler.process(request);
-    //         // Assert
-    //         expect(result).toEqual(body);
-    //     });
-    // });
 });
 
 // ----------------------------------------------------------------------------
@@ -546,8 +522,8 @@ describe('applyEdits()', function() {
             const image = sharp(originalImage, { failOnError: false }).withMetadata();
             const edits = {
                 resize: {
-                    width: '100',
-                    height: '100'
+                    width: '99.1',
+                    height: '99.9'
                 }
             }
             // Act
@@ -555,8 +531,57 @@ describe('applyEdits()', function() {
             const result = await imageHandler.applyEdits(image, edits);
             // Assert
             const resultBuffer = await result.toBuffer();
-            const convertedImage = await sharp(originalImage, { failOnError: false }).withMetadata().resize({ width: 100, height: 100 }).toBuffer();
+            const convertedImage = await sharp(originalImage, { failOnError: false }).withMetadata().resize({ width: 99, height: 100 }).toBuffer();
             expect(resultBuffer).toEqual(convertedImage);
+        });
+    });
+    describe('012/roundCrop/noOptions', function() {
+        it('Should pass if roundCrop keyName is passed with no additional options', async function() {
+            // Arrange
+            const originalImage = Buffer.from('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAAEAAQDAREAAhEBAxEB/8QAFAABAAAAAAAAAAAAAAAAAAAACv/EABQQAQAAAAAAAAAAAAAAAAAAAAD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AfwD/2Q==', 'base64');
+            const image = sharp(originalImage, { failOnError: false }).withMetadata();
+            const metadata = image.metadata();
+
+            const edits = {
+                roundCrop: true,
+
+            }
+
+            // Act
+            const imageHandler = new ImageHandler(s3, rekognition);
+            const result = await imageHandler.applyEdits(image, edits);
+
+            // Assert
+            const expectedResult = {width: metadata.width / 2, height: metadata.height / 2}
+            expect(mockAws.getObject).toHaveBeenCalledWith({ Bucket: 'aaa', Key: 'bbb' });
+            expect(result.options.input).not.toEqual(expectedResult);
+        });
+    });
+    describe('013/roundCrop/withOptions', function() {
+        it('Should pass if roundCrop keyName is passed with additional options', async function() {
+            // Arrange
+            const originalImage = Buffer.from('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAAEAAQDAREAAhEBAxEB/8QAFAABAAAAAAAAAAAAAAAAAAAACv/EABQQAQAAAAAAAAAAAAAAAAAAAAD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AfwD/2Q==', 'base64');
+            const image = sharp(originalImage, { failOnError: false }).withMetadata();
+            const metadata = image.metadata();
+
+            const edits = {
+                roundCrop: {
+                    top: 100,
+                    left: 100,
+                    rx: 100,
+                    ry: 100,
+                },
+
+            }
+
+            // Act
+            const imageHandler = new ImageHandler(s3, rekognition);
+            const result = await imageHandler.applyEdits(image, edits);
+
+            // Assert
+            const expectedResult = {width: metadata.width / 2, height: metadata.height / 2}
+            expect(mockAws.getObject).toHaveBeenCalledWith({ Bucket: 'aaa', Key: 'bbb' });
+            expect(result.options.input).not.toEqual(expectedResult);
         });
     });
 });
@@ -581,7 +606,7 @@ describe('getOverlayImage()', function() {
             const result = await imageHandler.getOverlayImage('validBucket', 'validKey', '100', '100', '20', metadata);
             // Assert
             expect(mockAws.getObject).toHaveBeenCalledWith({ Bucket: 'validBucket', Key: 'validKey' });
-            expect(result).toEqual(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAsTAAALEwEAmpwYAAAADUlEQVQI12P4z8CQCgAEZgFlTg0nBwAAAABJRU5ErkJggg==', 'base64'));
+            expect(result).toEqual(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAsTAAALEwEAmpwYAAAADUlEQVQImWP4z8CQCgAEZgFll19D6QAAAABJRU5ErkJggg==', 'base64'));
         });
     });
     describe('002/imageDoesNotExist', function() {
@@ -718,6 +743,77 @@ describe('getBoundingBox()', function() {
                     message: 'SimulatedError'
                 });
             }
+        });
+    });
+    describe('003/noDetectedFaces', function () {
+        it('Should pass if no faces are detected', async function () {
+            //Arrange
+            const currentImage = Buffer.from('TestImageData');
+            const faceIndex = 0;
+
+            // Mock
+            mockAws.detectFaces.mockImplementationOnce(() => {
+                return {
+                    promise() {
+                        return Promise.resolve({
+                            FaceDetails: []
+                        });
+                    }
+                };
+            });
+
+            //Act
+            const imageHandler = new ImageHandler(s3, rekognition);
+            const result = await imageHandler.getBoundingBox(currentImage, faceIndex);
+
+            // Assert
+            const expectedResult = {
+                Height: 1,
+                Left: 0,
+                Top: 0,
+                Width: 1
+            };
+            expect(mockAws.detectFaces).toHaveBeenCalledWith({ Image: { Bytes: currentImage }});
+            expect(result).toEqual(expectedResult);
+        });
+    });
+    describe('004/boundsGreaterThanImageDimensions', function () {
+        it('Should pass if bounds detected go beyond the image dimensions', async function () {
+            //Arrange
+            const currentImage = Buffer.from('TestImageData');
+            const faceIndex = 0;
+
+            // Mock
+            mockAws.detectFaces.mockImplementationOnce(() => {
+                return {
+                    promise() {
+                        return Promise.resolve({
+                            FaceDetails: [{
+                                BoundingBox: {
+                                    Height: 1,
+                                    Left: 0.50,
+                                    Top: 0.30,
+                                    Width: 0.65
+                                }
+                            }]
+                        });
+                    }
+                };
+            });
+
+            //Act
+            const imageHandler = new ImageHandler(s3, rekognition);
+            const result = await imageHandler.getBoundingBox(currentImage, faceIndex);
+
+            // Assert
+            const expectedResult = {
+                Height: 0.70,
+                Left: 0.50,
+                Top: 0.30,
+                Width: 0.50
+            };
+            expect(mockAws.detectFaces).toHaveBeenCalledWith({ Image: { Bytes: currentImage }});
+            expect(result).toEqual(expectedResult);
         });
     });
 });

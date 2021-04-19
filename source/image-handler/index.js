@@ -5,7 +5,6 @@ const logger = require("./logger");
 const AWS = require("aws-sdk");
 const s3 = new AWS.S3();
 const rekognition = new AWS.Rekognition();
-const secretsManager = new AWS.SecretsManager();
 
 const ImageRequest = require("./image-request.js");
 const ImageHandler = require("./image-handler.js");
@@ -13,11 +12,9 @@ const ImageHandler = require("./image-handler.js");
 exports.handler = async (event) => {
   logger.registerCloudwatchEvent(event);
 
-  logger.debug("Received Event from ApiGateway", event);
-  const imageRequest = new ImageRequest(s3, secretsManager);
+  const imageRequest = new ImageRequest(s3);
   const imageHandler = new ImageHandler(s3, rekognition);
-  const isAlb =
-    event.requestContext && event.requestContext.hasOwnProperty("elb");
+  const isAlb = event.requestContext && event.requestContext.hasOwnProperty("elb");
 
   try {
     const request = await imageRequest.setup(event);
