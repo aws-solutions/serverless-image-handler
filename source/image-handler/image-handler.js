@@ -44,8 +44,8 @@ class ImageHandler {
         }
 
         // If the converted image is larger than Lambda's payload hard limit, throw an error.
-        const lambdaPayloadLimit = 6 * 1024 * 1024;
-        if (returnImage.length > lambdaPayloadLimit) {
+        const lambdaPayloadLimit = 6291456; // 6 * 1024 * 1024
+        if (Buffer.byteLength(returnImage, 'base64' ) > lambdaPayloadLimit) {
             throw {
                 status: '413',
                 code: 'TooLargeImageException',
