@@ -2,8 +2,6 @@
   "name": "cdk-image-handler",
   "scripts": {
     "clobber": "npx projen clobber",
-    "bump": "npx projen bump",
-    "unbump": "npx projen unbump",
     "compile": "npx projen compile",
     "test:compile": "npx projen test:compile",
     "test": "npx projen test",
@@ -26,7 +24,7 @@
     "@types/node": "^10.17.0",
     "@typescript-eslint/eslint-plugin": "^4.28.0",
     "@typescript-eslint/parser": "^4.28.0",
-    "aws-cdk": "^1.95.2",
+    "aws-cdk": "^1.110.0",
     "eslint": "^7.29.0",
     "eslint-import-resolver-node": "^0.3.4",
     "eslint-import-resolver-typescript": "^2.4.0",
@@ -35,15 +33,16 @@
     "jest-junit": "^12",
     "json-schema": "^0.3.0",
     "npm-check-updates": "^11",
-    "projen": "^0.17.95",
-    "standard-version": "^9",
+    "projen": "^0.24.12",
     "ts-jest": "^27.0.3",
-    "ts-node": "^10.0.0",
+    "ts-node": "^9",
     "typescript": "^4.3.4"
   },
   "dependencies": {
-    "@aws-cdk/assert": "^1.95.2",
-    "@aws-cdk/core": "^1.95.2"
+    "@aws-cdk/assert": "^1.110.0",
+    "@aws-cdk/aws-ecs": "^1.110.0",
+    "@aws-cdk/aws-ecs-patterns": "^1.110.0",
+    "@aws-cdk/core": "^1.110.0"
   },
   "bundledDependencies": [],
   "license": "Apache-2.0",

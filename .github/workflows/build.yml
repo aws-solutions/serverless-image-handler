@@ -7,6 +7,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: write
     env:
       CI: "true"
     steps:
@@ -37,3 +40,12 @@ jobs:
           status="completed" -F conclusion="success"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - if: steps.git_diff.outputs.has_changes
+        name: Fail check if self mutation happened
+        run: >-
+          echo "Self-mutation happened on this pull request, so this commit is
+          marked as having failed checks."
+
+          echo "The self-mutation commit has been marked as successful, and no further action should be necessary."
+
+          exit 1

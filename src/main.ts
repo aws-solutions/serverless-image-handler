@@ -1,22 +1,35 @@
+import * as path from 'path';
+import * as ecs from '@aws-cdk/aws-ecs';
+import * as ecsPatterns from '@aws-cdk/aws-ecs-patterns';
 import { App, Construct, Stack, StackProps } from '@aws-cdk/core';
 
-export class MyStack extends Stack {
+
+export class ImageHandlerStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps = {}) {
     super(scope, id, props);
 
-    // define resources here...
+    const loadBalancedFargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'Service', {
+      memoryLimitMiB: 1024,
+      cpu: 512,
+      desiredCount: 2,
+      taskImageOptions: {
+        image: ecs.ContainerImage.fromAsset(path.join(__dirname, 'docker')),
+      },
+    });
+
+    loadBalancedFargateService.targetGroup.configureHealthCheck({
+      path: '/',
+    });
   }
 }
 
-// for development, use account/region from cdk cli
-const devEnv = {
+const env = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
-  region: process.env.CDK_DEFAULT_REGION,
+  region: 'us-west-2',
 };
 
 const app = new App();
 
-new MyStack(app, 'my-stack-dev', { env: devEnv });
-// new MyStack(app, 'my-stack-prod', { env: prodEnv });
+new ImageHandlerStack(app, 'cdk-image-handler', { env });
 
 app.synth();

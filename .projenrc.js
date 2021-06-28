@@ -1,10 +1,14 @@
 const { AwsCdkTypeScriptApp } = require('projen');
 const project = new AwsCdkTypeScriptApp({
-  cdkVersion: '1.95.2',
+  cdkVersion: '1.110.0',
   defaultReleaseBranch: 'main',
   name: 'cdk-image-handler',
-
-  // cdkDependencies: undefined,        /* Which AWS CDK modules (those that start with "@aws-cdk/") this app uses. */
+  // projenVersion: '^0.24.12',
+  cdkDependencies: [
+    /* Which AWS CDK modules (those that start with "@aws-cdk/") this app uses. */
+    '@aws-cdk/aws-ecs',
+    '@aws-cdk/aws-ecs-patterns',
+  ],
   // deps: [],                          /* Runtime dependencies of this module. */
   // description: undefined,            /* The description is just a string that helps people understand the purpose of the package. */
   // devDeps: [],                       /* Build dependencies for this module. */
