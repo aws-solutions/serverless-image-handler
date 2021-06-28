@@ -13,7 +13,7 @@ export class ImageHandlerStack extends Stack {
       cpu: 512,
       desiredCount: 2,
       taskImageOptions: {
-        image: ecs.ContainerImage.fromAsset(path.join(__dirname, 'docker')),
+        image: ecs.ContainerImage.fromAsset(path.join(__dirname, 'app')),
       },
     });
 
