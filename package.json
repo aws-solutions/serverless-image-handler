@@ -43,12 +43,21 @@
     "@aws-cdk/aws-ec2": "^1.110.0",
     "@aws-cdk/aws-ecs": "^1.110.0",
     "@aws-cdk/aws-ecs-patterns": "^1.110.0",
+    "@aws-cdk/aws-s3": "^1.110.0",
     "@aws-cdk/core": "^1.110.0"
   },
   "bundledDependencies": [],
   "license": "Apache-2.0",
   "version": "0.0.0",
   "jest": {
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/cdk.out/"
+    ],
+    "watchPathIgnorePatterns": [
+      "/node_modules/",
+      "/cdk.out/"
+    ],
     "testMatch": [
       "**/__tests__/**/*.ts?(x)",
       "**/?(*.)+(spec|test).ts?(x)"
@@ -63,13 +72,8 @@
     ],
     "coverageDirectory": "coverage",
     "coveragePathIgnorePatterns": [
-      "/node_modules/"
-    ],
-    "testPathIgnorePatterns": [
-      "/node_modules/"
-    ],
-    "watchPathIgnorePatterns": [
-      "/node_modules/"
+      "/node_modules/",
+      "/cdk.out/"
     ],
     "reporters": [
       "default",

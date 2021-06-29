@@ -9,6 +9,10 @@
       "type": "build"
     },
     {
+      "name": "@types/koa-logger",
+      "type": "build"
+    },
+    {
       "name": "@types/node",
       "version": "^10.17.0",
       "type": "build"
@@ -77,6 +81,10 @@
     },
     {
       "name": "koa",
+      "type": "runtime"
+    },
+    {
+      "name": "koa-logger",
       "type": "runtime"
     }
   ],

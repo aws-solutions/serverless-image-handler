@@ -30,9 +30,9 @@ COPY --chown=node:node package.json yarn.lock /app/
 ENV NODE_ENV=production
 
 # https://pm2.keymetrics.io/docs/usage/docker-pm2-nodejs/
-RUN yarn --production \
-    && yarn add --dev pm2 \
-    && yarn cache clean --all
+RUN yarn --production && \
+    yarn add --dev pm2 && \
+    yarn cache clean --all
 
 COPY --from=builder /app/lib /app/lib
 

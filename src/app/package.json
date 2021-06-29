@@ -21,6 +21,7 @@
   "devDependencies": {
     "@types/jest": "^26.0.23",
     "@types/koa": "^2.13.3",
+    "@types/koa-logger": "^3.1.1",
     "@types/node": "^10.17.0",
     "@typescript-eslint/eslint-plugin": "^4.28.0",
     "@typescript-eslint/parser": "^4.28.0",
@@ -39,12 +40,21 @@
     "typescript": "^4.3.4"
   },
   "dependencies": {
-    "koa": "^2.13.1"
+    "koa": "^2.13.1",
+    "koa-logger": "^3.2.1"
   },
   "bundledDependencies": [],
   "license": "Apache-2.0",
   "version": "0.0.0",
   "jest": {
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/cdk.out/"
+    ],
+    "watchPathIgnorePatterns": [
+      "/node_modules/",
+      "/cdk.out/"
+    ],
     "testMatch": [
       "**/__tests__/**/*.ts?(x)",
       "**/?(*.)+(spec|test).ts?(x)"
@@ -59,13 +69,8 @@
     ],
     "coverageDirectory": "coverage",
     "coveragePathIgnorePatterns": [
-      "/node_modules/"
-    ],
-    "testPathIgnorePatterns": [
-      "/node_modules/"
-    ],
-    "watchPathIgnorePatterns": [
-      "/node_modules/"
+      "/node_modules/",
+      "/cdk.out/"
     ],
     "reporters": [
       "default",

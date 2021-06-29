@@ -29,7 +29,7 @@ Object {
     },
   },
   "Resources": Object {
-    "ClusterEB0386A7": Object {
+    "EcsDefaultClusterMnL3mNNYNVpc18E0451A": Object {
       "Type": "AWS::ECS::Cluster",
     },
     "Service9571FDD8": Object {
@@ -39,7 +39,7 @@ Object {
       ],
       "Properties": Object {
         "Cluster": Object {
-          "Ref": "ClusterEB0386A7",
+          "Ref": "EcsDefaultClusterMnL3mNNYNVpc18E0451A",
         },
         "DeploymentConfiguration": Object {
           "MaximumPercent": 200,
@@ -244,7 +244,7 @@ Object {
                   Object {
                     "Ref": "AWS::URLSuffix",
                   },
-                  "/aws-cdk/assets:4fe12d7830af1267a47f82d4f8563272f5ad8ed1e26741f1df2a47aec2a9ba39",
+                  "/aws-cdk/assets:02801d0ccfe28963f5ef29db73b03bb4b6689653d267da016273a1819459f8b7",
                 ],
               ],
             },
@@ -387,9 +387,60 @@ Object {
       },
       "Type": "AWS::IAM::Role",
     },
+    "ServiceTaskDefTaskRoleDefaultPolicy9CCB4F8E": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": Array [
+                Object {
+                  "Fn::GetAtt": Array [
+                    "SrcBucket613E28A1",
+                    "Arn",
+                  ],
+                },
+                Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      Object {
+                        "Fn::GetAtt": Array [
+                          "SrcBucket613E28A1",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "ServiceTaskDefTaskRoleDefaultPolicy9CCB4F8E",
+        "Roles": Array [
+          Object {
+            "Ref": "ServiceTaskDefTaskRole0CFE2F57",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
     "ServiceTaskDefwebLogGroup2A898F61": Object {
       "DeletionPolicy": "Retain",
       "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "SrcBucket613E28A1": Object {
+      "DeletionPolicy": "Retain",
+      "Type": "AWS::S3::Bucket",
       "UpdateReplacePolicy": "Retain",
     },
     "Vpc8378EB38": Object {

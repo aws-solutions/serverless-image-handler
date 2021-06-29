@@ -8,8 +8,21 @@ const project = new AwsCdkTypeScriptApp({
     /* Which AWS CDK modules (those that start with "@aws-cdk/") this app uses. */
     '@aws-cdk/aws-ec2',
     '@aws-cdk/aws-ecs',
+    '@aws-cdk/aws-s3',
     '@aws-cdk/aws-ecs-patterns',
   ],
+  jestOptions: {
+    jestConfig: {
+      testPathIgnorePatterns: [
+        '/node_modules/',
+        '/cdk.out/',
+      ],
+      watchPathIgnorePatterns: [
+        '/node_modules/',
+        '/cdk.out/',
+      ],
+    },
+  },
   // deps: [],                          /* Runtime dependencies of this module. */
   // description: undefined,            /* The description is just a string that helps people understand the purpose of the package. */
   // devDeps: [],                       /* Build dependencies for this module. */
@@ -26,10 +39,12 @@ const app = new TypeScriptAppProject({
   deps: [
     /* Runtime dependencies of this module. */
     'koa',
+    'koa-logger',
   ],
   devDeps: [
     /* Build dependencies for this module. */
     '@types/koa',
+    '@types/koa-logger',
     'ts-node',
     'nodemon',
   ],
@@ -40,6 +55,18 @@ const app = new TypeScriptAppProject({
   scripts: {
     'watch-server': 'nodemon --ignore test/ --watch src -e ts,tsx --exec ts-node src/index.ts',
     'serve': 'node lib/index.js',
+  },
+  jestOptions: {
+    jestConfig: {
+      testPathIgnorePatterns: [
+        '/node_modules/',
+        '/cdk.out/',
+      ],
+      watchPathIgnorePatterns: [
+        '/node_modules/',
+        '/cdk.out/',
+      ],
+    },
   },
 });
 
