@@ -6,6 +6,7 @@ const project = new AwsCdkTypeScriptApp({
   // projenVersion: '^0.24.12',
   cdkDependencies: [
     /* Which AWS CDK modules (those that start with "@aws-cdk/") this app uses. */
+    '@aws-cdk/aws-ec2',
     '@aws-cdk/aws-ecs',
     '@aws-cdk/aws-ecs-patterns',
   ],

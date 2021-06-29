@@ -79,6 +79,11 @@
       "type": "runtime"
     },
     {
+      "name": "@aws-cdk/aws-ec2",
+      "version": "^1.110.0",
+      "type": "runtime"
+    },
+    {
       "name": "@aws-cdk/aws-ecs-patterns",
       "version": "^1.110.0",
       "type": "runtime"
