@@ -14,7 +14,7 @@ app.use(async ctx => {
     const image = sharp(path.join(__dirname, '../test/fixtures/example.jpg'));
     const imgCtx = { image };
     const actions: string[] = (ctx.query['x-oss-process'] as string).split('/');
-    ImageProcessor.getInstance().process(imgCtx, actions);
+    await ImageProcessor.getInstance().process(imgCtx, actions);
     const { data, info } = await imgCtx.image.toBuffer({ resolveWithObject: true });
     ctx.body = data;
     ctx.type = info.format;

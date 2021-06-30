@@ -45,7 +45,7 @@ export class ImageResizeAction implements IImageAction {
     }
     return opt;
   }
-  public process(ctx: IImageContext, params: string[]): void {
+  public async process(ctx: IImageContext, params: string[]): Promise<void> {
     const opt = this.validate(params);
 
     ctx.image = ctx.image.resize(opt.w, opt.h);

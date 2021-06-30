@@ -21,7 +21,7 @@ export class ImageProcessor implements IProcessor {
 
   private constructor() {}
 
-  public process(ctx: IImageContext, actions: string[]): void {
+  public async process(ctx: IImageContext, actions: string[]): Promise<void> {
     if (!ctx.image) {
       throw new Error('Invalid image context');
     }
@@ -31,13 +31,13 @@ export class ImageProcessor implements IProcessor {
       }
 
       // "<action-name>,<param-1>,<param-2>,..."
-      const parts = action.split(',');
-      const name = parts[0];
+      const params = action.split(',');
+      const name = params[0];
       const act = this.action(name);
       if (!act) {
         throw new Error(`Unkown action: "${name}"`);
       }
-      act.process(ctx, parts);
+      await act.process(ctx, params);
     }
   }
 
@@ -45,12 +45,16 @@ export class ImageProcessor implements IProcessor {
     return this._registeredActions[name];
   }
 
-  public register(action: IImageAction): void {
-    if (!this._registeredActions[action.name]) {
-      this._registeredActions[action.name] = action;
+  public register(...actions: IImageAction[]): void {
+    for (const action of actions) {
+      if (!this._registeredActions[action.name]) {
+        this._registeredActions[action.name] = action;
+      }
     }
   }
 }
 
 // Register actions
-ImageProcessor.getInstance().register(new ImageResizeAction());
+ImageProcessor.getInstance().register(
+  new ImageResizeAction(),
+);
