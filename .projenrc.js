@@ -35,12 +35,12 @@ const app = new TypeScriptAppProject({
   defaultReleaseBranch: 'main',
   name: 'app',
   outdir: './src/app',
-
   deps: [
     /* Runtime dependencies of this module. */
     'koa',
     'koa-logger',
     'sharp',
+    'aws-sdk',
   ],
   devDeps: [
     /* Build dependencies for this module. */

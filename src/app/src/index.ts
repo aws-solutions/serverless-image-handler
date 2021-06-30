@@ -1,21 +1,18 @@
-import * as path from 'path';
 import * as Koa from 'koa';
 import * as logger from 'koa-logger';
 import * as sharp from 'sharp';
 import config from './config';
-import { ImageProcessor } from './processor/image';
-import { LocalStore } from './store';
+import { ImageProcessor } from './processor/image';;
 
 const app = new Koa();
-const store = new LocalStore();
 
 app.use(logger());
 
 app.use(async ctx => {
   if (ctx.query['x-oss-process']) {
-    const buffer = await store.get(path.join(__dirname, '../test/fixtures/example.jpg'));
-    const imgctx = { image: sharp(buffer), store };
-    const actions: string[] = (ctx.query['x-oss-process'] as string).split('/');
+    const buffer = await config.store.get(ctx.path.replace(/^\//, ''));
+    const imgctx = { image: sharp(buffer), store: config.store };
+    const actions = (ctx.query['x-oss-process'] as string).split('/');
     await ImageProcessor.getInstance().process(imgctx, actions);
     const { data, info } = await imgctx.image.toBuffer({ resolveWithObject: true });
 

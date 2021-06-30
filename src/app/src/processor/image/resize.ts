@@ -1,6 +1,6 @@
 import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
-import { IActionOpts } from '..';
+import { IActionOpts, InvalidInput } from '..';
 
 export const enum Mode {
   LFIT = 'lft',
@@ -38,10 +38,10 @@ export class ImageResizeAction implements IImageAction {
         if (v && ((v === Mode.LFIT) || (v === Mode.MFIT) || (v === Mode.FILL) || (v === Mode.PAD) || (v === Mode.FIXED))) {
           opt.m = v;
         } else {
-          throw new Error(`Unkown m: "${v}"`);
+          throw new InvalidInput(`Unkown m: "${v}"`);
         }
       } else {
-        throw new Error(`Unkown param: "${k}"`);
+        throw new InvalidInput(`Unkown param: "${k}"`);
       }
     }
     return opt;

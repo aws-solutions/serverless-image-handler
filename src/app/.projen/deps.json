@@ -84,6 +84,10 @@
       "type": "build"
     },
     {
+      "name": "aws-sdk",
+      "type": "runtime"
+    },
+    {
       "name": "koa",
       "type": "runtime"
     },
