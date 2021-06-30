@@ -1,3 +1,4 @@
+import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts } from '..';
 
@@ -48,6 +49,8 @@ export class ImageResizeAction implements IImageAction {
   public async process(ctx: IImageContext, params: string[]): Promise<void> {
     const opt = this.validate(params);
 
-    ctx.image = ctx.image.resize(opt.w, opt.h);
+    ctx.image = ctx.image.resize(opt.w, opt.h, {
+      fit: sharp.fit.contain,
+    });
   }
 }

@@ -1,5 +1,5 @@
 import * as sharp from 'sharp';
-import { IAction, IProcessContext, IProcessor } from '../../processor';
+import { IAction, InvalidInput, IProcessContext, IProcessor } from '../../processor';
 import { ImageResizeAction } from './resize';
 
 export interface IImageAction extends IAction {}
@@ -15,7 +15,7 @@ export class ImageProcessor implements IProcessor {
     return ImageProcessor._instance;
   }
   private static _instance: ImageProcessor;
-  private readonly _registeredActions: {[name: string]: IAction} = {};
+  private readonly _actions: {[name: string]: IAction} = {};
 
   public readonly name: string = 'image';
 
@@ -23,7 +23,7 @@ export class ImageProcessor implements IProcessor {
 
   public async process(ctx: IImageContext, actions: string[]): Promise<void> {
     if (!ctx.image) {
-      throw new Error('Invalid image context');
+      throw new InvalidInput('Invalid image context');
     }
     for (const action of actions) {
       if ((this.name === action) || (!action)) {
@@ -35,20 +35,20 @@ export class ImageProcessor implements IProcessor {
       const name = params[0];
       const act = this.action(name);
       if (!act) {
-        throw new Error(`Unkown action: "${name}"`);
+        throw new InvalidInput(`Unkown action: "${name}"`);
       }
       await act.process(ctx, params);
     }
   }
 
   public action(name: string): IAction {
-    return this._registeredActions[name];
+    return this._actions[name];
   }
 
   public register(...actions: IImageAction[]): void {
     for (const action of actions) {
-      if (!this._registeredActions[action.name]) {
-        this._registeredActions[action.name] = action;
+      if (!this._actions[action.name]) {
+        this._actions[action.name] = action;
       }
     }
   }

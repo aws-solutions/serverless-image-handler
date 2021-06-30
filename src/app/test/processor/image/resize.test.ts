@@ -2,6 +2,7 @@
 import * as sharp from 'sharp';
 import { IImageContext } from '../../../src/processor/image';
 import { ImageResizeAction } from '../../../src/processor/image/resize';
+import { NullStore } from '../../../src/store';
 
 test('image resize action validate', () => {
   const action = new ImageResizeAction();
@@ -38,7 +39,7 @@ test('image resize', async () => {
       background: { r: 255, g: 0, b: 0 },
     },
   });
-  const ctx: IImageContext = { image };
+  const ctx: IImageContext = { image, store: new NullStore() };
   const action = new ImageResizeAction();
   await action.process(ctx, 'resize,w_10,h_10'.split(','));
   const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
