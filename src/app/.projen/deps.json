@@ -18,6 +18,10 @@
       "type": "build"
     },
     {
+      "name": "@types/sharp",
+      "type": "build"
+    },
+    {
       "name": "@typescript-eslint/eslint-plugin",
       "type": "build"
     },
@@ -85,6 +89,10 @@
     },
     {
       "name": "koa-logger",
+      "type": "runtime"
+    },
+    {
+      "name": "sharp",
       "type": "runtime"
     }
   ],

@@ -40,11 +40,13 @@ const app = new TypeScriptAppProject({
     /* Runtime dependencies of this module. */
     'koa',
     'koa-logger',
+    'sharp',
   ],
   devDeps: [
     /* Build dependencies for this module. */
     '@types/koa',
     '@types/koa-logger',
+    '@types/sharp',
     'ts-node',
     'nodemon',
   ],

@@ -135,7 +135,7 @@
           "exec": "yarn install --check-files"
         },
         {
-          "exec": "yarn upgrade @types/jest @types/koa @types/koa-logger @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import jest jest-junit json-schema nodemon npm-check-updates ts-jest ts-node typescript koa koa-logger"
+          "exec": "yarn upgrade @types/jest @types/koa @types/koa-logger @types/node @types/sharp @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import jest jest-junit json-schema nodemon npm-check-updates ts-jest ts-node typescript koa koa-logger sharp"
         },
         {
           "exec": "npx projen"
