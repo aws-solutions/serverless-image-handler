@@ -10,6 +10,8 @@ const project = new AwsCdkTypeScriptApp({
     '@aws-cdk/aws-ecs',
     '@aws-cdk/aws-s3',
     '@aws-cdk/aws-ecs-patterns',
+    '@aws-cdk/aws-cloudfront',
+    '@aws-cdk/aws-cloudfront-origins',
   ],
   jestOptions: {
     jestConfig: {

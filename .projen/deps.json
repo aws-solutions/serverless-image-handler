@@ -79,6 +79,16 @@
       "type": "runtime"
     },
     {
+      "name": "@aws-cdk/aws-cloudfront-origins",
+      "version": "^1.110.0",
+      "type": "runtime"
+    },
+    {
+      "name": "@aws-cdk/aws-cloudfront",
+      "version": "^1.110.0",
+      "type": "runtime"
+    },
+    {
       "name": "@aws-cdk/aws-ec2",
       "version": "^1.110.0",
       "type": "runtime"

@@ -114,7 +114,19 @@
     "@aws-cdk/cx-api" "1.110.1"
     constructs "^3.3.69"
 
-"@aws-cdk/aws-cloudfront@1.110.1":
+"@aws-cdk/aws-cloudfront-origins@^1.110.0":
+  version "1.110.1"
+  resolved "https://registry.yarnpkg.com/@aws-cdk/aws-cloudfront-origins/-/aws-cloudfront-origins-1.110.1.tgz#6b33412a433f637c4417aa102bac0a5cfb1bb066"
+  integrity sha512-3FqHYeEQZZppzc13sMCn0cS/r9z5Dy71RFXObiGFSUPs/ljjB/gVUBUqBQzdBYGcQ/yFx65wHW+/63HCCK1X+Q==
+  dependencies:
+    "@aws-cdk/aws-cloudfront" "1.110.1"
+    "@aws-cdk/aws-elasticloadbalancingv2" "1.110.1"
+    "@aws-cdk/aws-iam" "1.110.1"
+    "@aws-cdk/aws-s3" "1.110.1"
+    "@aws-cdk/core" "1.110.1"
+    constructs "^3.3.69"
+
+"@aws-cdk/aws-cloudfront@1.110.1", "@aws-cdk/aws-cloudfront@^1.110.0":
   version "1.110.1"
   resolved "https://registry.yarnpkg.com/@aws-cdk/aws-cloudfront/-/aws-cloudfront-1.110.1.tgz#2c67c7c6eaa3fafd93606f1309322dd288ed154d"
   integrity sha512-rpNjXM2iL3FQjaI7glqo9KkoqZtywlXrSWkuR0Chve//DGcqD3l/+S466eRYJFQ3CyId/jTYYP9HbFsCnnsHOg==
