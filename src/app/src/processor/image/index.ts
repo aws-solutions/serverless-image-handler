@@ -1,6 +1,7 @@
 import * as sharp from 'sharp';
 import { IAction, InvalidInput, IProcessContext, IProcessor } from '../../processor';
-import { ImageResizeAction } from './resize';
+import { QualityAction } from './quality';
+import { ResizeAction } from './resize';
 
 export interface IImageAction extends IAction {}
 
@@ -56,5 +57,6 @@ export class ImageProcessor implements IProcessor {
 
 // Register actions
 ImageProcessor.getInstance().register(
-  new ImageResizeAction(),
+  new ResizeAction(),
+  new QualityAction(),
 );

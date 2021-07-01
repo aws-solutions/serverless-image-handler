@@ -1,0 +1,55 @@
+import * as sharp from 'sharp';
+import { IImageAction, IImageContext } from '.';
+import { IActionOpts, ReadOnly, InvalidInput } from '..';
+import { inRange } from './utils';
+
+
+const JPG = 'jpg';
+const JPEG = sharp.format.jpeg.id;
+const WEBP = sharp.format.webp.id;
+
+export interface QualityOpts extends IActionOpts {
+  q?: number;
+  Q?: number;
+}
+
+export class QualityAction implements IImageAction {
+  public readonly name: string = 'quality';
+
+  public validate(params: string[]): ReadOnly<QualityOpts> {
+    const opt: QualityOpts = {};
+    for (const p of params) {
+      if ((this.name === p) || (!p)) {
+        continue;
+      }
+      const [k, v] = p.split('_');
+      if (k === 'q') {
+        const q = parseInt(v);
+        if (inRange(q, 1, 100)) {
+          opt.q = q;
+        } else {
+          throw new InvalidInput('Quality must be between 1 and 100');
+        }
+      } else if (k === 'Q') {
+        const Q = parseInt(v);
+        if (inRange(Q, 1, 100)) {
+          opt.Q = Q;
+        } else {
+          throw new InvalidInput('Quality must be between 1 and 100');
+        }
+      } else {
+        throw new InvalidInput(`Unkown param: "${k}"`);
+      }
+    }
+    return opt;
+  }
+  public async process(ctx: IImageContext, params: string[]): Promise<void> {
+    const opt = this.validate(params);
+    const metadata = await ctx.image.metadata();
+    if (JPEG === metadata.format || JPG === metadata.format) {
+      ctx.image = ctx.image.jpeg({ quality: opt.q ?? opt.Q });
+    } else if (WEBP === metadata.format) {
+      ctx.image = ctx.image.webp({ quality: opt.q ?? opt.Q });
+    }
+  }
+}

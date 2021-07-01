@@ -10,7 +10,7 @@ export const enum Mode {
   FIXED = 'fixed'
 }
 
-export interface IImageOpts extends IActionOpts {
+export interface ResizeOpts extends IActionOpts {
   m?: Mode;
   w?: number;
   h?: number;
@@ -20,11 +20,11 @@ export interface IImageOpts extends IActionOpts {
   color?: string;
 }
 
-export class ImageResizeAction implements IImageAction {
+export class ResizeAction implements IImageAction {
   public readonly name: string = 'resize';
 
-  public validate(params: string[]): ReadOnly<IImageOpts> {
-    const opt: IImageOpts = {};
+  public validate(params: string[]): ReadOnly<ResizeOpts> {
+    const opt: ResizeOpts = {};
     for (const p of params) {
       if ((this.name === p) || (!p)) {
         continue;

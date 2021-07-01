@@ -1,11 +1,10 @@
-
 import * as sharp from 'sharp';
 import { IImageContext } from '../../../src/processor/image';
-import { ImageResizeAction } from '../../../src/processor/image/resize';
+import { ResizeAction } from '../../../src/processor/image/resize';
 import { NullStore } from '../../../src/store';
 
-test('image resize action validate', () => {
-  const action = new ImageResizeAction();
+test('resize action validate', () => {
+  const action = new ResizeAction();
   const param1 = action.validate('resize,m_mfit,h_100,w_100,,'.split(','));
   const param2 = action.validate('resize,m_fill,h_0,w_0,,'.split(','));
 
@@ -30,7 +29,7 @@ test('image resize action validate', () => {
   }).toThrowError(/Unkown param/);
 });
 
-test('image resize', async () => {
+test('resize action', async () => {
   const image = sharp({
     create: {
       width: 50,
@@ -40,7 +39,7 @@ test('image resize', async () => {
     },
   });
   const ctx: IImageContext = { image, store: new NullStore() };
-  const action = new ImageResizeAction();
+  const action = new ResizeAction();
   await action.process(ctx, 'resize,w_10,h_10'.split(','));
   const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
 

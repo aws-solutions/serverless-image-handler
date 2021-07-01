@@ -1,6 +1,6 @@
 import * as sharp from 'sharp';
 import { ImageProcessor } from '../../src/processor/image';
-import { ImageResizeAction } from '../../src/processor/image/resize';
+import { ResizeAction } from '../../src/processor/image/resize';
 import { NullStore } from '../../src/store';
 
 
@@ -12,7 +12,7 @@ test('image processor singleton', () => {
 });
 
 test('processor register', () => {
-  class MyResizeAction extends ImageResizeAction {
+  class MyResizeAction extends ResizeAction {
     public readonly name: string = 'my-resize';
   }
   const p = ImageProcessor.getInstance();
