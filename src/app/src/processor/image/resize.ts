@@ -1,6 +1,6 @@
 import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
-import { IActionOpts, InvalidInput } from '..';
+import { IActionOpts, ReadOnly, InvalidInput } from '..';
 
 export const enum Mode {
   LFIT = 'lft',
@@ -23,7 +23,7 @@ export interface IImageOpts extends IActionOpts {
 export class ImageResizeAction implements IImageAction {
   public readonly name: string = 'resize';
 
-  public validate(params: string[]): IImageOpts {
+  public validate(params: string[]): ReadOnly<IImageOpts> {
     const opt: IImageOpts = {};
     for (const p of params) {
       if ((this.name === p) || (!p)) {

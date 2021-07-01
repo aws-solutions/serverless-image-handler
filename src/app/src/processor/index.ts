@@ -1,5 +1,8 @@
 import { IStore } from '../store';
 
+export type ReadOnly<T> = {
+  readonly [K in keyof T]: ReadOnly<T[K]>;
+}
 export interface IProcessContext {
   store: IStore;
 }
@@ -12,7 +15,7 @@ export interface IProcessor {
 export interface IActionOpts {}
 export interface IAction {
   readonly name: string;
-  validate(params: string[]): IActionOpts;
+  validate(params: string[]): ReadOnly<IActionOpts>;
   process(ctx: IProcessContext, params: string[]): Promise<void>;
 }
 
