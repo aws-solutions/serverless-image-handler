@@ -9,17 +9,25 @@ const app = new Koa();
 app.use(logger());
 
 app.use(async ctx => {
-  if (ctx.query['x-oss-process']) {
-    const buffer = await config.store.get(ctx.path.replace(/^\//, ''));
-    const imgctx = { image: sharp(buffer), store: config.store };
-    const actions = (ctx.query['x-oss-process'] as string).split('/');
-    await ImageProcessor.getInstance().process(imgctx, actions);
-    const { data, info } = await imgctx.image.toBuffer({ resolveWithObject: true });
-
-    ctx.body = data;
-    ctx.type = info.format;
+  if ('/' === ctx.path || '/ping' === ctx.path) {
+    ctx.body = 'ok';
   } else {
-    ctx.body = 'HELLO WORLD';
+    const uri = ctx.path.replace(/^\//, '');
+    const actions = ((ctx.query['x-oss-process'] as string) ?? '').split('/').filter(x => x);
+    if ((actions.length > 1) && (actions[0] === ImageProcessor.getInstance().name)) {
+      const { buffer } = await config.store.get(uri);
+      const imgctx = { image: sharp(buffer), store: config.store };
+      await ImageProcessor.getInstance().process(imgctx, actions);
+      const { data, info } = await imgctx.image.toBuffer({ resolveWithObject: true });
+
+      ctx.body = data;
+      ctx.type = info.format;
+    } else {
+      const { stream, type } = config.store.createReadStream(uri);
+
+      ctx.body = stream;
+      ctx.type = type;
+    }
   }
 });
 

@@ -27,7 +27,7 @@ test('quality action validate', () => {
 
 
 test('quality action', async () => {
-  const image = sharp(await fixtureStore.get('example.jpg'));
+  const image = sharp((await fixtureStore.get('example.jpg')).buffer);
   const ctx: IImageContext = { image, store: fixtureStore };
   const action = new QualityAction();
   await action.process(ctx, 'quality,q_1'.split(','));

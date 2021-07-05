@@ -37,6 +37,7 @@ const app = new TypeScriptAppProject({
   defaultReleaseBranch: 'main',
   name: 'app',
   outdir: './src/app',
+  minNodeVersion: '14.0.0',
   deps: [
     /* Runtime dependencies of this module. */
     'koa',
