@@ -1,6 +1,7 @@
 import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidInput } from '..';
+import { isHexColor } from './utils';
 
 export const enum Mode {
   LFIT = 'lfit',
@@ -49,6 +50,13 @@ export class ResizeAction implements IImageAction {
           opt.limit = (v === '1');
         } else {
           throw new InvalidInput(`Unkown limit: "${v}"`);
+        }
+      } else if (k === 'color') {
+        const color = '#' + v;
+        if (isHexColor(color)) {
+          opt.color = color;
+        } else {
+          throw new InvalidInput(`Unkown color: "${v}"`);
         }
       } else {
         throw new InvalidInput(`Unkown param: "${k}"`);

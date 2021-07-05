@@ -123,7 +123,58 @@ test('resize action m_pad', async () => {
   expect(info.height).toBe(80);
 });
 
-// TODO: Seems that Sharp.js will use origin image's aspect ratio instead of
+test('resize action disable limit', async () => {
+  const image = sharp({
+    create: {
+      width: 20,
+      height: 20,
+      channels: 3,
+      background: 'gray',
+    },
+  });
+  const ctx: IImageContext = { image, store: new NullStore() };
+  const action = new ResizeAction();
+  await action.process(ctx, 'resize,w_100,h_100,limit_0'.split(','));
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(100);
+  expect(info.height).toBe(100);
+});
+
+test('resize action enable limit', async () => {
+  const image = sharp({
+    create: {
+      width: 20,
+      height: 20,
+      channels: 3,
+      background: 'gray',
+    },
+  });
+  const ctx: IImageContext = { image, store: new NullStore() };
+  const action = new ResizeAction();
+  await action.process(ctx, 'resize,w_100,h_100,limit_1'.split(','));
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(20);
+  expect(info.height).toBe(20);
+});
+
+test('resize action bad limit', async () => {
+  const image = sharp({
+    create: {
+      width: 20,
+      height: 20,
+      channels: 3,
+      background: 'gray',
+    },
+  });
+  const ctx: IImageContext = { image, store: new NullStore() };
+  const action = new ResizeAction();
+
+  void expect(action.process(ctx, 'resize,w_100,h_100,limit_3'.split(','))).rejects.toThrowError(/Unkown limit/);
+});
+
+// NOTES: Seems that Sharp.js will use origin image's aspect ratio instead of
 // intermediate image's aspect ratio
 test.skip('resize action m_fixed m_lfit', async () => {
   const image = sharp({
