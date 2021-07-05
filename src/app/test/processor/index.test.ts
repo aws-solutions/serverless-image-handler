@@ -34,7 +34,7 @@ test('image processor test', async () => {
     },
   });
   const ctx = { image, store: new NullStore() };
-  await ImageProcessor.getInstance().process(ctx, 'image/resize,w_100,h_100/'.split('/'));
+  await ImageProcessor.getInstance().process(ctx, 'image/resize,w_100,h_100,m_fixed,limit_0/'.split('/'));
   const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
 
   expect(info.width).toBe(100);

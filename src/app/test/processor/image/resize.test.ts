@@ -12,11 +12,15 @@ test('resize action validate', () => {
     w: 100,
     h: 100,
     m: 'mfit',
+    limit: true,
+    color: '#FFFFFF',
   });
   expect(param2).toEqual({
     w: 0,
     h: 0,
     m: 'fill',
+    limit: true,
+    color: '#FFFFFF',
   });
   expect(() => {
     action.validate('resize,m_unkown'.split(','));
@@ -29,13 +33,13 @@ test('resize action validate', () => {
   }).toThrowError(/Unkown param/);
 });
 
-test('resize action', async () => {
+test('resize action simple', async () => {
   const image = sharp({
     create: {
       width: 50,
       height: 50,
       channels: 3,
-      background: { r: 255, g: 0, b: 0 },
+      background: 'red',
     },
   });
   const ctx: IImageContext = { image, store: new NullStore() };
@@ -45,4 +49,97 @@ test('resize action', async () => {
 
   expect(info.width).toBe(10);
   expect(info.height).toBe(10);
+});
+
+test('resize action m_lfit', async () => {
+  const image = sharp({
+    create: {
+      width: 200,
+      height: 100,
+      channels: 3,
+      background: 'gray',
+    },
+  });
+  const ctx: IImageContext = { image, store: new NullStore() };
+  const action = new ResizeAction();
+  await action.process(ctx, 'resize,w_150,h_80,m_lfit'.split(','));
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(150);
+  expect(info.height).toBe(75);
+});
+
+test('resize action m_mfit', async () => {
+  const image = sharp({
+    create: {
+      width: 200,
+      height: 100,
+      channels: 3,
+      background: 'gray',
+    },
+  });
+  const ctx: IImageContext = { image, store: new NullStore() };
+  const action = new ResizeAction();
+  await action.process(ctx, 'resize,w_150,h_80,m_mfit'.split(','));
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(160);
+  expect(info.height).toBe(80);
+});
+
+test('resize action m_fill', async () => {
+  const image = sharp({
+    create: {
+      width: 200,
+      height: 100,
+      channels: 3,
+      background: 'gray',
+    },
+  });
+  const ctx: IImageContext = { image, store: new NullStore() };
+  const action = new ResizeAction();
+  await action.process(ctx, 'resize,w_150,h_80,m_fill'.split(','));
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(150);
+  expect(info.height).toBe(80);
+});
+
+test('resize action m_pad', async () => {
+  const image = sharp({
+    create: {
+      width: 200,
+      height: 100,
+      channels: 3,
+      background: 'gray',
+    },
+  });
+  const ctx: IImageContext = { image, store: new NullStore() };
+  const action = new ResizeAction();
+  await action.process(ctx, 'resize,w_150,h_80,m_pad'.split(','));
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(150);
+  expect(info.height).toBe(80);
+});
+
+// TODO: Seems that Sharp.js will use origin image's aspect ratio instead of
+// intermediate image's aspect ratio
+test.skip('resize action m_fixed m_lfit', async () => {
+  const image = sharp({
+    create: {
+      width: 400,
+      height: 300,
+      channels: 3,
+      background: 'gray',
+    },
+  });
+  const ctx: IImageContext = { image, store: new NullStore() };
+  const action = new ResizeAction();
+  await action.process(ctx, 'resize,w_200,h_100,m_fixed'.split(','));
+  await action.process(ctx, 'resize,w_150,h_100,m_lfit'.split(','));
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(150);
+  expect(info.height).toBe(75);
 });

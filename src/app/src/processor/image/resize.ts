@@ -3,7 +3,7 @@ import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidInput } from '..';
 
 export const enum Mode {
-  LFIT = 'lft',
+  LFIT = 'lfit',
   MFIT = 'mfit',
   FILL = 'fill',
   PAD = 'pad',
@@ -24,7 +24,11 @@ export class ResizeAction implements IImageAction {
   public readonly name: string = 'resize';
 
   public validate(params: string[]): ReadOnly<ResizeOpts> {
-    const opt: ResizeOpts = {};
+    const opt: ResizeOpts = {
+      m: Mode.LFIT,
+      limit: true,
+      color: '#FFFFFF',
+    };
     for (const p of params) {
       if ((this.name === p) || (!p)) {
         continue;
@@ -40,6 +44,12 @@ export class ResizeAction implements IImageAction {
         } else {
           throw new InvalidInput(`Unkown m: "${v}"`);
         }
+      } else if (k === 'limit') {
+        if (v && (v === '0' || v === '1')) {
+          opt.limit = (v === '1');
+        } else {
+          throw new InvalidInput(`Unkown limit: "${v}"`);
+        }
       } else {
         throw new InvalidInput(`Unkown param: "${k}"`);
       }
@@ -47,10 +57,25 @@ export class ResizeAction implements IImageAction {
     return opt;
   }
   public async process(ctx: IImageContext, params: string[]): Promise<void> {
-    const opt = this.validate(params);
-
-    ctx.image = ctx.image.resize(opt.w, opt.h, {
-      fit: sharp.fit.contain,
-    });
+    const o = this.validate(params);
+    const opt: sharp.ResizeOptions = {
+      width: o.w,
+      height: o.h,
+      withoutEnlargement: o.limit,
+      background: o.color,
+    };
+    // Mode
+    if (o.m === Mode.LFIT) {
+      opt.fit = sharp.fit.inside;
+    } else if (o.m === Mode.MFIT) {
+      opt.fit = sharp.fit.outside;
+    } else if (o.m === Mode.FILL) {
+      opt.fit = sharp.fit.cover;
+    } else if (o.m === Mode.PAD) {
+      opt.fit = sharp.fit.contain;
+    } else if (o.m === Mode.FIXED) {
+      opt.fit = sharp.fit.fill;
+    }
+    ctx.image = ctx.image.resize(null, null, opt);
   }
 }
