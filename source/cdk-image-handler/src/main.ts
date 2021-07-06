@@ -15,8 +15,8 @@ export class ImageHandlerStack extends Stack {
     const srcBucket = new s3.Bucket(this, 'SrcBucket');
     const albFargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'Service', {
       vpc: getOrCreateVpc(this),
-      cpu: 512,
-      memoryLimitMiB: 1024,
+      cpu: 2048,
+      memoryLimitMiB: 1024 * 4,
       desiredCount: 2,
       taskImageOptions: {
         image: ecs.ContainerImage.fromAsset(path.join(__dirname, 'app')),
@@ -28,6 +28,12 @@ export class ImageHandlerStack extends Stack {
     });
     albFargateService.targetGroup.configureHealthCheck({
       path: '/',
+    });
+    albFargateService.service.autoScaleTaskCount({
+      minCapacity: 2,
+      maxCapacity: 20,
+    }).scaleOnCpuUtilization('CpuScaling', {
+      targetUtilizationPercent: 50,
     });
     srcBucket.grantRead(albFargateService.taskDefinition.taskRole);
 
