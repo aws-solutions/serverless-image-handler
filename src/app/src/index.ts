@@ -2,7 +2,7 @@ import * as Koa from 'koa';
 import * as logger from 'koa-logger';
 import * as sharp from 'sharp';
 import config from './config';
-import { ImageProcessor } from './processor/image';;
+import { ImageProcessor } from './processor/image';
 
 const app = new Koa();
 
