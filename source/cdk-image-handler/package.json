@@ -12,7 +12,8 @@
     "synth": "cdk synth",
     "deploy": "cdk deploy",
     "destroy": "cdk destroy",
-    "diff": "cdk diff"
+    "diff": "cdk diff",
+    "postinstall": "cd src/app/ && yarn install"
   },
   "devDependencies": {
     "@types/jest": "^26.0.23",
