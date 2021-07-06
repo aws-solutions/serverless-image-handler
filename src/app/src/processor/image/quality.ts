@@ -18,11 +18,11 @@ export class QualityAction implements IImageAction {
 
   public validate(params: string[]): ReadOnly<QualityOpts> {
     const opt: QualityOpts = {};
-    for (const p of params) {
-      if ((this.name === p) || (!p)) {
+    for (const param of params) {
+      if ((this.name === param) || (!param)) {
         continue;
       }
-      const [k, v] = p.split('_');
+      const [k, v] = param.split('_');
       if (k === 'q') {
         const q = parseInt(v);
         if (inRange(q, 1, 100)) {

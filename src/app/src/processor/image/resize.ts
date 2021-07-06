@@ -1,7 +1,7 @@
 import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidInput } from '..';
-import { isHexColor } from './utils';
+import { inRange, isHexColor } from './utils';
 
 export const enum Mode {
   LFIT = 'lfit',
@@ -19,6 +19,7 @@ export interface ResizeOpts extends IActionOpts {
   s?: number;
   limit?: boolean;
   color?: string;
+  p?: number;
 }
 
 export class ResizeAction implements IImageAction {
@@ -30,11 +31,11 @@ export class ResizeAction implements IImageAction {
       limit: true,
       color: '#FFFFFF',
     };
-    for (const p of params) {
-      if ((this.name === p) || (!p)) {
+    for (const param of params) {
+      if ((this.name === param) || (!param)) {
         continue;
       }
-      const [k, v] = p.split('_');
+      const [k, v] = param.split('_');
       if (k === 'w') {
         opt.w = parseInt(v);
       } else if (k === 'h') {
@@ -57,6 +58,13 @@ export class ResizeAction implements IImageAction {
           opt.color = color;
         } else {
           throw new InvalidInput(`Unkown color: "${v}"`);
+        }
+      } else if (k === 'p') {
+        const p = parseInt(v);
+        if (inRange(p, 1, 1000)) {
+          opt.p = p;
+        } else {
+          throw new InvalidInput(`Unkown p: "${v}"`);
         }
       } else {
         throw new InvalidInput(`Unkown param: "${k}"`);
@@ -84,6 +92,16 @@ export class ResizeAction implements IImageAction {
     } else if (o.m === Mode.FIXED) {
       opt.fit = sharp.fit.fill;
     }
-    ctx.image = ctx.image.resize(null, null, opt);
+    if (o.p && (!o.w) && (!o.h)) {
+      const metadata = await ctx.image.metadata();
+      if (metadata.width && metadata.height) {
+        const width = Math.round(metadata.width * o.p * 0.01);
+        const height = Math.round(metadata.height * o.p * 0.01);
+        opt.withoutEnlargement = false;
+        ctx.image = ctx.image.resize(width, height, opt);
+      }
+    } else {
+      ctx.image = ctx.image.resize(null, null, opt);
+    }
   }
 }

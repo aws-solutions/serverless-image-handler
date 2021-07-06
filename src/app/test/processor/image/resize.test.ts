@@ -123,6 +123,60 @@ test('resize action m_pad', async () => {
   expect(info.height).toBe(80);
 });
 
+test('resize action p_100', async () => {
+  const image = sharp({
+    create: {
+      width: 100,
+      height: 100,
+      channels: 3,
+      background: 'gray',
+    },
+  });
+  const ctx: IImageContext = { image, store: new NullStore() };
+  const action = new ResizeAction();
+  await action.process(ctx, 'resize,p_100'.split(','));
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(100);
+  expect(info.height).toBe(100);
+});
+
+test('resize action p_50', async () => {
+  const image = sharp({
+    create: {
+      width: 100,
+      height: 100,
+      channels: 3,
+      background: 'gray',
+    },
+  });
+  const ctx: IImageContext = { image, store: new NullStore() };
+  const action = new ResizeAction();
+  await action.process(ctx, 'resize,p_50'.split(','));
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(50);
+  expect(info.height).toBe(50);
+});
+
+test('resize action p_1000', async () => {
+  const image = sharp({
+    create: {
+      width: 100,
+      height: 100,
+      channels: 3,
+      background: 'gray',
+    },
+  });
+  const ctx: IImageContext = { image, store: new NullStore() };
+  const action = new ResizeAction();
+  await action.process(ctx, 'resize,p_1000'.split(','));
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(1000);
+  expect(info.height).toBe(1000);
+});
+
 test('resize action disable limit', async () => {
   const image = sharp({
     create: {
