@@ -11,6 +11,8 @@ app.use(logger());
 app.use(async ctx => {
   if ('/' === ctx.path || '/ping' === ctx.path) {
     ctx.body = 'ok';
+  } else if ('/debug/sharp-info' === ctx.path) {
+    ctx.body = config.sharpInfo();
   } else {
     const uri = ctx.path.replace(/^\//, '');
     const actions = ((ctx.query['x-oss-process'] as string) ?? '').split('/').filter(x => x);
