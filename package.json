@@ -1,9 +1,10 @@
 {
   "name": "cdk-image-handler",
   "scripts": {
+    "compile": "echo nothing to do",
     "test:compile": "tsc --noEmit --project tsconfig.jest.json",
     "test": "rm -fr lib/ && yarn test:compile && jest --passWithNoTests --all --updateSnapshot && eslint",
-    "build": "yarn test && yarn synth",
+    "build": "yarn test && yarn compile && yarn synth",
     "test:watch": "jest --watch",
     "test:update": "jest --updateSnapshot",
     "upgrade-dependencies": "export CI=0 && npm-check-updates --upgrade --target=minor --reject='projen' && yarn install --check-files && yarn upgrade @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk eslint eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import jest jest-junit json-schema npm-check-updates ts-jest ts-node typescript @aws-cdk/assert @aws-cdk/aws-cloudfront-origins @aws-cdk/aws-cloudfront @aws-cdk/aws-ec2 @aws-cdk/aws-ecs-patterns @aws-cdk/aws-ecs @aws-cdk/aws-s3 @aws-cdk/core",
@@ -27,7 +28,6 @@
     "jest-junit": "^12",
     "json-schema": "^0.3.0",
     "npm-check-updates": "^11",
-    "projen": "^0.24.18",
     "ts-jest": "^27.0.3",
     "ts-node": "^9",
     "typescript": "^4.3.5"
