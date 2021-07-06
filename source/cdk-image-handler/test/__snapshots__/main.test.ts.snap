@@ -3,6 +3,23 @@
 exports[`Snapshot 1`] = `
 Object {
   "Outputs": Object {
+    "CFDistributionUrl": Object {
+      "Description": "The CloudFront distribution url",
+      "Value": Object {
+        "Fn::Join": Array [
+          "",
+          Array [
+            "https://",
+            Object {
+              "Fn::GetAtt": Array [
+                "Distribution830FAC52",
+                "DomainName",
+              ],
+            },
+          ],
+        ],
+      },
+    },
     "ServiceLoadBalancerDNSEC5B149E": Object {
       "Value": Object {
         "Fn::GetAtt": Array [
@@ -29,8 +46,88 @@ Object {
     },
   },
   "Resources": Object {
+    "CachePolicy26D8A535": Object {
+      "Properties": Object {
+        "CachePolicyConfig": Object {
+          "DefaultTTL": 86400,
+          "MaxTTL": 31536000,
+          "MinTTL": 0,
+          "Name": "CacheAllQueryString",
+          "ParametersInCacheKeyAndForwardedToOrigin": Object {
+            "CookiesConfig": Object {
+              "CookieBehavior": "none",
+            },
+            "EnableAcceptEncodingBrotli": false,
+            "EnableAcceptEncodingGzip": false,
+            "HeadersConfig": Object {
+              "HeaderBehavior": "none",
+            },
+            "QueryStringsConfig": Object {
+              "QueryStringBehavior": "all",
+            },
+          },
+        },
+      },
+      "Type": "AWS::CloudFront::CachePolicy",
+    },
+    "Distribution830FAC52": Object {
+      "Properties": Object {
+        "DistributionConfig": Object {
+          "Comment": "test distribution",
+          "DefaultCacheBehavior": Object {
+            "CachePolicyId": Object {
+              "Ref": "CachePolicy26D8A535",
+            },
+            "Compress": true,
+            "OriginRequestPolicyId": Object {
+              "Ref": "OriginRequestPolicy3EFDB4FA",
+            },
+            "TargetOriginId": "testDistributionOrigin1F4407531",
+            "ViewerProtocolPolicy": "redirect-to-https",
+          },
+          "Enabled": true,
+          "HttpVersion": "http2",
+          "IPV6Enabled": true,
+          "Origins": Array [
+            Object {
+              "CustomOriginConfig": Object {
+                "OriginProtocolPolicy": "http-only",
+                "OriginSSLProtocols": Array [
+                  "TLSv1.2",
+                ],
+              },
+              "DomainName": Object {
+                "Fn::GetAtt": Array [
+                  "ServiceLBE9A1ADBC",
+                  "DNSName",
+                ],
+              },
+              "Id": "testDistributionOrigin1F4407531",
+            },
+          ],
+        },
+      },
+      "Type": "AWS::CloudFront::Distribution",
+    },
     "EcsDefaultClusterMnL3mNNYNVpc18E0451A": Object {
       "Type": "AWS::ECS::Cluster",
+    },
+    "OriginRequestPolicy3EFDB4FA": Object {
+      "Properties": Object {
+        "OriginRequestPolicyConfig": Object {
+          "CookiesConfig": Object {
+            "CookieBehavior": "none",
+          },
+          "HeadersConfig": Object {
+            "HeaderBehavior": "none",
+          },
+          "Name": "ForwardAllQueryString",
+          "QueryStringsConfig": Object {
+            "QueryStringBehavior": "all",
+          },
+        },
+      },
+      "Type": "AWS::CloudFront::OriginRequestPolicy",
     },
     "Service9571FDD8": Object {
       "DependsOn": Array [
@@ -228,6 +325,14 @@ Object {
       "Properties": Object {
         "ContainerDefinitions": Array [
           Object {
+            "Environment": Array [
+              Object {
+                "Name": "SRC_BUCKET",
+                "Value": Object {
+                  "Ref": "SrcBucket613E28A1",
+                },
+              },
+            ],
             "Essential": true,
             "Image": Object {
               "Fn::Join": Array [
@@ -244,7 +349,7 @@ Object {
                   Object {
                     "Ref": "AWS::URLSuffix",
                   },
-                  "/aws-cdk/assets:02801d0ccfe28963f5ef29db73b03bb4b6689653d267da016273a1819459f8b7",
+                  "/aws-cdk/assets:49d6cb5e4a31ceb10d42b14d034f2dec1bed21ec2989be334be6270e7927547a",
                 ],
               ],
             },

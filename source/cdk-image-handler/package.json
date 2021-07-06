@@ -3,7 +3,8 @@
   "scripts": {
     "compile": "echo nothing to do",
     "test:compile": "tsc --noEmit --project tsconfig.jest.json",
-    "test": "rm -fr lib/ && yarn test:compile && jest --passWithNoTests --all --updateSnapshot && eslint",
+    "test": "rm -fr lib/ && yarn test:compile && jest --passWithNoTests --all --updateSnapshot && eslint && yarn test:app",
+    "test:app": "cd src/app && yarn test",
     "build": "yarn test && yarn compile && yarn synth",
     "test:watch": "jest --watch",
     "test:update": "jest --updateSnapshot",
@@ -17,7 +18,7 @@
   },
   "devDependencies": {
     "@types/jest": "^26.0.23",
-    "@types/node": "^10.17.0",
+    "@types/node": "^14.0.0",
     "@typescript-eslint/eslint-plugin": "^4.28.1",
     "@typescript-eslint/parser": "^4.28.1",
     "aws-cdk": "^1.110.0",
@@ -30,7 +31,7 @@
     "json-schema": "^0.3.0",
     "npm-check-updates": "^11",
     "ts-jest": "^27.0.3",
-    "ts-node": "^9",
+    "ts-node": "^10.0.0",
     "typescript": "^4.3.5"
   },
   "dependencies": {
@@ -44,12 +45,16 @@
     "@aws-cdk/core": "^1.110.0"
   },
   "bundledDependencies": [],
+  "engines": {
+    "node": ">= 14.0.0"
+  },
   "license": "Apache-2.0",
   "version": "0.0.0",
   "jest": {
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/cdk.out/"
+      "/cdk.out/",
+      "/src/app/"
     ],
     "watchPathIgnorePatterns": [
       "/node_modules/",
