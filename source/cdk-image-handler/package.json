@@ -1,0 +1,90 @@
+{
+  "name": "cdk-image-handler",
+  "scripts": {
+    "compile": "echo nothing to do",
+    "test:compile": "tsc --noEmit --project tsconfig.jest.json",
+    "test": "rm -fr lib/ && yarn test:compile && jest --passWithNoTests --all --updateSnapshot && eslint",
+    "build": "yarn test && yarn compile && yarn synth",
+    "test:watch": "jest --watch",
+    "test:update": "jest --updateSnapshot",
+    "upgrade-dependencies": "export CI=0 && npm-check-updates --upgrade --target=minor --reject='projen' && yarn install --check-files && yarn upgrade @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk eslint eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import jest jest-junit json-schema npm-check-updates ts-jest ts-node typescript @aws-cdk/assert @aws-cdk/aws-cloudfront-origins @aws-cdk/aws-cloudfront @aws-cdk/aws-ec2 @aws-cdk/aws-ecs-patterns @aws-cdk/aws-ecs @aws-cdk/aws-s3 @aws-cdk/core",
+    "eslint": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src test build-tools .projenrc.js",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy",
+    "diff": "cdk diff"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.23",
+    "@types/node": "^10.17.0",
+    "@typescript-eslint/eslint-plugin": "^4.28.1",
+    "@typescript-eslint/parser": "^4.28.1",
+    "aws-cdk": "^1.110.0",
+    "eslint": "^7.30.0",
+    "eslint-import-resolver-node": "^0.3.4",
+    "eslint-import-resolver-typescript": "^2.4.0",
+    "eslint-plugin-import": "^2.23.4",
+    "jest": "^27.0.6",
+    "jest-junit": "^12",
+    "json-schema": "^0.3.0",
+    "npm-check-updates": "^11",
+    "ts-jest": "^27.0.3",
+    "ts-node": "^9",
+    "typescript": "^4.3.5"
+  },
+  "dependencies": {
+    "@aws-cdk/assert": "^1.110.0",
+    "@aws-cdk/aws-cloudfront": "^1.110.0",
+    "@aws-cdk/aws-cloudfront-origins": "^1.110.0",
+    "@aws-cdk/aws-ec2": "^1.110.0",
+    "@aws-cdk/aws-ecs": "^1.110.0",
+    "@aws-cdk/aws-ecs-patterns": "^1.110.0",
+    "@aws-cdk/aws-s3": "^1.110.0",
+    "@aws-cdk/core": "^1.110.0"
+  },
+  "bundledDependencies": [],
+  "license": "Apache-2.0",
+  "version": "0.0.0",
+  "jest": {
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/cdk.out/"
+    ],
+    "watchPathIgnorePatterns": [
+      "/node_modules/",
+      "/cdk.out/"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.ts?(x)",
+      "**/?(*.)+(spec|test).ts?(x)"
+    ],
+    "clearMocks": true,
+    "collectCoverage": true,
+    "coverageReporters": [
+      "json",
+      "lcov",
+      "clover",
+      "text"
+    ],
+    "coverageDirectory": "coverage",
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/cdk.out/"
+    ],
+    "reporters": [
+      "default",
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "test-reports"
+        }
+      ]
+    ],
+    "preset": "ts-jest",
+    "globals": {
+      "ts-jest": {
+        "tsconfig": "tsconfig.jest.json"
+      }
+    }
+  }
+}

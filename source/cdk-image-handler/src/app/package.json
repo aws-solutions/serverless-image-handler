@@ -1,0 +1,91 @@
+{
+  "name": "app",
+  "scripts": {
+    "watch-server": "nodemon --ignore test/ --watch src -e ts,tsx --exec ts-node src/index.ts",
+    "serve": "node lib/index.js",
+    "compile": "tsc",
+    "test:compile": "tsc --noEmit --project tsconfig.jest.json",
+    "test": "rm -fr lib/ && yarn test:compile && jest --passWithNoTests --all --coverageProvider=v8 && eslint",
+    "build": "yarn test && yarn compile",
+    "test:watch": "jest --watch",
+    "test:update": "jest --updateSnapshot",
+    "upgrade-dependencies": "export CI=0 && npm-check-updates --upgrade --target=minor --reject='projen' && yarn install --check-files && yarn upgrade @types/jest @types/koa @types/koa-logger @types/node @types/sharp @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import jest jest-junit json-schema nodemon npm-check-updates ts-jest ts-node typescript aws-sdk koa koa-logger sharp",
+    "watch": "tsc -w",
+    "eslint": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src test build-tools .projenrc.js"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.23",
+    "@types/koa": "^2.13.3",
+    "@types/koa-logger": "^3.1.1",
+    "@types/node": "^14.0.0",
+    "@types/sharp": "^0.28.3",
+    "@typescript-eslint/eslint-plugin": "^4.28.0",
+    "@typescript-eslint/parser": "^4.28.0",
+    "eslint": "^7.29.0",
+    "eslint-import-resolver-node": "^0.3.4",
+    "eslint-import-resolver-typescript": "^2.4.0",
+    "eslint-plugin-import": "^2.23.4",
+    "jest": "^27.0.5",
+    "jest-junit": "^12",
+    "json-schema": "^0.3.0",
+    "nodemon": "^2.0.7",
+    "npm-check-updates": "^11",
+    "ts-jest": "^27.0.3",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.3.4"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.936.0",
+    "koa": "^2.13.1",
+    "koa-logger": "^3.2.1",
+    "sharp": "^0.28.3"
+  },
+  "bundledDependencies": [],
+  "engines": {
+    "node": ">= 14.0.0"
+  },
+  "license": "Apache-2.0",
+  "version": "0.0.0",
+  "jest": {
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/cdk.out/"
+    ],
+    "watchPathIgnorePatterns": [
+      "/node_modules/",
+      "/cdk.out/"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.ts?(x)",
+      "**/?(*.)+(spec|test).ts?(x)"
+    ],
+    "clearMocks": true,
+    "collectCoverage": true,
+    "coverageReporters": [
+      "json",
+      "lcov",
+      "clover",
+      "text"
+    ],
+    "coverageDirectory": "coverage",
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/cdk.out/"
+    ],
+    "reporters": [
+      "default",
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "test-reports"
+        }
+      ]
+    ],
+    "preset": "ts-jest",
+    "globals": {
+      "ts-jest": {
+        "tsconfig": "tsconfig.jest.json"
+      }
+    }
+  }
+}
