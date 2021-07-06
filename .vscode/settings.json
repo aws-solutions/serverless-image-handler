@@ -1,0 +1,7 @@
+{
+    "eslint.format.enable": true,
+    "eslint.lintTask.enable": true,
+    "eslint.workingDirectories": [
+        "./source/cdk-image-handler/",
+    ],
+}
