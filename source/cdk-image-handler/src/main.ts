@@ -17,6 +17,8 @@ export class ImageHandlerStack extends Stack {
       vpc: getOrCreateVpc(this),
       cpu: 2048,
       memoryLimitMiB: 1024 * 4,
+      minHealthyPercent: 100,
+      maxHealthyPercent: 200,
       desiredCount: 2,
       taskImageOptions: {
         image: ecs.ContainerImage.fromAsset(path.join(__dirname, 'app')),
