@@ -3,5 +3,6 @@
     "eslint.lintTask.enable": true,
     "eslint.workingDirectories": [
         "./source/cdk-image-handler/",
+        "./source/cdk-image-handler/src/app",
     ],
 }
