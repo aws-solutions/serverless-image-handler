@@ -1,3 +1,4 @@
+import * as HttpErrors from 'http-errors';
 import { IStore } from '../store';
 
 export type ReadOnly<T> = {
@@ -19,4 +20,4 @@ export interface IAction {
   process(ctx: IProcessContext, params: string[]): Promise<void>;
 }
 
-export class InvalidInput extends Error {}
+export class InvalidArgument extends HttpErrors[400] {}

@@ -1,5 +1,5 @@
 import * as sharp from 'sharp';
-import { IAction, InvalidInput, IProcessContext, IProcessor } from '../../processor';
+import { IAction, InvalidArgument, IProcessContext, IProcessor } from '../../processor';
 import { QualityAction } from './quality';
 import { ResizeAction } from './resize';
 
@@ -24,7 +24,7 @@ export class ImageProcessor implements IProcessor {
 
   public async process(ctx: IImageContext, actions: string[]): Promise<void> {
     if (!ctx.image) {
-      throw new InvalidInput('Invalid image context');
+      throw new InvalidArgument('Invalid image context');
     }
     for (const action of actions) {
       if ((this.name === action) || (!action)) {
@@ -36,7 +36,7 @@ export class ImageProcessor implements IProcessor {
       const name = params[0];
       const act = this.action(name);
       if (!act) {
-        throw new InvalidInput(`Unkown action: "${name}"`);
+        throw new InvalidArgument(`Unkown action: "${name}"`);
       }
       await act.process(ctx, params);
     }

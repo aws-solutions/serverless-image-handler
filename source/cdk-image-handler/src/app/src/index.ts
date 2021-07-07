@@ -8,6 +8,29 @@ const app = new Koa();
 
 app.use(logger());
 
+// Error handler
+app.use(async (ctx, next) => {
+  try {
+    await next();
+  } catch (err) {
+    ctx.status = err.statusCode || err.status || 500;
+
+    // ENOENT support
+    if (err.code === 'ENOENT') {
+      err.status = 404;
+      err.message = 'NotFound';
+    }
+    ctx.body = {
+      status: err.status,
+      name: err.name,
+      message: err.message,
+    };
+
+    ctx.app.emit('error', err, ctx);
+  }
+});
+
+// Main handler
 app.use(async ctx => {
   if ('/' === ctx.path || '/ping' === ctx.path) {
     ctx.body = 'ok';
@@ -31,6 +54,11 @@ app.use(async ctx => {
       ctx.type = type;
     }
   }
+});
+
+app.on('error', (err: Error) => {
+  const msg = err.stack || err.toString();
+  console.error(`\n${msg.replace(/^/gm, '  ')}\n`);
 });
 
 app.listen(config.port, () => {

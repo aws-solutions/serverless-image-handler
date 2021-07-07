@@ -1,6 +1,6 @@
 import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
-import { IActionOpts, ReadOnly, InvalidInput } from '..';
+import { IActionOpts, ReadOnly, InvalidArgument } from '..';
 import { inRange, isHexColor } from './utils';
 
 export const enum Mode {
@@ -44,30 +44,30 @@ export class ResizeAction implements IImageAction {
         if (v && ((v === Mode.LFIT) || (v === Mode.MFIT) || (v === Mode.FILL) || (v === Mode.PAD) || (v === Mode.FIXED))) {
           opt.m = v;
         } else {
-          throw new InvalidInput(`Unkown m: "${v}"`);
+          throw new InvalidArgument(`Unkown m: "${v}"`);
         }
       } else if (k === 'limit') {
         if (v && (v === '0' || v === '1')) {
           opt.limit = (v === '1');
         } else {
-          throw new InvalidInput(`Unkown limit: "${v}"`);
+          throw new InvalidArgument(`Unkown limit: "${v}"`);
         }
       } else if (k === 'color') {
         const color = '#' + v;
         if (isHexColor(color)) {
           opt.color = color;
         } else {
-          throw new InvalidInput(`Unkown color: "${v}"`);
+          throw new InvalidArgument(`Unkown color: "${v}"`);
         }
       } else if (k === 'p') {
         const p = parseInt(v);
         if (inRange(p, 1, 1000)) {
           opt.p = p;
         } else {
-          throw new InvalidInput(`Unkown p: "${v}"`);
+          throw new InvalidArgument(`Unkown p: "${v}"`);
         }
       } else {
-        throw new InvalidInput(`Unkown param: "${k}"`);
+        throw new InvalidArgument(`Unkown param: "${k}"`);
       }
     }
     return opt;

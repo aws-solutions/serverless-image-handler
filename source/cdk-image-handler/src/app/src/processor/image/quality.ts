@@ -1,6 +1,6 @@
 import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
-import { IActionOpts, ReadOnly, InvalidInput } from '..';
+import { IActionOpts, ReadOnly, InvalidArgument } from '..';
 import { inRange } from './utils';
 
 
@@ -28,17 +28,17 @@ export class QualityAction implements IImageAction {
         if (inRange(q, 1, 100)) {
           opt.q = q;
         } else {
-          throw new InvalidInput('Quality must be between 1 and 100');
+          throw new InvalidArgument('Quality must be between 1 and 100');
         }
       } else if (k === 'Q') {
         const Q = parseInt(v);
         if (inRange(Q, 1, 100)) {
           opt.Q = Q;
         } else {
-          throw new InvalidInput('Quality must be between 1 and 100');
+          throw new InvalidArgument('Quality must be between 1 and 100');
         }
       } else {
-        throw new InvalidInput(`Unkown param: "${k}"`);
+        throw new InvalidArgument(`Unkown param: "${k}"`);
       }
     }
     return opt;
