@@ -41,8 +41,12 @@ export class ImageHandlerStack extends Stack {
     // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/restrict-access-to-load-balancer.html
     // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listenerrule.html
 
-    this.distribution(new origins.LoadBalancerV2Origin(albFargateService.loadBalancer, {
-      protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+    this.distribution(new origins.OriginGroup({
+      primaryOrigin: new origins.LoadBalancerV2Origin(albFargateService.loadBalancer, {
+        protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+      }),
+      fallbackOrigin: new origins.S3Origin(srcBucket),
+      fallbackStatusCodes: [403],
     }));
   }
 

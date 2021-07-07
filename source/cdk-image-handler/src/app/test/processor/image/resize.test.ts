@@ -228,7 +228,7 @@ test('resize action bad limit', async () => {
   void expect(action.process(ctx, 'resize,w_100,h_100,limit_3'.split(','))).rejects.toThrowError(/Unkown limit/);
 });
 
-// NOTES: Seems that Sharp.js will use origin image's aspect ratio instead of
+// NOTE: Seems that Sharp.js will use origin image's aspect ratio instead of
 // intermediate image's aspect ratio
 test.skip('resize action m_fixed m_lfit', async () => {
   const image = sharp({

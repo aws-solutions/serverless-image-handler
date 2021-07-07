@@ -16,9 +16,9 @@ app.use(async ctx => {
   } else {
     const uri = ctx.path.replace(/^\//, '');
     const actions = ((ctx.query['x-oss-process'] as string) ?? '').split('/').filter(x => x);
-    const { buffer, type } = await config.store.get(uri);
 
     if ((actions.length > 1) && (actions[0] === ImageProcessor.getInstance().name)) {
+      const { buffer } = await config.store.get(uri);
       const imgctx = { image: sharp(buffer), store: config.store };
       await ImageProcessor.getInstance().process(imgctx, actions);
       const { data, info } = await imgctx.image.toBuffer({ resolveWithObject: true });
@@ -26,6 +26,7 @@ app.use(async ctx => {
       ctx.body = data;
       ctx.type = info.format;
     } else {
+      const { buffer, type } = await config.store.get(uri, true);
       ctx.body = buffer;
       ctx.type = type;
     }

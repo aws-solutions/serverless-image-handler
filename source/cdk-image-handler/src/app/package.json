@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.936.0",
+    "http-errors": "^1.8.0",
     "koa": "^2.13.1",
     "koa-logger": "^3.2.1",
     "sharp": "^0.28.3"

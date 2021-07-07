@@ -47,7 +47,7 @@ export class QualityAction implements IImageAction {
     const opt = this.validate(params);
     const metadata = await ctx.image.metadata();
 
-    // NOTES: It seems that ImageMagick can detect pictures quality https://superuser.com/questions/62730/how-to-find-the-jpg-quality
+    // NOTE: It seems that ImageMagick can detect pictures quality https://superuser.com/questions/62730/how-to-find-the-jpg-quality
     // while Sharp.js can not. For simplicity, we just use absolute quality at here.
 
     if (JPEG === metadata.format || JPG === metadata.format) {
