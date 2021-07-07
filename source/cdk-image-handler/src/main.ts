@@ -5,7 +5,7 @@ import * as ec2 from '@aws-cdk/aws-ec2';
 import * as ecs from '@aws-cdk/aws-ecs';
 import * as ecsPatterns from '@aws-cdk/aws-ecs-patterns';
 import * as s3 from '@aws-cdk/aws-s3';
-import { App, Construct, Stack, StackProps, CfnOutput } from '@aws-cdk/core';
+import { App, Construct, Stack, StackProps, CfnOutput, Duration } from '@aws-cdk/core';
 
 
 export class ImageHandlerStack extends Stack {
@@ -69,6 +69,13 @@ export class ImageHandlerStack extends Stack {
         originRequestPolicy,
         cachePolicy,
       },
+      errorResponses: [
+        { httpStatus: 500, ttl: Duration.seconds(10) },
+        { httpStatus: 501, ttl: Duration.seconds(10) },
+        { httpStatus: 502, ttl: Duration.seconds(10) },
+        { httpStatus: 503, ttl: Duration.seconds(10) },
+        { httpStatus: 504, ttl: Duration.seconds(10) },
+      ],
     });
 
     this.output('CFDistributionUrl', `https://${dist.distributionDomainName}`, 'The CloudFront distribution url');
