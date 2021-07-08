@@ -25,7 +25,9 @@
     "target": "ES2018"
   },
   "include": [
-    "lib/**/*.ts"
+    "bin/**/*.ts",
+    "lib/**/*.ts",
+    "test/**/*.ts",
   ],
   "exclude": [
     "cdk.out"

@@ -10,4 +10,7 @@ new ECSImageHandlerStack(app, 'serverless-ecr-image-handler-stack', {
   tags: {
     name: 'serverless-ecr-image-handler',
   },
+  env: {
+    region: process.env.CDK_DEPLOY_REGION,
+  },
 });
