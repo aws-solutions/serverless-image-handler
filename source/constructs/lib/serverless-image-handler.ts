@@ -11,7 +11,8 @@ import { Construct, CfnParameter } from '@aws-cdk/core';
 import * as cdk from '@aws-cdk/core';
 import { CloudFrontToApiGatewayToLambda } from '@aws-solutions-constructs/aws-cloudfront-apigateway-lambda';
 import { CloudFrontToS3 } from '@aws-solutions-constructs/aws-cloudfront-s3';
-const apiBody = import('./api.json');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import apiBody = require('./api.json');
 
 const { BUCKET_NAME, SOLUTION_NAME, VERSION } = process.env;
 
