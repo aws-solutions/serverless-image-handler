@@ -1,5 +1,5 @@
 {
-  "name": "app",
+  "name": "ecs-image-handler",
   "scripts": {
     "watch-server": "nodemon --ignore test/ --watch src -e ts,tsx --exec ts-node src/index.ts",
     "serve": "node lib/index.js",

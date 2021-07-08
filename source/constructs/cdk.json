@@ -1,5 +1,5 @@
 {
-  "app": "npx ts-node bin/constructs.ts",
+  "app": "npx ts-node --prefer-ts-exts bin/constructs.ts",
   "context": {
     "@aws-cdk/core:enableStackNameDuplicates": "false",
     "aws-cdk:enableDiffNoFail": "true"

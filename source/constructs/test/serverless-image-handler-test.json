@@ -406,14 +406,12 @@
           },
           "S3Key": "serverless-image-handler/TEST_VERSION/image-handler.zip"
         },
-        "Handler": "index.handler",
         "Role": {
           "Fn::GetAtt": [
             "ImageHandlerFunctionRole",
             "Arn"
           ]
         },
-        "Runtime": "nodejs12.x",
         "Description": "Serverless Image Handler - Function for performing image edits and manipulations.",
         "Environment": {
           "Variables": {
@@ -451,7 +449,9 @@
             }
           }
         },
+        "Handler": "index.handler",
         "MemorySize": 1024,
+        "Runtime": "nodejs12.x",
         "Timeout": 30
       },
       "DependsOn": [
@@ -558,79 +558,7 @@
     "ImageHandlerApi": {
       "Type": "AWS::ApiGateway::RestApi",
       "Properties": {
-        "Body": {
-          "swagger": "2.0",
-          "info": {
-            "title": "ServerlessImageHandler"
-          },
-          "basePath": "/image",
-          "schemes": [
-            "https"
-          ],
-          "paths": {
-            "/{proxy+}": {
-              "x-amazon-apigateway-any-method": {
-                "produces": [
-                  "application/json"
-                ],
-                "parameters": [
-                  {
-                    "name": "proxy",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                  },
-                  {
-                    "name": "signature",
-                    "in": "query",
-                    "description": "Signature of the image",
-                    "required": false,
-                    "type": "string"
-                  }
-                ],
-                "responses": {},
-                "x-amazon-apigateway-integration": {
-                  "responses": {
-                    "default": {
-                      "statusCode": "200"
-                    }
-                  },
-                  "uri": {
-                    "Fn::Join": [
-                      "",
-                      [
-                        "arn:aws:apigateway:",
-                        {
-                          "Ref": "AWS::Region"
-                        },
-                        ":",
-                        "lambda:path/2015-03-31/functions/",
-                        {
-                          "Fn::GetAtt": [
-                            "ImageHandlerFunction",
-                            "Arn"
-                          ]
-                        },
-                        "/invocations"
-                      ]
-                    ]
-                  },
-                  "passthroughBehavior": "when_no_match",
-                  "httpMethod": "POST",
-                  "cacheNamespace": "xh7gp9",
-                  "cacheKeyParameters": [
-                    "method.request.path.proxy"
-                  ],
-                  "contentHandling": "CONVERT_TO_TEXT",
-                  "type": "aws_proxy"
-                }
-              }
-            }
-          },
-          "x-amazon-apigateway-binary-media-types": [
-            "*/*"
-          ]
-        },
+        "Body": {},
         "EndpointConfiguration": {
           "Types": [
             "REGIONAL"
@@ -730,6 +658,9 @@
           "BlockPublicPolicy": true,
           "IgnorePublicAcls": true,
           "RestrictPublicBuckets": true
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
         }
       },
       "UpdateReplacePolicy": "Retain",
@@ -940,6 +871,222 @@
         }
       }
     },
+    "CustomResourceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Path": "/",
+        "RoleName": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "AWS::StackName"
+              },
+              "CustomResourceRole-",
+              {
+                "Ref": "AWS::Region"
+              }
+            ]
+          ]
+        }
+      },
+      "Metadata": {
+        "cfn_nag": {
+          "rules_to_suppress": [
+            {
+              "id": "W28",
+              "reason": "Resource name validated and found to pose no risk to updates that require replacement of this resource."
+            }
+          ]
+        }
+      }
+    },
+    "CustomResourcePolicy": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:CreateLogGroup",
+                "logs:PutLogEvents"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":logs:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":log-group:/aws/lambda/*"
+                  ]
+                ]
+              }
+            },
+            {
+              "Action": [
+                "s3:putBucketAcl",
+                "s3:putEncryptionConfiguration",
+                "s3:putBucketPolicy",
+                "s3:CreateBucket",
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:ListBucket"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":s3:::*"
+                  ]
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "AWS::StackName"
+              },
+              "CustomResourcePolicy"
+            ]
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "CustomResourceRole"
+          }
+        ]
+      }
+    },
+    "CustomResourceFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Join": [
+              "",
+              [
+                "TEST-",
+                {
+                  "Ref": "AWS::Region"
+                }
+              ]
+            ]
+          },
+          "S3Key": "serverless-image-handler/TEST_VERSION/custom-resource.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomResourceRole",
+            "Arn"
+          ]
+        },
+        "Description": "Serverless Image Handler - Custom resource",
+        "Environment": {
+          "Variables": {
+            "RETRY_SECONDS": "5"
+          }
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Runtime": "nodejs12.x",
+        "Timeout": 60
+      },
+      "DependsOn": [
+        "CustomResourceRole"
+      ],
+      "Metadata": {
+        "cfn_nag": {
+          "rules_to_suppress": [
+            {
+              "id": "W58",
+              "reason": "False alarm: The Lambda function does have the permission to write CloudWatch Logs."
+            }
+          ]
+        }
+      }
+    },
+    "CustomCFLoggingBucket": {
+      "Type": "Custom::CustomResource",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomResourceFunction",
+            "Arn"
+          ]
+        },
+        "customAction": "createCFLoggingBucket",
+        "stackName": {
+          "Ref": "AWS::StackName"
+        },
+        "bucketSuffix": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "AWS::StackName"
+              },
+              {
+                "Ref": "AWS::Region"
+              },
+              {
+                "Ref": "AWS::AccountId"
+              }
+            ]
+          ]
+        },
+        "policy": {
+          "Action": "*",
+          "Condition": {
+            "Bool": {
+              "aws:SecureTransport": "false"
+            }
+          },
+          "Effect": "Deny",
+          "Principal": "*",
+          "Resource": "",
+          "Sid": "HttpsOnly"
+        }
+      },
+      "DependsOn": [
+        "CustomResourcePolicy",
+        "CustomResourceRole"
+      ],
+      "Condition": "IsOptInRegion"
+    },
     "ImageHandlerCachePolicy": {
       "Type": "AWS::CloudFront::CachePolicy",
       "Properties": {
@@ -1101,25 +1248,6 @@
       },
       "Condition": "DeployDemoUICondition"
     },
-    "DemoOriginAccessIdentity": {
-      "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
-      "Properties": {
-        "CloudFrontOriginAccessIdentityConfig": {
-          "Comment": {
-            "Fn::Join": [
-              "",
-              [
-                "access-identity-",
-                {
-                  "Ref": "DemoBucket"
-                }
-              ]
-            ]
-          }
-        }
-      },
-      "Condition": "DeployDemoUICondition"
-    },
     "DemoDistribution": {
       "Type": "AWS::CloudFront::Distribution",
       "Properties": {
@@ -1216,173 +1344,24 @@
       },
       "Condition": "DeployDemoUICondition"
     },
-    "CustomResourceRole": {
-      "Type": "AWS::IAM::Role",
+    "DemoOriginAccessIdentity": {
+      "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
       "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "lambda.amazonaws.com"
-              }
-            }
-          ],
-          "Version": "2012-10-17"
-        },
-        "Path": "/",
-        "RoleName": {
-          "Fn::Join": [
-            "",
-            [
-              {
-                "Ref": "AWS::StackName"
-              },
-              "CustomResourceRole-",
-              {
-                "Ref": "AWS::Region"
-              }
-            ]
-          ]
-        }
-      },
-      "Metadata": {
-        "cfn_nag": {
-          "rules_to_suppress": [
-            {
-              "id": "W28",
-              "reason": "Resource name validated and found to pose no risk to updates that require replacement of this resource."
-            }
-          ]
-        }
-      }
-    },
-    "CustomResourcePolicy": {
-      "Type": "AWS::IAM::Policy",
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": [
-                "logs:CreateLogStream",
-                "logs:CreateLogGroup",
-                "logs:PutLogEvents"
-              ],
-              "Effect": "Allow",
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    "arn:",
-                    {
-                      "Ref": "AWS::Partition"
-                    },
-                    ":logs:",
-                    {
-                      "Ref": "AWS::Region"
-                    },
-                    ":",
-                    {
-                      "Ref": "AWS::AccountId"
-                    },
-                    ":log-group:/aws/lambda/*"
-                  ]
-                ]
-              }
-            },
-            {
-              "Action": [
-                "s3:putBucketAcl",
-                "s3:putEncryptionConfiguration",
-                "s3:putBucketPolicy",
-                "s3:CreateBucket",                
-                "s3:GetObject",
-                "s3:PutObject",
-                "s3:ListBucket"
-              ],
-              "Effect": "Allow",
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    "arn:",
-                    {
-                      "Ref": "AWS::Partition"
-                    },
-                    ":s3:::*"
-                  ]
-                ]
-              }
-            }
-          ],
-          "Version": "2012-10-17"
-        },
-        "PolicyName": {
-          "Fn::Join": [
-            "",
-            [
-              {
-                "Ref": "AWS::StackName"
-              },
-              "CustomResourcePolicy"
-            ]
-          ]
-        },
-        "Roles": [
-          {
-            "Ref": "CustomResourceRole"
-          }
-        ]
-      }
-    },
-    "CustomResourceFunction": {
-      "Type": "AWS::Lambda::Function",
-      "Properties": {
-        "Code": {
-          "S3Bucket": {
+        "CloudFrontOriginAccessIdentityConfig": {
+          "Comment": {
             "Fn::Join": [
               "",
               [
-                "TEST-",
+                "access-identity-",
                 {
-                  "Ref": "AWS::Region"
+                  "Ref": "DemoBucket"
                 }
               ]
             ]
-          },
-          "S3Key": "serverless-image-handler/TEST_VERSION/custom-resource.zip"
-        },
-        "Handler": "index.handler",
-        "Role": {
-          "Fn::GetAtt": [
-            "CustomResourceRole",
-            "Arn"
-          ]
-        },
-        "Runtime": "nodejs12.x",
-        "Description": "Serverless Image Handler - Custom resource",
-        "Environment": {
-          "Variables": {
-            "RETRY_SECONDS": "5"
           }
-        },
-        "MemorySize": 128,
-        "Timeout": 60
-      },
-      "DependsOn": [
-        "CustomResourceRole"
-      ],
-      "Metadata": {
-        "cfn_nag": {
-          "rules_to_suppress": [
-            {
-              "id": "W58",
-              "reason": "False alarm: The Lambda function does have the permission to write CloudWatch Logs."
-            }
-          ]
         }
-      }
+      },
+      "Condition": "DeployDemoUICondition"
     },
     "CustomResourceLogGroup": {
       "Type": "AWS::Logs::LogGroup",
@@ -1667,54 +1646,6 @@
         "CustomResourceRole"
       ],
       "Condition": "EnableDefaultFallbackImageCondition"
-    },
-    "CustomCFLoggingBucket": {
-      "Type": "Custom::CustomResource",
-      "Properties": {
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "CustomResourceFunction",
-            "Arn"
-          ]
-        },
-        "customAction": "createCFLoggingBucket",
-        "stackName": {
-          "Ref": "AWS::StackName"
-        },
-        "bucketSuffix": {
-          "Fn::Join": [
-            "",
-            [
-              {
-                "Ref": "AWS::StackName"
-              },
-              {
-                "Ref": "AWS::Region"
-              },
-              {
-                "Ref": "AWS::AccountId"
-              }
-            ]
-          ]
-        },
-        "policy": {
-          "Action": "*",
-          "Condition": {
-            "Bool": {
-              "aws:SecureTransport": "false"
-            }
-          },
-          "Effect": "Deny",
-          "Principal": "*",
-          "Resource": "",
-          "Sid": "HttpsOnly"
-        }
-      },
-      "DependsOn": [
-        "CustomResourcePolicy",
-        "CustomResourceRole"
-      ],
-      "Condition": "IsOptInRegion"
     }
   },
   "Outputs": {

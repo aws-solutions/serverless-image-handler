@@ -5,12 +5,12 @@ import * as ec2 from '@aws-cdk/aws-ec2';
 import * as ecs from '@aws-cdk/aws-ecs';
 import * as ecsPatterns from '@aws-cdk/aws-ecs-patterns';
 import * as s3 from '@aws-cdk/aws-s3';
-import { App, Construct, Stack, StackProps, CfnOutput, Duration } from '@aws-cdk/core';
+import { Construct, CfnOutput, Duration, Stack } from '@aws-cdk/core';
 
 
-export class ImageHandlerStack extends Stack {
-  constructor(scope: Construct, id: string, props: StackProps = {}) {
-    super(scope, id, props);
+export class ECSImageHandler extends Construct {
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
 
     const srcBucket = new s3.Bucket(this, 'SrcBucket');
     const albFargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'Service', {
@@ -21,7 +21,7 @@ export class ImageHandlerStack extends Stack {
       maxHealthyPercent: 200,
       desiredCount: 2,
       taskImageOptions: {
-        image: ecs.ContainerImage.fromAsset(path.join(__dirname, 'app')),
+        image: ecs.ContainerImage.fromAsset(path.join(__dirname, '../../ecs-image-handler')),
         containerPort: 8080,
         environment: {
           SRC_BUCKET: srcBucket.bucketName,
@@ -62,7 +62,7 @@ export class ImageHandlerStack extends Stack {
       queryStringBehavior: cloudfront.CacheQueryStringBehavior.all(),
     });
     const dist = new cloudfront.Distribution(this, 'Distribution', {
-      comment: `${this.stackName} distribution`,
+      comment: `${Stack.of(this).stackName} distribution`,
       defaultBehavior: {
         origin,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -86,16 +86,16 @@ export class ImageHandlerStack extends Stack {
   }
 }
 
-const env = {
-  account: process.env.CDK_DEFAULT_ACCOUNT,
-  region: 'us-west-2',
-};
+// const env = {
+//   account: process.env.CDK_DEFAULT_ACCOUNT,
+//   region: 'us-west-2',
+// };
 
-const app = new App();
+// const app = new App();
 
-new ImageHandlerStack(app, 'cdk-image-handler', { env });
+// new ECSImageHandlerStack(app, 'cdk-image-handler', { env });
 
-app.synth();
+// app.synth();
 
 function getOrCreateVpc(scope: Construct): ec2.IVpc {
   if (scope.node.tryGetContext('use_default_vpc') === '1' || process.env.CDK_USE_DEFAULT_VPC === '1') {
