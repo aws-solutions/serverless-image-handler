@@ -13,13 +13,12 @@ app.use(async (ctx, next) => {
   try {
     await next();
   } catch (err) {
-    ctx.status = err.statusCode || err.status || 500;
-
     // ENOENT support
     if (err.code === 'ENOENT') {
       err.status = 404;
       err.message = 'NotFound';
     }
+    ctx.status = err.statusCode || err.status || 500;
     ctx.body = {
       status: err.status,
       name: err.name,
