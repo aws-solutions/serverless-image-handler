@@ -49,34 +49,33 @@ This is an ECS Fargate based version of serverless image handler. The key featur
 ### How to use?
 
 ```bash
-cd source/cdk-image-handler
+cd source/constructs
 # Install dependencies
 yarn
 # Run test
 yarn test
 # Deploy stack
-yarn deploy
+yarn deploy serverless-ecr-image-handler-stack
 # Or deploy stack to an existing vpc
-yarn deploy -c use_vpc_id=vpc-1234567890
+CDK_DEPLOY_REGION=us-west-2 yarn deploy serverless-ecr-image-handler-stack -c use_vpc_id=vpc-123124124124
 # Destroy stack if you need
-yarn destroy
+yarn destroy serverless-ecr-image-handler-stack
 ```
 
 Once it is deployed you will get:
 
 ```
-cdk-image-handler: deploying...
-
- ✅  cdk-image-handler (no changes)
+ ✅  serverless-ecr-image-handler-stack
 
 Outputs:
-cdk-image-handler.CFDistributionUrl = https://ABCDEFG.cloudfront.net
-cdk-image-handler.ServiceLoadBalancerDNSEC5B149E = cdk-i-Servi-ABCDEFG.us-west-2.elb.amazonaws.com
-cdk-image-handler.ServiceServiceURL250C0FB6 = http://cdk-i-Servi-ABCDEFG.us-west-2.elb.amazonaws.com
+serverless-ecr-image-handler-stack.serverlessecrimagehandlerstackCFDistributionUrl1454FE90 = https://ABCDEFGH.cloudfront.net
+serverless-ecr-image-handler-stack.serverlessecrimagehandlerstackServiceLoadBalancerDNSDB026A6D = serve-serve-ABCDEF.us-west-2.elb.amazonaws.com
+serverless-ecr-image-handler-stack.serverlessecrimagehandlerstackServiceServiceURLE05B511A = http://serve-serve-ABCDEF.us-west-2.elb.amazonaws.com
+serverless-ecr-image-handler-stack.serverlessecrimagehandlerstackSrcBucketS3Url593801C5 = s3://serverless-ecr-image-han-serverlessecrimagehandle-ABCDE
 
 Stack ARN:
-arn:aws:cloudformation:us-west-2:********:stack/cdk-image-handler/********
-✨  Done in 9.67s.
+arn:aws:cloudformation:us-west-2:000000000:stack/serverless-ecr-image-handler-stack/0000000-0000-0000-0000-0000
+✨  Done in 593.00s.
 ```
 
 Then you could try to open `cdk-image-handler.CFDistributionUrl` https://ABCDEFG.cloudfront.net/example.jpg?x-oss-process=image/resize,w_500,h_500,limit_0/quality,q_50
