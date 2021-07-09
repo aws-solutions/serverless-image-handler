@@ -11,6 +11,7 @@ new ECSImageHandlerStack(app, 'serverless-ecr-image-handler-stack', {
     name: 'serverless-ecr-image-handler',
   },
   env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
     region: process.env.CDK_DEPLOY_REGION,
   },
 });
