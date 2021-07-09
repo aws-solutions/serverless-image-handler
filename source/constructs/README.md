@@ -1,6 +1,29 @@
-## Architecture
+# Table of Contents
 
-![architecture](./architecture.svg)
+- [Table of Contents](#table-of-contents)
+- [Overview](#overview)
+  - [Lambda Image Handler](#lambda-image-handler)
+  - [ECS Image Handler](#ecs-image-handler)
+    - [Workflow](#workflow)
+    - [Prerequisites](#prerequisites)
+    - [How to use?](#how-to-use)
+
+# Overview
+
+This cdk construct includes two different implementations of serverless image handler:
+
+1. Lambda Image Handler
+2. ECS Image Handler
+
+## Lambda Image Handler
+
+![architecture](../../architecture.png)
+
+TODO
+
+## ECS Image Handler
+
+![architecture](./ecs-image-handler-arch.svg)
 
 This is an ECS Fargate based version of serverless image handler. The key features are:
 
@@ -8,14 +31,14 @@ This is an ECS Fargate based version of serverless image handler. The key featur
 2. `x-oss-process` syntax.
 3. Modular function design.
 
-## Workflow
+### Workflow
 
 1. An image modification request will be sent through CloudFront.
 2. If the request is not cached by CloudFront it will firstly be sent to backend ECS Fargate cluster over Application Load Balancer. (i.e. origin #1)
 3. The ECS Fargate service will get pictures from S3 and do some modification based on the request return back to the CloudFront.
 4. If the request doesn't need any modification or request origin pictures. CloudFront will firstly send the request to origin #1. But the origin #1 will just return HTTP 403 Forbidden which's telling the CloudFront to failback to origin #2. This an intended design to tell CloudFront to directly access the picture stored in S3 without through ECS cluster.
 
-## Prerequisites
+### Prerequisites
 
 1. [nodejs](https://nodejs.org/) >= 14.0.0
 2. [docker](https://www.docker.com/)
@@ -23,7 +46,7 @@ This is an ECS Fargate based version of serverless image handler. The key featur
 4. [aws-cdk](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html)
 5. [cdk bootstrap](https://docs.aws.amazon.com/cdk/latest/guide/cli.html#cli-bootstrap)
 
-## How to use?
+### How to use?
 
 ```bash
 cd source/cdk-image-handler
