@@ -55,7 +55,6 @@ export class ECSImageHandler extends Construct {
   }
 
   private distribution(origin: cloudfront.IOrigin) {
-    console.log(this.node.addr);
     const originRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'ForwardAllQueryString', {
       queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all(),
     });
