@@ -8,11 +8,11 @@ on:
   pull_request: {}
   workflow_dispatch: {}
 jobs:
-  build-cdk-image-handler:
+  build:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: source/cdk-image-handler
+        working-directory: source/constructs
     permissions:
       checks: write
       contents: write
