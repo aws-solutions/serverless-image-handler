@@ -50,6 +50,8 @@ export class ECSImageHandler extends Construct {
       fallbackOrigin: new origins.S3Origin(srcBucket),
       fallbackStatusCodes: [403],
     }));
+
+    this.output('SrcBucketS3Url', `s3://${srcBucket.bucketName}`);
   }
 
   private distribution(origin: cloudfront.IOrigin) {
