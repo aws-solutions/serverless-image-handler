@@ -53,12 +53,11 @@ export class ECSImageHandler extends Construct {
   }
 
   private distribution(origin: cloudfront.IOrigin) {
-    const originRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'OriginRequestPolicy', {
-      originRequestPolicyName: 'ForwardAllQueryString',
+    console.log(this.node.addr);
+    const originRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'ForwardAllQueryString', {
       queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all(),
     });
-    const cachePolicy = new cloudfront.CachePolicy(this, 'CachePolicy', {
-      cachePolicyName: 'CacheAllQueryString',
+    const cachePolicy = new cloudfront.CachePolicy(this, 'CacheAllQueryString', {
       queryStringBehavior: cloudfront.CacheQueryStringBehavior.all(),
     });
     const dist = new cloudfront.Distribution(this, 'Distribution', {
