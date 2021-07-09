@@ -44,18 +44,41 @@ Object {
         ],
       },
     },
+    "testSrcBucketS3Url4DDD7660": Object {
+      "Value": Object {
+        "Fn::Join": Array [
+          "",
+          Array [
+            "s3://",
+            Object {
+              "Ref": "testSrcBucketAD4FA500",
+            },
+          ],
+        ],
+      },
+    },
   },
   "Resources": Object {
     "EcsDefaultClusterMnL3mNNYNVpc18E0451A": Object {
       "Type": "AWS::ECS::Cluster",
     },
-    "testCachePolicy82B0E2BF": Object {
+    "testCacheAllQueryString0AE63AEF": Object {
       "Properties": Object {
         "CachePolicyConfig": Object {
           "DefaultTTL": 86400,
           "MaxTTL": 31536000,
           "MinTTL": 0,
-          "Name": "CacheAllQueryString",
+          "Name": Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "testCacheAllQueryString3365C488-",
+                Object {
+                  "Ref": "AWS::Region",
+                },
+              ],
+            ],
+          },
           "ParametersInCacheKeyAndForwardedToOrigin": Object {
             "CookiesConfig": Object {
               "CookieBehavior": "none",
@@ -101,11 +124,11 @@ Object {
           ],
           "DefaultCacheBehavior": Object {
             "CachePolicyId": Object {
-              "Ref": "testCachePolicy82B0E2BF",
+              "Ref": "testCacheAllQueryString0AE63AEF",
             },
             "Compress": true,
             "OriginRequestPolicyId": Object {
-              "Ref": "testOriginRequestPolicy2D7E2CEE",
+              "Ref": "testForwardAllQueryString59F56102",
             },
             "TargetOriginId": "testDistributionOriginGroup1C39A2A4E",
             "ViewerProtocolPolicy": "redirect-to-https",
@@ -191,7 +214,7 @@ Object {
       },
       "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
     },
-    "testOriginRequestPolicy2D7E2CEE": Object {
+    "testForwardAllQueryString59F56102": Object {
       "Properties": Object {
         "OriginRequestPolicyConfig": Object {
           "CookiesConfig": Object {
@@ -200,7 +223,7 @@ Object {
           "HeadersConfig": Object {
             "HeaderBehavior": "none",
           },
-          "Name": "ForwardAllQueryString",
+          "Name": "testForwardAllQueryString613D6245",
           "QueryStringsConfig": Object {
             "QueryStringBehavior": "all",
           },
@@ -566,7 +589,7 @@ Object {
                   Object {
                     "Ref": "AWS::URLSuffix",
                   },
-                  "/aws-cdk/assets:51f4e9c41ebe1a3237adda8849e928a6e91e0335c651218108fd46cc734b91dd",
+                  "/aws-cdk/assets:683069133a58c2c45065d92edf9f2dc5ce4abecc058903ad81f85b3593486bea",
                 ],
               ],
             },
