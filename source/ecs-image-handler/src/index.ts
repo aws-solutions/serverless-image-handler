@@ -2,6 +2,7 @@ import * as Koa from 'koa';
 import * as logger from 'koa-logger';
 import * as sharp from 'sharp';
 import config from './config';
+import debug from './debug';
 import { ImageProcessor } from './processor/image';
 
 const app = new Koa();
@@ -33,8 +34,8 @@ app.use(async (ctx, next) => {
 app.use(async ctx => {
   if ('/' === ctx.path || '/ping' === ctx.path) {
     ctx.body = 'ok';
-  } else if ('/debug/sharp-info' === ctx.path) {
-    ctx.body = config.sharpInfo();
+  } else if ('/debug' === ctx.path) {
+    ctx.body = debug();
   } else {
     const uri = ctx.path.replace(/^\//, '');
     const actions = ((ctx.query['x-oss-process'] as string) ?? '').split('/').filter(x => x);
