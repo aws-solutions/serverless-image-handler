@@ -98,10 +98,10 @@ export class ResizeAction implements IImageAction {
         const width = Math.round(metadata.width * o.p * 0.01);
         const height = Math.round(metadata.height * o.p * 0.01);
         opt.withoutEnlargement = false;
-        ctx.image = ctx.image.resize(width, height, opt);
+        ctx.image.resize(width, height, opt);
       }
     } else {
-      ctx.image = ctx.image.resize(null, null, opt);
+      ctx.image.resize(null, null, opt);
     }
   }
 }

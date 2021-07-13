@@ -51,9 +51,9 @@ export class QualityAction implements IImageAction {
     // while Sharp.js can not. For simplicity, we just use absolute quality at here.
 
     if (JPEG === metadata.format || JPG === metadata.format) {
-      ctx.image = ctx.image.jpeg({ quality: opt.q ?? opt.Q });
+      ctx.image.jpeg({ quality: opt.q ?? opt.Q });
     } else if (WEBP === metadata.format) {
-      ctx.image = ctx.image.webp({ quality: opt.q ?? opt.Q });
+      ctx.image.webp({ quality: opt.q ?? opt.Q });
     }
   }
 }
