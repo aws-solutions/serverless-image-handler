@@ -1,5 +1,7 @@
 import * as sharp from 'sharp';
+import config from '../../config';
 import { IAction, InvalidArgument, IProcessContext, IProcessor } from '../../processor';
+import { DynamoDBStore, IKVStore } from '../../store';
 import { QualityAction } from './quality';
 import { ResizeAction } from './resize';
 
@@ -60,3 +62,39 @@ ImageProcessor.getInstance().register(
   new ResizeAction(),
   new QualityAction(),
 );
+
+export class StyleProcessor implements IProcessor {
+  public static getInstance(kvstore?: IKVStore): StyleProcessor {
+    if (!StyleProcessor._instance) {
+      StyleProcessor._instance = new StyleProcessor();
+    }
+    if (kvstore) {
+      StyleProcessor._instance._kvstore = kvstore;
+    }
+    return StyleProcessor._instance;
+  }
+  private static _instance: StyleProcessor;
+
+  public readonly name: string = 'style';
+  private _kvstore: IKVStore = new DynamoDBStore(config.styleTableName);
+
+  private constructor() {}
+
+  public async process(ctx: IImageContext, actions: string[]): Promise<void> {
+    if (!ctx.image) {
+      throw new InvalidArgument('Invalid style context');
+    }
+    if (actions.length != 2) {
+      throw new InvalidArgument('Invalid style name');
+    }
+    const stylename = actions[1];
+    const { style } = await this._kvstore.get(stylename);
+    if (style && (typeof style === 'string' || style instanceof String)) {
+      await ImageProcessor.getInstance().process(ctx, style.split('/').filter(x => x));
+    } else {
+      throw new InvalidArgument(`Style: ${stylename} not found`);
+    }
+  }
+
+  public register(..._: IAction[]): void {}
+}

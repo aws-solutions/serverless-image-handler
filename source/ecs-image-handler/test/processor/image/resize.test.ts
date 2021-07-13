@@ -42,7 +42,7 @@ test('resize action simple', async () => {
       background: 'red',
     },
   });
-  const ctx: IImageContext = { image, store: new NullStore() };
+  const ctx: IImageContext = { image, bufferStore: new NullStore() };
   const action = new ResizeAction();
   await action.process(ctx, 'resize,w_10,h_10'.split(','));
   const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
@@ -60,7 +60,7 @@ test('resize action m_lfit', async () => {
       background: 'gray',
     },
   });
-  const ctx: IImageContext = { image, store: new NullStore() };
+  const ctx: IImageContext = { image, bufferStore: new NullStore() };
   const action = new ResizeAction();
   await action.process(ctx, 'resize,w_150,h_80,m_lfit'.split(','));
   const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
@@ -78,7 +78,7 @@ test('resize action m_mfit', async () => {
       background: 'gray',
     },
   });
-  const ctx: IImageContext = { image, store: new NullStore() };
+  const ctx: IImageContext = { image, bufferStore: new NullStore() };
   const action = new ResizeAction();
   await action.process(ctx, 'resize,w_150,h_80,m_mfit'.split(','));
   const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
@@ -96,7 +96,7 @@ test('resize action m_fill', async () => {
       background: 'gray',
     },
   });
-  const ctx: IImageContext = { image, store: new NullStore() };
+  const ctx: IImageContext = { image, bufferStore: new NullStore() };
   const action = new ResizeAction();
   await action.process(ctx, 'resize,w_150,h_80,m_fill'.split(','));
   const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
@@ -114,7 +114,7 @@ test('resize action m_pad', async () => {
       background: 'gray',
     },
   });
-  const ctx: IImageContext = { image, store: new NullStore() };
+  const ctx: IImageContext = { image, bufferStore: new NullStore() };
   const action = new ResizeAction();
   await action.process(ctx, 'resize,w_150,h_80,m_pad'.split(','));
   const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
@@ -132,7 +132,7 @@ test('resize action p_100', async () => {
       background: 'gray',
     },
   });
-  const ctx: IImageContext = { image, store: new NullStore() };
+  const ctx: IImageContext = { image, bufferStore: new NullStore() };
   const action = new ResizeAction();
   await action.process(ctx, 'resize,p_100'.split(','));
   const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
@@ -150,7 +150,7 @@ test('resize action p_50', async () => {
       background: 'gray',
     },
   });
-  const ctx: IImageContext = { image, store: new NullStore() };
+  const ctx: IImageContext = { image, bufferStore: new NullStore() };
   const action = new ResizeAction();
   await action.process(ctx, 'resize,p_50'.split(','));
   const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
@@ -168,7 +168,7 @@ test('resize action p_1000', async () => {
       background: 'gray',
     },
   });
-  const ctx: IImageContext = { image, store: new NullStore() };
+  const ctx: IImageContext = { image, bufferStore: new NullStore() };
   const action = new ResizeAction();
   await action.process(ctx, 'resize,p_1000'.split(','));
   const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
@@ -186,7 +186,7 @@ test('resize action disable limit', async () => {
       background: 'gray',
     },
   });
-  const ctx: IImageContext = { image, store: new NullStore() };
+  const ctx: IImageContext = { image, bufferStore: new NullStore() };
   const action = new ResizeAction();
   await action.process(ctx, 'resize,w_100,h_100,limit_0'.split(','));
   const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
@@ -204,7 +204,7 @@ test('resize action enable limit', async () => {
       background: 'gray',
     },
   });
-  const ctx: IImageContext = { image, store: new NullStore() };
+  const ctx: IImageContext = { image, bufferStore: new NullStore() };
   const action = new ResizeAction();
   await action.process(ctx, 'resize,w_100,h_100,limit_1'.split(','));
   const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
@@ -222,7 +222,7 @@ test('resize action bad limit', async () => {
       background: 'gray',
     },
   });
-  const ctx: IImageContext = { image, store: new NullStore() };
+  const ctx: IImageContext = { image, bufferStore: new NullStore() };
   const action = new ResizeAction();
 
   void expect(action.process(ctx, 'resize,w_100,h_100,limit_3'.split(','))).rejects.toThrowError(/Unkown limit/);
@@ -239,7 +239,7 @@ test.skip('resize action m_fixed m_lfit', async () => {
       background: 'gray',
     },
   });
-  const ctx: IImageContext = { image, store: new NullStore() };
+  const ctx: IImageContext = { image, bufferStore: new NullStore() };
   const action = new ResizeAction();
   await action.process(ctx, 'resize,w_200,h_100,m_fixed'.split(','));
   await action.process(ctx, 'resize,w_150,h_100,m_lfit'.split(','));

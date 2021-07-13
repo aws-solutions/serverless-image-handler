@@ -1,5 +1,5 @@
 import * as HttpErrors from 'http-errors';
-import { IStore } from '../store';
+import { IBufferStore } from '../store';
 
 /**
  * A utility to make an object immutable.
@@ -17,7 +17,7 @@ export interface IProcessContext {
    * A abstract store to get file data.
    * It can either get from s3 or local filesystem.
    */
-  readonly store: IStore;
+  readonly bufferStore: IBufferStore;
 }
 
 /**

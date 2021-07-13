@@ -47,6 +47,7 @@
     "@aws-cdk/aws-apigateway": "1.110.0",
     "@aws-cdk/aws-cloudfront": "1.110.0",
     "@aws-cdk/aws-cloudfront-origins": "1.110.0",
+    "@aws-cdk/aws-dynamodb": "1.110.0",
     "@aws-cdk/aws-ec2": "1.110.0",
     "@aws-cdk/aws-ecs": "1.110.0",
     "@aws-cdk/aws-ecs-patterns": "1.110.0",

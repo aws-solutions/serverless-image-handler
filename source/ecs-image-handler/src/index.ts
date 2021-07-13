@@ -1,9 +1,10 @@
+import * as HttpErrors from 'http-errors';
 import * as Koa from 'koa';
 import * as logger from 'koa-logger';
 import * as sharp from 'sharp';
 import config from './config';
 import debug from './debug';
-import { ImageProcessor } from './processor/image';
+import { bufferStore, getProcessor } from './default';
 
 const app = new Koa();
 
@@ -40,16 +41,18 @@ app.use(async ctx => {
     const uri = ctx.path.replace(/^\//, '');
     const actions = ((ctx.query['x-oss-process'] as string) ?? '').split('/').filter(x => x);
 
-    if ((actions.length > 1) && (actions[0] === ImageProcessor.getInstance().name)) {
-      const { buffer } = await config.store.get(uri);
-      const imgctx = { image: sharp(buffer), store: config.store };
-      await ImageProcessor.getInstance().process(imgctx, actions);
-      const { data, info } = await imgctx.image.toBuffer({ resolveWithObject: true });
+    if (actions.length > 1) {
+      const processor = getProcessor(actions[0]);
+      const { buffer } = await bufferStore.get(uri);
+      const imagectx = { image: sharp(buffer), bufferStore };
+      await processor.process(imagectx, actions);
+      const { data, info } = await imagectx.image.toBuffer({ resolveWithObject: true });
 
       ctx.body = data;
       ctx.type = info.format;
     } else {
-      const { buffer, type } = await config.store.get(uri, true);
+      const { buffer, type } = await bufferStore.get(uri, bypass);
+
       ctx.body = buffer;
       ctx.type = type;
     }
@@ -64,3 +67,8 @@ app.on('error', (err: Error) => {
 app.listen(config.port, () => {
   console.log(`Server running on port ${config.port}`);
 });
+
+function bypass() {
+  // NOTE: This is intended to tell CloudFront to directly access the s3 object without through ECS cluster.
+  throw new HttpErrors[403]('Please visit s3 directly');
+}

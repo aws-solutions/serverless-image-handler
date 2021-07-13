@@ -1,11 +1,12 @@
 import * as path from 'path';
 import * as cloudfront from '@aws-cdk/aws-cloudfront';
 import * as origins from '@aws-cdk/aws-cloudfront-origins';
+import * as dynamodb from '@aws-cdk/aws-dynamodb';
 import * as ec2 from '@aws-cdk/aws-ec2';
 import * as ecs from '@aws-cdk/aws-ecs';
 import * as ecsPatterns from '@aws-cdk/aws-ecs-patterns';
 import * as s3 from '@aws-cdk/aws-s3';
-import { Construct, CfnOutput, Duration, Stack } from '@aws-cdk/core';
+import { Construct, CfnOutput, Duration, Stack, Aws } from '@aws-cdk/core';
 
 
 export class ECSImageHandler extends Construct {
@@ -13,6 +14,10 @@ export class ECSImageHandler extends Construct {
     super(scope, id);
 
     const srcBucket = new s3.Bucket(this, 'SrcBucket');
+    const table = new dynamodb.Table(this, 'StyleTable', {
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+    });
     const albFargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'Service', {
       vpc: getOrCreateVpc(this),
       cpu: 2048,
@@ -24,7 +29,9 @@ export class ECSImageHandler extends Construct {
         image: ecs.ContainerImage.fromAsset(path.join(__dirname, '../../ecs-image-handler')),
         containerPort: 8080,
         environment: {
+          REGION: Aws.REGION,
           SRC_BUCKET: srcBucket.bucketName,
+          STYLE_TABLE_NAME: table.tableName,
         },
       },
     });
@@ -38,6 +45,7 @@ export class ECSImageHandler extends Construct {
       targetUtilizationPercent: 50,
     });
     srcBucket.grantRead(albFargateService.taskDefinition.taskRole);
+    table.grantReadData(albFargateService.taskDefinition.taskRole);
 
     // TODO: Add restriction access to ALB
     // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/restrict-access-to-load-balancer.html
