@@ -1,7 +1,6 @@
 import * as sharp from 'sharp';
-import config from '../../config';
 import { IAction, InvalidArgument, IProcessContext, IProcessor } from '../../processor';
-import { DynamoDBStore, IKVStore } from '../../store';
+import { IKVStore, MemKVStore } from '../../store';
 import { QualityAction } from './quality';
 import { ResizeAction } from './resize';
 
@@ -76,7 +75,7 @@ export class StyleProcessor implements IProcessor {
   private static _instance: StyleProcessor;
 
   public readonly name: string = 'style';
-  private _kvstore: IKVStore = new DynamoDBStore(config.styleTableName);
+  private _kvstore: IKVStore = new MemKVStore({});
 
   private constructor() {}
 
