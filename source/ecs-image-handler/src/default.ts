@@ -1,4 +1,5 @@
 import * as path from 'path';
+import { ParsedUrlQuery } from 'querystring';
 import config from './config';
 import { InvalidArgument, IProcessor } from './processor';
 import { ImageProcessor, StyleProcessor } from './processor/image';
@@ -37,4 +38,24 @@ function kvstore(): IKVStore {
       box100: { id: 'box100', style: 'image/resize,w_100,h_100,m_fixed,limit_0/' },
     });
   }
+}
+
+export function parseRequest(uri: string, query: ParsedUrlQuery): {uri: string; actions: string[]} {
+  uri = uri.replace(/^\//, ''); // trim leading slash "/"
+  const parts = uri.split(/@?!/, 2);
+  if (parts.length === 1) {
+    const x_oss_process = (query['x-oss-process'] as string) ?? '';
+    return {
+      uri: uri,
+      actions: x_oss_process.split('/').filter(x => x),
+    };
+  }
+  const stylename = (parts[1] ?? '').trim();
+  if (!stylename) {
+    throw new InvalidArgument('Empty style name');
+  }
+  return {
+    uri: parts[0],
+    actions: ['style', stylename],
+  };
 }
