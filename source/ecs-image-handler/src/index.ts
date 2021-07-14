@@ -4,7 +4,7 @@ import * as logger from 'koa-logger';
 import * as sharp from 'sharp';
 import config from './config';
 import debug from './debug';
-import { bufferStore, getProcessor } from './default';
+import { bufferStore, getProcessor, parseRequest } from './default';
 
 const app = new Koa();
 
@@ -38,8 +38,7 @@ app.use(async ctx => {
   } else if ('/debug' === ctx.path) {
     ctx.body = debug();
   } else {
-    const uri = ctx.path.replace(/^\//, '');
-    const actions = ((ctx.query['x-oss-process'] as string) ?? '').split('/').filter(x => x);
+    const { uri, actions } = parseRequest(ctx.path, ctx.query);
 
     if (actions.length > 1) {
       const processor = getProcessor(actions[0]);

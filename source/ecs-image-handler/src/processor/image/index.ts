@@ -87,11 +87,14 @@ export class StyleProcessor implements IProcessor {
       throw new InvalidArgument('Invalid style name');
     }
     const stylename = actions[1];
+    if (!stylename.match(/^[\w\-_\.]{1,63}$/)) {
+      throw new InvalidArgument('Invalid style name');
+    }
     const { style } = await this._kvstore.get(stylename);
     if (style && (typeof style === 'string' || style instanceof String)) {
       await ImageProcessor.getInstance().process(ctx, style.split('/').filter(x => x));
     } else {
-      throw new InvalidArgument(`Style: ${stylename} not found`);
+      throw new InvalidArgument('Style not found');
     }
   }
 

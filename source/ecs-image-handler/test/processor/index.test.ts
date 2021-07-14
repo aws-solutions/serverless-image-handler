@@ -61,6 +61,23 @@ test('style processor test', async () => {
   expect(info.height).toBe(100);
 });
 
+test('style processor test invalid style name', async () => {
+  const image = sharp({
+    create: {
+      width: 50,
+      height: 50,
+      channels: 3,
+      background: { r: 255, g: 0, b: 0 },
+    },
+  });
+  const ctx = { image, bufferStore: new NullStore() };
+  const styleStore = new MemKVStore({
+    style1: { id: 'style1', style: 'image/resize,w_100,h_100,m_fixed,limit_0/' },
+  });
+  void expect(StyleProcessor.getInstance(styleStore).process(ctx, 'style/ #$ '.split('/')))
+    .rejects.toThrowError(/Invalid style name/);
+});
+
 test('style processor not found', async () => {
   const image = sharp({
     create: {
@@ -75,5 +92,5 @@ test('style processor not found', async () => {
     style1: { id: 'style1', style: 'image/resize,w_100,h_100,m_fixed,limit_0/' },
   });
   void expect(StyleProcessor.getInstance(styleStore).process(ctx, 'style/notfound'.split('/')))
-    .rejects.toThrowError(/Style: notfound not found/);
+    .rejects.toThrowError(/Style not found/);
 });
