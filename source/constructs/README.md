@@ -55,7 +55,7 @@ yarn
 # Run test
 yarn test
 # Deploy stack
-yarn deploy serverless-ecr-image-handler-stack
+CDK_DEPLOY_REGION=us-west-2 yarn deploy serverless-ecr-image-handler-stack
 # Or deploy stack to an existing vpc
 CDK_DEPLOY_REGION=us-west-2 yarn deploy serverless-ecr-image-handler-stack -c use_vpc_id=vpc-123124124124
 # Destroy stack if you need
