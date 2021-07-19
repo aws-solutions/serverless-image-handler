@@ -1,23 +1,24 @@
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidArgument } from '..';
-import { inRange } from './utils';
 
 export interface GreyOpts extends IActionOpts {
-  grey: number;
+  grey: boolean;
 }
 
 export class GreyAction implements IImageAction {
   public readonly name: string = 'grey';
 
   public validate(params: string[]): ReadOnly<GreyOpts> {
-    let opt: GreyOpts = { grey: 0 };
+    let opt: GreyOpts = { grey: false };
 
     if (params.length !== 2) {
       throw new InvalidArgument('Grey param error, e.g: grey,1');
     }
-    const s = parseInt(params[1]);
-    if (inRange(s, 0, 1)) {
-      opt.grey = s;
+    if (params[1] === '1') {
+      opt.grey = true;
+    } else if (params[1] === '0') {
+      opt.grey = false;
+
     } else {
       throw new InvalidArgument('Grey must be 0 or 1');
     }
@@ -27,7 +28,7 @@ export class GreyAction implements IImageAction {
 
   public async process(ctx: IImageContext, params: string[]): Promise<void> {
     const opt = this.validate(params);
-    if (opt.grey === 1) {
+    if (opt.grey) {
       ctx.image.greyscale();
     }
 

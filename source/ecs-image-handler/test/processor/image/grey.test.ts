@@ -7,7 +7,7 @@ test('quality action validate', () => {
   const action = new GreyAction();
   const param1 = action.validate('grey,1'.split(','));
   expect(param1).toEqual({
-    grey: 1,
+    grey: true,
   });
 
   expect(() => {
