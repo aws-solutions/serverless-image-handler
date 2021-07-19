@@ -1,4 +1,3 @@
-import { Metadata } from 'sharp';
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidArgument } from '..';
 
@@ -56,49 +55,48 @@ export class IndexCropAction implements IImageAction {
     let h = 0;
     let needCrop: boolean = true;
 
-
-    await ctx.image.metadata()
-      .then(function (metadata: Metadata) {
-        if (metadata.height === undefined || metadata.width === undefined) {
-          throw new InvalidArgument('Incorrect image format');
-        }
-        h = metadata.height;
-        w = metadata.width;
-
-        if (opt.x > 0) {
-          if (opt.x > metadata.width) {
-            needCrop = false;
-            return;
-          }
-          const count = Math.floor(metadata.width / opt.x);
-          if (opt.i + 1 > count) {
-            needCrop = false;
-            return;
-          }
-          x = opt.i * opt.x;
-          w = opt.x;
-
-        } else if (opt.y > 0) {
-
-          if (opt.y > metadata.height) {
-            needCrop = false;
-            return;
-          }
-
-          const count = Math.floor(metadata.height / opt.y);
-          if (opt.i + 1 > count) {
-            needCrop = false;
-            return;
-          }
-          y = opt.i * opt.y;
-          h = opt.y;
-
-        }
-
-      });
+    const metadata = await ctx.image.metadata();
+    if (metadata.height === undefined || metadata.width === undefined) {
+      throw new InvalidArgument('Incorrect image format');
+    }
 
 
-    // console.log(`x=${x}  y=${y} w=${w}  h=${h} i=${opt.i}`);
+    if (metadata.height === undefined || metadata.width === undefined) {
+      throw new InvalidArgument('Incorrect image format');
+    }
+    h = metadata.height;
+    w = metadata.width;
+
+    if (opt.x > 0) {
+      if (opt.x > metadata.width) {
+        needCrop = false;
+        return;
+      }
+      const count = Math.floor(metadata.width / opt.x);
+      if (opt.i + 1 > count) {
+        needCrop = false;
+        return;
+      }
+      x = opt.i * opt.x;
+      w = opt.x;
+
+    } else if (opt.y > 0) {
+
+      if (opt.y > metadata.height) {
+        needCrop = false;
+        return;
+      }
+
+      const count = Math.floor(metadata.height / opt.y);
+      if (opt.i + 1 > count) {
+        needCrop = false;
+        return;
+      }
+      y = opt.i * opt.y;
+      h = opt.y;
+
+    }
+
     if (needCrop) {
       ctx.image.extract({ left: x, top: y, width: w, height: h });
     }

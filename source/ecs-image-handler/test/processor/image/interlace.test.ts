@@ -7,7 +7,7 @@ test('Interlace action validate', () => {
   const action = new InterlaceAction();
   const param1 = action.validate('interlace,1'.split(','));
   expect(param1).toEqual({
-    interlace: 1,
+    interlace: true,
   });
 
   expect(() => {
