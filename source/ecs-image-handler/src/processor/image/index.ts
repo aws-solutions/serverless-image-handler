@@ -1,10 +1,21 @@
 import * as sharp from 'sharp';
 import { IAction, InvalidArgument, IProcessContext, IProcessor } from '../../processor';
 import { IKVStore, MemKVStore } from '../../store';
+import { AutoOrientAction } from './auto-orient';
+import { BlurAction } from './blur';
+import { BrightAction } from './bright';
+import { ContrastAction } from './contrast';
+import { CropAction } from './crop';
+import { FormatAction } from './format';
+import { GreyAction } from './grey';
+import { IndexCropAction } from './indexcrop';
+import { InterlaceAction } from './interlace';
 import { QualityAction } from './quality';
 import { ResizeAction } from './resize';
+import { RotateAction } from './rotate';
+import { SharpenAction } from './sharpen';
 
-export interface IImageAction extends IAction {}
+export interface IImageAction extends IAction { }
 
 export interface IImageContext extends IProcessContext {
   image: sharp.Sharp;
@@ -17,11 +28,11 @@ export class ImageProcessor implements IProcessor {
     return ImageProcessor._instance;
   }
   private static _instance: ImageProcessor;
-  private readonly _actions: {[name: string]: IAction} = {};
+  private readonly _actions: { [name: string]: IAction } = {};
 
   public readonly name: string = 'image';
 
-  private constructor() {}
+  private constructor() { }
 
   public async process(ctx: IImageContext, actions: string[]): Promise<void> {
     if (!ctx.image) {
@@ -60,6 +71,18 @@ export class ImageProcessor implements IProcessor {
 ImageProcessor.getInstance().register(
   new ResizeAction(),
   new QualityAction(),
+  new BrightAction(),
+  new FormatAction(),
+  new BlurAction(),
+  new RotateAction(),
+  new ContrastAction(),
+  new SharpenAction(),
+  new InterlaceAction(),
+  new AutoOrientAction(),
+  new GreyAction(),
+  new CropAction(),
+  new IndexCropAction(),
+
 );
 
 export class StyleProcessor implements IProcessor {
@@ -77,7 +100,7 @@ export class StyleProcessor implements IProcessor {
   public readonly name: string = 'style';
   private _kvstore: IKVStore = new MemKVStore({});
 
-  private constructor() {}
+  private constructor() { }
 
   public async process(ctx: IImageContext, actions: string[]): Promise<void> {
     if (!ctx.image) {
@@ -98,5 +121,5 @@ export class StyleProcessor implements IProcessor {
     }
   }
 
-  public register(..._: IAction[]): void {}
+  public register(..._: IAction[]): void { }
 }
