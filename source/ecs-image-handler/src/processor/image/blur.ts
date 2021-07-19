@@ -11,7 +11,7 @@ export class BlurAction implements IImageAction {
   public readonly name: string = 'blur';
 
   public validate(params: string[]): ReadOnly<BlurOpts> {
-    var opt: BlurOpts = { r: 0, s: 0 };
+    let opt: BlurOpts = { r: 0, s: 0 };
 
     if (params.length < 2) {
       throw new InvalidArgument('blur param error, e.g: blur,r_3,s_2');
@@ -49,7 +49,7 @@ export class BlurAction implements IImageAction {
     const opt = this.validate(params);
 
     const sums = opt.r + opt.s;
-    //NOTE: Ali blur config range from s 0 to 50 , r 0 to 50 ,
+    // NOTE: Ali blur config range from s 0 to 50 , r 0 to 50 ,
     // SharpJs blur config range from 0.3 to 1000.
     const blur = 50 * sums / 100 + 0.3;
     ctx.image.blur(blur);

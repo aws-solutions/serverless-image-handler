@@ -10,9 +10,9 @@ export class RotateAction implements IImageAction {
   public readonly name: string = 'rotate';
 
   public validate(params: string[]): ReadOnly<RotateOpts> {
-    var opt: RotateOpts = { degree: 0 };
+    let opt: RotateOpts = { degree: 0 };
 
-    if ( params.length != 2) {
+    if (params.length !== 2) {
       throw new InvalidArgument('Rotate param error, e.g: rotate,90');
     }
     const d = parseInt(params[1]);

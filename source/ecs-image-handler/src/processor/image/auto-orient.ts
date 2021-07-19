@@ -10,9 +10,9 @@ export class AutoOrientAction implements IImageAction {
   public readonly name: string = 'auto-orient';
 
   public validate(params: string[]): ReadOnly<AutoOrientOpts> {
-    var opt: AutoOrientOpts = { auto: 0 };
+    let opt: AutoOrientOpts = { auto: 0 };
 
-    if ( params.length != 2) {
+    if (params.length !== 2) {
       throw new InvalidArgument('Auto-orient param error, e.g: auto-orient,1');
     }
     const a = parseInt(params[1]);
@@ -27,7 +27,7 @@ export class AutoOrientAction implements IImageAction {
 
   public async process(ctx: IImageContext, params: string[]): Promise<void> {
     const opt = this.validate(params);
-    if (opt.auto == 1) {
+    if (opt.auto === 1) {
       ctx.image.rotate();
     }
 

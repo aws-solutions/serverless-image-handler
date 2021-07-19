@@ -14,7 +14,7 @@ export class CropAction implements IImageAction {
   public readonly name: string = 'crop';
 
   public validate(params: string[]): ReadOnly<CropOpts> {
-    var opt: CropOpts = { w: 0, h: 0, x: 0, y: 0, g: 'nw' };
+    let opt: CropOpts = { w: 0, h: 0, x: 0, y: 0, g: 'nw' };
 
     if (params.length < 2) {
       throw new InvalidArgument('Crop param error, e.g: crop,x_100,y_50');
@@ -54,9 +54,9 @@ export class CropAction implements IImageAction {
           throw new InvalidArgument('Crop param \'y\' must be greater than or equal to 0');
         }
       } else if (k === 'g') {
-        if (v == 'nw' || v == 'north' || v == 'ne' ||
-          v == 'west' || v == 'center' || v == 'east' ||
-          v == 'sw' || v == 'south' || v == 'se') {
+        if (v === 'nw' || v === 'north' || v === 'ne' ||
+          v === 'west' || v === 'center' || v === 'east' ||
+          v === 'sw' || v === 'south' || v === 'se') {
           opt.g = v;
         } else {
           throw new InvalidArgument('Crop param \'g\' must be  \'nw, north, ne, west, center, east, sw, south, se\'');
@@ -73,16 +73,16 @@ export class CropAction implements IImageAction {
   public async process(ctx: IImageContext, params: string[]): Promise<void> {
     const opt = this.validate(params);
 
-    var height = opt.h;
-    var width = opt.w;
-    var x = opt.x;
-    var y = opt.y;
+    let height = opt.h;
+    let width = opt.w;
+    let x = opt.x;
+    let y = opt.y;
 
 
     await ctx.image.metadata()
       .then(function (metadata: Metadata) {
 
-        if (metadata.height == undefined || metadata.width == undefined) {
+        if (metadata.height === undefined || metadata.width === undefined) {
           throw new InvalidArgument('Incorrect image format');
         }
 
@@ -92,15 +92,15 @@ export class CropAction implements IImageAction {
              v == 'sw'    || v =='south'    || v =='se'
         */
 
-        if (opt.g === 'west' || opt.g === 'center' || opt.g == 'east') {
+        if (opt.g === 'west' || opt.g === 'center' || opt.g === 'east') {
           y += Math.round(metadata.height / 3);
-        } else if (opt.g == 'sw' || opt.g == 'south' || opt.g == 'se') {
+        } else if (opt.g === 'sw' || opt.g === 'south' || opt.g === 'se') {
           y += Math.round(metadata.height / 3) * 2;
         }
 
-        if (opt.g == 'north' || opt.g == 'center' || opt.g == 'south') {
+        if (opt.g === 'north' || opt.g === 'center' || opt.g === 'south') {
           x += Math.round(metadata.width / 3);
-        } else if (opt.g == 'ne' || opt.g == 'east' || opt.g == 'se') {
+        } else if (opt.g === 'ne' || opt.g === 'east' || opt.g === 'se') {
           x += Math.round(metadata.width / 3) * 2;
         }
 
@@ -112,14 +112,14 @@ export class CropAction implements IImageAction {
         }
 
         // The width and height are not set in the parameter, modify them to reasonable values
-        if (width == 0) {
+        if (width === 0) {
           width = metadata.width - x;
         }
-        if (height == 0) {
+        if (height === 0) {
           height = metadata.height - y;
         }
 
-        //The width and height of the set parameters exceed the size of the picture, modify them to reasonable values
+        // The width and height of the set parameters exceed the size of the picture, modify them to reasonable values
         if (x + width > metadata.width) {
           width = metadata.width - x;
         }
@@ -127,7 +127,6 @@ export class CropAction implements IImageAction {
           height = metadata.height - y;
         }
 
-        // console.log(`x=${x}  y=${y} w=${width}  h=${height} g=${opt.g}`);
       });
 
 

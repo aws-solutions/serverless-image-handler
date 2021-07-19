@@ -12,9 +12,9 @@ export class IndexCropAction implements IImageAction {
   public readonly name: string = 'indexcrop';
 
   public validate(params: string[]): ReadOnly<IndexCropOpts> {
-    var opt: IndexCropOpts = { x: 0, y: 0, i: 0 };
+    let opt: IndexCropOpts = { x: 0, y: 0, i: 0 };
 
-    if ( params.length < 3 ) {
+    if (params.length < 3) {
       throw new InvalidArgument('IndexCrop param error, e.g: indexcrop,x_100,i_0');
     }
 
@@ -25,12 +25,12 @@ export class IndexCropAction implements IImageAction {
       const [k, v] = param.split('_');
       if (k === 'x') {
         opt.x = parseInt(v);
-        if (opt.x <0 ) {
+        if (opt.x < 0) {
           throw new InvalidArgument('Param error:  \'x\' value must be greater than 0');
         }
       } else if (k === 'y') {
         opt.y = parseInt(v);
-        if (opt.y <0 ) {
+        if (opt.y < 0) {
           throw new InvalidArgument('Param error:  \'y\' value must be greater than 0');
         }
       } else if (k === 'i') {
@@ -39,7 +39,7 @@ export class IndexCropAction implements IImageAction {
         throw new InvalidArgument(`Unkown param: "${k}"`);
       }
     }
-    if (opt.x > 0 && opt.y >0 ) {
+    if (opt.x > 0 && opt.y > 0) {
       throw new InvalidArgument('Param error:  Cannot enter \'x\' and \'y\' at the same time');
     }
 
@@ -50,16 +50,16 @@ export class IndexCropAction implements IImageAction {
   public async process(ctx: IImageContext, params: string[]): Promise<void> {
     const opt = this.validate(params);
 
-    var x = 0;
-    var y = 0;
-    var w = 0;
-    var h = 0;
-    var needCrop:boolean = true;
+    let x = 0;
+    let y = 0;
+    let w = 0;
+    let h = 0;
+    let needCrop: boolean = true;
 
 
     await ctx.image.metadata()
-      .then(function(metadata: Metadata) {
-        if (metadata.height == undefined || metadata.width == undefined) {
+      .then(function (metadata: Metadata) {
+        if (metadata.height === undefined || metadata.width === undefined) {
           throw new InvalidArgument('Incorrect image format');
         }
         h = metadata.height;
@@ -70,8 +70,8 @@ export class IndexCropAction implements IImageAction {
             needCrop = false;
             return;
           }
-          const count = Math.floor(metadata.width/opt.x);
-          if (opt.i + 1> count) {
+          const count = Math.floor(metadata.width / opt.x);
+          if (opt.i + 1 > count) {
             needCrop = false;
             return;
           }
@@ -85,8 +85,8 @@ export class IndexCropAction implements IImageAction {
             return;
           }
 
-          const count = Math.floor(metadata.height/opt.y);
-          if (opt.i + 1> count) {
+          const count = Math.floor(metadata.height / opt.y);
+          if (opt.i + 1 > count) {
             needCrop = false;
             return;
           }
