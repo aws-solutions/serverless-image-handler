@@ -10,7 +10,7 @@ export class SharpenAction implements IImageAction {
   public readonly name: string = 'sharpen';
 
   public validate(params: string[]): ReadOnly<SharpenOpts> {
-    let opt: SharpenOpts = { sharpen: 0 };
+    const opt: SharpenOpts = { sharpen: 0 };
 
     if (params.length !== 2) {
       throw new InvalidArgument('Sharpen param error, e.g: sharpen,100');

@@ -1,8 +1,19 @@
 import * as sharp from 'sharp';
 import { IAction, InvalidArgument, IProcessContext, IProcessor } from '../../processor';
 import { IKVStore, MemKVStore } from '../../store';
+import { AutoOrientAction } from './auto-orient';
+import { BlurAction } from './blur';
+import { BrightAction } from './bright';
+import { ContrastAction } from './contrast';
+import { CropAction } from './crop';
+import { FormatAction } from './format';
+import { GreyAction } from './grey';
+import { IndexCropAction } from './indexcrop';
+import { InterlaceAction } from './interlace';
 import { QualityAction } from './quality';
 import { ResizeAction } from './resize';
+import { RotateAction } from './rotate';
+import { SharpenAction } from './sharpen';
 
 export interface IImageAction extends IAction { }
 
@@ -60,6 +71,17 @@ export class ImageProcessor implements IProcessor {
 ImageProcessor.getInstance().register(
   new ResizeAction(),
   new QualityAction(),
+  new BrightAction(),
+  new FormatAction(),
+  new BlurAction(),
+  new RotateAction(),
+  new ContrastAction(),
+  new SharpenAction(),
+  new InterlaceAction(),
+  new AutoOrientAction(),
+  new GreyAction(),
+  new CropAction(),
+  new IndexCropAction(),
 
 );
 

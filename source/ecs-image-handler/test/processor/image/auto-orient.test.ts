@@ -3,15 +3,15 @@ import { IImageContext } from '../../../src/processor/image';
 import { AutoOrientAction } from '../../../src/processor/image/auto-orient';
 import { fixtureStore } from './utils';
 
-test('quality action validate', () => {
+test('auto-orient action validate', () => {
   const action = new AutoOrientAction();
   const param0 = action.validate('auto-orient,0'.split(','));
   expect(param0).toEqual({
-    auto: 0,
+    auto: false,
   });
   const param1 = action.validate('auto-orient,1'.split(','));
   expect(param1).toEqual({
-    auto: 1,
+    auto: true,
   });
 
 

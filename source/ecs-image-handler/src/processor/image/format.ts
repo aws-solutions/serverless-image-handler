@@ -17,7 +17,7 @@ export class FormatAction implements IImageAction {
     opt.format = params[1];
 
     if (opt.format !== 'jpg' && opt.format !== 'png' && opt.format !== 'webp') {
-      throw new InvalidArgument('Format must be one of \'jpg,png,webp\'');
+      throw new InvalidArgument('Format must be one of jpg,png,webp');
     }
 
     return opt;

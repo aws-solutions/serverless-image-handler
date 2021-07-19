@@ -23,15 +23,15 @@ test('indexcrop action validate', () => {
 
   expect(() => {
     action.validate('indexcrop,x_-10,i_0'.split(','));
-  }).toThrowError(/Param error:  'x' value must be greater than 0/);
+  }).toThrowError(/Param error:  x value must be greater than 0/);
+
+  expect(() => {
+    action.validate('indexcrop,y_-10,i_0'.split(','));
+  }).toThrowError(/Param error:  y value must be greater than 0/);
 
   expect(() => {
     action.validate('indexcrop,i_10'.split(','));
-  }).toThrowError(/Param error:  One of 'x' and 'y' must be entered/);
-
-  expect(() => {
-    action.validate('indexcrop,x_10,y_100'.split(','));
-  }).toThrowError(/Param error:  Cannot enter 'x' and 'y' at the same time/);
+  }).toThrowError(/IndexCrop param error, e.g: indexcrop,x_100,i_0/);
 
 
 });
@@ -40,14 +40,14 @@ test('indexcrop action validate', () => {
   const action = new IndexCropAction();
   expect(() => {
     action.validate('indexcrop,x_10,y_10'.split(','));
-  }).toThrowError(/Param error:  Cannot enter 'x' and 'y' at the same time/);
+  }).toThrowError(/Param error:  Cannot enter x and y at the same time/);
 });
 
 test('indexcrop action validate', () => {
   const action = new IndexCropAction();
   expect(() => {
     action.validate('indexcrop,y_-10,i_0'.split(','));
-  }).toThrowError(/Param error:  'y' value must be greater than 0/);
+  }).toThrowError(/Param error:  y value must be greater than 0/);
 });
 
 

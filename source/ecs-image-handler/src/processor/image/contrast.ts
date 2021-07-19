@@ -10,7 +10,7 @@ export class ContrastAction implements IImageAction {
   public readonly name: string = 'contrast';
 
   public validate(params: string[]): ReadOnly<ContrastOpts> {
-    let opt: ContrastOpts = { contrast: -100 };
+    const opt: ContrastOpts = { contrast: -100 };
 
     if (params.length !== 2) {
       throw new InvalidArgument('Contrast param error, e.g: contrast,-50');

@@ -26,12 +26,12 @@ export class IndexCropAction implements IImageAction {
       if (k === 'x') {
         opt.x = parseInt(v);
         if (opt.x < 0) {
-          throw new InvalidArgument('Param error:  \'x\' value must be greater than 0');
+          throw new InvalidArgument('Param error:  x value must be greater than 0');
         }
       } else if (k === 'y') {
         opt.y = parseInt(v);
         if (opt.y < 0) {
-          throw new InvalidArgument('Param error:  \'y\' value must be greater than 0');
+          throw new InvalidArgument('Param error:  y value must be greater than 0');
         }
       } else if (k === 'i') {
         opt.i = parseInt(v);
@@ -40,7 +40,7 @@ export class IndexCropAction implements IImageAction {
       }
     }
     if (opt.x > 0 && opt.y > 0) {
-      throw new InvalidArgument('Param error:  Cannot enter \'x\' and \'y\' at the same time');
+      throw new InvalidArgument('Param error:  Cannot enter x and y at the same time');
     }
 
     return opt;
