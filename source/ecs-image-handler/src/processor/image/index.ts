@@ -4,7 +4,7 @@ import { IKVStore, MemKVStore } from '../../store';
 import { QualityAction } from './quality';
 import { ResizeAction } from './resize';
 
-export interface IImageAction extends IAction {}
+export interface IImageAction extends IAction { }
 
 export interface IImageContext extends IProcessContext {
   image: sharp.Sharp;
@@ -17,11 +17,11 @@ export class ImageProcessor implements IProcessor {
     return ImageProcessor._instance;
   }
   private static _instance: ImageProcessor;
-  private readonly _actions: {[name: string]: IAction} = {};
+  private readonly _actions: { [name: string]: IAction } = {};
 
   public readonly name: string = 'image';
 
-  private constructor() {}
+  private constructor() { }
 
   public async process(ctx: IImageContext, actions: string[]): Promise<void> {
     if (!ctx.image) {
@@ -60,6 +60,7 @@ export class ImageProcessor implements IProcessor {
 ImageProcessor.getInstance().register(
   new ResizeAction(),
   new QualityAction(),
+
 );
 
 export class StyleProcessor implements IProcessor {
@@ -77,7 +78,7 @@ export class StyleProcessor implements IProcessor {
   public readonly name: string = 'style';
   private _kvstore: IKVStore = new MemKVStore({});
 
-  private constructor() {}
+  private constructor() { }
 
   public async process(ctx: IImageContext, actions: string[]): Promise<void> {
     if (!ctx.image) {
@@ -98,5 +99,5 @@ export class StyleProcessor implements IProcessor {
     }
   }
 
-  public register(..._: IAction[]): void {}
+  public register(..._: IAction[]): void { }
 }
