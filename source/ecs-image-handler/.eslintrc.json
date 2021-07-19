@@ -40,6 +40,17 @@
     "coverage"
   ],
   "rules": {
+    "space-infix-ops": "error",
+    "spaced-comment": [
+      "error",
+      "always"
+    ],
+    "no-var": "error",
+    "eqeqeq": "error",
+    "space-in-parens": [
+      "error",
+      "never"
+    ],
     "indent": [
       "off"
     ],

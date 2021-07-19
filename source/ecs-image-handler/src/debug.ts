@@ -55,7 +55,7 @@ export default function debug(): IDebugInfo {
       cpus: os.cpus().length,
       loadavg: os.loadavg(),
     },
-    memoryStats: `free: ${fmtmb(os.freemem())}, total: ${fmtmb(os.totalmem())}, usage ${Math.round(100 * (os.totalmem() - os.freemem())/ os.totalmem()) / 100} %`,
+    memoryStats: `free: ${fmtmb(os.freemem())}, total: ${fmtmb(os.totalmem())}, usage ${Math.round(100 * (os.totalmem() - os.freemem()) / os.totalmem()) / 100} %`,
     memoryUsage: process.memoryUsage(),
     resourceUsage: process.resourceUsage(),
     sharp: {
