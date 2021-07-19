@@ -83,7 +83,7 @@ export class StyleProcessor implements IProcessor {
     if (!ctx.image) {
       throw new InvalidArgument('Invalid style context');
     }
-    if (actions.length != 2) {
+    if (actions.length !== 2) {
       throw new InvalidArgument('Invalid style name');
     }
     const stylename = actions[1];
