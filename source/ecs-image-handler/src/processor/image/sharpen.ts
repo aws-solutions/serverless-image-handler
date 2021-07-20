@@ -27,22 +27,6 @@ export class SharpenAction implements IImageAction {
 
   public async process(ctx: IImageContext, params: string[]): Promise<void> {
     const opt = this.validate(params);
-
-    // NOTE: Ali sharpen config range from 50 to 399, default 100
-    //  Ali oss           SharpJs
-    // [50, 100)   ->    [0.01, 1)
-    // [100, 399]  ->    [1, 300]
-    // SharpJs sharpen config number between 0.01 and 10000
-
-    let s = 1.0;
-    if (opt.sharpen >= 100) {
-      s = opt.sharpen - 99;
-    } else {
-      s = (opt.sharpen - 50) * (1 - 0.01) / (100 - 50) + 0.01;
-    }
-    // console.log(`raw sharpen =${opt.sharpen} SharpJs sharpen=${s}`);
-    ctx.image.sharpen(s);
-
-
+    ctx.image.sharpen(opt.sharpen / 100, 0.5, 1);
   }
 }
