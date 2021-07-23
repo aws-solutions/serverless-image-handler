@@ -5,6 +5,7 @@ import * as dynamodb from '@aws-cdk/aws-dynamodb';
 import * as ec2 from '@aws-cdk/aws-ec2';
 import * as ecs from '@aws-cdk/aws-ecs';
 import * as ecsPatterns from '@aws-cdk/aws-ecs-patterns';
+import * as iam from '@aws-cdk/aws-iam';
 import * as s3 from '@aws-cdk/aws-s3';
 import { Construct, CfnOutput, Duration, Stack, Aws } from '@aws-cdk/core';
 
@@ -13,7 +14,7 @@ export class ECSImageHandler extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    const srcBucket = new s3.Bucket(this, 'SrcBucket');
+    const srcBucket = getOrCreateBucket(this, 'SrcBucket');
     const table = new dynamodb.Table(this, 'StyleTable', {
       partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -55,11 +56,36 @@ export class ECSImageHandler extends Construct {
       primaryOrigin: new origins.LoadBalancerV2Origin(albFargateService.loadBalancer, {
         protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
       }),
-      fallbackOrigin: new origins.S3Origin(srcBucket),
+      fallbackOrigin: new origins.S3Origin(srcBucket, {
+        originAccessIdentity: this.withS3OAI(srcBucket),
+      }),
       fallbackStatusCodes: [403],
     }));
 
     this.output('SrcBucketS3Url', `s3://${srcBucket.bucketName}`);
+  }
+
+  private withS3OAI(bucket: s3.IBucket): cloudfront.IOriginAccessIdentity {
+    // https://stackoverflow.com/a/60917015/4108187
+    const s3oai = new cloudfront.OriginAccessIdentity(this, 'OAI');
+    const policyStatement = new iam.PolicyStatement({
+      actions: [
+        's3:GetObject',
+      ],
+      resources: [
+        bucket.arnForObjects('*'),
+      ],
+      principals: [
+        new iam.CanonicalUserPrincipal(s3oai.cloudFrontOriginAccessIdentityS3CanonicalUserId),
+      ],
+    });
+
+    if (bucket.policy) {
+      bucket.policy.document.addStatements(policyStatement);
+    } else {
+      new s3.BucketPolicy(this, 'BucketPolicy', { bucket: bucket }).document.addStatements(policyStatement);
+    }
+    return s3oai;
   }
 
   private distribution(origin: cloudfront.IOrigin) {
@@ -112,4 +138,12 @@ function getOrCreateVpc(scope: Construct): ec2.IVpc {
     return ec2.Vpc.fromLookup(scope, 'Vpc', { vpcId: scope.node.tryGetContext('use_vpc_id') });
   }
   return new ec2.Vpc(scope, 'Vpc', { maxAzs: 3, natGateways: 1 });
+}
+
+function getOrCreateBucket(scope: Construct, id: string): s3.IBucket {
+  const bucketName = scope.node.tryGetContext('use_bucket');
+  if (bucketName) {
+    return s3.Bucket.fromBucketName(scope, id, bucketName);
+  }
+  return new s3.Bucket(scope, id, { versioned: true });
 }
