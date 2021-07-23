@@ -54,10 +54,16 @@ cd source/constructs
 yarn
 # Run test
 yarn test
+
 # Deploy stack
 CDK_DEPLOY_REGION=us-west-2 yarn deploy serverless-ecr-image-handler-stack
+
 # Or deploy stack to an existing vpc
 CDK_DEPLOY_REGION=us-west-2 yarn deploy serverless-ecr-image-handler-stack -c use_vpc_id=vpc-123124124124
+
+# Or deploy stack with an existing s3 bucket (WARN: This may overide your existing bucket policy)
+CDK_DEPLOY_REGION=us-west-2 yarn deploy serverless-ecr-image-handler-stack -c use_vpc_id=vpc-123124124124 -c use_bucket=your-bucket
+
 # Destroy stack if you need
 yarn destroy serverless-ecr-image-handler-stack
 ```
