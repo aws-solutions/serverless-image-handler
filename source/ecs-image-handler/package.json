@@ -44,7 +44,7 @@
   },
   "bundledDependencies": [],
   "engines": {
-    "node": ">= 14.0.0"
+    "node": ">= 12.0.0"
   },
   "license": "Apache-2.0",
   "version": "0.0.0",

@@ -1,31 +1,21 @@
-FROM node:14-slim as builder
-
-RUN mkdir /app && \
-    chown node /app
-
-USER node
+FROM node:12-alpine as builder
 
 WORKDIR /app
 
-COPY --chown=node:node package.json yarn.lock /app/
+COPY package.json yarn.lock /app/
 
 RUN yarn
 
-COPY --chown=node:node . .
+COPY . .
 
 RUN yarn build
 
 
-FROM node:14-slim
-
-RUN mkdir /app && \
-    chown node /app
-
-USER node
+FROM node:12-alpine
 
 WORKDIR /app
 
-COPY --chown=node:node package.json yarn.lock /app/
+COPY package.json yarn.lock /app/
 
 ENV NODE_ENV=production
 

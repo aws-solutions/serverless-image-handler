@@ -40,7 +40,7 @@ This is an ECS Fargate based version of serverless image handler. The key featur
 
 ### Prerequisites
 
-1. [nodejs](https://nodejs.org/) >= 14.0.0
+1. [nodejs](https://nodejs.org/) >= 12.0.0
 2. [docker](https://www.docker.com/)
 3. [yarn](https://yarnpkg.com/getting-started/install)
 4. [aws-cdk](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html)
