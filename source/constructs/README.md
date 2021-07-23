@@ -7,6 +7,7 @@
     - [Workflow](#workflow)
     - [Prerequisites](#prerequisites)
     - [How to use?](#how-to-use)
+    - [Load Test](#load-test)
 
 # Overview
 
@@ -84,4 +85,43 @@ arn:aws:cloudformation:us-west-2:000000000:stack/serverless-ecr-image-handler-st
 ✨  Done in 593.00s.
 ```
 
-Then you could try to open `cdk-image-handler.CFDistributionUrl` https://ABCDEFG.cloudfront.net/example.jpg?x-oss-process=image/resize,w_500,h_500,limit_0/quality,q_50
+Upload some pictures into
+
+```
+serverlessecrimagehandlerstackSrcBucketS3Url593801C5 = s3://serverless-ecr-image-han-serverlessecrimagehandle-ABCDE
+```
+
+Then you could try to open
+
+```
+serverlessecrimagehandlerstackCFDistributionUrl1454FE90 = https://ABCDEFGH.cloudfront.net
+```
+
+Like: https://ABCDEFG.cloudfront.net/example.jpg?x-oss-process=image/resize,w_500,h_500,limit_0/quality,q_50
+
+### Load Test
+
+Just simply test against ALB endpoint.
+
+```shell
+$ npx loadtest -t 900 -c 20 --rps 300 "http://serve-serve-ABCDEF.us-west-2.elb.amazonaws.com/example.jpg?x-oss-process=image/resize,w_200,h_100,limit_1/quality,q_50" | log.log
+
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO Target URL:          http://serve-serve-ABCDEF.us-west-2.elb.amazonaws.com/example.jpg/example.jpg?x-oss-process=image/resize,w_200,h_100,limit_1/quality,q_50
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO Max time (s):        900
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO Concurrency level:   20
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO Agent:               none
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO Requests per second: 300
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO 
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO Completed requests:  269848
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO Total errors:        0
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO Total time:          900.0039508269999 s
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO Requests per second: 300
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO Mean latency:        46.4 ms
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO 
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO Percentage of the requests served within a certain time
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO   50%      38 ms
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO   90%      55 ms
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO   95%      64 ms
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO   99%      132 ms
+[Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO  100%      2578 ms (longest request)
+```
