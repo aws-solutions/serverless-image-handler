@@ -34,8 +34,8 @@ jobs:
       - name: Upload patch
         uses: actions/upload-artifact@v2
         with:
-          name: .upgrade.tmp.patch
-          path: .upgrade.tmp.patch
+          name: source/ecs-image-handler/.upgrade.tmp.patch
+          path: source/ecs-image-handler/.upgrade.tmp.patch
   pr:
     name: Create Pull Request
     needs: upgrade-ecs-image-handler
