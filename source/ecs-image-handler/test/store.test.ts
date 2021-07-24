@@ -58,7 +58,7 @@ test.skip('s3 store', async () => {
 
 
 test.skip('dynamodb store', async () => {
-  const table = 'serverless-ecr-image-handler-stack-serverlessecrimagehandlerstackStyleTableE94C4297-PTLOYODP1J7E';
+  const table = 'serverless-ecs-image-handler-stack-serverlessecrimagehandlerstackStyleTableE94C4297-PTLOYODP1J7E';
   const ddbstore = new DynamoDBStore(table);
 
   console.log(await ddbstore.get('hello'));
