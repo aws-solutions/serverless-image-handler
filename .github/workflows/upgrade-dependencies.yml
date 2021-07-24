@@ -40,6 +40,9 @@ jobs:
     name: Create Pull Request
     needs: upgrade-ecs-image-handler
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: source/ecs-image-handler
     permissions:
       contents: write
       pull-requests: write
