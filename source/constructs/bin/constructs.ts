@@ -6,9 +6,10 @@ import { ConstructsStack, ECSImageHandlerStack } from '../lib/constructs-stack';
 
 const app = new cdk.App();
 new ConstructsStack(app, 'ConstructsStack');
-new ECSImageHandlerStack(app, 'serverless-ecr-image-handler-stack', {
+new ECSImageHandlerStack(app, 'serverless-ecs-image-handler-stack', {
+  stackName: process.env.STACK_NAME,
   tags: {
-    name: 'serverless-ecr-image-handler',
+    name: 'serverless-ecs-image-handler',
   },
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,

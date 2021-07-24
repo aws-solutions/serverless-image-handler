@@ -8,6 +8,7 @@
     - [Prerequisites](#prerequisites)
     - [How to use?](#how-to-use)
     - [Load Test](#load-test)
+    - [Trouble Shooting](#trouble-shooting)
 
 # Overview
 
@@ -57,31 +58,31 @@ yarn
 yarn test
 
 # Deploy stack
-CDK_DEPLOY_REGION=us-west-2 yarn deploy serverless-ecr-image-handler-stack
+CDK_DEPLOY_REGION=us-west-2 yarn deploy serverless-ecs-image-handler-stack
 
 # Or deploy stack to an existing vpc
-CDK_DEPLOY_REGION=us-west-2 yarn deploy serverless-ecr-image-handler-stack -c use_vpc_id=vpc-123124124124
+CDK_DEPLOY_REGION=us-west-2 yarn deploy serverless-ecs-image-handler-stack -c use_vpc_id=vpc-123124124124
 
 # Or deploy stack with an existing s3 bucket (WARN: This may overide your existing bucket policy)
-CDK_DEPLOY_REGION=us-west-2 yarn deploy serverless-ecr-image-handler-stack -c use_vpc_id=vpc-123124124124 -c use_bucket=your-bucket
+CDK_DEPLOY_REGION=us-west-2 yarn deploy serverless-ecs-image-handler-stack -c use_vpc_id=vpc-123124124124 -c use_bucket=your-bucket
 
 # Destroy stack if you need
-yarn destroy serverless-ecr-image-handler-stack
+yarn destroy serverless-ecs-image-handler-stack
 ```
 
 Once it is deployed you will get:
 
 ```
- ✅  serverless-ecr-image-handler-stack
+ ✅  serverless-ecs-image-handler-stack
 
 Outputs:
-serverless-ecr-image-handler-stack.serverlessecrimagehandlerstackCFDistributionUrl1454FE90 = https://ABCDEFGH.cloudfront.net
-serverless-ecr-image-handler-stack.serverlessecrimagehandlerstackServiceLoadBalancerDNSDB026A6D = serve-serve-ABCDEF.us-west-2.elb.amazonaws.com
-serverless-ecr-image-handler-stack.serverlessecrimagehandlerstackServiceServiceURLE05B511A = http://serve-serve-ABCDEF.us-west-2.elb.amazonaws.com
-serverless-ecr-image-handler-stack.serverlessecrimagehandlerstackSrcBucketS3Url593801C5 = s3://serverless-ecr-image-han-serverlessecrimagehandle-ABCDE
+serverless-ecs-image-handler-stack.serverlessecrimagehandlerstackCFDistributionUrl1454FE90 = https://ABCDEFGH.cloudfront.net
+serverless-ecs-image-handler-stack.serverlessecrimagehandlerstackServiceLoadBalancerDNSDB026A6D = serve-serve-ABCDEF.us-west-2.elb.amazonaws.com
+serverless-ecs-image-handler-stack.serverlessecrimagehandlerstackServiceServiceURLE05B511A = http://serve-serve-ABCDEF.us-west-2.elb.amazonaws.com
+serverless-ecs-image-handler-stack.serverlessecrimagehandlerstackSrcBucketS3Url593801C5 = s3://serverless-ecr-image-han-serverlessecrimagehandle-ABCDE
 
 Stack ARN:
-arn:aws:cloudformation:us-west-2:000000000:stack/serverless-ecr-image-handler-stack/0000000-0000-0000-0000-0000
+arn:aws:cloudformation:us-west-2:000000000:stack/serverless-ecs-image-handler-stack/0000000-0000-0000-0000-0000
 ✨  Done in 593.00s.
 ```
 
@@ -125,3 +126,18 @@ $ npx loadtest -t 900 -c 20 --rps 300 "http://serve-serve-ABCDEF.us-west-2.elb.a
 [Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO   99%      132 ms
 [Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO  100%      2578 ms (longest request)
 ```
+
+### Trouble Shooting
+
+1. Internal error reported from downstream service during operation 'AWS::CloudFront::OriginRequestPolicy'.
+
+    Check if you're deploying the stack to different region with the same stack name. Since `AWS::CloudFront::OriginRequestPolicy`
+    must be unique. To solve this issue, try to deploy the stack with different stack name.
+
+    ```
+    STACK_NAME=ecs-img-hdlr yarn deploy serverless-ecs-image-handler-stack ...
+    ```
+
+2. ECS always stay in `CREATE_IN_PROGRESS` status. And ECS task failed with `ResourceInitializationError: unable to pull secrets or registry auth: pull command failed: : signal: killed`
+
+    This is a known issue. To solve this. Please don't use default vpc. Let cdk create a new VPC for your.
