@@ -16,7 +16,7 @@
     "build:ecs-image-handler:docker": "cd ../ecs-image-handler && yarn build:docker",
     "test:watch": "export BUCKET_NAME=TEST SOLUTION_NAME=serverless-image-handler VERSION=TEST_VERSION && jest --watch",
     "test:update": "export BUCKET_NAME=TEST SOLUTION_NAME=serverless-image-handler VERSION=TEST_VERSION && jest --updateSnapshot",
-    "upgrade-dependencies": "export CI=0 && npm-check-updates --upgrade --target=minor --reject='projen' && yarn install --check-files && yarn upgrade @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk eslint eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import jest jest-junit json-schema npm-check-updates ts-jest ts-node typescript @aws-cdk/assert @aws-cdk/aws-cloudfront-origins @aws-cdk/aws-cloudfront @aws-cdk/aws-ec2 @aws-cdk/aws-ecs-patterns @aws-cdk/aws-ecs @aws-cdk/aws-s3 @aws-cdk/core",
+    "upgrade-dependencies": "export CI=0 && npm-check-updates --upgrade --target=minor --reject='projen' && yarn install --check-files && yarn upgrade",
     "eslint": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src test build-tools .projenrc.js",
     "synth": "cdk synth",
     "deploy": "cdk deploy",
