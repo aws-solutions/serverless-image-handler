@@ -38,7 +38,7 @@ jobs:
           path: .upgrade.tmp.patch
   pr:
     name: Create Pull Request
-    needs: upgrade
+    needs: upgrade-ecs-image-handler
     runs-on: ubuntu-latest
     permissions:
       contents: write
