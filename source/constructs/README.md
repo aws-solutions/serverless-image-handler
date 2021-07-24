@@ -127,7 +127,7 @@ $ npx loadtest -t 900 -c 20 --rps 300 "http://serve-serve-ABCDEF.us-west-2.elb.a
 [Fri Jul 23 2021 13:02:23 GMT+0000 (Coordinated Universal Time)] INFO  100%      2578 ms (longest request)
 ```
 
-### Trouble Shooting
+### Troubleshooting
 
 1. Internal error reported from downstream service during operation 'AWS::CloudFront::OriginRequestPolicy'.
 
