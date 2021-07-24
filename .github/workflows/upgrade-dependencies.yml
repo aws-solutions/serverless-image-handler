@@ -6,9 +6,12 @@ on:
   schedule:
     - cron: 0 0 * * *
 jobs:
-  upgrade:
+  upgrade-ecs-image-handler:
     name: Upgrade
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: source/ecs-image-handler
     permissions:
       contents: read
     outputs:
@@ -19,10 +22,10 @@ jobs:
       - name: Install dependencies
         run: yarn install --check-files --frozen-lockfile
       - name: Upgrade dependencies
-        run: npx projen upgrade-dependencies
+        run: yarn upgrade-dependencies
       - name: Build
         id: build
-        run: npx projen build && echo "::set-output name=conclusion::success" || echo
+        run: yarn build && yarn build:ecs-image-handler:docker && echo "::set-output name=conclusion::success" || echo
           "::set-output name=conclusion::failure"
       - name: Create Patch
         run: |-
