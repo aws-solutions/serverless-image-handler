@@ -62,7 +62,7 @@
     "@aws-solutions-constructs/core": "1.110.0"
   },
   "engines": {
-    "node": ">= 14.0.0"
+    "node": ">= 12.0.0"
   },
   "jest": {
     "testPathIgnorePatterns": [
