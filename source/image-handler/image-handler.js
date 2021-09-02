@@ -33,6 +33,13 @@ class ImageHandler {
                 }
             }
 
+            if (request.outputFormat === 'webp') {
+                const reductionEffortVal = process.env.WEBP_REDUCTION_EFFORT;
+                if (typeof reductionEffortVal !== "undefined") {
+                    image = sharp(originalImage, { failOnError: false }).webp({reductionEffort: parseInt(reductionEffortVal, 10)});
+                }
+            }
+            
             const modifiedImage = await this.applyEdits(image, edits);
             if (request.outputFormat !== undefined) {
                 modifiedImage.toFormat(request.outputFormat);
