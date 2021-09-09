@@ -86,6 +86,11 @@ aws s3 sync ./global-s3-assets/ s3://$DIST_OUTPUT_BUCKET-$REGION/$SOLUTION_NAME/
 - [@bretto36](https://github.com/bretto36) for [#182](https://github.com/awslabs/serverless-image-handler/pull/182)
 - [@makoncline](https://github.com/makoncline) for [#255](https://github.com/awslabs/serverless-image-handler/pull/255)
 
+
+## Collection of operational metrics
+This solution collects anonymous operational metrics to help AWS improve the quality and features of the solution. For more information, including how to disable this capability, please see the [implementation guide](https://docs.aws.amazon.com/solutions/latest/serverless-image-handler/op-metrics.html).
+
+
 ***
 ## License
 Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.<br />
