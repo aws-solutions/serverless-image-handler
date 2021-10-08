@@ -698,6 +698,54 @@ describe('getOriginalImage()', function() {
             }
         });
     });
+    describe('005/noExtension', function() {
+        const testFiles = [[0x89,0x50,0x4E,0x47],[0xFF,0xD8,0xFF,0xDB],[0xFF,0xD8,0xFF,0xE0],[0xFF,0xD8,0xFF,0xEE],[0xFF,0xD8,0xFF,0xE1],[0x52,0x49,0x46,0x46],[0x49,0x49,0x2A,0x00],[0x4D,0x4D,0x00,0x2A]];
+        const expectFileType = ["image/png", "image/jpeg", "image/jpeg", "image/jpeg", "image/jpeg", "image/webp", "image/tiff", "image/tiff"];
+        testFiles.forEach(function (test, index) {it('Should pass and infer content type if there is no extension, had default s3 content type and it has a vlid key and a valid bucket', async function() {
+            //Mock
+            mockAws.getObject.mockImplementationOnce(() => {
+                return {
+                    promise() {
+                        return Promise.resolve({
+                            ContentType: 'application/octet-stream',
+                            Body: Buffer.from(new Uint8Array(test))
+                        });
+                    }
+                };
+            })
+
+            // Act
+            const imageRequest = new ImageRequest(s3, secretsManager);
+            const result = await imageRequest.getOriginalImage('validBucket', 'validKey');
+            // Assert
+            expect(mockAws.getObject).toHaveBeenCalledWith({ Bucket: 'validBucket', Key: 'validKey' });
+            expect(result).toEqual(Buffer.from(new Uint8Array(test)));
+            expect(imageRequest.ContentType).toEqual(expectFileType[index]);
+        });})
+        it('Should fail to infer content type if there is no extension and file header is not recognized', async function() {
+            //Mock
+            mockAws.getObject.mockImplementationOnce(() => {
+                return {
+                    promise() {
+                        return Promise.resolve({
+                            ContentType: 'application/octet-stream',
+                            Body: Buffer.from(new Uint8Array(test))
+                        });
+                    }
+                };
+            })
+
+            //Act
+            const imageRequest = new ImageRequest(s3, secretsManager);
+            try {
+                const result = await imageRequest.getOriginalImage('validBucket', 'validKey');
+            } catch(error){
+                //Assert
+                expect(mockAws.getObject).toHaveBeenCalledWith({ Bucket: 'validBucket', Key: 'validKey' });
+                expect(error.status).toEqual(500);
+            }
+        });
+    });
 });
 
 // ----------------------------------------------------------------------------

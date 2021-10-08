@@ -127,7 +127,7 @@ class ImageRequest {
 
             if (originalImage.ContentType) {
                 //If using default s3 ContentType infer from hex headers
-                if(originalImage.ContentType === 'binary/octet-stream') {
+                if(originalImage.ContentType === 'binary/octet-stream' || originalImage.ContentType === 'application/octet-stream') {
                     const imageBuffer = Buffer.from(originalImage.Body);
                     this.ContentType = this.inferImageType(imageBuffer);
                 } else {
@@ -398,7 +398,7 @@ class ImageRequest {
     * @param {Buffer} imageBuffer - Image buffer.
     */
    inferImageType(imageBuffer) {
-    switch(imageBuffer.toString('hex').substring(0,8).toUpperCase()) {
+    switch(imageBuffer.slice(0, 4).toString('hex').toUpperCase()) {
         case '89504E47': return 'image/png';
         case 'FFD8FFDB': return 'image/jpeg';
         case 'FFD8FFE0': return 'image/jpeg';
