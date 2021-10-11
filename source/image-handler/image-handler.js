@@ -300,7 +300,7 @@ class ImageHandler {
             return boundingBox;
         } catch (err) {
             console.error(err);
-            if (err.message === "Cannot read property 'BoundingBox' of undefined") {
+            if (err.message === "Cannot read property 'BoundingBox' of undefined" || err.message === "Cannot read properties of undefined (reading 'BoundingBox')") {
                 throw {
                     status: 400,
                     code: 'SmartCrop::FaceIndexOutOfRange',
