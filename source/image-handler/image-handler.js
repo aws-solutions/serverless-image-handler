@@ -179,6 +179,8 @@ class ImageHandler {
                     }
                 } 
 
+            } else if (editKey === 'contentModeration') {
+                image.trim();
             } else {
                 image[editKey](value);
             }
