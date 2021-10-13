@@ -25,7 +25,7 @@ The CDN is configured to respect the value of the `Accept` HTTP header. Given
 there are 2 different browsers, one supports `webp`, one does not:
 
 ```shell
-$ curl -v 'https://di7yufqc6mgnl.cloudfront.net/4k_hdr.jpg' \
+$ curl -v 'https://images.t-online.de/4k_hdr.jpg' \
         --header 'Accept: image/webp'
 ...
 < HTTP/2 200
@@ -34,7 +34,7 @@ $ curl -v 'https://di7yufqc6mgnl.cloudfront.net/4k_hdr.jpg' \
 ```
 
 ```shell
-$ curl -v 'https://di7yufqc6mgnl.cloudfront.net/4k_hdr.jpg'
+$ curl -v 'https://images.t-online.de/4k_hdr.jpg'
 ...
 < HTTP/2 200
 < content-type: image/jpeg
@@ -56,7 +56,7 @@ the bucket.
 A sample response could look like this:
 
 ```shell
-$ curl -v https://di7yufqc6mgnl.cloudfront.net/GQSyGuVtRUsD/stimpson-stimpy-j-katzwinkel-ein-fetter-einfach-strukturierter-kater-aufnahme-aus-fruehester-kindheit.png
+$ curl -v https://images.t-online.de/GQSyGuVtRUsD/stimpson-stimpy-j-katzwinkel-ein-fetter-einfach-strukturierter-kater-aufnahme-aus-fruehester-kindheit.png
 ...
 < HTTP/2 200
 < date: Fri, 15 Jan 2021 10:45:05 GMT
@@ -74,7 +74,7 @@ Each item has a strong `ETag` which should allow conditional requests. `ETag` ar
 validators:
 
 ```shell
-$ curl -v 'https://di7yufqc6mgnl.cloudfront.net/4k_hdr.jpg' \
+$ curl -v 'https://images.t-online.de/4k_hdr.jpg' \
       --header 'Accept: image/webp' \
       --header 'If-None-Match: "c84339d0817baaba0726aeb5b8532d55"'
 ...
@@ -87,7 +87,7 @@ $ curl -v 'https://di7yufqc6mgnl.cloudfront.net/4k_hdr.jpg' \
 There is also a `Date` header with also allows conditional requests. `This is a weak validator.
 
 ```shell
-$ curl -v 'https://di7yufqc6mgnl.cloudfront.net/4k_hdr.jpg' \
+$ curl -v 'https://images.t-online.de/4k_hdr.jpg' \
        --header 'Accept: image/webp,*/*' \
        --header 'If-Modified-Since: Fri, 15 Jan 2021 09:55:58 GMT'
 ...
@@ -103,8 +103,8 @@ Here is a tl;dr for the most important ones, demonstrated on an image from [the 
 ### #nofilter
 
 will simply output the original image as is 
-![original](https://di7yufqc6mgnl.cloudfront.net/4k_hdr.jpg)
-https://di7yufqc6mgnl.cloudfront.net/4k_hdr.jpg
+![original](https://images.t-online.de/4k_hdr.jpg)
+https://images.t-online.de/4k_hdr.jpg
 
 ### Resize `/fit-in/${WIDTH}x${HEIGHT}/` 
 
@@ -113,37 +113,37 @@ the original image ratio. You can either set both `WIDTH` and `HEIGHT` or limit 
   by setting the other dimension to `0`, e.g. only set the width to 666 px and scale the height accordingly
   `/fit-in/666x0/`
 
-![resized](https://di7yufqc6mgnl.cloudfront.net/fit-in/666x0/4k_hdr.jpg)
-https://di7yufqc6mgnl.cloudfront.net/fit-in/666x0/4k_hdr.jpg
+![resized](https://images.t-online.de/fit-in/666x0/4k_hdr.jpg)
+https://images.t-online.de/fit-in/666x0/4k_hdr.jpg
 
 ### Cropping `/${X}x${Y}:${WIDTH}x${HEIGHT}/`
 
 starting from a `Point(x, y)` cut a rectangle sized `width x height`, without further resizing. 
 
-![crop](https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/4k_hdr.jpg)
-https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/4k_hdr.jpg
+![crop](https://images.t-online.de/1800x1450:888x500/4k_hdr.jpg)
+https://images.t-online.de/1800x1450:888x500/4k_hdr.jpg
 
 ### Effects `/filters:blur(7)/`
 
-![crop](https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:blur(7)/4k_hdr.jpg)
-https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:blur(7)/4k_hdr.jpg
+![crop](https://images.t-online.de/1800x1450:888x500/filters:blur(7)/4k_hdr.jpg)
+https://images.t-online.de/1800x1450:888x500/filters:blur(7)/4k_hdr.jpg
 
 ### Effects `/filters:grayscale()/`
 
-![crop](https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:grayscale()/4k_hdr.jpg)
-https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:grayscale()/4k_hdr.jpg
+![crop](https://images.t-online.de/1800x1450:888x500/filters:grayscale()/4k_hdr.jpg)
+https://images.t-online.de/1800x1450:888x500/filters:grayscale()/4k_hdr.jpg
 
 ### Effects `/filters:quality(0-100)/`
 
 change the quality, [default is 80][output options]
 
-![crop](https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:quality(1)/4k_hdr.jpg)
-https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:quality(1)/4k_hdr.jpg
+![crop](https://images.t-online.de/1800x1450:888x500/filters:quality(1)/4k_hdr.jpg)
+https://images.t-online.de/1800x1450:888x500/filters:quality(1)/4k_hdr.jpg
 
 ### Effects `/filters:rotate(0-360)/`
 
-![crop](https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:rotate(180)/4k_hdr.jpg)
-https://di7yufqc6mgnl.cloudfront.net/1800x1450:888x500/filters:rotate(180)/4k_hdr.jpg
+![crop](https://images.t-online.de/1800x1450:888x500/filters:rotate(180)/4k_hdr.jpg)
+https://images.t-online.de/1800x1450:888x500/filters:rotate(180)/4k_hdr.jpg
 
 ## Try it out
 
