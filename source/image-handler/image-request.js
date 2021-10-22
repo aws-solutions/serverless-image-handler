@@ -237,7 +237,7 @@ class ImageRequest {
         if (requestType === "Default") {
             // Decode the image request and return the image key
             const decoded = this.decodeRequest(event);
-            return decoded.key;
+            return decodeURIComponent(decoded.key);
         }
 
         if (requestType === "Thumbor" || requestType === "Custom") {

@@ -533,6 +533,41 @@ describe('setup()', function() {
             expect(imageRequest).toEqual(expectedResult);
         });
     });
+    describe('010/defaultImageRequest/WithUriEncodedKey', function() {
+        it('Should pass when a default image request is provided and populate the ImageRequest object with the proper values and a URI encoded key', async function() {
+            // Arrange
+            const event = {
+                path : '/eyJidWNrZXQiOiJ2YWxpZEJ1Y2tldCIsImtleSI6IiVFNCVCOCVBRCVFNiU5NiU4NyIsImVkaXRzIjp7ImdyYXlzY2FsZSI6dHJ1ZX0sIm91dHB1dEZvcm1hdCI6ImpwZWcifQ=='
+            }
+            process.env = {
+                SOURCE_BUCKETS : "validBucket, validBucket2"
+            }
+            // Mock
+            mockAws.getObject.mockImplementationOnce(() => {
+                return {
+                    promise() {
+                        return Promise.resolve({ Body: Buffer.from('SampleImageContent\n') });
+                    }
+                };
+            });
+            // Act
+            const imageRequest = new ImageRequest(s3, secretsManager);
+            await imageRequest.setup(event);
+            const expectedResult = {
+                requestType: 'Default',
+                bucket: 'validBucket',
+                key: '中文',
+                edits: { grayscale: true },
+                outputFormat: 'jpeg',
+                originalImage: Buffer.from('SampleImageContent\n'),
+                CacheControl: 'max-age=31536000,public',
+                ContentType: 'image/jpeg'
+            };
+            // Assert
+            expect(mockAws.getObject).toHaveBeenCalledWith({ Bucket: 'validBucket', Key: '中文' });
+            expect(imageRequest).toEqual(expectedResult);
+        });
+    });
 });
 // ----------------------------------------------------------------------------
 // getOriginalImage()
