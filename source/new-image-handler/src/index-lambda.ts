@@ -8,6 +8,10 @@ import { bufferStore, getProcessor, parseRequest } from './default';
 export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
   console.log('event:', JSON.stringify(event));
 
+  if (event.rawPath === '/' || event.rawPath === '/ping') {
+    return resp(200, 'ok', 'text');
+  }
+
   const { uri, actions } = parseRequest(event.rawPath, event.queryStringParameters ?? {});
 
   if (actions.length > 1) {
@@ -32,7 +36,7 @@ function bypass() {
 
 function resp(code: number, body: Buffer | string, type: string) {
   const isBase64Encoded = Buffer.isBuffer(body);
-  const data: string = isBase64Encoded ? body.toString('base64') : body;
+  const data: string = isBase64Encoded ? body.toString('base64') : body.toString();
 
   return {
     isBase64Encoded,
