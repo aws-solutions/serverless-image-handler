@@ -4,6 +4,7 @@
 import * as cdk from '@aws-cdk/core';
 import { CfnParameter } from '@aws-cdk/core';
 import { ECSImageHandler } from './ecs-image-handler';
+import { LambdaImageHandler } from './lambda-image-handler';
 import { ServerlessImageHandler, ServerlessImageHandlerProps } from './serverless-image-handler';
 
 const { VERSION } = process.env;
@@ -190,5 +191,13 @@ export class ECSImageHandlerStack extends cdk.Stack {
     super(scope, id, props);
 
     new ECSImageHandler(this, id);
+  }
+}
+
+export class LambdaImageHandlerStack extends cdk.Stack {
+  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+
+    new LambdaImageHandler(this, id);
   }
 }
