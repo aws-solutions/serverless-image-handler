@@ -8,6 +8,10 @@ import { bufferStore, getProcessor, parseRequest } from './default';
 export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
   console.log('event:', JSON.stringify(event));
 
+  if (event.rawPath === '/' || event.rawPath === '/ping') {
+    return resp(200, 'ok', 'text');
+  }
+
   const { uri, actions } = parseRequest(event.rawPath, event.queryStringParameters ?? {});
 
   if (actions.length > 1) {
@@ -30,9 +34,16 @@ function bypass() {
   throw new HttpErrors[403]('Please visit s3 directly');
 }
 
-function resp(code: number, body: Buffer | string, type: string) {
+function resp(code: number, body: any, type: string) {
   const isBase64Encoded = Buffer.isBuffer(body);
-  const data: string = isBase64Encoded ? body.toString('base64') : body;
+  let data: string = '';
+  if (isBase64Encoded) {
+    data = body.toString('base64');
+  } else if (typeof body === 'string' && body.length > 0) {
+    data = body;
+  } else {
+    data = JSON.stringify(body);
+  }
 
   return {
     isBase64Encoded,

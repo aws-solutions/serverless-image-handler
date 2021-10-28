@@ -65,7 +65,7 @@ export class LambdaImageHandler extends Construct {
         NODE_ENV: 'production',
         SOURCE_BUCKETS: 'sih-input',
       },
-      handler: 'index.handler',
+      handler: 'src/index-lambda.handler',
       layers: [layer],
     });
 
