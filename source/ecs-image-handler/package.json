@@ -1,9 +1,9 @@
 {
   "name": "ecs-image-handler",
   "scripts": {
-    "watch-server": "nodemon --ignore test/ --watch src -e ts,tsx --exec ts-node -P tsconfig.prod.json src/index.ts",
+    "watch-server": "nodemon --ignore test/ --watch src -e ts,tsx --exec ts-node -P tsconfig.json src/index.ts",
     "serve": "node lib/index.js",
-    "compile": "tsc --project tsconfig.prod.json",
+    "compile": "tsc --project tsconfig.json",
     "test:compile": "tsc --noEmit --project tsconfig.jest.json",
     "test": "rm -fr lib/ && yarn test:compile && jest --passWithNoTests --all --coverageProvider=v8 && eslint",
     "build": "yarn test && yarn compile",
@@ -11,7 +11,7 @@
     "test:watch": "jest --watch",
     "test:update": "jest --updateSnapshot",
     "upgrade-dependencies": "export CI=0 && npm-check-updates --upgrade --target=minor --reject='projen' && yarn install --check-files && yarn upgrade",
-    "watch": "tsc --project tsconfig.prod.json -w",
+    "watch": "tsc --project tsconfig.json -w",
     "eslint": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src test build-tools .projenrc.js"
   },
   "devDependencies": {
