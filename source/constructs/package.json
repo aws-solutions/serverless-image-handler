@@ -10,10 +10,10 @@
     "cdk": "cdk",
     "compile": "echo nothing to do",
     "test:compile": "tsc --noEmit --project tsconfig.jest.json",
-    "test": "export BUCKET_NAME=TEST SOLUTION_NAME=serverless-image-handler VERSION=TEST_VERSION && rm -fr dist/ && yarn test:compile && jest --passWithNoTests --all --updateSnapshot && eslint && yarn test:ecs-image-handler",
-    "test:ecs-image-handler": "cd ../ecs-image-handler && yarn test",
+    "test": "export BUCKET_NAME=TEST SOLUTION_NAME=serverless-image-handler VERSION=TEST_VERSION && rm -fr dist/ && yarn test:compile && jest --passWithNoTests --all --updateSnapshot && eslint && yarn test:new-image-handler",
+    "test:new-image-handler": "cd ../new-image-handler && yarn test",
     "build": "yarn test && yarn compile && yarn synth",
-    "build:ecs-image-handler:docker": "cd ../ecs-image-handler && yarn build:docker",
+    "build:new-image-handler:docker": "cd ../new-image-handler && yarn build:docker",
     "test:watch": "export BUCKET_NAME=TEST SOLUTION_NAME=serverless-image-handler VERSION=TEST_VERSION && jest --watch",
     "test:update": "export BUCKET_NAME=TEST SOLUTION_NAME=serverless-image-handler VERSION=TEST_VERSION && jest --updateSnapshot",
     "upgrade-dependencies": "export CI=0 && npm-check-updates --upgrade --target=minor --reject='projen' && yarn install --check-files && yarn upgrade",
@@ -22,7 +22,7 @@
     "deploy": "cdk deploy",
     "destroy": "cdk destroy",
     "diff": "cdk diff",
-    "postinstall": "cd ../ecs-image-handler && yarn"
+    "postinstall": "cd ../new-image-handler && yarn"
   },
   "devDependencies": {
     "@aws-cdk/assert": "1.110.0",

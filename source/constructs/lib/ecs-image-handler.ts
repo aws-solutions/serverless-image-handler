@@ -27,7 +27,7 @@ export class ECSImageHandler extends Construct {
       maxHealthyPercent: 200,
       desiredCount: 2,
       taskImageOptions: {
-        image: ecs.ContainerImage.fromAsset(path.join(__dirname, '../../ecs-image-handler')),
+        image: ecs.ContainerImage.fromAsset(path.join(__dirname, '../../new-image-handler')),
         containerPort: 8080,
         environment: {
           REGION: Aws.REGION,

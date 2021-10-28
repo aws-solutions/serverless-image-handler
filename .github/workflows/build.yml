@@ -39,4 +39,4 @@ jobs:
       - name: CDK synth
         run: yarn synth
       - name: Build docker
-        run: yarn build:ecs-image-handler:docker
+        run: yarn build:new-image-handler:docker

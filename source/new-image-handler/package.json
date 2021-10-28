@@ -1,5 +1,5 @@
 {
-  "name": "ecs-image-handler",
+  "name": "new-image-handler",
   "scripts": {
     "watch-server": "nodemon --ignore test/ --watch src -e ts,tsx --exec ts-node -P tsconfig.json src/index.ts",
     "serve": "node lib/index.js",
@@ -7,7 +7,7 @@
     "test:compile": "tsc --noEmit --project tsconfig.jest.json",
     "test": "rm -fr lib/ && yarn test:compile && jest --passWithNoTests --all --coverageProvider=v8 && eslint",
     "build": "yarn test && yarn compile",
-    "build:docker": "docker build -t ecs-image-handler .",
+    "build:docker": "docker build -t new-image-handler .",
     "test:watch": "jest --watch",
     "test:update": "jest --updateSnapshot",
     "upgrade-dependencies": "export CI=0 && npm-check-updates --upgrade --target=minor --reject='projen' && yarn install --check-files && yarn upgrade",
