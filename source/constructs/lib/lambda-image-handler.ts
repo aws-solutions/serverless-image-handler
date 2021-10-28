@@ -1,6 +1,6 @@
 import * as path from 'path';
-// import * as cloudfront from '@aws-cdk/aws-cloudfront';
-// import * as origins from '@aws-cdk/aws-cloudfront-origins';
+import * as cloudfront from '@aws-cdk/aws-cloudfront';
+import * as origins from '@aws-cdk/aws-cloudfront-origins';
 // import * as dynamodb from '@aws-cdk/aws-dynamodb';
 // import * as ec2 from '@aws-cdk/aws-ec2';
 // import * as ecs from '@aws-cdk/aws-ecs';
@@ -9,13 +9,24 @@ import * as iam from '@aws-cdk/aws-iam';
 import * as lambda from '@aws-cdk/aws-lambda';
 import * as apigw2 from '@aws-cdk/aws-apigatewayv2';
 import * as apigw2integ from '@aws-cdk/aws-apigatewayv2-integrations';
-// import * as s3 from '@aws-cdk/aws-s3';
+import * as s3 from '@aws-cdk/aws-s3';
 import * as cdk from '@aws-cdk/core';
 import { Construct } from '@aws-cdk/core';
 
 
+export interface LambdaImageHandlerProps {
+  bucketNames: string[];
+}
+
 export class LambdaImageHandler extends Construct {
-  constructor(scope: Construct, id: string) {
+  private originRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'ForwardAllQueryString', {
+    queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all(),
+  });
+  private cachePolicy = new cloudfront.CachePolicy(this, 'CacheAllQueryString', {
+    queryStringBehavior: cloudfront.CacheQueryStringBehavior.all(),
+  });
+
+  constructor(scope: Construct, id: string, props: LambdaImageHandlerProps) {
     super(scope, id);
 
     const layer = new lambda.LayerVersion(this, 'DepsLayer', {
@@ -85,7 +96,7 @@ export class LambdaImageHandler extends Construct {
       resources: ['*'],
     }));
 
-    this.cfnOutput('ApiEndpoint', { value: api.apiEndpoint });
+    this.cfnOutput('ApiEndpoint', api.apiEndpoint);
 
     // const srcBucket = getOrCreateBucket(this, 'SrcBucket');
     // const table = new dynamodb.Table(this, 'StyleTable', {
@@ -125,15 +136,17 @@ export class LambdaImageHandler extends Construct {
     // // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/restrict-access-to-load-balancer.html
     // // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listenerrule.html
 
-    // this.distribution(new origins.OriginGroup({
-    //   primaryOrigin: new origins.LoadBalancerV2Origin(albFargateService.loadBalancer, {
-    //     protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
-    //   }),
-    //   fallbackOrigin: new origins.S3Origin(srcBucket, {
-    //     originAccessIdentity: this.withS3OAI(srcBucket),
-    //   }),
-    //   fallbackStatusCodes: [403],
-    // }));
+    for (const bucket of props.bucketNames) {
+      this.distribution(new origins.OriginGroup({
+        primaryOrigin: new origins.HttpOrigin(api.apiEndpoint, {
+          protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
+        }),
+        fallbackOrigin: new origins.S3Origin(s3.Bucket.fromBucketName(scope, id, bucket), {
+          // originAccessIdentity: this.withS3OAI(srcBucket),
+        }),
+        fallbackStatusCodes: [403],
+      }));
+    }
 
     // this.output('SrcBucketS3Url', `s3://${srcBucket.bucketName}`);
   }
@@ -161,39 +174,29 @@ export class LambdaImageHandler extends Construct {
   //   return s3oai;
   // }
 
-  // private distribution(origin: cloudfront.IOrigin) {
-  //   const originRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'ForwardAllQueryString', {
-  //     queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all(),
-  //   });
-  //   const cachePolicy = new cloudfront.CachePolicy(this, 'CacheAllQueryString', {
-  //     queryStringBehavior: cloudfront.CacheQueryStringBehavior.all(),
-  //   });
-  //   const dist = new cloudfront.Distribution(this, 'Distribution', {
-  //     comment: `${Stack.of(this).stackName} distribution`,
-  //     defaultBehavior: {
-  //       origin,
-  //       viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-  //       originRequestPolicy,
-  //       cachePolicy,
-  //     },
-  //     errorResponses: [
-  //       { httpStatus: 500, ttl: Duration.seconds(10) },
-  //       { httpStatus: 501, ttl: Duration.seconds(10) },
-  //       { httpStatus: 502, ttl: Duration.seconds(10) },
-  //       { httpStatus: 503, ttl: Duration.seconds(10) },
-  //       { httpStatus: 504, ttl: Duration.seconds(10) },
-  //     ],
-  //   });
+  private distribution(origin: cloudfront.IOrigin) {
+    const dist = new cloudfront.Distribution(this, 'Distribution', {
+      comment: `${cdk.Stack.of(this).stackName} distribution`,
+      defaultBehavior: {
+        origin,
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        originRequestPolicy: this.originRequestPolicy,
+        cachePolicy: this.cachePolicy,
+      },
+      errorResponses: [
+        { httpStatus: 500, ttl: cdk.Duration.seconds(10) },
+        { httpStatus: 501, ttl: cdk.Duration.seconds(10) },
+        { httpStatus: 502, ttl: cdk.Duration.seconds(10) },
+        { httpStatus: 503, ttl: cdk.Duration.seconds(10) },
+        { httpStatus: 504, ttl: cdk.Duration.seconds(10) },
+      ],
+    });
+    this.cfnOutput('CFDistributionUrl', `https://${dist.distributionDomainName}`, 'The CloudFront distribution url');
+    return this;
+  }
 
-  //   this.output('CFDistributionUrl', `https://${dist.distributionDomainName}`, 'The CloudFront distribution url');
-  // }
-
-  // private output(id: string, value: string, description?: string) {
-  //   new CfnOutput(this, id, { value, description });
-  // }
-
-  protected cfnOutput(id: string, props: cdk.CfnOutputProps): void {
-    new cdk.CfnOutput(this, id, props);
+  protected cfnOutput(id: string, value: string, description?: string): void {
+    new cdk.CfnOutput(this, id, { value, description });
   }
 }
 
@@ -215,12 +218,4 @@ export class LambdaImageHandler extends Construct {
 //     return ec2.Vpc.fromLookup(scope, 'Vpc', { vpcId: scope.node.tryGetContext('use_vpc_id') });
 //   }
 //   return new ec2.Vpc(scope, 'Vpc', { maxAzs: 3, natGateways: 1 });
-// }
-
-// function getOrCreateBucket(scope: Construct, id: string): s3.IBucket {
-//   const bucketName = scope.node.tryGetContext('use_bucket');
-//   if (bucketName) {
-//     return s3.Bucket.fromBucketName(scope, id, bucketName);
-//   }
-//   return new s3.Bucket(scope, id, { versioned: true });
 // }
