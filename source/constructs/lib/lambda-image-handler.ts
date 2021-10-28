@@ -63,6 +63,7 @@ export class LambdaImageHandler extends Construct {
       }),
       environment: {
         NODE_ENV: 'production',
+        NODE_OPTIONS: '--enable-source-maps',
         SOURCE_BUCKETS: 'sih-input',
       },
       handler: 'src/index-lambda.handler',
