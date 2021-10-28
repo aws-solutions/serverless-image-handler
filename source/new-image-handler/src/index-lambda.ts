@@ -1,7 +1,7 @@
-import * as sharp from 'sharp';
-import * as HttpErrors from 'http-errors';
 // eslint-disable-next-line import/no-unresolved
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
+import * as HttpErrors from 'http-errors';
+import * as sharp from 'sharp';
 import { bufferStore, getProcessor, parseRequest } from './default';
 
 
