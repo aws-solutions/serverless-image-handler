@@ -56,7 +56,7 @@ export class LambdaImageHandler extends Construct {
               'cp -rvf /asset-input/{src,test,*.json,.*.json,*.lock} .',
               'npx yarn',
               'npx yarn build',
-              'cp -au lib/src /asset-output/'
+              'cp -au lib/src /asset-output/',
             ].join('&&'),
           ],
         },
