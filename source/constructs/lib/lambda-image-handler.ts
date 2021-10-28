@@ -19,15 +19,16 @@ export interface LambdaImageHandlerProps {
 }
 
 export class LambdaImageHandler extends Construct {
-  private originRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'ForwardAllQueryString', {
-    queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all(),
-  });
-  private cachePolicy = new cloudfront.CachePolicy(this, 'CacheAllQueryString', {
-    queryStringBehavior: cloudfront.CacheQueryStringBehavior.all(),
-  });
 
   constructor(scope: Construct, id: string, props: LambdaImageHandlerProps) {
     super(scope, id);
+
+    const originRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'ForwardAllQueryString', {
+      queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all(),
+    });
+    const cachePolicy = new cloudfront.CachePolicy(this, 'CacheAllQueryString', {
+      queryStringBehavior: cloudfront.CacheQueryStringBehavior.all(),
+    });
 
     const layer = new lambda.LayerVersion(this, 'DepsLayer', {
       code: lambda.Code.fromAsset(path.join(__dirname, '../../new-image-handler'), {
@@ -136,17 +137,17 @@ export class LambdaImageHandler extends Construct {
     // // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/restrict-access-to-load-balancer.html
     // // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-listenerrule.html
 
-    for (const bucket of props.bucketNames) {
+    props.bucketNames.forEach((bucket, index) => {
       this.distribution(new origins.OriginGroup({
         primaryOrigin: new origins.HttpOrigin(api.apiEndpoint, {
           protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
         }),
-        fallbackOrigin: new origins.S3Origin(s3.Bucket.fromBucketName(scope, id, bucket), {
+        fallbackOrigin: new origins.S3Origin(s3.Bucket.fromBucketName(this, `${bucket}${index}`, bucket), {
           // originAccessIdentity: this.withS3OAI(srcBucket),
         }),
         fallbackStatusCodes: [403],
-      }));
-    }
+      }), index, originRequestPolicy, cachePolicy);
+    });
 
     // this.output('SrcBucketS3Url', `s3://${srcBucket.bucketName}`);
   }
@@ -174,14 +175,15 @@ export class LambdaImageHandler extends Construct {
   //   return s3oai;
   // }
 
-  private distribution(origin: cloudfront.IOrigin) {
-    const dist = new cloudfront.Distribution(this, 'Distribution', {
-      comment: `${cdk.Stack.of(this).stackName} distribution`,
+  private distribution(origin: cloudfront.IOrigin, index: number,
+    originRequestPolicy: cloudfront.IOriginRequestPolicy, cachePolicy: cloudfront.ICachePolicy) {
+    const dist = new cloudfront.Distribution(this, `Distribution ${index}`, {
+      comment: `${cdk.Stack.of(this).stackName} distribution ${index}`,
       defaultBehavior: {
         origin,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        originRequestPolicy: this.originRequestPolicy,
-        cachePolicy: this.cachePolicy,
+        originRequestPolicy,
+        cachePolicy,
       },
       errorResponses: [
         { httpStatus: 500, ttl: cdk.Duration.seconds(10) },
@@ -191,7 +193,7 @@ export class LambdaImageHandler extends Construct {
         { httpStatus: 504, ttl: cdk.Duration.seconds(10) },
       ],
     });
-    this.cfnOutput('CFDistributionUrl', `https://${dist.distributionDomainName}`, 'The CloudFront distribution url');
+    this.cfnOutput('CFDistributionUrl' + index, `https://${dist.distributionDomainName}`, 'The CloudFront distribution url');
     return this;
   }
 
