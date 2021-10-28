@@ -5,10 +5,13 @@ import * as path from 'path';
 // import * as ec2 from '@aws-cdk/aws-ec2';
 // import * as ecs from '@aws-cdk/aws-ecs';
 // import * as ecsPatterns from '@aws-cdk/aws-ecs-patterns';
-// import * as iam from '@aws-cdk/aws-iam';
+import * as iam from '@aws-cdk/aws-iam';
 import * as lambda from '@aws-cdk/aws-lambda';
+import * as apigw2 from '@aws-cdk/aws-apigatewayv2';
+import * as apigw2integ from '@aws-cdk/aws-apigatewayv2-integrations';
 // import * as s3 from '@aws-cdk/aws-s3';
-import { Construct, Duration } from '@aws-cdk/core';
+import * as cdk from '@aws-cdk/core';
+import { Construct } from '@aws-cdk/core';
 
 
 export class LambdaImageHandler extends Construct {
@@ -39,7 +42,7 @@ export class LambdaImageHandler extends Construct {
 
     const lambdaHandler = new lambda.Function(this, 'LambdaHandler', {
       runtime: lambda.Runtime.NODEJS_12_X,
-      timeout: Duration.seconds(30),
+      timeout: cdk.Duration.seconds(30),
       memorySize: 1024,
       code: lambda.Code.fromAsset(path.join(__dirname, '../../new-image-handler'), {
         bundling: {
@@ -66,7 +69,22 @@ export class LambdaImageHandler extends Construct {
       layers: [layer],
     });
 
-    console.log(lambdaHandler);
+    const api = new apigw2.HttpApi(this, 'ApiGw2');
+    api.addRoutes({
+      path: '/{proxy+}',
+      methods: [apigw2.HttpMethod.ANY],
+      integration: new apigw2integ.LambdaProxyIntegration({ handler: lambdaHandler }),
+    });
+
+    lambdaHandler.role?.addToPrincipalPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        's3:GetObject',
+      ],
+      resources: ['*'],
+    }));
+
+    this.cfnOutput('ApiEndpoint', { value: api.apiEndpoint });
 
     // const srcBucket = getOrCreateBucket(this, 'SrcBucket');
     // const table = new dynamodb.Table(this, 'StyleTable', {
@@ -172,6 +190,10 @@ export class LambdaImageHandler extends Construct {
   // private output(id: string, value: string, description?: string) {
   //   new CfnOutput(this, id, { value, description });
   // }
+
+  protected cfnOutput(id: string, props: cdk.CfnOutputProps): void {
+    new cdk.CfnOutput(this, id, props);
+  }
 }
 
 // const env = {

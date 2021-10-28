@@ -40,6 +40,32 @@
     "@aws-cdk/cx-api" "1.110.0"
     constructs "^3.3.69"
 
+"@aws-cdk/aws-apigatewayv2-integrations@1.110.0":
+  version "1.110.0"
+  resolved "https://registry.yarnpkg.com/@aws-cdk/aws-apigatewayv2-integrations/-/aws-apigatewayv2-integrations-1.110.0.tgz#eced7eb4f1dd6670c8782349df688a975b1a82a0"
+  integrity sha512-MsLLnf1kssmBQtsf7LgTwzsPRTZg8ad++HiUeTsyRH0E7hJSrPHLlBqEV/MYvGSQeAgslKNAwgT3PSBGUa6inA==
+  dependencies:
+    "@aws-cdk/aws-apigatewayv2" "1.110.0"
+    "@aws-cdk/aws-ec2" "1.110.0"
+    "@aws-cdk/aws-elasticloadbalancingv2" "1.110.0"
+    "@aws-cdk/aws-iam" "1.110.0"
+    "@aws-cdk/aws-lambda" "1.110.0"
+    "@aws-cdk/aws-servicediscovery" "1.110.0"
+    "@aws-cdk/core" "1.110.0"
+    constructs "^3.3.69"
+
+"@aws-cdk/aws-apigatewayv2@1.110.0":
+  version "1.110.0"
+  resolved "https://registry.yarnpkg.com/@aws-cdk/aws-apigatewayv2/-/aws-apigatewayv2-1.110.0.tgz#e6703be40101b4dbd287f02cc4ace037b41c0e6c"
+  integrity sha512-196RLOxDBRB45bm+SQCpi4fJ7Z/CVkDiTtE9GfYZ60clIC5voxvd/VmO8BIC6VjtKioHKC8pRnwPEn8tGjTrjg==
+  dependencies:
+    "@aws-cdk/aws-certificatemanager" "1.110.0"
+    "@aws-cdk/aws-cloudwatch" "1.110.0"
+    "@aws-cdk/aws-ec2" "1.110.0"
+    "@aws-cdk/aws-iam" "1.110.0"
+    "@aws-cdk/core" "1.110.0"
+    constructs "^3.3.69"
+
 "@aws-cdk/aws-applicationautoscaling@1.110.0":
   version "1.110.0"
   resolved "https://registry.yarnpkg.com/@aws-cdk/aws-applicationautoscaling/-/aws-applicationautoscaling-1.110.0.tgz#d65909bf1339364141d6aaa878bf555201037c40"

@@ -56,6 +56,8 @@
     "@aws-cdk/aws-logs": "1.110.0",
     "@aws-cdk/aws-s3": "1.110.0",
     "@aws-cdk/core": "1.110.0",
+    "@aws-cdk/aws-apigatewayv2": "1.110.0",
+    "@aws-cdk/aws-apigatewayv2-integrations": "1.110.0",
     "@aws-solutions-constructs/aws-apigateway-lambda": "1.110.0",
     "@aws-solutions-constructs/aws-cloudfront-apigateway-lambda": "1.110.0",
     "@aws-solutions-constructs/aws-cloudfront-s3": "1.110.0",
