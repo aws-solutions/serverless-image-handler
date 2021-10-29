@@ -13,20 +13,22 @@ const PROCESSOR_MAP: { [key: string]: IProcessor } = {
 export function getProcessor(name: string): IProcessor {
   const processor = PROCESSOR_MAP[name];
   if (!processor) {
-    throw new InvalidArgument('Can not find processor');
+    throw new InvalidArgument('Can Not find processor');
   }
   return processor;
 }
 
-export const bufferStore: IBufferStore = (() => {
+export function bufferStore(p?: string): IBufferStore {
   if (config.isProd) {
-    console.log(`use ${S3Store.name}`);
-    return new S3Store(config.srcBucket);
+    if (!p) { p = config.srcBucket; }
+    console.log(`use ${S3Store.name} s3://${p}`);
+    return new S3Store(p);
   } else {
-    console.log(`use ${LocalStore.name}`);
-    return new LocalStore(path.join(__dirname, '../test/fixtures'));
+    if (!p) { p = path.join(__dirname, '../test/fixtures'); }
+    console.log(`use ${LocalStore.name} file://${p}`);
+    return new LocalStore(p);
   }
-})();
+}
 
 function kvstore(): IKVStore {
   if (config.isProd) {
@@ -40,7 +42,7 @@ function kvstore(): IKVStore {
   }
 }
 
-export function parseRequest(uri: string, query: ParsedUrlQuery): {uri: string; actions: string[]} {
+export function parseRequest(uri: string, query: ParsedUrlQuery): { uri: string; actions: string[] } {
   uri = uri.replace(/^\//, ''); // trim leading slash "/"
   const parts = uri.split(/@?!/, 2);
   if (parts.length === 1) {

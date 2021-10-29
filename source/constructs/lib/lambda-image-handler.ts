@@ -70,9 +70,10 @@ export class LambdaImageHandler extends Construct {
         },
       }),
       environment: {
+        REGION: cdk.Aws.REGION,
         NODE_ENV: 'production',
         NODE_OPTIONS: '--enable-source-maps',
-        SOURCE_BUCKETS: 'sih-input',
+        SRC_BUCKET: 'sih-input',
       },
       handler: 'src/index-lambda.handler',
       layers: [layer],
@@ -105,6 +106,9 @@ export class LambdaImageHandler extends Construct {
           origin: new origins.OriginGroup({
             primaryOrigin: new origins.HttpOrigin(`${api.apiId}.execute-api.${cdk.Aws.REGION}.${cdk.Aws.URL_SUFFIX}`, {
               protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
+              customHeaders: {
+                'x-bucket': bucket.valueAsString,
+              },
             }),
             fallbackOrigin: new origins.S3Origin(s3.Bucket.fromBucketName(this, `Bucket${index}`, bucket.valueAsString)),
             fallbackStatusCodes: [403],

@@ -4,6 +4,7 @@ import * as HttpErrors from 'http-errors';
 import * as sharp from 'sharp';
 import { bufferStore, getProcessor, parseRequest } from './default';
 
+const DefaultBufferStore = bufferStore();
 
 export const handler = WrapError(async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
   console.log('event:', JSON.stringify(event));
@@ -12,18 +13,19 @@ export const handler = WrapError(async (event: APIGatewayProxyEventV2): Promise<
     return resp(200, 'ok');
   }
 
+  const bs = getBufferStore(event);
   const { uri, actions } = parseRequest(event.rawPath, event.queryStringParameters ?? {});
 
   if (actions.length > 1) {
     const processor = getProcessor(actions[0]);
-    const { buffer } = await bufferStore.get(uri);
-    const imagectx = { image: sharp(buffer), bufferStore };
+    const { buffer } = await bs.get(uri);
+    const imagectx = { image: sharp(buffer), bufferStore: bs };
     await processor.process(imagectx, actions);
     const { data, info } = await imagectx.image.toBuffer({ resolveWithObject: true });
 
     return resp(200, data, info.format);
   } else {
-    const { buffer, type } = await bufferStore.get(uri, bypass);
+    const { buffer, type } = await bs.get(uri, bypass);
 
     return resp(200, buffer, type);
   }
@@ -80,4 +82,12 @@ function WrapError(fn: LambdaHandlerFn): LambdaHandlerFn {
       return resp(statusCode, body);
     }
   };
+}
+
+function getBufferStore(event: APIGatewayProxyEventV2) {
+  const bucket = event.headers['x-bucket'];
+  if (bucket) {
+    return bufferStore(bucket);
+  }
+  return DefaultBufferStore;
 }
