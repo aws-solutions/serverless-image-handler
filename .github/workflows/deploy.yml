@@ -37,13 +37,5 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-1
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: ecr push
-        run: make push
-
-      - name: ecr logout
-        if: always()
-        run: docker logout ${{ steps.login-ecr.outputs.registry }}
+      - name: s3 upload artefact
+        run: make upload

@@ -22,3 +22,7 @@ data "aws_iam_role" "code_pipeline" {
 data "aws_s3_bucket" "pipeline_artifacts" {
   bucket = "codepipeline-bucket-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
 }
+
+data "aws_s3_bucket" "ci" {
+  bucket = "ci-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
+}

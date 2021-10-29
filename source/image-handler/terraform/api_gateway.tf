@@ -1,7 +1,6 @@
 resource "aws_apigatewayv2_api" "this" {
   name          = "image handler"
   protocol_type = "HTTP"
-  tags          = local.default_tags
 
   cors_configuration {
     allow_credentials = false

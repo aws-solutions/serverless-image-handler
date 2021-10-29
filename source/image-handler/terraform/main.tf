@@ -1,13 +1,7 @@
 locals {
   function_name = "image-handler"
-
-  default_tags = {
-    managed_by   = "terraform"
-    map-migrated = "d-server-00fvusu7ux3q9a"
-    service      = local.function_name
-    source       = "https://github.com/stroeer/serverless-image-handler"
-    App          = "Images"
-  }
+  zip_package   = "../dist/image-handler.zip"
+  s3_key        = "image-handler/image-handler.zip"
 }
 
 resource "aws_lambda_alias" "this" {
@@ -24,37 +18,27 @@ resource "aws_lambda_alias" "this" {
 resource "aws_s3_bucket" "images" {
   bucket        = "master-images-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
   force_destroy = true
-  tags          = local.default_tags
 
   versioning {
     enabled = false
   }
 }
 
-resource "aws_ecr_repository" "this" {
-  name = local.function_name
-  tags = local.default_tags
-
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-}
-
 module "lambda" {
   source  = "moritzzimmer/lambda/aws"
-  version = "5.12.1"
+  version = "6.0.0"
 
   cloudwatch_lambda_insights_enabled = true
   description                        = "provider of cute kitty pics."
   function_name                      = local.function_name
   ignore_external_function_updates   = true
-  image_uri                          = "${aws_ecr_repository.this.repository_url}:${var.docker_image_tag}"
-  log_retention_in_days              = 1
-  logfilter_destination_arn          = data.aws_lambda_function.log_streaming.arn
   memory_size                        = 1024
   publish                            = true
-  package_type                       = "Image"
-  tags                               = local.default_tags
+  runtime                            = "nodejs14.x"
+  handler                            = "index.handler"
+  s3_bucket                          = data.aws_s3_bucket.ci.bucket
+  s3_key                             = local.s3_key
+  s3_object_version                  = aws_s3_bucket_object.this.version_id
   timeout                            = 30
   tracing_config_mode                = "Active"
 
@@ -68,13 +52,32 @@ module "lambda" {
   }
 }
 
+# ---------------------------------------------------------------------------------------------------------------------
+# Deployment resources
+# ---------------------------------------------------------------------------------------------------------------------
+
+// this resource is only used for the initial `terraform apply` - all further
+// deployments are running on CodePipeline
+
+resource "aws_s3_bucket_object" "this" {
+  bucket = data.aws_s3_bucket.ci.bucket
+  key    = local.s3_key
+  source = fileexists(local.zip_package) ? local.zip_package : null
+  etag   = fileexists(local.zip_package) ? filemd5(local.zip_package) : null
+
+  lifecycle {
+    ignore_changes = [etag, source, version_id, tags_all]
+  }
+}
+
 module "deployment" {
-  source     = "moritzzimmer/lambda/aws//modules/deployment"
-  version    = "5.12.1"
+  source  = "moritzzimmer/lambda/aws//modules/deployment"
+  version = "6.0.0"
 
   alias_name                        = aws_lambda_alias.this.name
   codestar_notifications_target_arn = data.aws_sns_topic.notifications.arn
-  ecr_image_tag                     = var.docker_image_tag
-  ecr_repository_name               = aws_ecr_repository.this.name
+  codepipeline_artifact_store_bucket = data.aws_s3_bucket.pipeline_artifacts.bucket
+  s3_bucket                         = data.aws_s3_bucket.ci.bucket
+  s3_key                            = local.s3_key
   function_name                     = local.function_name
 }
