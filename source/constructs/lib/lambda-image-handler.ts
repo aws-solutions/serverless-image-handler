@@ -26,6 +26,12 @@ export class LambdaImageHandler extends Construct {
   constructor(scope: Construct, id: string, props: LambdaImageHandlerProps) {
     super(scope, id);
 
+    const conditions = props.bucketNameParams.map((bucket, index) => {
+      return new cdk.CfnCondition(this, `HasBucket${index}`, {
+        expression: cdk.Fn.conditionNot(cdk.Fn.conditionEquals('', bucket.valueAsString)),
+      });
+    });
+
     const layer = new lambda.LayerVersion(this, 'DepsLayer', {
       code: lambda.Code.fromAsset(path.join(__dirname, '../../new-image-handler'), {
         bundling: {
@@ -91,15 +97,17 @@ export class LambdaImageHandler extends Construct {
       actions: [
         's3:GetObject',
       ],
-      resources: ['*'], // TODO: Remove wildcard later
+      resources: props.bucketNameParams.map((bucket, index) => {
+        return cdk.Fn.conditionIf(conditions[index].logicalId,
+          `arn:${cdk.Aws.PARTITION}:s3:::${bucket.valueAsString}/*`,
+          cdk.Aws.NO_VALUE).toString()
+      }),
     }));
 
     this.cfnOutput('ApiGw2Endpoint', api.apiEndpoint);
 
     props.bucketNameParams.forEach((bucket, index) => {
-      const condition = new cdk.CfnCondition(this, `HasBucket${index}`, {
-        expression: cdk.Fn.conditionNot(cdk.Fn.conditionEquals('', bucket.valueAsString)),
-      });
+      const condition = conditions[index];
       const dist = new cloudfront.Distribution(this, `Dist${index}`, {
         comment: `${cdk.Stack.of(this).stackName} distribution${index} for s3://${bucket.valueAsString}`,
         defaultBehavior: {
