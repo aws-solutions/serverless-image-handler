@@ -209,8 +209,13 @@ export class LambdaImageHandlerStack extends cdk.Stack {
           type: 'String',
           description: 'BucketParam1',
           default: '',
-        })
-      ]
+        }),
+        new cdk.CfnParameter(this, 'BucketParam2', {
+          type: 'String',
+          description: 'BucketParam2',
+          default: '',
+        }),
+      ],
     });
   }
 }

@@ -1,11 +1,11 @@
 import * as path from 'path';
+import * as apigw2 from '@aws-cdk/aws-apigatewayv2';
+import * as apigw2integ from '@aws-cdk/aws-apigatewayv2-integrations';
 import * as cloudfront from '@aws-cdk/aws-cloudfront';
 import * as origins from '@aws-cdk/aws-cloudfront-origins';
 // import * as dynamodb from '@aws-cdk/aws-dynamodb';
 import * as iam from '@aws-cdk/aws-iam';
 import * as lambda from '@aws-cdk/aws-lambda';
-import * as apigw2 from '@aws-cdk/aws-apigatewayv2';
-import * as apigw2integ from '@aws-cdk/aws-apigatewayv2-integrations';
 import * as s3 from '@aws-cdk/aws-s3';
 import * as cdk from '@aws-cdk/core';
 import { Aspects, Construct } from '@aws-cdk/core';
@@ -90,7 +90,7 @@ export class LambdaImageHandler extends Construct {
       actions: [
         's3:GetObject',
       ],
-      resources: ['*'],
+      resources: ['*'], // TODO: Remove wildcard later
     }));
 
     this.cfnOutput('ApiGw2Endpoint', api.apiEndpoint);
