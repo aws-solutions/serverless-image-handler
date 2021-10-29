@@ -2,15 +2,13 @@
   "name": "image-handler",
   "description": "A Lambda function for performing on-demand image edits and manipulations.",
   "main": "index.js",
-  "author": {
-    "name": "aws-solutions-builder"
-  },
+  "author": "aws-solutions-builder",
   "version": "5.1.0",
   "private": true,
   "dependencies": {
     "color": "3.1.3",
     "color-name": "1.1.4",
-    "sharp": "^0.28.1"
+    "sharp": "0.29.2"
   },
   "devDependencies": {
     "aws-sdk": "2.887.0",
@@ -25,5 +23,9 @@
     "build:dist": "mkdir -p dist && mv image-handler.zip dist/",
     "build": "npm run build:init && npm install --arch=x64 --platform=linux --production && npm run build:zip && npm run build:dist"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "directories": {
+    "test": "test"
+  },
+  "keywords": []
 }

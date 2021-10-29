@@ -15,7 +15,7 @@ class ImageHandler {
    * @param {ImageRequest} request - An ImageRequest object.
    */
   async process(request) {
-    let returnImage = "";
+    let returnImage;
     const originalImage = request.originalImage;
     const edits = request.edits;
     const cropping = request.cropping;
@@ -23,18 +23,18 @@ class ImageHandler {
     const hasEdits = edits !== undefined && Object.keys(edits).length > 0;
     const hasCropping = cropping !== undefined;
     if (hasEdits || hasCropping) {
-      let image = null;
+      let image;
       const keys = Object.keys(edits);
 
       if (keys.includes("rotate") && edits.rotate === null) {
         image = sharp(originalImage, {failOnError: false});
       } else {
         const metadata = await sharp(originalImage, {
-          failOnError: false,
+          failOnError: false
         }).metadata();
         if (metadata.orientation) {
           image = sharp(originalImage, {failOnError: false}).withMetadata({
-            orientation: metadata.orientation,
+            orientation: metadata.orientation
           });
         } else {
           image = sharp(originalImage, {failOnError: false}).withMetadata();
@@ -42,6 +42,17 @@ class ImageHandler {
       }
 
       if (hasCropping) {
+        const image_metadata = await image.metadata();
+        const width = image_metadata.width;
+        const height = await image_metadata.height;
+        if (cropping.left + cropping.width > width || cropping.top + cropping.height > height) {
+          throw {
+            status: 400,
+            code: "CropOutOfBounds",
+            message:
+              `The cropping ${cropping.left},${cropping.top}x${cropping.width}:${cropping.height} is outside the image boundary of ${width}x${height}`
+          };
+        }
         image = await this.applyCropping(image, cropping);
       }
       if (hasEdits) {
@@ -71,7 +82,7 @@ class ImageHandler {
           "The converted image is too large to return. Actual = " +
           returnImage.length +
           " - max " +
-          lambdaPayloadLimit,
+          lambdaPayloadLimit
       };
     }
 
@@ -168,7 +179,7 @@ class ImageHandler {
           throw {
             status: 400,
             code: "SmartCrop::PaddingOutOfBounds",
-            message: "The padding value you provided exceeds the boundaries of the original image. Please try choosing a smaller value or applying padding via Sharp for greater specificity.",
+            message: "The padding value you provided exceeds the boundaries of the original image. Please try choosing a smaller value or applying padding via Sharp for greater specificity."
           };
         }
       } else if (editKey === 'roundCrop') {
@@ -215,7 +226,7 @@ class ImageHandler {
       const overlayImage = await this.s3.getObject(params).promise();
       let resize = {
         fit: 'inside'
-      }
+      };
 
       // Set width and height of the watermark image based on the ratio
       const zeroToHundred = /^(100|[1-9]?[0-9])$/;
@@ -270,8 +281,8 @@ class ImageHandler {
       left: parseInt((boundingBox.Left * metadata.width) - padding),
       top: parseInt((boundingBox.Top * metadata.height) - padding),
       width: parseInt((boundingBox.Width * metadata.width) + (padding * 2)),
-      height: parseInt((boundingBox.Height * metadata.height) + (padding * 2)),
-    }
+      height: parseInt((boundingBox.Height * metadata.height) + (padding * 2))
+    };
     // Return the crop area
     return cropArea;
   }
@@ -314,13 +325,13 @@ class ImageHandler {
         throw {
           status: 400,
           code: "SmartCrop::FaceIndexOutOfRange",
-          message: "You have provided a FaceIndex value that exceeds the length of the zero-based detectedFaces array. Please specify a value that is in-range.",
+          message: "You have provided a FaceIndex value that exceeds the length of the zero-based detectedFaces array. Please specify a value that is in-range."
         };
       } else {
         throw {
           status: err.statusCode ? err.statusCode : 500,
           code: err.code,
-          message: err.message,
+          message: err.message
         };
       }
     }
