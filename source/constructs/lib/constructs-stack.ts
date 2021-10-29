@@ -198,6 +198,19 @@ export class LambdaImageHandlerStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    new LambdaImageHandler(this, id, { bucketNames: ['sih-input', 'sih-input1'] });
+    new LambdaImageHandler(this, id, {
+      bucketNameParams: [
+        new cdk.CfnParameter(this, 'BucketParam0', {
+          type: 'String',
+          description: 'BucketParam0',
+          default: '',
+        }),
+        new cdk.CfnParameter(this, 'BucketParam1', {
+          type: 'String',
+          description: 'BucketParam1',
+          default: '',
+        })
+      ]
+    });
   }
 }

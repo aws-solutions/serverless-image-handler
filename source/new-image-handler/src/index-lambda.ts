@@ -34,7 +34,7 @@ function bypass() {
   throw new HttpErrors[403]('Please visit s3 directly');
 }
 
-function resp(code: number, body: any, type?: string) {
+function resp(code: number, body: any, type?: string): APIGatewayProxyResultV2 {
   const isBase64Encoded = Buffer.isBuffer(body);
   let data: string = '';
   if (isBase64Encoded) {
