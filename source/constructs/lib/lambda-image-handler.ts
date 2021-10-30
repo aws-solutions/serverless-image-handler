@@ -26,10 +26,13 @@ export class LambdaImageHandler extends Construct {
   constructor(scope: Construct, id: string, props: LambdaImageHandlerProps) {
     super(scope, id);
 
-    const conditions = props.bucketNameParams.map((bucket, index) => {
-      return new cdk.CfnCondition(this, `HasBucket${index}`, {
-        expression: cdk.Fn.conditionNot(cdk.Fn.conditionEquals('', bucket.valueAsString)),
-      });
+    const bucketNameParamConditionPair = props.bucketNameParams.map((bucket, index): [cdk.CfnParameter, cdk.CfnCondition] => {
+      return [
+        bucket,
+        new cdk.CfnCondition(this, `HasBucket${index}`, {
+          expression: cdk.Fn.conditionNot(cdk.Fn.conditionEquals('', bucket.valueAsString)),
+        }),
+      ];
     });
 
     const layer = new lambda.LayerVersion(this, 'DepsLayer', {
@@ -97,17 +100,14 @@ export class LambdaImageHandler extends Construct {
       actions: [
         's3:GetObject',
       ],
-      resources: props.bucketNameParams.map((bucket, index) => {
-        return cdk.Fn.conditionIf(conditions[index].logicalId,
-          `arn:${cdk.Aws.PARTITION}:s3:::${bucket.valueAsString}/*`,
-          cdk.Aws.NO_VALUE).toString()
-      }),
+      resources: bucketNameParamConditionPair.map(([bucket, condition]) =>
+        cdk.Fn.conditionIf(condition.logicalId, `arn:${cdk.Aws.PARTITION}:s3:::${bucket.valueAsString}/*`, cdk.Aws.NO_VALUE).toString(),
+      ),
     }));
 
     this.cfnOutput('ApiGw2Endpoint', api.apiEndpoint);
 
-    props.bucketNameParams.forEach((bucket, index) => {
-      const condition = conditions[index];
+    bucketNameParamConditionPair.forEach(([bucket, condition], index) => {
       const dist = new cloudfront.Distribution(this, `Dist${index}`, {
         comment: `${cdk.Stack.of(this).stackName} distribution${index} for s3://${bucket.valueAsString}`,
         defaultBehavior: {
