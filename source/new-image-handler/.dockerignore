@@ -1,4 +1,7 @@
 Dockerfile
+Dockerfile.lambda.deps
+Dockerfile.lambda
+Dockerfile*
 node_modules
 coverage
 test-reports

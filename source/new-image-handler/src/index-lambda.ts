@@ -4,7 +4,6 @@ import * as HttpErrors from 'http-errors';
 import * as sharp from 'sharp';
 import { bufferStore, getProcessor, parseRequest } from './default';
 
-const DefaultBufferStore = bufferStore();
 
 export const handler = WrapError(async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
   console.log('event:', JSON.stringify(event));
@@ -17,9 +16,9 @@ export const handler = WrapError(async (event: APIGatewayProxyEventV2): Promise<
   const { uri, actions } = parseRequest(event.rawPath, event.queryStringParameters ?? {});
 
   if (actions.length > 1) {
-    const processor = getProcessor(actions[0]);
     const { buffer } = await bs.get(uri);
     const imagectx = { image: sharp(buffer), bufferStore: bs };
+    const processor = getProcessor(actions[0]);
     await processor.process(imagectx, actions);
     const { data, info } = await imagectx.image.toBuffer({ resolveWithObject: true });
 
@@ -32,7 +31,7 @@ export const handler = WrapError(async (event: APIGatewayProxyEventV2): Promise<
 });
 
 function bypass() {
-  // NOTE: This is intended to tell CloudFront to directly access the s3 object without through ECS cluster.
+  // NOTE: This is intended to tell CloudFront to directly access the s3 object without through API GW.
   throw new HttpErrors[403]('Please visit s3 directly');
 }
 
@@ -83,6 +82,8 @@ function WrapError(fn: LambdaHandlerFn): LambdaHandlerFn {
     }
   };
 }
+
+const DefaultBufferStore = bufferStore();
 
 function getBufferStore(event: APIGatewayProxyEventV2) {
   const bucket = event.headers['x-bucket'];

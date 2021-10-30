@@ -1,0 +1,13 @@
+FROM public.ecr.aws/sam/build-nodejs12.x
+
+WORKDIR /app
+
+COPY package.json yarn.lock /app/
+
+RUN npx yarn
+
+COPY . /app/
+
+RUN npx yarn build && \
+    mkdir -p /asset/ && \
+    cp -au lib/src /asset/

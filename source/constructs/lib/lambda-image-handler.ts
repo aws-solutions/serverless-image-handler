@@ -36,22 +36,8 @@ export class LambdaImageHandler extends Construct {
     });
 
     const layer = new lambda.LayerVersion(this, 'DepsLayer', {
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../new-image-handler'), {
-        bundling: {
-          image: lambda.Runtime.NODEJS_12_X.bundlingImage,
-          command: [
-            'bash', '-xc', [
-              'export npm_config_update_notifier=false',
-              'export npm_config_cache=$(mktemp -d)', // https://github.com/aws/aws-cdk/issues/8707#issuecomment-757435414
-              'export npm_config_platform=linux npm_config_arch=x64',
-              'cd $(mktemp -d)',
-              'cp -v /asset-input/package*.json /asset-input/yarn.lock .',
-              'npx yarn install --prod',
-              'mkdir -p /asset-output/nodejs/',
-              'cp -au node_modules /asset-output/nodejs/',
-            ].join('&&'),
-          ],
-        },
+      code: lambda.Code.fromDockerBuild(path.join(__dirname, '../../new-image-handler'), {
+        file: 'Dockerfile.lambda.deps'
       }),
       compatibleRuntimes: [lambda.Runtime.NODEJS_12_X],
       description: 'Sharp Deps Layer',
@@ -61,22 +47,8 @@ export class LambdaImageHandler extends Construct {
       runtime: lambda.Runtime.NODEJS_12_X,
       timeout: cdk.Duration.seconds(30),
       memorySize: 1024,
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../new-image-handler'), {
-        bundling: {
-          image: lambda.Runtime.NODEJS_12_X.bundlingImage,
-          command: [
-            'bash', '-xc', [
-              'export npm_config_update_notifier=false',
-              'export npm_config_cache=$(mktemp -d)', // https://github.com/aws/aws-cdk/issues/8707#issuecomment-757435414
-              'export npm_config_platform=linux npm_config_arch=x64',
-              'cd $(mktemp -d)',
-              'cp -rvf /asset-input/{src,test,*.json,.*.json,*.lock} .',
-              'npx yarn',
-              'npx yarn build',
-              'cp -au lib/src /asset-output/',
-            ].join('&&'),
-          ],
-        },
+      code: lambda.Code.fromDockerBuild(path.join(__dirname, '../../new-image-handler'), {
+        file: 'Dockerfile.lambda'
       }),
       environment: {
         REGION: cdk.Aws.REGION,
