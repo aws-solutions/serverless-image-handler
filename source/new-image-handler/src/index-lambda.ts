@@ -2,6 +2,7 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import * as HttpErrors from 'http-errors';
 import * as sharp from 'sharp';
+import debug from './debug';
 import { bufferStore, getProcessor, parseRequest } from './default';
 
 
@@ -10,6 +11,8 @@ export const handler = WrapError(async (event: APIGatewayProxyEventV2): Promise<
 
   if (event.rawPath === '/' || event.rawPath === '/ping') {
     return resp(200, 'ok');
+  } else if (event.rawPath === '/debug') {
+    return resp(200, debug());
   }
 
   const bs = getBufferStore(event);
