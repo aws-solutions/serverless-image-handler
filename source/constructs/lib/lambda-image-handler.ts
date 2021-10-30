@@ -61,6 +61,7 @@ export class LambdaImageHandler extends Construct {
         NODE_OPTIONS: '--enable-source-maps',
         SRC_BUCKET: 'sih-input',
         STYLE_TABLE_NAME: table.tableName,
+        USE_STYLE_CONFIG: 'true',
       },
       handler: 'src/index-lambda.handler',
       layers: [layer],

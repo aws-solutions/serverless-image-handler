@@ -4,6 +4,7 @@ import config from './config';
 import { InvalidArgument, IProcessor } from './processor';
 import { ImageProcessor, StyleProcessor } from './processor/image';
 import { IBufferStore, S3Store, LocalStore, MemKVStore, DynamoDBStore, IKVStore } from './store';
+import * as style from './style.json';
 
 const PROCESSOR_MAP: { [key: string]: IProcessor } = {
   [ImageProcessor.getInstance().name]: ImageProcessor.getInstance(),
@@ -30,15 +31,13 @@ export function bufferStore(p?: string): IBufferStore {
   }
 }
 
-function kvstore(): IKVStore {
-  if (config.isProd) {
+export function kvstore(): IKVStore {
+  if (config.isProd && !config.useStyleConfig) {
     console.log(`use ${DynamoDBStore.name}`);
     return new DynamoDBStore(config.styleTableName);
   } else {
     console.log(`use ${MemKVStore.name}`);
-    return new MemKVStore({
-      box100: { id: 'box100', style: 'image/resize,w_100,h_100,m_fixed,limit_0/' },
-    });
+    return new MemKVStore(style);
   }
 }
 
