@@ -3,7 +3,7 @@ import * as apigw2 from '@aws-cdk/aws-apigatewayv2';
 import * as apigw2integ from '@aws-cdk/aws-apigatewayv2-integrations';
 import * as cloudfront from '@aws-cdk/aws-cloudfront';
 import * as origins from '@aws-cdk/aws-cloudfront-origins';
-// import * as dynamodb from '@aws-cdk/aws-dynamodb';
+import * as dynamodb from '@aws-cdk/aws-dynamodb';
 import * as iam from '@aws-cdk/aws-iam';
 import * as lambda from '@aws-cdk/aws-lambda';
 import * as s3 from '@aws-cdk/aws-s3';
@@ -35,9 +35,14 @@ export class LambdaImageHandler extends Construct {
       ];
     });
 
+    const table = new dynamodb.Table(this, 'StyleTable', {
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+    });
+
     const layer = new lambda.LayerVersion(this, 'DepsLayer', {
       code: lambda.Code.fromDockerBuild(path.join(__dirname, '../../new-image-handler'), {
-        file: 'Dockerfile.lambda.deps'
+        file: 'Dockerfile.lambda.deps',
       }),
       compatibleRuntimes: [lambda.Runtime.NODEJS_12_X],
       description: 'Sharp Deps Layer',
@@ -48,23 +53,17 @@ export class LambdaImageHandler extends Construct {
       timeout: cdk.Duration.seconds(30),
       memorySize: 1024,
       code: lambda.Code.fromDockerBuild(path.join(__dirname, '../../new-image-handler'), {
-        file: 'Dockerfile.lambda'
+        file: 'Dockerfile.lambda',
       }),
       environment: {
         REGION: cdk.Aws.REGION,
         NODE_ENV: 'production',
         NODE_OPTIONS: '--enable-source-maps',
         SRC_BUCKET: 'sih-input',
+        STYLE_TABLE_NAME: table.tableName,
       },
       handler: 'src/index-lambda.handler',
       layers: [layer],
-    });
-
-    const api = new apigw2.HttpApi(this, 'ApiGw2');
-    api.addRoutes({
-      path: '/{proxy+}',
-      methods: [apigw2.HttpMethod.ANY],
-      integration: new apigw2integ.LambdaProxyIntegration({ handler: lambdaHandler }),
     });
 
     lambdaHandler.role?.addToPrincipalPolicy(new iam.PolicyStatement({
@@ -76,6 +75,14 @@ export class LambdaImageHandler extends Construct {
         cdk.Fn.conditionIf(condition.logicalId, `arn:${cdk.Aws.PARTITION}:s3:::${bucket.valueAsString}/*`, cdk.Aws.NO_VALUE).toString(),
       ),
     }));
+    table.grantReadData(lambdaHandler);
+
+    const api = new apigw2.HttpApi(this, 'ApiGw2');
+    api.addRoutes({
+      path: '/{proxy+}',
+      methods: [apigw2.HttpMethod.ANY],
+      integration: new apigw2integ.LambdaProxyIntegration({ handler: lambdaHandler }),
+    });
 
     this.cfnOutput('ApiGw2Endpoint', api.apiEndpoint);
 
