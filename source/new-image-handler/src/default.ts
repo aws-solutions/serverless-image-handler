@@ -32,7 +32,7 @@ export function bufferStore(p?: string): IBufferStore {
 }
 
 export function kvstore(): IKVStore {
-  if (config.isProd && !config.useStyleConfig) {
+  if (config.isProd) {
     console.log(`use ${DynamoDBStore.name}`);
     return new DynamoDBStore(config.styleTableName);
   } else {

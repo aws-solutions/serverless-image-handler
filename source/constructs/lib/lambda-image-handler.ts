@@ -40,6 +40,8 @@ export class LambdaImageHandler extends Construct {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
 
+    this.cfnOutput('StyleConfig', table.tableName, 'The DynamoDB table of image processing style');
+
     const layer = new lambda.LayerVersion(this, 'DepsLayer', {
       code: lambda.Code.fromDockerBuild(path.join(__dirname, '../../new-image-handler'), {
         file: 'Dockerfile.lambda.deps',
@@ -61,7 +63,6 @@ export class LambdaImageHandler extends Construct {
         NODE_OPTIONS: '--enable-source-maps',
         SRC_BUCKET: 'sih-input',
         STYLE_TABLE_NAME: table.tableName,
-        USE_STYLE_CONFIG: 'true',
       },
       handler: 'src/index-lambda.handler',
       layers: [layer],
@@ -128,6 +129,8 @@ export class LambdaImageHandler extends Construct {
   }
 
   protected cfnOutput(id: string, value: string, description?: string): cdk.CfnOutput {
-    return new cdk.CfnOutput(this, id, { value, description });
+    const o = new cdk.CfnOutput(this, id, { value, description });
+    o.overrideLogicalId(id);
+    return o;
   }
 }
