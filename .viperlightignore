@@ -1,0 +1,14 @@
+# Ignore Config used with code.amazon.com
+Config
+
+# Use of opensource-codeofconduct email for amazon is expected
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+docs/en/index.md
+docs/zh/index.md
+
+cdk.out/
+^dist/
+node_modules/
+package-lock.json
+yarn.lock

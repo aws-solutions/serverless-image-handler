@@ -1,0 +1,21 @@
+# Instructions
+# ------------
+# 1) Add any cfn_nag rules that don't apply to this solution, providing a reason for each item
+# 2) Rename this file to .cfnnag_global_suppress_list
+# Reference: https://github.com/stelligent/cfn_nag#global-blacklist
+---
+RulesToSuppress:
+- id: W89
+  reason: Lambda functions in this solution do not need to be deployed in a VPC
+- id: W33
+  reason: Your reason
+- id: W58
+  reason: Your reason
+- id: W40
+  reason: Your reason
+- id: W5
+  reason: Your reason
+- id: W60
+  reason: Your reason
+- id: W92
+  reason: Your reason
