@@ -194,25 +194,30 @@ export class ECSImageHandlerStack extends cdk.Stack {
   }
 }
 
+interface LambdaImageHandlerStackProps extends cdk.StackProps {
+  isChinaRegion?: boolean;
+}
+
 export class LambdaImageHandlerStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: cdk.Construct, id: string, props?: LambdaImageHandlerStackProps) {
     super(scope, id, props);
 
     new LambdaImageHandler(this, id, {
+      isChinaRegion: props?.isChinaRegion,
       bucketNameParams: [
         new cdk.CfnParameter(this, 'BucketParam0', {
           type: 'String',
-          description: 'BucketParam0',
+          description: '(Required) The bucket that contains your image files.',
           default: '',
         }),
         new cdk.CfnParameter(this, 'BucketParam1', {
           type: 'String',
-          description: 'BucketParam1',
+          description: '(Optional) The bucket that contains your image files. Leave it empty if it doesn\'t exist.',
           default: '',
         }),
         new cdk.CfnParameter(this, 'BucketParam2', {
           type: 'String',
-          description: 'BucketParam2',
+          description: '(Optional) The bucket that contains your image files. Leave it empty if it doesn\'t exist.',
           default: '',
         }),
       ],
