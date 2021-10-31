@@ -19,3 +19,14 @@ RulesToSuppress:
   reason: Your reason
 - id: W92
   reason: Your reason
+
+- id: W46
+  reason: ApiGateway V2 should have access logging configured
+- id: W10
+  reason: CloudFront Distribution should enable access logging
+- id: W70
+  reason: Cloudfront should use minimum protocol version TLS 1.2
+- id: W78
+  reason: DynamoDB table should have backup enabled, should be set using PointInTimeRecoveryEnabled
+- id: W74
+  reason: DynamoDB table should have encryption enabled using a CMK stored in KMS

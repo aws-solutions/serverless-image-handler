@@ -45,6 +45,7 @@ export class LambdaImageHandler extends Construct {
     const table = new dynamodb.Table(this, 'StyleTable', {
       partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecovery: true,
     });
 
     this.cfnOutput('StyleConfig', table.tableName, 'The DynamoDB table of image processing style');
