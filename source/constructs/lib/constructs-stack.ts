@@ -4,6 +4,7 @@
 import * as cdk from '@aws-cdk/core';
 import { CfnParameter } from '@aws-cdk/core';
 import { ECSImageHandler } from './ecs-image-handler';
+import { LambdaImageHandler } from './lambda-image-handler';
 import { ServerlessImageHandler, ServerlessImageHandlerProps } from './serverless-image-handler';
 
 const { VERSION } = process.env;
@@ -190,5 +191,36 @@ export class ECSImageHandlerStack extends cdk.Stack {
     super(scope, id, props);
 
     new ECSImageHandler(this, id);
+  }
+}
+
+interface LambdaImageHandlerStackProps extends cdk.StackProps {
+  isChinaRegion?: boolean;
+}
+
+export class LambdaImageHandlerStack extends cdk.Stack {
+  constructor(scope: cdk.Construct, id: string, props?: LambdaImageHandlerStackProps) {
+    super(scope, id, props);
+
+    new LambdaImageHandler(this, id, {
+      isChinaRegion: props?.isChinaRegion,
+      bucketNameParams: [
+        new cdk.CfnParameter(this, 'BucketParam0', {
+          type: 'String',
+          description: '(Required) The bucket that contains your image files.',
+          default: '',
+        }),
+        new cdk.CfnParameter(this, 'BucketParam1', {
+          type: 'String',
+          description: '(Optional) The bucket that contains your image files. Leave it empty if it doesn\'t exist.',
+          default: '',
+        }),
+        new cdk.CfnParameter(this, 'BucketParam2', {
+          type: 'String',
+          description: '(Optional) The bucket that contains your image files. Leave it empty if it doesn\'t exist.',
+          default: '',
+        }),
+      ],
+    });
   }
 }

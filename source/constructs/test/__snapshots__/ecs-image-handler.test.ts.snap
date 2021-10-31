@@ -62,6 +62,45 @@ Object {
     "EcsDefaultClusterMnL3mNNYNVpc18E0451A": Object {
       "Type": "AWS::ECS::Cluster",
     },
+    "testBucketPolicy187DD4AD": Object {
+      "Properties": Object {
+        "Bucket": Object {
+          "Ref": "testSrcBucketAD4FA500",
+        },
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Principal": Object {
+                "CanonicalUser": Object {
+                  "Fn::GetAtt": Array [
+                    "testOAI6BB36C5B",
+                    "S3CanonicalUserId",
+                  ],
+                },
+              },
+              "Resource": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    Object {
+                      "Fn::GetAtt": Array [
+                        "testSrcBucketAD4FA500",
+                        "Arn",
+                      ],
+                    },
+                    "/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
     "testCacheAllQueryString0AE63AEF": Object {
       "Properties": Object {
         "CachePolicyConfig": Object {
@@ -194,7 +233,7 @@ Object {
                     Array [
                       "origin-access-identity/cloudfront/",
                       Object {
-                        "Ref": "testDistributionOrigin2S3Origin9B183C99",
+                        "Ref": "testOAI6BB36C5B",
                       },
                     ],
                   ],
@@ -205,14 +244,6 @@ Object {
         },
       },
       "Type": "AWS::CloudFront::Distribution",
-    },
-    "testDistributionOrigin2S3Origin9B183C99": Object {
-      "Properties": Object {
-        "CloudFrontOriginAccessIdentityConfig": Object {
-          "Comment": "Identity for testDistributionOrigin2503E261E",
-        },
-      },
-      "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
     },
     "testForwardAllQueryString59F56102": Object {
       "Properties": Object {
@@ -230,6 +261,14 @@ Object {
         },
       },
       "Type": "AWS::CloudFront::OriginRequestPolicy",
+    },
+    "testOAI6BB36C5B": Object {
+      "Properties": Object {
+        "CloudFrontOriginAccessIdentityConfig": Object {
+          "Comment": "Allows CloudFront to reach the bucket",
+        },
+      },
+      "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
     },
     "testService8DB925F6": Object {
       "DependsOn": Array [
@@ -567,9 +606,21 @@ Object {
           Object {
             "Environment": Array [
               Object {
+                "Name": "REGION",
+                "Value": Object {
+                  "Ref": "AWS::Region",
+                },
+              },
+              Object {
                 "Name": "SRC_BUCKET",
                 "Value": Object {
                   "Ref": "testSrcBucketAD4FA500",
+                },
+              },
+              Object {
+                "Name": "STYLE_TABLE_NAME",
+                "Value": Object {
+                  "Ref": "testStyleTable3315E595",
                 },
               },
             ],
@@ -589,7 +640,7 @@ Object {
                   Object {
                     "Ref": "AWS::URLSuffix",
                   },
-                  "/aws-cdk/assets:683069133a58c2c45065d92edf9f2dc5ce4abecc058903ad81f85b3593486bea",
+                  "/aws-cdk/assets:77d152e53defa3c2ba234133d00d2daccb8a728692da1d41340e90e09aaef6e9",
                 ],
               ],
             },
@@ -670,6 +721,29 @@ Object {
                 },
               ],
             },
+            Object {
+              "Action": Array [
+                "dynamodb:BatchGetItem",
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+              ],
+              "Effect": "Allow",
+              "Resource": Array [
+                Object {
+                  "Fn::GetAtt": Array [
+                    "testStyleTable3315E595",
+                    "Arn",
+                  ],
+                },
+                Object {
+                  "Ref": "AWS::NoValue",
+                },
+              ],
+            },
           ],
           "Version": "2012-10-17",
         },
@@ -706,47 +780,33 @@ Object {
     },
     "testSrcBucketAD4FA500": Object {
       "DeletionPolicy": "Retain",
+      "Properties": Object {
+        "VersioningConfiguration": Object {
+          "Status": "Enabled",
+        },
+      },
       "Type": "AWS::S3::Bucket",
       "UpdateReplacePolicy": "Retain",
     },
-    "testSrcBucketPolicyF1F0F538": Object {
+    "testStyleTable3315E595": Object {
+      "DeletionPolicy": "Retain",
       "Properties": Object {
-        "Bucket": Object {
-          "Ref": "testSrcBucketAD4FA500",
-        },
-        "PolicyDocument": Object {
-          "Statement": Array [
-            Object {
-              "Action": "s3:GetObject",
-              "Effect": "Allow",
-              "Principal": Object {
-                "CanonicalUser": Object {
-                  "Fn::GetAtt": Array [
-                    "testDistributionOrigin2S3Origin9B183C99",
-                    "S3CanonicalUserId",
-                  ],
-                },
-              },
-              "Resource": Object {
-                "Fn::Join": Array [
-                  "",
-                  Array [
-                    Object {
-                      "Fn::GetAtt": Array [
-                        "testSrcBucketAD4FA500",
-                        "Arn",
-                      ],
-                    },
-                    "/*",
-                  ],
-                ],
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
+        "AttributeDefinitions": Array [
+          Object {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": Array [
+          Object {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+        ],
       },
-      "Type": "AWS::S3::BucketPolicy",
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Retain",
     },
     "testVpc2D302CD6": Object {
       "Properties": Object {

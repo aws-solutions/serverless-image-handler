@@ -6,12 +6,12 @@ on:
   schedule:
     - cron: 0 0 * * *
 jobs:
-  upgrade-ecs-image-handler:
+  upgrade-new-image-handler:
     name: Upgrade
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: source/ecs-image-handler
+        working-directory: source/new-image-handler
     permissions:
       contents: read
     outputs:
@@ -25,7 +25,7 @@ jobs:
         run: yarn upgrade-dependencies
       - name: Build
         id: build
-        run: yarn build && yarn build:ecs-image-handler:docker && echo "::set-output name=conclusion::success" || echo
+        run: yarn build && yarn build:new-image-handler:docker && echo "::set-output name=conclusion::success" || echo
           "::set-output name=conclusion::failure"
       - name: Create Patch
         run: |-
@@ -35,14 +35,14 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: .upgrade.tmp.patch
-          path: source/ecs-image-handler/.upgrade.tmp.patch
+          path: source/new-image-handler/.upgrade.tmp.patch
   pr:
     name: Create Pull Request
-    needs: upgrade-ecs-image-handler
+    needs: upgrade-new-image-handler
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: source/ecs-image-handler
+        working-directory: source/new-image-handler
     permissions:
       contents: write
       pull-requests: write

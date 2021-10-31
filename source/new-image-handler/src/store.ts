@@ -25,16 +25,16 @@ export interface IKeyValue {
   [key: string]: any;
 }
 
-export interface IBufferStore extends IStore<{ buffer: Buffer; type: string }> {};
+export interface IBufferStore extends IStore<{ buffer: Buffer; type: string }> { };
 
-export interface IKVStore extends IStore<IKeyValue> {}
+export interface IKVStore extends IStore<IKeyValue> { }
 
 
 /**
  * A local file system based store.
  */
 export class LocalStore implements IBufferStore {
-  public constructor(private root: string = '') {}
+  public constructor(private root: string = '') { }
   public async get(p: string, _?: () => void): Promise<{ buffer: Buffer; type: string }> {
     p = path.join(this.root, p);
     return {
@@ -49,7 +49,7 @@ export class LocalStore implements IBufferStore {
  */
 export class S3Store implements IBufferStore {
   private _s3: S3 = new S3({ region: config.region });
-  public constructor(public readonly bucket: string) {}
+  public constructor(public readonly bucket: string) { }
   public async get(p: string, beforeGetFunc?: () => void): Promise<{ buffer: Buffer; type: string }> {
     beforeGetFunc?.();
     const res = await this._s3.getObject({
@@ -81,7 +81,7 @@ export class NullStore implements IBufferStore {
 
 export class DynamoDBStore implements IKVStore {
   private _ddb = new DynamoDB.DocumentClient({ region: config.region });
-  public constructor(public readonly tableName: string) {}
+  public constructor(public readonly tableName: string) { }
   public async get(key: string, _?: () => void): Promise<IKeyValue> {
     const data = await this._ddb.get({
       TableName: this.tableName,
@@ -92,7 +92,7 @@ export class DynamoDBStore implements IKVStore {
 }
 
 export class MemKVStore implements IKVStore {
-  public constructor(public readonly dict: IKeyValue) {}
+  public constructor(public readonly dict: IKeyValue) { }
 
   public async get(key: string, _?: () => void): Promise<IKeyValue> {
     return Promise.resolve(this.dict[key] ?? {});

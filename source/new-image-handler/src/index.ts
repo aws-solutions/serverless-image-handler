@@ -6,6 +6,7 @@ import config from './config';
 import debug from './debug';
 import { bufferStore, getProcessor, parseRequest } from './default';
 
+const DefaultBufferStore = bufferStore();
 const app = new Koa();
 
 app.use(logger());
@@ -39,18 +40,18 @@ app.use(async ctx => {
     ctx.body = debug();
   } else {
     const { uri, actions } = parseRequest(ctx.path, ctx.query);
-
+    const bs = getBufferStore(ctx);
     if (actions.length > 1) {
       const processor = getProcessor(actions[0]);
-      const { buffer } = await bufferStore.get(uri);
-      const imagectx = { image: sharp(buffer), bufferStore };
+      const { buffer } = await bs.get(uri);
+      const imagectx = { image: sharp(buffer), bufferStore: bs };
       await processor.process(imagectx, actions);
       const { data, info } = await imagectx.image.toBuffer({ resolveWithObject: true });
 
       ctx.body = data;
       ctx.type = info.format;
     } else {
-      const { buffer, type } = await bufferStore.get(uri, bypass);
+      const { buffer, type } = await bs.get(uri, bypass);
 
       ctx.body = buffer;
       ctx.type = type;
@@ -70,4 +71,12 @@ app.listen(config.port, () => {
 function bypass() {
   // NOTE: This is intended to tell CloudFront to directly access the s3 object without through ECS cluster.
   throw new HttpErrors[403]('Please visit s3 directly');
+}
+
+function getBufferStore(ctx: Koa.ParameterizedContext) {
+  const bucket = ctx.headers['x-bucket'];
+  if (bucket) {
+    return bufferStore(bucket.toString());
+  }
+  return DefaultBufferStore;
 }

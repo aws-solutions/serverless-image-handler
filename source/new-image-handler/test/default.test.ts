@@ -1,4 +1,4 @@
-import { parseRequest } from '../src/default';
+import { parseRequest, kvstore } from '../src/default';
 
 test('parseActions empty', () => {
   expect(parseRequest('', {})).toEqual({
@@ -36,4 +36,11 @@ test('parseActions custom delimiter', () => {
     actions: ['style', 'ABCabc.-_'],
   });
   expect(() => parseRequest('/example.jpg@!  ', {})).toThrowError(/Empty style name/);
+});
+
+test('kvstore', async () => {
+  const store = kvstore();
+  expect(await store.get('box100')).toEqual({
+    style: 'image/resize,w_100,h_100,m_fixed,limit_0/',
+  });
 });

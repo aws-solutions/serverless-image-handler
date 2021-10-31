@@ -4,6 +4,7 @@ import config from './config';
 import { InvalidArgument, IProcessor } from './processor';
 import { ImageProcessor, StyleProcessor } from './processor/image';
 import { IBufferStore, S3Store, LocalStore, MemKVStore, DynamoDBStore, IKVStore } from './store';
+import * as style from './style.json';
 
 const PROCESSOR_MAP: { [key: string]: IProcessor } = {
   [ImageProcessor.getInstance().name]: ImageProcessor.getInstance(),
@@ -13,34 +14,34 @@ const PROCESSOR_MAP: { [key: string]: IProcessor } = {
 export function getProcessor(name: string): IProcessor {
   const processor = PROCESSOR_MAP[name];
   if (!processor) {
-    throw new InvalidArgument('Can not find processor');
+    throw new InvalidArgument('Can Not find processor');
   }
   return processor;
 }
 
-export const bufferStore: IBufferStore = (() => {
+export function bufferStore(p?: string): IBufferStore {
   if (config.isProd) {
-    console.log(`use ${S3Store.name}`);
-    return new S3Store(config.srcBucket);
+    if (!p) { p = config.srcBucket; }
+    console.log(`use ${S3Store.name} s3://${p}`);
+    return new S3Store(p);
   } else {
-    console.log(`use ${LocalStore.name}`);
-    return new LocalStore(path.join(__dirname, '../test/fixtures'));
+    if (!p) { p = path.join(__dirname, '../test/fixtures'); }
+    console.log(`use ${LocalStore.name} file://${p}`);
+    return new LocalStore(p);
   }
-})();
+}
 
-function kvstore(): IKVStore {
+export function kvstore(): IKVStore {
   if (config.isProd) {
     console.log(`use ${DynamoDBStore.name}`);
     return new DynamoDBStore(config.styleTableName);
   } else {
     console.log(`use ${MemKVStore.name}`);
-    return new MemKVStore({
-      box100: { id: 'box100', style: 'image/resize,w_100,h_100,m_fixed,limit_0/' },
-    });
+    return new MemKVStore(style);
   }
 }
 
-export function parseRequest(uri: string, query: ParsedUrlQuery): {uri: string; actions: string[]} {
+export function parseRequest(uri: string, query: ParsedUrlQuery): { uri: string; actions: string[] } {
   uri = uri.replace(/^\//, ''); // trim leading slash "/"
   const parts = uri.split(/@?!/, 2);
   if (parts.length === 1) {

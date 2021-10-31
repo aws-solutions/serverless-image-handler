@@ -8,7 +8,7 @@
     - [Prerequisites](#prerequisites)
     - [How to use?](#how-to-use)
     - [Load Test](#load-test)
-    - [Trouble Shooting](#trouble-shooting)
+    - [Troubleshooting](#troubleshooting)
 
 # Overview
 
@@ -25,7 +25,7 @@ TODO
 
 ## ECS Image Handler
 
-![architecture](./ecs-image-handler-arch.svg)
+![architecture](./new-image-handler-arch.svg)
 
 This is an ECS Fargate based version of serverless image handler. The key features are:
 
