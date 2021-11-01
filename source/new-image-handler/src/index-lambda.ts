@@ -4,6 +4,7 @@ import * as HttpErrors from 'http-errors';
 import * as sharp from 'sharp';
 import debug from './debug';
 import { bufferStore, getProcessor, parseRequest } from './default';
+import * as is from './is';
 
 
 export const handler = WrapError(async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
@@ -43,7 +44,7 @@ function resp(code: number, body: any, type?: string): APIGatewayProxyResultV2 {
   let data: string = '';
   if (isBase64Encoded) {
     data = body.toString('base64');
-  } else if (typeof body === 'string' && body.length > 0) {
+  } else if (is.string(body)) {
     data = body;
     type = 'text/plain';
   } else {

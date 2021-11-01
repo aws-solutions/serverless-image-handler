@@ -1,6 +1,6 @@
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidArgument } from '..';
-import { inRange } from './utils';
+import * as is from '../../is';
 
 export interface ContrastOpts extends IActionOpts {
   contrast: number;
@@ -16,7 +16,7 @@ export class ContrastAction implements IImageAction {
       throw new InvalidArgument('Contrast param error, e.g: contrast,-50');
     }
     const b = parseInt(params[1]);
-    if (inRange(b, -100, 100)) {
+    if (is.inRange(b, -100, 100)) {
       opt.contrast = b;
     } else {
       throw new InvalidArgument('Contrast must be between -100 and 100');

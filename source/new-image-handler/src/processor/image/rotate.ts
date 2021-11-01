@@ -1,6 +1,6 @@
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidArgument } from '..';
-import { inRange } from './utils';
+import * as is from '../../is';
 
 export interface RotateOpts extends IActionOpts {
   degree: number;
@@ -16,7 +16,7 @@ export class RotateAction implements IImageAction {
       throw new InvalidArgument('Rotate param error, e.g: rotate,90');
     }
     const d = parseInt(params[1]);
-    if (inRange(d, 0, 360)) {
+    if (is.inRange(d, 0, 360)) {
       opt.degree = d;
     } else {
       throw new InvalidArgument('Rotate must be between 0 and 360');

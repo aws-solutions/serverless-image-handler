@@ -1,7 +1,7 @@
 import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidArgument } from '..';
-import { inRange } from './utils';
+import * as is from '../../is';
 
 
 const JPG = 'jpg';
@@ -25,14 +25,14 @@ export class QualityAction implements IImageAction {
       const [k, v] = param.split('_');
       if (k === 'q') {
         const q = parseInt(v);
-        if (inRange(q, 1, 100)) {
+        if (is.inRange(q, 1, 100)) {
           opt.q = q;
         } else {
           throw new InvalidArgument('Quality must be between 1 and 100');
         }
       } else if (k === 'Q') {
         const Q = parseInt(v);
-        if (inRange(Q, 1, 100)) {
+        if (is.inRange(Q, 1, 100)) {
           opt.Q = Q;
         } else {
           throw new InvalidArgument('Quality must be between 1 and 100');

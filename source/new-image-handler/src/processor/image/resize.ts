@@ -1,7 +1,7 @@
 import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidArgument } from '..';
-import { inRange, isHexColor } from './utils';
+import * as is from '../../is';
 
 export const enum Mode {
   LFIT = 'lfit',
@@ -54,14 +54,14 @@ export class ResizeAction implements IImageAction {
         }
       } else if (k === 'color') {
         const color = '#' + v;
-        if (isHexColor(color)) {
+        if (is.hexColor(color)) {
           opt.color = color;
         } else {
           throw new InvalidArgument(`Unkown color: "${v}"`);
         }
       } else if (k === 'p') {
         const p = parseInt(v);
-        if (inRange(p, 1, 1000)) {
+        if (is.inRange(p, 1, 1000)) {
           opt.p = p;
         } else {
           throw new InvalidArgument(`Unkown p: "${v}"`);
