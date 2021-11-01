@@ -97,8 +97,23 @@ export class LambdaImageHandler extends Construct {
     this.cfnOutput('ApiGw2Endpoint', api.apiEndpoint);
 
     bucketNameParamConditionPair.forEach(([bucket, condition], index) => {
-      let dist: cloudfront.IDistribution;
+      const s3bucket = s3.Bucket.fromBucketAttributes(this, `TheBucket${index}`, {
+        bucketName: bucket.valueAsString,
+        region: Aws.REGION,
+      });
+      const s3oai = new cloudfront.OriginAccessIdentity(this, `S3Origin${index}`, {
+        comment: `Identity for s3://${s3bucket.bucketName}`,
+      });
+      const bucketPolicy = new iam.PolicyStatement({
+        resources: [s3bucket.arnForObjects('*')],
+        actions: ['s3:GetObject'],
+        principals: [s3oai.grantPrincipal],
+      });
+      s3bucket.addToResourcePolicy(bucketPolicy);
+      this.cfnOutput(`Bucket${index}`, `s3://${bucket.valueAsString}`).condition = condition;
+      this.cfnOutput(`BucketPolicy${index}`, `${JSON.stringify(bucketPolicy.toStatementJson())}`, `Please add this statement into bucket${index}'s bucket policy`).condition = condition;
 
+      let dist: cloudfront.IDistribution;
       if (props.isChinaRegion) {
         dist = new cloudfront.CloudFrontWebDistribution(this, `WebDist${index}`, {
           comment: `${cdk.Stack.of(this).stackName} distribution${index} for s3://${bucket.valueAsString}`,
@@ -115,10 +130,8 @@ export class LambdaImageHandler extends Construct {
                 },
               },
               failoverS3OriginSource: {
-                s3BucketSource: s3.Bucket.fromBucketAttributes(this, `Bucket${index}`, {
-                  bucketName: bucket.valueAsString,
-                  region: Aws.REGION,
-                }),
+                s3BucketSource: s3bucket,
+                originAccessIdentity: s3oai,
               },
               failoverCriteriaStatusCodes: [403],
               behaviors: [
@@ -157,10 +170,7 @@ export class LambdaImageHandler extends Construct {
                   'x-bucket': bucket.valueAsString,
                 },
               }),
-              fallbackOrigin: new origins.S3Origin(s3.Bucket.fromBucketAttributes(this, `Bucket${index}`, {
-                bucketName: bucket.valueAsString,
-                region: Aws.REGION,
-              })),
+              fallbackOrigin: new origins.S3Origin(s3bucket, { originAccessIdentity: s3oai }),
               fallbackStatusCodes: [403],
             }),
             viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -177,8 +187,7 @@ export class LambdaImageHandler extends Construct {
         });
       }
 
-      const output = this.cfnOutput(`DistUrl${index}`, `https://${dist.distributionDomainName}`, `The CloudFront distribution url${index}`);
-      output.condition = condition;
+      this.cfnOutput(`DistUrl${index}`, `https://${dist.distributionDomainName}`, `The CloudFront distribution url${index}`).condition = condition;
 
       this.enable({ construct: dist, if: condition });
     });
