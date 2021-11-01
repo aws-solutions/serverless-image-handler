@@ -2,12 +2,41 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as cdk from '@aws-cdk/core';
-import { CfnParameter } from '@aws-cdk/core';
+import { CfnParameter, CfnParameterProps, Stack } from '@aws-cdk/core';
 import { ECSImageHandler } from './ecs-image-handler';
 import { LambdaImageHandler } from './lambda-image-handler';
 import { ServerlessImageHandler, ServerlessImageHandlerProps } from './serverless-image-handler';
 
 const { VERSION } = process.env;
+
+
+export class SolutionStack extends Stack {
+  private _paramGroup: { [grpname: string]: CfnParameter[] } = {}
+
+  protected setDescription(description: string) { this.templateOptions.description = description; }
+  protected newParam(id: string, props?: CfnParameterProps): CfnParameter { return new CfnParameter(this, id, props); }
+  protected addGroupParam(props: { [key: string]: CfnParameter[] }): void {
+    for (const key of Object.keys(props)) {
+      const params = props[key];
+      this._paramGroup[key] = params.concat(this._paramGroup[key] ?? []);
+    }
+    this._setParamGroups();
+  }
+  private _setParamGroups(): void {
+    if (!this.templateOptions.metadata) { this.templateOptions.metadata = {}; }
+    const mkgrp = (label: string, params: CfnParameter[]) => {
+      return {
+        Label: { default: label },
+        Parameters: params.map(p => {
+          return p ? p.logicalId : '';
+        }).filter(id => id),
+      };
+    };
+    this.templateOptions.metadata['AWS::CloudFormation::Interface'] = {
+      ParameterGroups: Object.keys(this._paramGroup).map(key => mkgrp(key, this._paramGroup[key])),
+    };
+  }
+}
 
 /**
  * @class ConstructsStack
@@ -198,27 +227,32 @@ interface LambdaImageHandlerStackProps extends cdk.StackProps {
   isChinaRegion?: boolean;
 }
 
-export class LambdaImageHandlerStack extends cdk.Stack {
+export class LambdaImageHandlerStack extends SolutionStack {
   constructor(scope: cdk.Construct, id: string, props?: LambdaImageHandlerStackProps) {
     super(scope, id, props);
+
+    this.setDescription(`(SO0023) - Serverless Image Handler. version ${VERSION}`);
 
     new LambdaImageHandler(this, id, {
       isChinaRegion: props?.isChinaRegion,
       bucketNameParams: [
-        new cdk.CfnParameter(this, 'BucketParam0', {
+        this.newParam('BucketParam0', {
           type: 'String',
           description: '(Required) The bucket that contains your image files.',
           default: '',
+          allowedPattern: '^[^\\*]*$',
         }),
-        new cdk.CfnParameter(this, 'BucketParam1', {
+        this.newParam('BucketParam1', {
           type: 'String',
           description: '(Optional) The bucket that contains your image files. Leave it empty if it doesn\'t exist.',
           default: '',
+          allowedPattern: '^[^\\*]*$',
         }),
-        new cdk.CfnParameter(this, 'BucketParam2', {
+        this.newParam('BucketParam2', {
           type: 'String',
           description: '(Optional) The bucket that contains your image files. Leave it empty if it doesn\'t exist.',
           default: '',
+          allowedPattern: '^[^\\*]*$',
         }),
       ],
     });
