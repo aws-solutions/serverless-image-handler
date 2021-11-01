@@ -40,6 +40,7 @@
     "coverage"
   ],
   "rules": {
+    "radix": "error",
     "space-infix-ops": "error",
     "spaced-comment": [
       "error",

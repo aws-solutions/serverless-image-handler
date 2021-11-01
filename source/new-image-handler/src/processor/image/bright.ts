@@ -15,7 +15,7 @@ export class BrightAction implements IImageAction {
     if (params.length !== 2) {
       throw new InvalidArgument('Bright param error, e.g: bright,50');
     }
-    const b = parseInt(params[1]);
+    const b = Number.parseInt(params[1], 10);
     if (is.inRange(b, -100, 100)) {
       opt.bright = b;
     } else {

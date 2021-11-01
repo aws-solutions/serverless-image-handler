@@ -15,7 +15,7 @@ export class ContrastAction implements IImageAction {
     if (params.length !== 2) {
       throw new InvalidArgument('Contrast param error, e.g: contrast,-50');
     }
-    const b = parseInt(params[1]);
+    const b = Number.parseInt(params[1], 10);
     if (is.inRange(b, -100, 100)) {
       opt.contrast = b;
     } else {

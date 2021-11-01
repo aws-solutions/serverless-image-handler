@@ -24,14 +24,14 @@ export class QualityAction implements IImageAction {
       }
       const [k, v] = param.split('_');
       if (k === 'q') {
-        const q = parseInt(v);
+        const q = Number.parseInt(v, 10);
         if (is.inRange(q, 1, 100)) {
           opt.q = q;
         } else {
           throw new InvalidArgument('Quality must be between 1 and 100');
         }
       } else if (k === 'Q') {
-        const Q = parseInt(v);
+        const Q = Number.parseInt(v, 10);
         if (is.inRange(Q, 1, 100)) {
           opt.Q = Q;
         } else {

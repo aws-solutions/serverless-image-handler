@@ -23,17 +23,17 @@ export class IndexCropAction implements IImageAction {
       }
       const [k, v] = param.split('_');
       if (k === 'x') {
-        opt.x = parseInt(v);
+        opt.x = Number.parseInt(v, 10);
         if (opt.x < 0) {
           throw new InvalidArgument('Param error:  x value must be greater than 0');
         }
       } else if (k === 'y') {
-        opt.y = parseInt(v);
+        opt.y = Number.parseInt(v, 10);
         if (opt.y < 0) {
           throw new InvalidArgument('Param error:  y value must be greater than 0');
         }
       } else if (k === 'i') {
-        opt.i = parseInt(v);
+        opt.i = Number.parseInt(v, 10);
       } else {
         throw new InvalidArgument(`Unkown param: "${k}"`);
       }

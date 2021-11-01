@@ -15,7 +15,7 @@ export class SharpenAction implements IImageAction {
     if (params.length !== 2) {
       throw new InvalidArgument('Sharpen param error, e.g: sharpen,100');
     }
-    const s = parseInt(params[1]);
+    const s = Number.parseInt(params[1], 10);
     if (is.inRange(s, 50, 399)) {
       opt.sharpen = s;
     } else {

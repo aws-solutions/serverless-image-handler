@@ -3,7 +3,7 @@
     "eslint.lintTask.enable": true,
     "eslint.workingDirectories": [
         "source/constructs",
-        "source/ecs-image-handler",
+        "source/new-image-handler",
     ],
     "yaml.customTags": [
         "!And",

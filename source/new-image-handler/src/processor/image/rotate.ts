@@ -15,7 +15,7 @@ export class RotateAction implements IImageAction {
     if (params.length !== 2) {
       throw new InvalidArgument('Rotate param error, e.g: rotate,90');
     }
-    const d = parseInt(params[1]);
+    const d = Number.parseInt(params[1], 10);
     if (is.inRange(d, 0, 360)) {
       opt.degree = d;
     } else {

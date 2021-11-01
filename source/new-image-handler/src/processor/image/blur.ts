@@ -23,14 +23,14 @@ export class BlurAction implements IImageAction {
       }
       const [k, v] = param.split('_');
       if (k === 'r') {
-        const r = parseInt(v);
+        const r = Number.parseInt(v, 10);
         if (is.inRange(r, 0, 50)) {
           opt.r = r;
         } else {
           throw new InvalidArgument('Blur param \'r\' must be between 0 and 50');
         }
       } else if (k === 's') {
-        const s = parseInt(v);
+        const s = Number.parseInt(v, 10);
         if (is.inRange(s, 0, 50)) {
           opt.s = s;
         } else {

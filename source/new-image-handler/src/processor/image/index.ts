@@ -13,6 +13,7 @@ import { InterlaceAction } from './interlace';
 import { QualityAction } from './quality';
 import { ResizeAction } from './resize';
 import { RotateAction } from './rotate';
+import { RoundedCornersAction } from './rounded-corners';
 import { SharpenAction } from './sharpen';
 
 export interface IImageAction extends IAction { }
@@ -82,7 +83,7 @@ ImageProcessor.getInstance().register(
   new GreyAction(),
   new CropAction(),
   new IndexCropAction(),
-
+  new RoundedCornersAction(),
 );
 
 export class StyleProcessor implements IProcessor {

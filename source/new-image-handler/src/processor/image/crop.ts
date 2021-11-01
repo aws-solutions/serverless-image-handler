@@ -25,28 +25,28 @@ export class CropAction implements IImageAction {
       }
       const [k, v] = param.split('_');
       if (k === 'w') {
-        const w = parseInt(v);
+        const w = Number.parseInt(v, 10);
         if (w > 0) {
           opt.w = w;
         } else {
           throw new InvalidArgument('Crop param w must be greater than  0');
         }
       } else if (k === 'h') {
-        const h = parseInt(v);
+        const h = Number.parseInt(v, 10);
         if (h > 0) {
           opt.h = h;
         } else {
           throw new InvalidArgument('Crop param h must be greater than  0');
         }
       } else if (k === 'x') {
-        const x = parseInt(v);
+        const x = Number.parseInt(v, 10);
         if (x >= 0) {
           opt.x = x;
         } else {
           throw new InvalidArgument('Crop param x must be greater than or equal to 0');
         }
       } else if (k === 'y') {
-        const y = parseInt(v);
+        const y = Number.parseInt(v, 10);
         if (y >= 0) {
           opt.y = y;
         } else {
