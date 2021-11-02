@@ -50,6 +50,12 @@ module "lambda" {
       SOURCE_BUCKETS = aws_s3_bucket.images.bucket
     }
   }
+
+  cloudwatch_log_subscription_filters = {
+    elasticsearch = {
+      destination_arn = data.aws_lambda_function.log_streaming.arn
+    }
+  }
 }
 
 # ---------------------------------------------------------------------------------------------------------------------

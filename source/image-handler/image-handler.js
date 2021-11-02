@@ -78,11 +78,7 @@ class ImageHandler {
       throw {
         status: 413,
         code: "TooLargeImageException",
-        message:
-          "The converted image is too large to return. Actual = " +
-          returnImage.length +
-          " - max " +
-          lambdaPayloadLimit
+        message: `The converted image is too large to return. Actual = ${returnImage.length} - max ${lambdaPayloadLimit}`
       };
     }
 
