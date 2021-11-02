@@ -1,3 +1,4 @@
+import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidArgument } from '..';
 
@@ -55,7 +56,7 @@ export class IndexCropAction implements IImageAction {
     let h = 0;
     let needCrop: boolean = true;
 
-    const metadata = await ctx.image.metadata();
+    const metadata = await sharp(await ctx.image.toBuffer()).metadata();
     if (metadata.height === undefined || metadata.width === undefined) {
       throw new InvalidArgument('Incorrect image format');
     }
@@ -98,7 +99,7 @@ export class IndexCropAction implements IImageAction {
     }
 
     if (needCrop) {
-      ctx.image.extract({ left: x, top: y, width: w, height: h });
+      ctx.image = sharp(await ctx.image.extract({ left: x, top: y, width: w, height: h }).toBuffer())
     }
 
   }

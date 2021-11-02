@@ -1,4 +1,3 @@
-import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidArgument } from '..';
 import * as is from '../../is';
@@ -45,14 +44,9 @@ export class RoundedCornersAction implements IImageAction {
       const rbox = Buffer.from(`<svg viewBox="0 0 ${metadata.width} ${metadata.height}">
         <rect width="${metadata.width}" height="${metadata.height}" rx="${opt.r}" />
       </svg>`);
-      const buffer = await ctx.image.composite([
+      ctx.image.composite([
         { input: rbox, blend: 'dest-in' },
-      ]).png().toBuffer();
-      if (metadata.format) {
-        ctx.image = sharp(buffer).toFormat(metadata.format);
-      } else {
-        ctx.image = sharp(buffer);
-      }
+      ]);
     } else {
       throw new InvalidArgument('Can\'t read image\'s width and height');
     }

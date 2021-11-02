@@ -1,3 +1,4 @@
+import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidArgument } from '..';
 
@@ -77,7 +78,7 @@ export class CropAction implements IImageAction {
     let x = opt.x;
     let y = opt.y;
 
-    const metadata = await ctx.image.metadata();
+    const metadata = await sharp(await ctx.image.toBuffer()).metadata();
     if (metadata.height === undefined || metadata.width === undefined) {
       throw new InvalidArgument('Incorrect image format');
     }
@@ -117,6 +118,11 @@ export class CropAction implements IImageAction {
       height = metadata.height - y;
     }
 
-    ctx.image.extract({ left: x, top: y, width: width, height: height });
+    ctx.image = sharp(await ctx.image.extract({
+      left: x,
+      top: y,
+      width: width,
+      height: height
+    }).toBuffer());
   }
 }
