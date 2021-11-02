@@ -1,6 +1,6 @@
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidArgument } from '..';
-import { inRange } from './utils';
+import * as is from '../../is';
 
 export interface SharpenOpts extends IActionOpts {
   sharpen: number;
@@ -15,8 +15,8 @@ export class SharpenAction implements IImageAction {
     if (params.length !== 2) {
       throw new InvalidArgument('Sharpen param error, e.g: sharpen,100');
     }
-    const s = parseInt(params[1]);
-    if (inRange(s, 50, 399)) {
+    const s = Number.parseInt(params[1], 10);
+    if (is.inRange(s, 50, 399)) {
       opt.sharpen = s;
     } else {
       throw new InvalidArgument('Sharpen be between 50 and 399');

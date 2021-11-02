@@ -1,3 +1,4 @@
+import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidArgument } from '..';
 
@@ -23,17 +24,17 @@ export class IndexCropAction implements IImageAction {
       }
       const [k, v] = param.split('_');
       if (k === 'x') {
-        opt.x = parseInt(v);
+        opt.x = Number.parseInt(v, 10);
         if (opt.x < 0) {
           throw new InvalidArgument('Param error:  x value must be greater than 0');
         }
       } else if (k === 'y') {
-        opt.y = parseInt(v);
+        opt.y = Number.parseInt(v, 10);
         if (opt.y < 0) {
           throw new InvalidArgument('Param error:  y value must be greater than 0');
         }
       } else if (k === 'i') {
-        opt.i = parseInt(v);
+        opt.i = Number.parseInt(v, 10);
       } else {
         throw new InvalidArgument(`Unkown param: "${k}"`);
       }
@@ -55,7 +56,7 @@ export class IndexCropAction implements IImageAction {
     let h = 0;
     let needCrop: boolean = true;
 
-    const metadata = await ctx.image.metadata();
+    const metadata = await sharp(await ctx.image.toBuffer()).metadata();
     if (metadata.height === undefined || metadata.width === undefined) {
       throw new InvalidArgument('Incorrect image format');
     }
@@ -98,7 +99,7 @@ export class IndexCropAction implements IImageAction {
     }
 
     if (needCrop) {
-      ctx.image.extract({ left: x, top: y, width: w, height: h });
+      ctx.image = sharp(await ctx.image.extract({ left: x, top: y, width: w, height: h }).toBuffer())
     }
 
   }

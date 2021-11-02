@@ -1,6 +1,6 @@
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidArgument } from '..';
-import { inRange } from './utils';
+import * as is from '../../is';
 
 export interface BrightOpts extends IActionOpts {
   bright: number;
@@ -15,8 +15,8 @@ export class BrightAction implements IImageAction {
     if (params.length !== 2) {
       throw new InvalidArgument('Bright param error, e.g: bright,50');
     }
-    const b = parseInt(params[1]);
-    if (inRange(b, -100, 100)) {
+    const b = Number.parseInt(params[1], 10);
+    if (is.inRange(b, -100, 100)) {
       opt.bright = b;
     } else {
       throw new InvalidArgument('Bright must be between -100 and 100');

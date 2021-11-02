@@ -2,6 +2,7 @@ import * as sharp from 'sharp';
 import { ImageProcessor, StyleProcessor } from '../../src/processor/image';
 import { ResizeAction } from '../../src/processor/image/resize';
 import { MemKVStore, NullStore } from '../../src/store';
+import { fixtureStore } from './image/utils';
 
 
 test('image processor singleton', () => {
@@ -39,6 +40,37 @@ test('image processor test', async () => {
 
   expect(info.width).toBe(100);
   expect(info.height).toBe(100);
+});
+
+test('image/crop,w_100,h_100/rounded-corners,r_10/format,png', async () => {
+  const image = sharp((await fixtureStore.get('example.jpg')).buffer);
+  const ctx = { image, bufferStore: new NullStore() };
+  await ImageProcessor.getInstance().process(ctx, 'image/crop,w_100,h_100/rounded-corners,r_10/format,png'.split('/'));
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(100);
+  expect(info.height).toBe(100);
+  expect(info.channels).toBe(4);
+});
+
+test('image/resize,w_50/crop,w_100,h_100/rounded-corners,r_100/format,png', async () => {
+  const image = sharp((await fixtureStore.get('example.jpg')).buffer);
+  const ctx = { image, bufferStore: new NullStore() };
+  await ImageProcessor.getInstance().process(ctx, 'image/resize,w_50/crop,w_100,h_100/rounded-corners,r_100/format,png'.split('/'));
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(50);
+  expect(info.height).toBe(33);
+  expect(info.channels).toBe(4);
+});
+
+test('image/resize,w_20/indexcrop,x_50,i_0/', async () => {
+  const image = sharp((await fixtureStore.get('example.jpg')).buffer);
+  const ctx = { image, bufferStore: new NullStore() };
+  await ImageProcessor.getInstance().process(ctx, 'image/resize,w_20/indexcrop,x_50,i_0/'.split('/'));
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(20);
 });
 
 test('style processor test', async () => {
