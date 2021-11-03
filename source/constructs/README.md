@@ -25,7 +25,7 @@ TODO
 
 ## ECS Image Handler
 
-![architecture](./new-image-handler-arch.svg)
+![architecture](./ecs-image-handler-arch.svg)
 
 This is an ECS Fargate based version of serverless image handler. The key features are:
 
