@@ -122,7 +122,7 @@ export class CropAction implements IImageAction {
       left: x,
       top: y,
       width: width,
-      height: height
+      height: height,
     }).toBuffer());
   }
 }
