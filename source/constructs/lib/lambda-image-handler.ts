@@ -14,6 +14,7 @@ import { Aspects, Aws, Construct } from '@aws-cdk/core';
 export interface LambdaImageHandlerProps {
   isChinaRegion?: boolean;
   bucketNameParams: cdk.CfnParameter[];
+  altDomainParams?: cdk.CfnParameter[];
 }
 
 export class LambdaImageHandler extends Construct {
@@ -116,6 +117,19 @@ export class LambdaImageHandler extends Construct {
       let dist: cloudfront.IDistribution;
       if (props.isChinaRegion) {
         dist = new cloudfront.CloudFrontWebDistribution(this, `WebDist${index}`, {
+          viewerCertificate: (() => {
+            if (props.altDomainParams) {
+              const param = props.altDomainParams[index];
+              const hasAltDomain = new cdk.CfnCondition(this, `HasAltDomain${index}`, {
+                expression: cdk.Fn.conditionNot(cdk.Fn.conditionEquals('', cdk.Fn.join('', param.valueAsList))),
+              });
+              return {
+                props: { cloudFrontDefaultCertificate: true },
+                aliases: cdk.Fn.conditionIf(hasAltDomain.logicalId, param.valueAsList, Aws.NO_VALUE).toString() as any,
+              };
+            }
+            return;
+          })(),
           comment: `${cdk.Stack.of(this).stackName} distribution${index} for s3://${bucket.valueAsString}`,
           priceClass: cloudfront.PriceClass.PRICE_CLASS_ALL,
           enableIpV6: false,

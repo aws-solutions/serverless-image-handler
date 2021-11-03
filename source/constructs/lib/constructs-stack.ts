@@ -233,28 +233,40 @@ export class LambdaImageHandlerStack extends SolutionStack {
 
     this.setDescription(`(SO0023) - Serverless Image Handler. version ${VERSION}`);
 
+    const isChinaRegion = props?.isChinaRegion;
+    const bucketNameParams: cdk.CfnParameter[] = [];
+    const altDomainParams: cdk.CfnParameter[] = [];
+
+    const mkParamGrp = (index: number) => {
+      const requiredOrOptional = index === 0 ? '(Required)' : '(Optional)';
+      const bp = this.newParam(`BucketParam${index}`, {
+        type: 'String',
+        description: `${requiredOrOptional} The bucket that contains your image files.`,
+        default: '',
+        allowedPattern: '^[^\\*]*$',
+      });
+      bucketNameParams.push(bp);
+      if (isChinaRegion) {
+        const adp = this.newParam(`AltDomainParam${index}`, {
+          type: 'CommaDelimitedList',
+          description: `(Optional if BucketParam${index} is empty) Alternate domain of Dist${index}.`,
+          default: '',
+        });
+        altDomainParams.push(adp);
+        this.addGroupParam({ [`Dist${index}`]: [bp, adp] });
+      } else {
+        this.addGroupParam({ [`Dist${index}`]: [bp] });
+      }
+    };
+
+    mkParamGrp(0);
+    mkParamGrp(1);
+    mkParamGrp(2);
+
     new LambdaImageHandler(this, id, {
-      isChinaRegion: props?.isChinaRegion,
-      bucketNameParams: [
-        this.newParam('BucketParam0', {
-          type: 'String',
-          description: '(Required) The bucket that contains your image files.',
-          default: '',
-          allowedPattern: '^[^\\*]*$',
-        }),
-        this.newParam('BucketParam1', {
-          type: 'String',
-          description: '(Optional) The bucket that contains your image files. Leave it empty if it doesn\'t exist.',
-          default: '',
-          allowedPattern: '^[^\\*]*$',
-        }),
-        this.newParam('BucketParam2', {
-          type: 'String',
-          description: '(Optional) The bucket that contains your image files. Leave it empty if it doesn\'t exist.',
-          default: '',
-          allowedPattern: '^[^\\*]*$',
-        }),
-      ],
+      isChinaRegion,
+      bucketNameParams,
+      altDomainParams: isChinaRegion ? altDomainParams : undefined,
     });
   }
 }
