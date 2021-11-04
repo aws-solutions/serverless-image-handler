@@ -1,3 +1,4 @@
+import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidArgument } from '..';
 import * as is from '../../is';
@@ -39,7 +40,7 @@ export class RoundedCornersAction implements IImageAction {
 
   public async process(ctx: IImageContext, params: string[]): Promise<void> {
     const opt = this.validate(params);
-    const metadata = await ctx.image.metadata();
+    const metadata = await sharp(await ctx.image.toBuffer()).metadata(); // https://github.com/lovell/sharp/issues/2959
     if (metadata.width && metadata.height) {
       const rbox = Buffer.from(`<svg viewBox="0 0 ${metadata.width} ${metadata.height}">
         <rect width="${metadata.width}" height="${metadata.height}" rx="${opt.r}" />
