@@ -15,6 +15,7 @@ export interface LambdaImageHandlerProps {
   isChinaRegion?: boolean;
   bucketNameParams: cdk.CfnParameter[];
   altDomainParams?: cdk.CfnParameter[];
+  iamCertParams?: cdk.CfnParameter[];
 }
 
 export class LambdaImageHandler extends Construct {
@@ -30,6 +31,16 @@ export class LambdaImageHandler extends Construct {
 
   constructor(scope: Construct, id: string, props: LambdaImageHandlerProps) {
     super(scope, id);
+
+    const hasAltDomainParams = !!props.altDomainParams;
+    const hasIamCertParams = !!props.iamCertParams;
+    if (
+      (hasAltDomainParams && (!hasIamCertParams))
+      ||
+      ((!hasAltDomainParams) && hasIamCertParams)
+    ) {
+      throw new Error('\'altDomainParams\' and \'iamCertParams\' must be both present or absent at the same time!');
+    }
 
     this.enable({ construct: this.originRequestPolicy, if: this.isNotChinaRegionCondition });
     this.enable({ construct: this.cachePolicy, if: this.isNotChinaRegionCondition });
@@ -173,6 +184,18 @@ export class LambdaImageHandler extends Construct {
             { errorCode: 504, errorCachingMinTtl: 10 },
           ],
         });
+
+        if (props.iamCertParams) {
+          const param = props.iamCertParams[index];
+          const hasIamCert = new cdk.CfnCondition(this, `HasIamCert${index}`, {
+            expression: cdk.Fn.conditionNot(cdk.Fn.conditionEquals('', param.valueAsString)),
+          });
+          Aspects.of(dist).add(new InjectViewerCertificate(cdk.Fn.conditionIf(hasIamCert.logicalId, {
+            IamCertificateId: param.valueAsString,
+            SslSupportMethod: 'sni-only',
+            MinimumProtocolVersion: 'TLSv1.2_2021',
+          }, Aws.NO_VALUE).toString()));
+        }
       } else {
         dist = new cloudfront.Distribution(this, `Dist${index}`, {
           comment: `${cdk.Stack.of(this).stackName} distribution${index} for s3://${bucket.valueAsString}`,
@@ -225,6 +248,18 @@ class InjectCondition implements cdk.IAspect {
   public visit(node: cdk.IConstruct): void {
     if (node instanceof cdk.CfnResource) {
       node.cfnOptions.condition = this.condition;
+    }
+  }
+}
+
+class InjectViewerCertificate implements cdk.IAspect {
+  public constructor(private viewerCertificate: string) { }
+
+  public visit(node: cdk.IConstruct): void {
+    if (node instanceof cloudfront.CfnDistribution) {
+      Object.assign(node.distributionConfig as cloudfront.CfnDistribution.DistributionConfigProperty, {
+        viewerCertificate: this.viewerCertificate,
+      });
     }
   }
 }

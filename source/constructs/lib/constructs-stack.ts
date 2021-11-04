@@ -236,6 +236,7 @@ export class LambdaImageHandlerStack extends SolutionStack {
     const isChinaRegion = props?.isChinaRegion;
     const bucketNameParams: cdk.CfnParameter[] = [];
     const altDomainParams: cdk.CfnParameter[] = [];
+    const iamCertParams: cdk.CfnParameter[] = [];
 
     const mkParamGrp = (index: number) => {
       const requiredOrOptional = index === 0 ? '(Required)' : '(Optional)';
@@ -252,8 +253,14 @@ export class LambdaImageHandlerStack extends SolutionStack {
           description: `(Optional if BucketParam${index} is empty) Alternate domain of Dist${index}.`,
           default: '',
         });
+        const cert = this.newParam(`IAMCertParam${index}`, {
+          type: 'String',
+          description: `(Optional) IamCertificateId${index}.`,
+          default: '',
+        });
         altDomainParams.push(adp);
-        this.addGroupParam({ [`Dist${index}`]: [bp, adp] });
+        iamCertParams.push(cert);
+        this.addGroupParam({ [`Dist${index}`]: [bp, adp, cert] });
       } else {
         this.addGroupParam({ [`Dist${index}`]: [bp] });
       }
@@ -267,6 +274,7 @@ export class LambdaImageHandlerStack extends SolutionStack {
       isChinaRegion,
       bucketNameParams,
       altDomainParams: isChinaRegion ? altDomainParams : undefined,
+      iamCertParams: isChinaRegion ? iamCertParams : undefined,
     });
   }
 }
