@@ -47,11 +47,11 @@ export class BlurAction implements IImageAction {
 
   public async process(ctx: IImageContext, params: string[]): Promise<void> {
     const opt = this.validate(params);
+    const a = -0.0057;
+    const b = 1.1787;
+    const c = -0.0694;
+    const sigma = a * opt.s * opt.s + b * opt.s + c;
 
-    const sums = opt.r + opt.s;
-    // NOTE: Ali blur config range from s 0 to 50 , r 0 to 50 ,
-    // SharpJs blur config range from 0.3 to 1000.
-    const blur = 50 * sums / 100 + 0.3;
-    ctx.image.blur(blur);
+    ctx.image.blur(sigma);
   }
 }
