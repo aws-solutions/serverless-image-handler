@@ -28,8 +28,10 @@ export class ContrastAction implements IImageAction {
   public async process(ctx: IImageContext, params: string[]): Promise<void> {
     const opt = this.validate(params);
 
-    // NOTE: Ali contrast config range from -100 to 100, SharpJs contrast  range from 0(baseBright) to 100.
-    const contrast = Math.floor((opt.contrast + 100) / 2);
-    ctx.image.clahe({ width: 100, height: 100, maxSlope: contrast });
+    if (opt.contrast > 0) {
+      ctx.image.linear((2 * opt.contrast + 100) / 200 + 0.5);
+    } else {
+      ctx.image.linear((opt.contrast + 100) / 200 + 0.5);
+    }
   }
 }
