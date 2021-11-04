@@ -28,14 +28,8 @@ export class BrightAction implements IImageAction {
   public async process(ctx: IImageContext, params: string[]): Promise<void> {
     const opt = this.validate(params);
 
-    // NOTE: Ali bright config range from -100 to 100, SharpJs bright config range from 0.5(baseBright) to 1.
-    const baseBirght = 0.3;
-    const d = 1 / baseBirght;
-    const range = ((d + 1) * 100) / (d - 1);
-    const bright = (opt.bright + range) / (range + 100);
-
     ctx.image.modulate({
-      brightness: bright,
+      lightness: opt.bright * 0.39,
     });
   }
 }
