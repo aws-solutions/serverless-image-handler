@@ -28,8 +28,6 @@ export class BrightAction implements IImageAction {
   public async process(ctx: IImageContext, params: string[]): Promise<void> {
     const opt = this.validate(params);
 
-    ctx.image.modulate({
-      lightness: opt.bright * 0.39,
-    });
+    ctx.image.linear(1, opt.bright);
   }
 }
