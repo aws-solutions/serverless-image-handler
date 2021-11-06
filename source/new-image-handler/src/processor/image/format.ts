@@ -16,8 +16,8 @@ export class FormatAction implements IImageAction {
     }
     opt.format = params[1];
 
-    if (opt.format !== 'jpg' && opt.format !== 'png' && opt.format !== 'webp') {
-      throw new InvalidArgument('Format must be one of jpg,png,webp');
+    if (!SUPPORTED_FORMAT.includes(opt.format)) {
+      throw new InvalidArgument(`Format must be one of ${SUPPORTED_FORMAT.toString()}`);
     }
 
     return opt;
@@ -38,3 +38,9 @@ export class FormatAction implements IImageAction {
 
   }
 }
+
+const SUPPORTED_FORMAT = [
+  'jpg',
+  'png',
+  'webp',
+];
