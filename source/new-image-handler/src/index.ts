@@ -44,7 +44,7 @@ app.use(async ctx => {
     if (actions.length > 1) {
       const processor = getProcessor(actions[0]);
       const { buffer } = await bs.get(uri);
-      const imagectx = { image: sharp(buffer), bufferStore: bs };
+      const imagectx = { image: sharp(buffer, { animated: true }), bufferStore: bs };
       await processor.process(imagectx, actions);
       const { data, info } = await imagectx.image.toBuffer({ resolveWithObject: true });
 
