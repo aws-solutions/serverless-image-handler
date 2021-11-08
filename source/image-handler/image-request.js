@@ -407,11 +407,10 @@ class ImageRequest {
         case '52494646': return 'image/webp';
         case '49492A00': return 'image/tiff';
         case '4D4D002A': return 'image/tiff';
-        default: throw {
-            status: 500,
-            code: 'RequestTypeError',
-            message: 'The file does not have an extension and the file type could not be inferred. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg). Refer to the documentation for additional guidance on forming image requests.'
-        };   
+        // We have been uploading files for years setting up the content-type as application/octet-stream
+        // until we fix them, let's return a generic `image` instead of throwing an exception because some of the
+        // files doesn't match the validation implemented in this method.
+        default: return 'image';
     }
 }
 }
