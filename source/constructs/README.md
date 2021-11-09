@@ -3,6 +3,11 @@
 - [Table of Contents](#table-of-contents)
 - [Overview](#overview)
   - [Lambda Image Handler](#lambda-image-handler)
+    - [架构流程](#架构流程)
+    - [前提条件（国际区域）](#前提条件国际区域)
+    - [部署参数（国际区域）](#部署参数国际区域)
+    - [部署后续（国际区域）](#部署后续国际区域)
+    - [修改存储桶策略 BucketPolicy（国际区域）](#修改存储桶策略-bucketpolicy国际区域)
   - [ECS Image Handler](#ecs-image-handler)
     - [Workflow](#workflow)
     - [Prerequisites](#prerequisites)
@@ -19,9 +24,75 @@ This cdk construct includes two different implementations of serverless image ha
 
 ## Lambda Image Handler
 
-![architecture](../../architecture.png)
+![architecture](./lambda-image-handler-arch.svg)
 
-TODO
+这是一个基于 Lambda 的无服务器图像处理器版本.
+
+1. 输出的修改后图片必须小于 6MB。
+2. `x-oss-process`语法。
+
+### 架构流程
+
+1. 客户端图像修改请求首先发送至 CloudFront。
+2. 如果请求没有被 CloudFront 缓存，它将首先通过 API Gateway 发送到后端 Lambda。(即 Origin #1)
+3. Lambda 将从 S3 获取图片，并做一些图片处理。
+4. 如果客户端请求不需要任何修改或请求原点图片。CloudFront 将首先把请求发送到 Origin #1。但是，Origin #1 会直接返回 HTTP 403 Forbidden，这就告诉 CloudFront 去访问 #2。这个设计的目的是告诉 CloudFront 直接访问存储在S3中的图片。
+
+### 前提条件（国际区域）
+
+1. 一个或多个 S3 桶
+
+### 部署参数（国际区域）
+
+| 参数名称     | 描述                  |
+| ------------ | --------------------- |
+| BucketParam0 | S3 存储桶 #0          |
+| BucketParam1 | S3 存储桶 #1 （可选） |
+| BucketParam2 | S3 存储桶 #2 （可选） |
+
+### 部署后续（国际区域）
+
+| 输出参数                             | 描述                                                                                                                                                            | 示例                                                                                                                      |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| ApiGw2Endpoint                       | API Gateway 的 API 地址（无缓存）                                                                                                                               | https://`<ID>`.execute-api.`<REGION>`.amazonaws.com                                                                       |
+| Bucket0                              | S3 存储桶 #0 名称                                                                                                                                               | s3://`<BUCKET0>`                                                                                                          |
+| BucketPolicy0                        | S3 存储桶 #0 的桶策略 ⚠️ 注意：部署好之后还需要在您的“存储桶 #0”的存储桶策略内将此内容复制到存储桶策略内。此策略为 CloudFront 安全访问“存储桶 #0” 必须填写的策略 | {"Action":"s3:GetObject","Effect":"Allow","Principal":{"CanonicalUser":"`<ID>`"},"Resource":"arn:aws:s3:::`<BUCKET0>`/*"} |
+| DistUrl0                             | CloudFront 的 API 地址（有缓存，推荐作为生产环境 API 地址）                                                                                                     | https://`<ID>`.cloudfront.net                                                                                             |
+| Bucket1（若存在 BucketParam1）       | 同上                                                                                                                                                            | 同上                                                                                                                      |
+| BucketPolicy1（若存在 BucketParam1） | 同上                                                                                                                                                            | 同上                                                                                                                      |
+| DistUrl1（若存在 BucketParam1）      | 同上                                                                                                                                                            | 同上                                                                                                                      |
+| Bucket2（若存在 BucketParam2）       | 同上                                                                                                                                                            | 同上                                                                                                                      |
+| BucketPolicy2（若存在 BucketParam2） | 同上                                                                                                                                                            | 同上                                                                                                                      |
+| DistUrl2（若存在 BucketParam2）      | 同上                                                                                                                                                            | 同上                                                                                                                      |
+| StyleConfig                          | 处理样式的 DynamoDB 配置表名称                                                                                                                                  |                                                                                                                           |
+
+使用方式：
+
+```
+curl <DistUrl0>/example.jpg?x-oss-process=image/resize,w_200,h_100/quality,q_50
+```
+
+### 修改存储桶策略 BucketPolicy（国际区域）
+
+![](./images/01-edit-bucket-policy.png)
+
+1. 找到 S3 存储桶 #0。
+2. 找到权限 Permissions 选项卡。
+3. 找到存储桶策略 Bucket Policy， 点击 Edit 按钮。
+
+![](./images/02-edit-bucket-policy.png)
+
+将输出参数 BucketPolicy0 的内容复制到此处，并保存。格式如图。例如：
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {"Action":"s3:GetObject","Effect":"Allow","Principal":{"CanonicalUser":"<ID>"},"Resource":"arn:aws:s3:::<BUCKET0>/*"}
+    ]
+}
+```
+
 
 ## ECS Image Handler
 
