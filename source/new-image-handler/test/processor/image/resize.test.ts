@@ -2,6 +2,59 @@ import * as sharp from 'sharp';
 import { IImageContext } from '../../../src/processor/image';
 import { ResizeAction } from '../../../src/processor/image/resize';
 import { NullStore } from '../../../src/store';
+import { fixtureStore } from './utils';
+
+test('resize,l_100', async () => {
+  const image = sharp((await fixtureStore.get('example.jpg')).buffer);
+  const ctx: IImageContext = { image, bufferStore: fixtureStore };
+
+  const action = new ResizeAction();
+  await action.process(ctx, 'resize,l_100'.split(','));
+
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(100);
+  expect(info.height).toBe(67);
+});
+
+test('resize,s_100', async () => {
+  const image = sharp((await fixtureStore.get('example.jpg')).buffer);
+  const ctx: IImageContext = { image, bufferStore: fixtureStore };
+
+  const action = new ResizeAction();
+  await action.process(ctx, 'resize,s_100'.split(','));
+
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(150);
+  expect(info.height).toBe(100);
+});
+
+test('resize,s_100,l_100', async () => {
+  const image = sharp((await fixtureStore.get('example.jpg')).buffer);
+  const ctx: IImageContext = { image, bufferStore: fixtureStore };
+
+  const action = new ResizeAction();
+  await action.process(ctx, 'resize,s_100,l_100'.split(','));
+
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(100);
+  expect(info.height).toBe(67);
+});
+
+test('resize,l_100,s_100,m_fixed,limit_0', async () => {
+  const image = sharp((await fixtureStore.get('example.jpg')).buffer);
+  const ctx: IImageContext = { image, bufferStore: fixtureStore };
+
+  const action = new ResizeAction();
+  await action.process(ctx, 'resize,l_100,s_100,m_fixed,limit_0'.split(','));
+
+  const { info } = await ctx.image.toBuffer({ resolveWithObject: true });
+
+  expect(info.width).toBe(100);
+  expect(info.height).toBe(100);
+});
 
 test('resize action validate', () => {
   const action = new ResizeAction();

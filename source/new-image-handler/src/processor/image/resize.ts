@@ -40,6 +40,10 @@ export class ResizeAction implements IImageAction {
         opt.w = Number.parseInt(v, 10);
       } else if (k === 'h') {
         opt.h = Number.parseInt(v, 10);
+      } else if (k === 'l') {
+        opt.l = Number.parseInt(v, 10);
+      } else if (k === 's') {
+        opt.s = Number.parseInt(v, 10);
       } else if (k === 'm') {
         if (v && ((v === Mode.LFIT) || (v === Mode.MFIT) || (v === Mode.FILL) || (v === Mode.PAD) || (v === Mode.FIXED))) {
           opt.m = v;
@@ -92,8 +96,8 @@ export class ResizeAction implements IImageAction {
     } else if (o.m === Mode.FIXED) {
       opt.fit = sharp.fit.fill;
     }
+    const metadata = await ctx.image.metadata();
     if (o.p && (!o.w) && (!o.h)) {
-      const metadata = await ctx.image.metadata();
       if (metadata.width && metadata.height) {
         const width = Math.round(metadata.width * o.p * 0.01);
         const height = Math.round(metadata.height * o.p * 0.01);
@@ -101,7 +105,25 @@ export class ResizeAction implements IImageAction {
         ctx.image.resize(width, height, opt);
       }
     } else {
-      ctx.image.resize(null, null, opt);
+      if (metadata.width && metadata.height) {
+        if (o.l) {
+          if (metadata.width > metadata.height) {
+            opt.width = o.l;
+          } else {
+            opt.height = o.l;
+          }
+        }
+        if (o.s) {
+          if (metadata.height < metadata.width) {
+            opt.height = o.s;
+          } else {
+            opt.width = o.s;
+          }
+        }
+        ctx.image.resize(null, null, opt);
+      } else {
+        throw new InvalidArgument('Can\'t read image\'s width and height');
+      }
     }
   }
 }
