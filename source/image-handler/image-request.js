@@ -291,8 +291,8 @@ class ImageRequest {
   parseRequestType(event) {
     const path = event["path"];
     const matchDefault = new RegExp(/^(\/?)([0-9a-zA-Z+\/]{4})*(([0-9a-zA-Z+\/]{2}==)|([0-9a-zA-Z+\/]{3}=))?$/);
-    const matchThumbor = new RegExp(/^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(\.+jpg|\.+png|\.+webp|\.tiff|\.jpeg|\.svg)$/i);
-    const matchCustom = new RegExp(/(\/?)(.*)(jpg|png|webp|tiff|jpeg|svg)/i);
+    const matchThumbor = new RegExp(/^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(\.+jpg|\.+png|\.+webp|\.tiff|\.jpeg|\.svg|\.gif)$/i);
+    const matchCustom = new RegExp(/(\/?)(.*)(jpg|png|webp|tiff|jpeg|svg|gif)/i);
 
     const definedEnvironmentVariables =
       process.env.REWRITE_MATCH_PATTERN !== "" &&
