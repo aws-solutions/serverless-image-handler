@@ -17,6 +17,10 @@ WORKDIR /app
 
 COPY package.json yarn.lock /app/
 
+RUN apk update && \
+    apk add fontconfig \
+        font-noto
+
 ENV NODE_ENV=production
 
 # https://pm2.keymetrics.io/docs/usage/docker-pm2-nodejs/
