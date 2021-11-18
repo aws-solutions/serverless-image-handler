@@ -18,8 +18,9 @@ WORKDIR /app
 COPY package.json yarn.lock /app/
 
 RUN apk update && \
-    apk add fontconfig \
-        font-noto
+    apk add fontconfig
+
+COPY ./fonts/* /usr/share/fonts/
 
 ENV NODE_ENV=production
 
