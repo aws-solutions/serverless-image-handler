@@ -2,6 +2,8 @@ import * as sharp from 'sharp';
 import { IImageAction, IImageContext } from '.';
 import { IActionOpts, ReadOnly, InvalidArgument } from '..';
 
+const margin = 5;
+
 export interface WatermarkOpts extends IActionOpts {
   text: string;
   t: number; // 不透明度
@@ -188,7 +190,6 @@ export class WatermarkAction implements IImageAction {
   }
 
   calculateTextSize(text: string, fontSize: number): WatermarkTextOpts {
-    const margin = 20;
     let cWidth = 0;
     for (let v of text) {
       const charCode = v.charCodeAt(0);
@@ -219,8 +220,8 @@ export class WatermarkAction implements IImageAction {
   textSvgImg(svgBytes: Buffer, textOpt: WatermarkTextOpts): sharp.Sharp {
     const overlapImg = sharp({
       create: {
-        width: textOpt.width + 10,
-        height: textOpt.height + 10,
+        width: textOpt.width + margin,
+        height: textOpt.height + margin,
         channels: 4,
         background: { r: 0, g: 0, b: 0, alpha: 0 },
       },

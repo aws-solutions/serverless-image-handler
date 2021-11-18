@@ -15,6 +15,7 @@ import { ResizeAction } from './resize';
 import { RotateAction } from './rotate';
 import { RoundedCornersAction } from './rounded-corners';
 import { SharpenAction } from './sharpen';
+import { WatermarkAction } from './watermark';
 
 export interface IImageAction extends IAction { }
 
@@ -84,6 +85,7 @@ ImageProcessor.getInstance().register(
   new CropAction(),
   new IndexCropAction(),
   new RoundedCornersAction(),
+  new WatermarkAction(),
 );
 
 export class StyleProcessor implements IProcessor {
