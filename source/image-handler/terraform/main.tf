@@ -26,9 +26,11 @@ resource "aws_s3_bucket" "images" {
 
 module "lambda" {
   source  = "moritzzimmer/lambda/aws"
-  version = "6.0.0"
+  version = "6.0.1"
 
+  architectures                      = ["arm64"]
   cloudwatch_lambda_insights_enabled = true
+  cloudwatch_logs_retention_in_days  = 1
   description                        = "provider of cute kitty pics."
   function_name                      = local.function_name
   ignore_external_function_updates   = true
@@ -78,12 +80,12 @@ resource "aws_s3_bucket_object" "this" {
 
 module "deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
-  version = "6.0.0"
+  version = "6.0.1"
 
-  alias_name                        = aws_lambda_alias.this.name
-  codestar_notifications_target_arn = data.aws_sns_topic.notifications.arn
+  alias_name                         = aws_lambda_alias.this.name
+  codestar_notifications_target_arn  = data.aws_sns_topic.notifications.arn
   codepipeline_artifact_store_bucket = data.aws_s3_bucket.pipeline_artifacts.bucket
-  s3_bucket                         = data.aws_s3_bucket.ci.bucket
-  s3_key                            = local.s3_key
-  function_name                     = local.function_name
+  s3_bucket                          = data.aws_s3_bucket.ci.bucket
+  s3_key                             = local.s3_key
+  function_name                      = local.function_name
 }
