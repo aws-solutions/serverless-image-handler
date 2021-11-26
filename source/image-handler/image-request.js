@@ -237,6 +237,13 @@ class ImageRequest {
         if (requestType === "Default") {
             // Decode the image request and return the image key
             const decoded = this.decodeRequest(event);
+            if (decoded.key === undefined) {
+                throw ({
+                    status: 400,
+                    code: 'ImageEdits::CannotFindImage',
+                    message: 'The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists.'
+                });
+            }
             return decoded.key;
         }
 
@@ -343,7 +350,7 @@ class ImageRequest {
                 return JSON.parse(toBuffer.toString());
             } catch (e) {
                 throw ({
-                    status: 400,
+                    status: 477, // 99% of the time is because of a truncated base64 encoded string by Outlook!
                     code: 'DecodeRequest::CannotDecodeRequest',
                     message: 'The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.'
                 });
