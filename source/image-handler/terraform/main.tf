@@ -26,7 +26,7 @@ resource "aws_s3_bucket" "images" {
 
 module "lambda" {
   source  = "moritzzimmer/lambda/aws"
-  version = "6.0.1"
+  version = "6.1.0"
 
   architectures                      = ["arm64"]
   cloudwatch_lambda_insights_enabled = true
@@ -34,6 +34,7 @@ module "lambda" {
   description                        = "provider of cute kitty pics."
   function_name                      = local.function_name
   ignore_external_function_updates   = true
+  layers                             = ["arn:aws:lambda:${data.aws_region.current.name}:580247275435:layer:LambdaInsightsExtension-Arm64:1"]
   memory_size                        = 1024
   publish                            = true
   runtime                            = "nodejs14.x"
@@ -80,7 +81,7 @@ resource "aws_s3_bucket_object" "this" {
 
 module "deployment" {
   source  = "moritzzimmer/lambda/aws//modules/deployment"
-  version = "6.0.1"
+  version = "6.1.0"
 
   alias_name                         = aws_lambda_alias.this.name
   codestar_notifications_target_arn  = data.aws_sns_topic.notifications.arn
