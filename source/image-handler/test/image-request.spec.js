@@ -1036,6 +1036,26 @@ describe('parseImageKey()', function() {
             }
         });
     });
+    describe('007/defaultRequestType/keyNotSpecifiedInRequest', function() {
+        it('Should return 400 if the key is not specified in the request', function() {
+            // Arrange
+            const event = {
+                path : '/eyJidWNrZXQiOiJhbGxvd2VkQnVja2V0MDAxIiwiZWRpdHMiOnsiZ3JheXNjYWxlIjoidHJ1ZSJ9fQ=='
+            }
+            // Act
+            const imageRequest = new ImageRequest(s3, secretsManager);
+            // Assert
+            try {
+                imageRequest.parseImageKey(event, 'Default');
+            } catch (error) {
+                expect(error).toEqual({
+                    status: 400,
+                    code: 'ImageEdits::CannotFindImage',
+                    message: 'The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists.'
+                });
+            }
+        });
+    });
 });
 
 // ----------------------------------------------------------------------------
@@ -1213,7 +1233,7 @@ describe('decodeRequest()', function() {
                 imageRequest.decodeRequest(event);
             } catch (error) {
                 expect(error).toEqual({
-                    status: 400,
+                    status: 477,
                     code: 'DecodeRequest::CannotDecodeRequest',
                     message: 'The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.'
                 });
