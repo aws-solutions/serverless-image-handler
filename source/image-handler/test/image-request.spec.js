@@ -1036,6 +1036,26 @@ describe('parseImageKey()', function() {
             }
         });
     });
+    describe('007/defaultRequestType/keyNotSpecifiedInRequest', function() {
+        it('Should return 400 if the key is not specified in the request', function() {
+            // Arrange
+            const event = {
+                path : '/eyJidWNrZXQiOiJhbGxvd2VkQnVja2V0MDAxIiwiZWRpdHMiOnsiZ3JheXNjYWxlIjoidHJ1ZSJ9fQ=='
+            }
+            // Act
+            const imageRequest = new ImageRequest(s3, secretsManager);
+            // Assert
+            try {
+                imageRequest.parseImageKey(event, 'Default');
+            } catch (error) {
+                expect(error).toEqual({
+                    status: 400,
+                    code: 'ImageEdits::CannotFindImage',
+                    message: 'The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists.'
+                });
+            }
+        });
+    });
 });
 
 // ----------------------------------------------------------------------------
@@ -1128,9 +1148,9 @@ describe('parseRequestType()', function() {
                 expect(result).not.toEqual(notExpectedResult);
             } catch (error) {
                 expect(error).toEqual({
-                    status: 400,
-                    code: 'RequestTypeError',
-                    message: 'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.'
+                    status: 477, // 99% of the time is because of a truncated base64 encoded string by Outlook!
+                    code: 'DecodeRequest::CannotDecodeRequest',
+                    message: 'The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.'
                 });
             }
         });
@@ -1213,7 +1233,7 @@ describe('decodeRequest()', function() {
                 imageRequest.decodeRequest(event);
             } catch (error) {
                 expect(error).toEqual({
-                    status: 400,
+                    status: 477,
                     code: 'DecodeRequest::CannotDecodeRequest',
                     message: 'The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.'
                 });
