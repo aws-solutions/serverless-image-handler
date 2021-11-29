@@ -1148,9 +1148,9 @@ describe('parseRequestType()', function() {
                 expect(result).not.toEqual(notExpectedResult);
             } catch (error) {
                 expect(error).toEqual({
-                    status: 400,
-                    code: 'RequestTypeError',
-                    message: 'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.'
+                    status: 477, // 99% of the time is because of a truncated base64 encoded string by Outlook!
+                    code: 'DecodeRequest::CannotDecodeRequest',
+                    message: 'The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.'
                 });
             }
         });

@@ -296,9 +296,11 @@ class ImageRequest {
 
         //Check if path is base 64 encoded
         let isBase64Encoded = true;
+        let decodeError = null;
         try {
             this.decodeRequest(event);
         } catch(error) {
+            decodeError = error;
             console.error(error);
             isBase64Encoded = false;
         } 
@@ -309,6 +311,9 @@ class ImageRequest {
             return 'Custom';
         } else if (matchThumbor.test(path)) {  // use thumbor mappings
             return 'Thumbor';
+        } else if (decodeError && decodeError.code === 'DecodeRequest::CannotDecodeRequest') {
+            // 99% of the time is a truncated base64 encoded URL by Outlook, return the 477 code instead of 400
+            throw decodeError;
         } else {
             throw {
                 status: 400,
