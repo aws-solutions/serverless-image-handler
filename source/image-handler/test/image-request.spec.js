@@ -568,9 +568,9 @@ describe('setup()', function() {
                 expect(imageRequest).toEqual(expectedResult);
             } catch (error) {
                 expect(error).toEqual({
-                    status: 400,
-                    code: 'RequestTypeError',
-                    message: 'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.'
+                    status: 477,
+                    code: 'DecodeRequest::CannotDecodeRequest',
+                    message: 'The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.'
                 });
             }
         });
@@ -1124,9 +1124,9 @@ describe('parseRequestType()', function() {
                 imageRequest.parseRequestType(event);
             } catch (error) {
                 expect(error).toEqual({
-                    status: 400,
-                    code: 'RequestTypeError',
-                    message: 'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.'
+                    status: 477,
+                    code: 'DecodeRequest::CannotDecodeRequest',
+                    message: 'The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.'
                 });
             }
         });
