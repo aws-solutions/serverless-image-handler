@@ -2,7 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 const AWS = require('aws-sdk');
-const s3 = new AWS.S3();
+const s3 = new AWS.S3({
+    maxRetries: 2,
+    retryDelayOptions: {
+        customBackoff: retryCount => {
+            console.log(`retry count: ${retryCount}, waiting: 100ms`)
+            return 100 // in milliseconds
+        }
+    },
+    httpOptions: {
+        connectTimeout: 2000, // in milliseconds
+        timeout: 5000, // in milliseconds
+    },
+});
 const rekognition = new AWS.Rekognition();
 const secretsManager = new AWS.SecretsManager();
 
