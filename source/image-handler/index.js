@@ -3,7 +3,7 @@
 
 const AWS = require('aws-sdk');
 const s3 = new AWS.S3({
-    maxRetries: 2,
+    maxRetries: 3,
     retryDelayOptions: {
         customBackoff: retryCount => {
             console.log(`retry count: ${retryCount}, waiting: 100ms`)
@@ -11,7 +11,7 @@ const s3 = new AWS.S3({
         }
     },
     httpOptions: {
-        connectTimeout: 2000, // in milliseconds
+        connectTimeout: 1000, // in milliseconds
         timeout: 5000, // in milliseconds
     },
 });
