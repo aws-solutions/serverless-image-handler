@@ -77,7 +77,8 @@ class ImageRequest {
 
       return this;
     } catch (err) {
-      logger.error(err.message, err);
+      const log = (err.status && err.status >= 400 && err.status < 500) ? logger.warn : logger.error;
+      log(err.message, err);
       throw err;
     }
   }
@@ -90,7 +91,7 @@ class ImageRequest {
    */
   async getOriginalImage(bucket, key) {
     const imageLocation = {Bucket: bucket, Key: key};
-    logger.info(imageLocation)
+
     try {
       const originalImage = await this.s3.getObject(imageLocation).promise();
 
@@ -322,7 +323,7 @@ class ImageRequest {
         status: 400,
         code: "RequestTypeError",
         message:
-          "The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.",
+          "The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg, gif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.",
       };
     }
   }
