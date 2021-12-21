@@ -23,6 +23,7 @@ if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
     exit 1
 fi
 
+# Exit immediately if a command exits with a non-zero status.
 set -e
 
 # Get reference for all important folders
@@ -30,53 +31,70 @@ template_dir="$PWD"
 template_dist_dir="$template_dir/global-s3-assets"
 build_dist_dir="$template_dir/regional-s3-assets"
 source_dir="$template_dir/../source"
+cdk_source_dir="$source_dir/constructs"
 
 echo "------------------------------------------------------------------------------"
-echo "Rebuild distribution"
+echo "[Init] Clean old dist folders"
 echo "------------------------------------------------------------------------------"
+echo "rm -rf $template_dist_dir"
 rm -rf $template_dist_dir
+echo "mkdir -p $template_dist_dir"
 mkdir -p $template_dist_dir
+echo "rm -rf $build_dist_dir"
 rm -rf $build_dist_dir
+echo "mkdir -p $build_dist_dir"
 mkdir -p $build_dist_dir
 
 echo "------------------------------------------------------------------------------"
-echo "CloudFormation template with CDK and Constructs"
+echo "Synthesize the CDK project into a CloudFormation template"
 echo "------------------------------------------------------------------------------"
-export BUCKET_NAME=$1
-export SOLUTION_NAME=$2
-export VERSION=$3
+export SOLUTION_BUCKET_NAME_PLACEHOLDER=$1
+export SOLUTION_NAME_PLACEHOLDER=$2
+export SOLUTION_VERSION_PLACEHOLDER=$3
+export overrideWarningsEnabled=false
 
-cd $source_dir/constructs
+cd $cdk_source_dir
+npm run clean
 npm install
-npm run build && cdk synth --asset-metadata false --path-metadata false --json true > serverless-image-handler.json
-mv serverless-image-handler.json $template_dist_dir/serverless-image-handler.template
+node_modules/aws-cdk/bin/cdk synth --asset-metadata false --path-metadata false >$template_dist_dir/$2.template
+
+declare -a lambda_packages=(
+    "image-handler"
+    "custom-resource"
+)
+
+for lambda_package in "${lambda_packages[@]}"; do
+    echo "------------------------------------------------------------------------------"
+    echo "Building Lambda package: $lambda_package"
+    echo "------------------------------------------------------------------------------"
+    cd $source_dir/$lambda_package
+    npm run package
+    # Check the result of the package step and exit if a failure is identified
+    if [ $? -eq 0 ]; then
+        echo "Package for $lambda_package built successfully"
+    else
+        echo "******************************************************************************"
+        echo "Lambda package build FAILED for $lambda_package"
+        echo "******************************************************************************"
+        exit 1
+    fi
+    mv dist/package.zip $build_dist_dir/$lambda_package.zip
+    rm -rf dist
+done
 
 echo "------------------------------------------------------------------------------"
-echo "Package the image-handler code"
-echo "------------------------------------------------------------------------------"
-cd $source_dir/image-handler
-npm install
-npm run build
-cp dist/image-handler.zip $build_dist_dir/image-handler.zip
-
-echo "------------------------------------------------------------------------------"
-echo "Package the demo-ui assets"
+echo "Package Serverless Image Handler Demo UI"
 echo "------------------------------------------------------------------------------"
 mkdir $build_dist_dir/demo-ui/
 cp -r $source_dir/demo-ui/** $build_dist_dir/demo-ui/
 
 echo "------------------------------------------------------------------------------"
-echo "Package the custom-resource code"
-echo "------------------------------------------------------------------------------"
-cd $source_dir/custom-resource
-npm install
-npm run build
-cp dist/custom-resource.zip $build_dist_dir/custom-resource.zip
-
-echo "------------------------------------------------------------------------------"
-echo "Generate the demo-ui manifest document"
+echo "[Create] Console manifest"
 echo "------------------------------------------------------------------------------"
 cd $source_dir/demo-ui
-manifest=(`find * -type f ! -iname ".DS_Store"`)
-manifest_json=$(IFS=,;printf "%s" "${manifest[*]}")
-echo "{\"files\":[\"$manifest_json\"]}" | sed 's/,/","/g' >> $build_dist_dir/demo-ui-manifest.json
+manifest=($(find * -type f ! -iname ".DS_Store"))
+manifest_json=$(
+    IFS=,
+    printf "%s" "${manifest[*]}"
+)
+echo "{\"files\":[\"$manifest_json\"]}" | sed 's/,/","/g' >>$build_dist_dir/demo-ui-manifest.json

@@ -12,6 +12,7 @@
 
 # test assets
 **/coverage
+**/coverage-reports
 **/.nyc_output
 
 # misc
