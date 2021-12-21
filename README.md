@@ -28,7 +28,7 @@ For more information and a detailed deployment guide, visit the [Serverless Imag
 
 # Architecture Diagram
 
-![Architecture Diagram](./deployment/architecture.png)
+![Architecture Diagram](./architecture.png)
 
 The AWS CloudFormation template deploys an Amazon CloudFront distribution, Amazon API Gateway REST API, and an AWS Lambda function. Amazon CloudFront provides a caching layer to reduce the cost of image processing and the latency of subsequent image delivery. The Amazon API Gateway provides endpoint resources and triggers the AWS Lambda function. The AWS Lambda function retrieves the image from the customer's Amazon Simple Storage Service (Amazon S3) bucket and uses Sharp to return a modified version of the image to the API Gateway. Additionally, the solution generates a CloudFront domain name that provides cached access to the image handler API.
 
