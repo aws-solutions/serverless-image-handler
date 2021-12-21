@@ -6,13 +6,45 @@ THIRD PARTY COMPONENTS
 **********************
 This software includes third party software subject to the following copyrights:
 
-aws-sdk under the Apache License Version 2.0
+@aws-cdk/assert under the Apache License 2.0
+@aws-cdk/aws-apigateway under the Apache License 2.0
+@aws-cdk/aws-cloudfront under the Apache License 2.0
+@aws-cdk/aws-iam under the Apache License 2.0
+@aws-cdk/aws-lambda under the Apache License 2.0
+@aws-cdk/aws-s3 under the Apache License 2.0
+@aws-cdk/core under the Apache License 2.0
+@aws-solutions-constructs/aws-apigateway-lambda under the Apache License 2.0
+@aws-solutions-constructs/aws-cloudfront-apigateway-lambda under the Apache License 2.0
+@aws-solutions-constructs/aws-cloudfront-s3 under the Apache License 2.0
+@aws-solutions-constructs/core under the Apache License 2.0
+@popperjs/core under the Massachusetts Institute of Technology (MIT) license
+@types/color under the Massachusetts Institute of Technology (MIT) license
+@types/color-name under the Massachusetts Institute of Technology (MIT) license
+@types/jest under the Massachusetts Institute of Technology (MIT) license
+@types/node under the Massachusetts Institute of Technology (MIT) license
+@types/sharp under the Massachusetts Institute of Technology (MIT) license
+@types/uuid under the Massachusetts Institute of Technology (MIT) license
+@typescript-eslint/eslint-plugin under the Massachusetts Institute of Technology (MIT) license
+@typescript-eslint/parser under the BSD 2-Clause license
+aws-cdk under the Apache License 2.0
+aws-sdk under the Apache License 2.0
 axios under the Massachusetts Institute of Technology (MIT) license
-axios-mock-adapter under the Massachusetts Institute of Technology (MIT) license
 bootstrap under the Massachusetts Institute of Technology (MIT) license
 color under the Massachusetts Institute of Technology (MIT) license
 color-name under the Massachusetts Institute of Technology (MIT) license
+eslint under the Massachusetts Institute of Technology (MIT) license
+eslint-config-prettier under the Massachusetts Institute of Technology (MIT) license
+eslint-config-standard under the Massachusetts Institute of Technology (MIT) license
+eslint-plugin-header under the Massachusetts Institute of Technology (MIT) license
+eslint-plugin-import under the Massachusetts Institute of Technology (MIT) license
+eslint-plugin-jsdoc under the BSD 2-Clause license
+eslint-plugin-node under the Massachusetts Institute of Technology (MIT) license
+eslint-plugin-prettier under the Massachusetts Institute of Technology (MIT) license
 jest under the Massachusetts Institute of Technology (MIT) license
-mocha under the Massachusetts Institute of Technology (MIT) license
-sharp under the Apache License Version 2.0
+jquery under the Massachusetts Institute of Technology (MIT) license
+moment under the Massachusetts Institute of Technology (MIT) license
+sharp under the Apache License 2.0
+ts-jest under the Massachusetts Institute of Technology (MIT) license
+ts-node under the Massachusetts Institute of Technology (MIT) license
+typescript under the Apache License 2.0
 uuid under the Massachusetts Institute of Technology (MIT) license

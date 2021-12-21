@@ -1,0 +1,2001 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Serverless Image Handler Stack Snapshot 1`] = `
+Object {
+  "Conditions": Object {
+    "CommonResourcesDeployDemoUICondition308D3B09": Object {
+      "Fn::Equals": Array [
+        Object {
+          "Ref": "DeployDemoUIParameter",
+        },
+        "Yes",
+      ],
+    },
+    "CommonResourcesEnableCorsConditionA0615348": Object {
+      "Fn::Equals": Array [
+        Object {
+          "Ref": "CorsEnabledParameter",
+        },
+        "Yes",
+      ],
+    },
+    "CommonResourcesEnableDefaultFallbackImageConditionD1A10983": Object {
+      "Fn::Equals": Array [
+        Object {
+          "Ref": "EnableDefaultFallbackImageParameter",
+        },
+        "Yes",
+      ],
+    },
+    "CommonResourcesEnableSignatureCondition909DC7A1": Object {
+      "Fn::Equals": Array [
+        Object {
+          "Ref": "EnableSignatureParameter",
+        },
+        "Yes",
+      ],
+    },
+  },
+  "Description": "Serverless Image Handler Stack",
+  "Metadata": Object {
+    "AWS::CloudFormation::Interface": Object {
+      "ParameterGroups": Array [
+        Object {
+          "Label": Object {
+            "default": "CORS Options",
+          },
+          "Parameters": Array [
+            "CorsEnabledParameter",
+            "CorsOriginParameter",
+          ],
+        },
+        Object {
+          "Label": Object {
+            "default": "Image Sources",
+          },
+          "Parameters": Array [
+            "SourceBucketsParameter",
+          ],
+        },
+        Object {
+          "Label": Object {
+            "default": "Demo UI",
+          },
+          "Parameters": Array [
+            "DeployDemoUIParameter",
+          ],
+        },
+        Object {
+          "Label": Object {
+            "default": "Event Logging",
+          },
+          "Parameters": Array [
+            "LogRetentionPeriodParameter",
+          ],
+        },
+        Object {
+          "Label": Object {
+            "default": "Image URL Signature (Note: Enabling signature is not compatible with previous image URLs, which could result in broken image links. Please refer to the implementation guide for details: https://docs.aws.amazon.com/solutions/latest/serverless-image-handler/considerations.html)",
+          },
+          "Parameters": Array [
+            "EnableSignatureParameter",
+            "SecretsManagerSecretParameter",
+            "SecretsManagerKeyParameter",
+          ],
+        },
+        Object {
+          "Label": Object {
+            "default": "Default Fallback Image (Note: Enabling default fallback image returns the default fallback image instead of JSON object when error happens. Please refer to the implementation guide for details: https://docs.aws.amazon.com/solutions/latest/serverless-image-handler/considerations.html)",
+          },
+          "Parameters": Array [
+            "EnableDefaultFallbackImageParameter",
+            "FallbackImageS3BucketParameter",
+            "FallbackImageS3KeyParameter",
+          ],
+        },
+        Object {
+          "Label": Object {
+            "default": "Auto WebP",
+          },
+          "Parameters": Array [
+            "AutoWebPParameter",
+          ],
+        },
+      ],
+      "ParameterLabels": Object {
+        "AutoWebPParameter": Object {
+          "default": "AutoWebP",
+        },
+        "CloudFrontPriceClassParameter": Object {
+          "default": "CloudFront PriceClass",
+        },
+        "CorsEnabledParameter": Object {
+          "default": "CORS Enabled",
+        },
+        "CorsOriginParameter": Object {
+          "default": "CORS Origin",
+        },
+        "DeployDemoUIParameter": Object {
+          "default": "Deploy Demo UI",
+        },
+        "EnableDefaultFallbackImageParameter": Object {
+          "default": "Enable Default Fallback Image",
+        },
+        "EnableSignatureParameter": Object {
+          "default": "Enable Signature",
+        },
+        "FallbackImageS3BucketParameter": Object {
+          "default": "Fallback Image S3 Bucket",
+        },
+        "FallbackImageS3KeyParameter": Object {
+          "default": "Fallback Image S3 Key",
+        },
+        "LogRetentionPeriodParameter": Object {
+          "default": "Log Retention Period",
+        },
+        "SecretsManagerKeyParameter": Object {
+          "default": "SecretsManager Key",
+        },
+        "SecretsManagerSecretParameter": Object {
+          "default": "SecretsManager Secret",
+        },
+        "SourceBucketsParameter": Object {
+          "default": "Source Buckets",
+        },
+      },
+    },
+  },
+  "Outputs": Object {
+    "ApiEndpoint": Object {
+      "Description": "Link to API endpoint for sending image requests to.",
+      "Value": Object {
+        "Fn::Join": Array [
+          "",
+          Array [
+            "https://",
+            Object {
+              "Fn::GetAtt": Array [
+                "BackEndImageHandlerCloudFrontApiGatewayLambdaCloudFrontToApiGatewayCloudFrontDistribution03AA31B2",
+                "DomainName",
+              ],
+            },
+          ],
+        ],
+      },
+    },
+    "CorsEnabled": Object {
+      "Description": "Indicates whether Cross-Origin Resource Sharing (CORS) has been enabled for the image handler API.",
+      "Value": Object {
+        "Ref": "CorsEnabledParameter",
+      },
+    },
+    "CorsOrigin": Object {
+      "Condition": "CommonResourcesEnableCorsConditionA0615348",
+      "Description": "Origin value returned in the Access-Control-Allow-Origin header of image handler API responses.",
+      "Value": Object {
+        "Ref": "CorsOriginParameter",
+      },
+    },
+    "DemoUrl": Object {
+      "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
+      "Description": "Link to the demo user interface for the solution.",
+      "Value": Object {
+        "Fn::Join": Array [
+          "",
+          Array [
+            "https://",
+            Object {
+              "Fn::GetAtt": Array [
+                "FrontEndDistributionToS3CloudFrontDistribution15FE13D0",
+                "DomainName",
+              ],
+            },
+            "/index.html",
+          ],
+        ],
+      },
+    },
+    "LogRetentionPeriod": Object {
+      "Description": "Number of days for event logs from Lambda to be retained in CloudWatch.",
+      "Value": Object {
+        "Ref": "LogRetentionPeriodParameter",
+      },
+    },
+    "SourceBuckets": Object {
+      "Description": "Amazon S3 bucket location containing original image files.",
+      "Value": Object {
+        "Ref": "SourceBucketsParameter",
+      },
+    },
+  },
+  "Parameters": Object {
+    "AutoWebPParameter": Object {
+      "AllowedValues": Array [
+        "Yes",
+        "No",
+      ],
+      "Default": "No",
+      "Description": "Would you like to enable automatic WebP based on accept headers? Select 'Yes' if so.",
+      "Type": "String",
+    },
+    "CloudFrontPriceClassParameter": Object {
+      "AllowedValues": Array [
+        "PriceClass_All",
+        "PriceClass_200",
+        "PriceClass_100",
+      ],
+      "Default": "PriceClass_All",
+      "Description": "The AWS CloudFront price class to use. For more information see: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PriceClass.html",
+      "Type": "String",
+    },
+    "CorsEnabledParameter": Object {
+      "AllowedValues": Array [
+        "Yes",
+        "No",
+      ],
+      "Default": "No",
+      "Description": "Would you like to enable Cross-Origin Resource Sharing (CORS) for the image handler API? Select 'Yes' if so.",
+      "Type": "String",
+    },
+    "CorsOriginParameter": Object {
+      "Default": "*",
+      "Description": "If you selected 'Yes' above, please specify an origin value here. A wildcard (*) value will support any origin. We recommend specifying an origin (i.e. https://example.domain) to restrict cross-site access to your API.",
+      "Type": "String",
+    },
+    "DeployDemoUIParameter": Object {
+      "AllowedValues": Array [
+        "Yes",
+        "No",
+      ],
+      "Default": "Yes",
+      "Description": "Would you like to deploy a demo UI to explore the features and capabilities of this solution? This will create an additional Amazon S3 bucket and Amazon CloudFront distribution in your account.",
+      "Type": "String",
+    },
+    "EnableDefaultFallbackImageParameter": Object {
+      "AllowedValues": Array [
+        "Yes",
+        "No",
+      ],
+      "Default": "No",
+      "Description": "Would you like to enable the default fallback image? If so, select 'Yes' and provide FallbackImageS3Bucket and FallbackImageS3Key values.",
+      "Type": "String",
+    },
+    "EnableSignatureParameter": Object {
+      "AllowedValues": Array [
+        "Yes",
+        "No",
+      ],
+      "Default": "No",
+      "Description": "Would you like to enable the signature? If so, select 'Yes' and provide SecretsManagerSecret and SecretsManagerKey values.",
+      "Type": "String",
+    },
+    "FallbackImageS3BucketParameter": Object {
+      "Default": "",
+      "Description": "The name of the Amazon S3 bucket which contains the default fallback image. e.g. my-fallback-image-bucket",
+      "Type": "String",
+    },
+    "FallbackImageS3KeyParameter": Object {
+      "Default": "",
+      "Description": "The name of the default fallback image object key including prefix. e.g. prefix/image.jpg",
+      "Type": "String",
+    },
+    "LogRetentionPeriodParameter": Object {
+      "AllowedValues": Array [
+        "1",
+        "3",
+        "5",
+        "7",
+        "14",
+        "30",
+        "60",
+        "90",
+        "120",
+        "150",
+        "180",
+        "365",
+        "400",
+        "545",
+        "731",
+        "1827",
+        "3653",
+      ],
+      "Default": "1",
+      "Description": "This solution automatically logs events to Amazon CloudWatch. Select the amount of time for CloudWatch logs from this solution to be retained (in days).",
+      "Type": "Number",
+    },
+    "SecretsManagerKeyParameter": Object {
+      "Default": "",
+      "Description": "The name of AWS Secrets Manager secret key. You need to create secret key with this key name. The secret value would be used to check signature.",
+      "Type": "String",
+    },
+    "SecretsManagerSecretParameter": Object {
+      "Default": "",
+      "Description": "The name of AWS Secrets Manager secret. You need to create your secret under this name.",
+      "Type": "String",
+    },
+    "SourceBucketsParameter": Object {
+      "AllowedPattern": ".+",
+      "Default": "defaultBucket, bucketNo2, bucketNo3, ...",
+      "Description": "(Required) List the buckets (comma-separated) within your account that contain original image files. If you plan to use Thumbor or Custom image requests with this solution, the source bucket for those requests will be the first bucket listed in this field.",
+      "Type": "String",
+    },
+  },
+  "Resources": Object {
+    "BackEndCachePolicy1DCE9B1B": Object {
+      "Properties": Object {
+        "CachePolicyConfig": Object {
+          "DefaultTTL": 86400,
+          "MaxTTL": 31536000,
+          "MinTTL": 1,
+          "Name": Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "ServerlessImageHandler-",
+                Object {
+                  "Fn::GetAtt": Array [
+                    "CommonResourcesCustomResourcesCustomResourceUuid64E7CCAD",
+                    "UUID",
+                  ],
+                },
+              ],
+            ],
+          },
+          "ParametersInCacheKeyAndForwardedToOrigin": Object {
+            "CookiesConfig": Object {
+              "CookieBehavior": "none",
+            },
+            "EnableAcceptEncodingBrotli": false,
+            "EnableAcceptEncodingGzip": true,
+            "HeadersConfig": Object {
+              "HeaderBehavior": "whitelist",
+              "Headers": Array [
+                "origin",
+                "accept",
+              ],
+            },
+            "QueryStringsConfig": Object {
+              "QueryStringBehavior": "whitelist",
+              "QueryStrings": Array [
+                "signature",
+              ],
+            },
+          },
+        },
+      },
+      "Type": "AWS::CloudFront::CachePolicy",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaApiAccessLogGroup9B786692": Object {
+      "DeletionPolicy": "Retain",
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W84",
+              "reason": "By default CloudWatchLogs LogGroups data is encrypted using the CloudWatch server-side encryption keys (AWS Managed Keys)",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "RetentionInDays": Object {
+          "Ref": "LogRetentionPeriodParameter",
+        },
+        "Tags": Array [
+          Object {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaCloudFrontToApiGatewayCloudFrontDistribution03AA31B2": Object {
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W70",
+              "reason": "Since the distribution uses the CloudFront domain name, CloudFront automatically sets the security policy to TLSv1 regardless of the value of MinimumProtocolVersion",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "DistributionConfig": Object {
+          "Comment": "Image Handler Distribution for Serverless Image Handler",
+          "CustomErrorResponses": Array [
+            Object {
+              "ErrorCachingMinTTL": 600,
+              "ErrorCode": 500,
+            },
+            Object {
+              "ErrorCachingMinTTL": 600,
+              "ErrorCode": 501,
+            },
+            Object {
+              "ErrorCachingMinTTL": 600,
+              "ErrorCode": 502,
+            },
+            Object {
+              "ErrorCachingMinTTL": 600,
+              "ErrorCode": 503,
+            },
+            Object {
+              "ErrorCachingMinTTL": 600,
+              "ErrorCode": 504,
+            },
+          ],
+          "DefaultCacheBehavior": Object {
+            "AllowedMethods": Array [
+              "GET",
+              "HEAD",
+            ],
+            "CachePolicyId": Object {
+              "Ref": "BackEndCachePolicy1DCE9B1B",
+            },
+            "Compress": true,
+            "OriginRequestPolicyId": Object {
+              "Ref": "BackEndOriginRequestPolicy771345D7",
+            },
+            "TargetOriginId": "TestStackBackEndImageHandlerCloudFrontApiGatewayLambdaCloudFrontToApiGatewayCloudFrontDistributionOrigin1A053AEB7",
+            "ViewerProtocolPolicy": "https-only",
+          },
+          "Enabled": true,
+          "HttpVersion": "http2",
+          "IPV6Enabled": true,
+          "Logging": Object {
+            "Bucket": Object {
+              "Fn::Join": Array [
+                "",
+                Array [
+                  Object {
+                    "Fn::GetAtt": Array [
+                      "CommonResourcesCustomResourcesLogBucketCustomResource2445A3AB",
+                      "BucketName",
+                    ],
+                  },
+                  ".s3.",
+                  Object {
+                    "Fn::GetAtt": Array [
+                      "CommonResourcesCustomResourcesLogBucketCustomResource2445A3AB",
+                      "Region",
+                    ],
+                  },
+                  ".",
+                  Object {
+                    "Ref": "AWS::URLSuffix",
+                  },
+                ],
+              ],
+            },
+            "Prefix": "api-cloudfront/",
+          },
+          "Origins": Array [
+            Object {
+              "CustomOriginConfig": Object {
+                "OriginProtocolPolicy": "https-only",
+                "OriginSSLProtocols": Array [
+                  "TLSv1.1",
+                  "TLSv1.2",
+                ],
+              },
+              "DomainName": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    Object {
+                      "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109",
+                    },
+                    ".execute-api.",
+                    Object {
+                      "Ref": "AWS::Region",
+                    },
+                    ".amazonaws.com",
+                  ],
+                ],
+              },
+              "Id": "TestStackBackEndImageHandlerCloudFrontApiGatewayLambdaCloudFrontToApiGatewayCloudFrontDistributionOrigin1A053AEB7",
+              "OriginPath": "/image",
+            },
+          ],
+          "PriceClass": Object {
+            "Ref": "CloudFrontPriceClassParameter",
+          },
+        },
+        "Tags": Array [
+          Object {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+      },
+      "Type": "AWS::CloudFront::Distribution",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109": Object {
+      "Properties": Object {
+        "BinaryMediaTypes": Array [
+          "*/*",
+        ],
+        "EndpointConfiguration": Object {
+          "Types": Array [
+            "REGIONAL",
+          ],
+        },
+        "Name": "LambdaRestApi",
+        "Tags": Array [
+          Object {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+      },
+      "Type": "AWS::ApiGateway::RestApi",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiANYApiPermissionTestStackBackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi9D692DD2ANY979F1429": Object {
+      "Properties": Object {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": Object {
+          "Fn::GetAtt": Array [
+            "BackEndImageHandlerLambdaFunctionADEF7FF2",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": Object {
+          "Fn::Join": Array [
+            "",
+            Array [
+              "arn:",
+              Object {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:",
+              Object {
+                "Ref": "AWS::Region",
+              },
+              ":",
+              Object {
+                "Ref": "AWS::AccountId",
+              },
+              ":",
+              Object {
+                "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109",
+              },
+              "/",
+              Object {
+                "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiDeploymentStageimageB55D20E3",
+              },
+              "/*/",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiANYApiPermissionTestTestStackBackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi9D692DD2ANY932D3700": Object {
+      "Properties": Object {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": Object {
+          "Fn::GetAtt": Array [
+            "BackEndImageHandlerLambdaFunctionADEF7FF2",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": Object {
+          "Fn::Join": Array [
+            "",
+            Array [
+              "arn:",
+              Object {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:",
+              Object {
+                "Ref": "AWS::Region",
+              },
+              ":",
+              Object {
+                "Ref": "AWS::AccountId",
+              },
+              ":",
+              Object {
+                "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109",
+              },
+              "/test-invoke-stage/*/",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiANYE4494B31": Object {
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W59",
+              "reason": "AWS::ApiGateway::Method AuthorizationType is set to 'NONE' because API Gateway behind CloudFront does not support AWS_IAM authentication",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "ANY",
+        "Integration": Object {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:",
+                Object {
+                  "Ref": "AWS::Region",
+                },
+                ":lambda:path/2015-03-31/functions/",
+                Object {
+                  "Fn::GetAtt": Array [
+                    "BackEndImageHandlerLambdaFunctionADEF7FF2",
+                    "Arn",
+                  ],
+                },
+                "/invocations",
+              ],
+            ],
+          },
+        },
+        "ResourceId": Object {
+          "Fn::GetAtt": Array [
+            "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109",
+            "RootResourceId",
+          ],
+        },
+        "RestApiId": Object {
+          "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiAccountE5522E5D": Object {
+      "DependsOn": Array [
+        "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109",
+      ],
+      "Properties": Object {
+        "CloudWatchRoleArn": Object {
+          "Fn::GetAtt": Array [
+            "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiCloudWatchRole12575C4D",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ApiGateway::Account",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiCloudWatchRole12575C4D": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "apigateway.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Policies": Array [
+          Object {
+            "PolicyDocument": Object {
+              "Statement": Array [
+                Object {
+                  "Action": Array [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:DescribeLogGroups",
+                    "logs:DescribeLogStreams",
+                    "logs:PutLogEvents",
+                    "logs:GetLogEvents",
+                    "logs:FilterLogEvents",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": Object {
+                    "Fn::Join": Array [
+                      "",
+                      Array [
+                        "arn:",
+                        Object {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":logs:",
+                        Object {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        Object {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "LambdaRestApiCloudWatchRolePolicy",
+          },
+        ],
+        "Tags": Array [
+          Object {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiDeployment663240D6235994dc47b5d82fe8cf9199608ba4c9": Object {
+      "DependsOn": Array [
+        "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiproxyANY8F9763E1",
+        "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiproxyBDF0A131",
+        "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiANYE4494B31",
+      ],
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W45",
+              "reason": "ApiGateway has AccessLogging enabled in AWS::ApiGateway::Stage resource, but cfn_nag checkes for it in AWS::ApiGateway::Deployment resource",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "Description": "Automatically created by the RestApi construct",
+        "RestApiId": Object {
+          "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109",
+        },
+      },
+      "Type": "AWS::ApiGateway::Deployment",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiDeploymentStageimageB55D20E3": Object {
+      "Properties": Object {
+        "AccessLogSetting": Object {
+          "DestinationArn": Object {
+            "Fn::GetAtt": Array [
+              "BackEndImageHandlerCloudFrontApiGatewayLambdaApiAccessLogGroup9B786692",
+              "Arn",
+            ],
+          },
+          "Format": "{\\"requestId\\":\\"$context.requestId\\",\\"ip\\":\\"$context.identity.sourceIp\\",\\"user\\":\\"$context.identity.user\\",\\"caller\\":\\"$context.identity.caller\\",\\"requestTime\\":\\"$context.requestTime\\",\\"httpMethod\\":\\"$context.httpMethod\\",\\"resourcePath\\":\\"$context.resourcePath\\",\\"status\\":\\"$context.status\\",\\"protocol\\":\\"$context.protocol\\",\\"responseLength\\":\\"$context.responseLength\\"}",
+        },
+        "DeploymentId": Object {
+          "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiDeployment663240D6235994dc47b5d82fe8cf9199608ba4c9",
+        },
+        "MethodSettings": Array [
+          Object {
+            "DataTraceEnabled": false,
+            "HttpMethod": "*",
+            "LoggingLevel": "INFO",
+            "ResourcePath": "/*",
+          },
+        ],
+        "RestApiId": Object {
+          "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109",
+        },
+        "StageName": "image",
+        "Tags": Array [
+          Object {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+        "TracingEnabled": true,
+      },
+      "Type": "AWS::ApiGateway::Stage",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiUsagePlan76CA1E70": Object {
+      "Properties": Object {
+        "ApiStages": Array [
+          Object {
+            "ApiId": Object {
+              "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109",
+            },
+            "Stage": Object {
+              "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiDeploymentStageimageB55D20E3",
+            },
+            "Throttle": Object {},
+          },
+        ],
+        "Tags": Array [
+          Object {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+      },
+      "Type": "AWS::ApiGateway::UsagePlan",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiproxyANY8F9763E1": Object {
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W59",
+              "reason": "AWS::ApiGateway::Method AuthorizationType is set to 'NONE' because API Gateway behind CloudFront does not support AWS_IAM authentication",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "ANY",
+        "Integration": Object {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:",
+                Object {
+                  "Ref": "AWS::Region",
+                },
+                ":lambda:path/2015-03-31/functions/",
+                Object {
+                  "Fn::GetAtt": Array [
+                    "BackEndImageHandlerLambdaFunctionADEF7FF2",
+                    "Arn",
+                  ],
+                },
+                "/invocations",
+              ],
+            ],
+          },
+        },
+        "ResourceId": Object {
+          "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiproxyBDF0A131",
+        },
+        "RestApiId": Object {
+          "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiproxyANYApiPermissionTestStackBackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi9D692DD2ANYproxyB5CBD1F7": Object {
+      "Properties": Object {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": Object {
+          "Fn::GetAtt": Array [
+            "BackEndImageHandlerLambdaFunctionADEF7FF2",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": Object {
+          "Fn::Join": Array [
+            "",
+            Array [
+              "arn:",
+              Object {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:",
+              Object {
+                "Ref": "AWS::Region",
+              },
+              ":",
+              Object {
+                "Ref": "AWS::AccountId",
+              },
+              ":",
+              Object {
+                "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109",
+              },
+              "/",
+              Object {
+                "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiDeploymentStageimageB55D20E3",
+              },
+              "/*/*",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiproxyANYApiPermissionTestTestStackBackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi9D692DD2ANYproxyAEADD71A": Object {
+      "Properties": Object {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": Object {
+          "Fn::GetAtt": Array [
+            "BackEndImageHandlerLambdaFunctionADEF7FF2",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": Object {
+          "Fn::Join": Array [
+            "",
+            Array [
+              "arn:",
+              Object {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:",
+              Object {
+                "Ref": "AWS::Region",
+              },
+              ":",
+              Object {
+                "Ref": "AWS::AccountId",
+              },
+              ":",
+              Object {
+                "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109",
+              },
+              "/test-invoke-stage/*/*",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApiproxyBDF0A131": Object {
+      "Properties": Object {
+        "ParentId": Object {
+          "Fn::GetAtt": Array [
+            "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109",
+            "RootResourceId",
+          ],
+        },
+        "PathPart": "{proxy+}",
+        "RestApiId": Object {
+          "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaLambdaRestApi5A77D109",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "BackEndImageHandlerFunctionPolicy437940B5": Object {
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W12",
+              "reason": "rekognition:DetectFaces requires '*' resources.",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    "arn:",
+                    Object {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":logs:",
+                    Object {
+                      "Ref": "AWS::Region",
+                    },
+                    ":",
+                    Object {
+                      "Ref": "AWS::AccountId",
+                    },
+                    ":log-group:/aws/lambda/*",
+                  ],
+                ],
+              },
+            },
+            Object {
+              "Action": Array [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:ListBucket",
+              ],
+              "Effect": "Allow",
+              "Resource": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    "arn:",
+                    Object {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":s3:::*",
+                  ],
+                ],
+              },
+            },
+            Object {
+              "Action": Array [
+                "rekognition:DetectFaces",
+                "rekognition:DetectModerationLabels",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "BackEndImageHandlerFunctionPolicy437940B5",
+        "Roles": Array [
+          Object {
+            "Ref": "BackEndImageHandlerFunctionRoleABF81E5C",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "BackEndImageHandlerFunctionRoleABF81E5C": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Path": "/",
+        "Tags": Array [
+          Object {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "BackEndImageHandlerLambdaFunctionADEF7FF2": Object {
+      "DependsOn": Array [
+        "BackEndImageHandlerFunctionRoleABF81E5C",
+      ],
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W58",
+              "reason": "The function does have permission to write CloudWatch Logs.",
+            },
+            Object {
+              "id": "W89",
+              "reason": "The Lambda function does not require any VPC connection at all.",
+            },
+            Object {
+              "id": "W92",
+              "reason": "The Lambda function does not require ReservedConcurrentExecutions.",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "Code": Object {
+          "S3Bucket": Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "hosting-bucket-",
+                Object {
+                  "Ref": "AWS::Region",
+                },
+              ],
+            ],
+          },
+          "S3Key": "sih/v6.0.0/image-handler.zip",
+        },
+        "Description": "Serverless Image Handler Test (v6.0.0): Performs image edits and manipulations",
+        "Environment": Object {
+          "Variables": Object {
+            "AUTO_WEBP": Object {
+              "Ref": "AutoWebPParameter",
+            },
+            "CORS_ENABLED": Object {
+              "Ref": "CorsEnabledParameter",
+            },
+            "CORS_ORIGIN": Object {
+              "Ref": "CorsOriginParameter",
+            },
+            "DEFAULT_FALLBACK_IMAGE_BUCKET": Object {
+              "Ref": "FallbackImageS3BucketParameter",
+            },
+            "DEFAULT_FALLBACK_IMAGE_KEY": Object {
+              "Ref": "FallbackImageS3KeyParameter",
+            },
+            "ENABLE_DEFAULT_FALLBACK_IMAGE": Object {
+              "Ref": "EnableDefaultFallbackImageParameter",
+            },
+            "ENABLE_SIGNATURE": Object {
+              "Ref": "EnableSignatureParameter",
+            },
+            "REWRITE_MATCH_PATTERN": "",
+            "REWRITE_SUBSTITUTION": "",
+            "SECRETS_MANAGER": Object {
+              "Ref": "SecretsManagerSecretParameter",
+            },
+            "SECRET_KEY": Object {
+              "Ref": "SecretsManagerKeyParameter",
+            },
+            "SOURCE_BUCKETS": Object {
+              "Ref": "SourceBucketsParameter",
+            },
+          },
+        },
+        "Handler": "image-handler/index.handler",
+        "MemorySize": 1024,
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "BackEndImageHandlerFunctionRoleABF81E5C",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs14.x",
+        "Tags": Array [
+          Object {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "BackEndImageHandlerLogGroupA0941EEC": Object {
+      "DeletionPolicy": "Retain",
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W84",
+              "reason": "CloudWatch log group is always encrypted by default.",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "LogGroupName": Object {
+          "Fn::Join": Array [
+            "",
+            Array [
+              "/aws/lambda/",
+              Object {
+                "Ref": "BackEndImageHandlerLambdaFunctionADEF7FF2",
+              },
+            ],
+          ],
+        },
+        "RetentionInDays": Object {
+          "Ref": "LogRetentionPeriodParameter",
+        },
+        "Tags": Array [
+          Object {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "BackEndOriginRequestPolicy771345D7": Object {
+      "Properties": Object {
+        "OriginRequestPolicyConfig": Object {
+          "CookiesConfig": Object {
+            "CookieBehavior": "none",
+          },
+          "HeadersConfig": Object {
+            "HeaderBehavior": "whitelist",
+            "Headers": Array [
+              "origin",
+              "accept",
+            ],
+          },
+          "Name": Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "ServerlessImageHandler-",
+                Object {
+                  "Fn::GetAtt": Array [
+                    "CommonResourcesCustomResourcesCustomResourceUuid64E7CCAD",
+                    "UUID",
+                  ],
+                },
+              ],
+            ],
+          },
+          "QueryStringsConfig": Object {
+            "QueryStringBehavior": "whitelist",
+            "QueryStrings": Array [
+              "signature",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::CloudFront::OriginRequestPolicy",
+    },
+    "CommonResourcesCustomResourcesCopyWebsite83738AA9": Object {
+      "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
+      "DeletionPolicy": "Delete",
+      "Properties": Object {
+        "CustomAction": "copyS3assets",
+        "DestS3Bucket": Object {
+          "Ref": "FrontEndDistributionToS3S3Bucket3A171D78",
+        },
+        "ManifestKey": "sih/v6.0.0/demo-ui-manifest.json",
+        "Region": Object {
+          "Ref": "AWS::Region",
+        },
+        "ServiceToken": Object {
+          "Fn::GetAtt": Array [
+            "CommonResourcesCustomResourcesCustomResourceFunction0D924235",
+            "Arn",
+          ],
+        },
+        "SourceS3Bucket": Object {
+          "Fn::Join": Array [
+            "",
+            Array [
+              "hosting-bucket-",
+              Object {
+                "Ref": "AWS::Region",
+              },
+            ],
+          ],
+        },
+        "SourceS3key": "sih/v6.0.0/demo-ui",
+        "Version": "v6.0.0",
+      },
+      "Type": "AWS::CloudFormation::CustomResource",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CommonResourcesCustomResourcesCustomResourceAnonymousMetric51363F57": Object {
+      "DeletionPolicy": "Delete",
+      "Properties": Object {
+        "AnonymousData": "Yes",
+        "AutoWebP": Object {
+          "Ref": "AutoWebPParameter",
+        },
+        "CorsEnabled": Object {
+          "Ref": "CorsEnabledParameter",
+        },
+        "CustomAction": "sendMetric",
+        "DeployDemoUi": Object {
+          "Ref": "DeployDemoUIParameter",
+        },
+        "EnableDefaultFallbackImage": Object {
+          "Ref": "EnableDefaultFallbackImageParameter",
+        },
+        "EnableSignature": Object {
+          "Ref": "EnableSignatureParameter",
+        },
+        "LogRetentionPeriod": Object {
+          "Ref": "LogRetentionPeriodParameter",
+        },
+        "Region": Object {
+          "Ref": "AWS::Region",
+        },
+        "ServiceToken": Object {
+          "Fn::GetAtt": Array [
+            "CommonResourcesCustomResourcesCustomResourceFunction0D924235",
+            "Arn",
+          ],
+        },
+        "SourceBuckets": Object {
+          "Ref": "SourceBucketsParameter",
+        },
+        "UUID": Object {
+          "Fn::GetAtt": Array [
+            "CommonResourcesCustomResourcesCustomResourceUuid64E7CCAD",
+            "UUID",
+          ],
+        },
+      },
+      "Type": "AWS::CloudFormation::CustomResource",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CommonResourcesCustomResourcesCustomResourceCheckFallbackImage6CE45571": Object {
+      "Condition": "CommonResourcesEnableDefaultFallbackImageConditionD1A10983",
+      "DeletionPolicy": "Delete",
+      "Properties": Object {
+        "CustomAction": "checkFallbackImage",
+        "FallbackImageS3Bucket": Object {
+          "Ref": "FallbackImageS3BucketParameter",
+        },
+        "FallbackImageS3Key": Object {
+          "Ref": "FallbackImageS3KeyParameter",
+        },
+        "ServiceToken": Object {
+          "Fn::GetAtt": Array [
+            "CommonResourcesCustomResourcesCustomResourceFunction0D924235",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::CloudFormation::CustomResource",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CommonResourcesCustomResourcesCustomResourceCheckSecretsManagerAEEEC776": Object {
+      "Condition": "CommonResourcesEnableSignatureCondition909DC7A1",
+      "DeletionPolicy": "Delete",
+      "Properties": Object {
+        "CustomAction": "checkSecretsManager",
+        "SecretsManagerKey": Object {
+          "Ref": "SecretsManagerKeyParameter",
+        },
+        "SecretsManagerName": Object {
+          "Ref": "SecretsManagerSecretParameter",
+        },
+        "ServiceToken": Object {
+          "Fn::GetAtt": Array [
+            "CommonResourcesCustomResourcesCustomResourceFunction0D924235",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::CloudFormation::CustomResource",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CommonResourcesCustomResourcesCustomResourceCheckSourceBucketsA313C9B7": Object {
+      "DeletionPolicy": "Delete",
+      "Properties": Object {
+        "CustomAction": "checkSourceBuckets",
+        "Region": Object {
+          "Ref": "AWS::Region",
+        },
+        "ServiceToken": Object {
+          "Fn::GetAtt": Array [
+            "CommonResourcesCustomResourcesCustomResourceFunction0D924235",
+            "Arn",
+          ],
+        },
+        "SourceBuckets": Object {
+          "Ref": "SourceBucketsParameter",
+        },
+      },
+      "Type": "AWS::CloudFormation::CustomResource",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CommonResourcesCustomResourcesCustomResourceFunction0D924235": Object {
+      "DependsOn": Array [
+        "CommonResourcesCustomResourcesCustomResourceRoleDefaultPolicy5AE1B0FC",
+        "CommonResourcesCustomResourcesCustomResourceRole8958A1ED",
+      ],
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W58",
+              "reason": "The function does have permission to write CloudWatch Logs.",
+            },
+            Object {
+              "id": "W89",
+              "reason": "The Lambda function does not require any VPC connection at all.",
+            },
+            Object {
+              "id": "W92",
+              "reason": "The Lambda function does not require ReservedConcurrentExecutions.",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "Code": Object {
+          "S3Bucket": Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "hosting-bucket-",
+                Object {
+                  "Ref": "AWS::Region",
+                },
+              ],
+            ],
+          },
+          "S3Key": "sih/v6.0.0/custom-resource.zip",
+        },
+        "Description": "Serverless Image Handler Test (v6.0.0): Custom resource",
+        "Environment": Object {
+          "Variables": Object {
+            "RETRY_SECONDS": "5",
+            "SOLUTION_ID": "S0ABC",
+            "SOLUTION_VERSION": "v6.0.0",
+          },
+        },
+        "Handler": "custom-resource/index.handler",
+        "MemorySize": 128,
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "CommonResourcesCustomResourcesCustomResourceRole8958A1ED",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs14.x",
+        "Tags": Array [
+          Object {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+        "Timeout": 60,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CommonResourcesCustomResourcesCustomResourceRole8958A1ED": Object {
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W11",
+              "reason": "Allow '*' because it is required for making DescribeRegions API call as it doesn't support resource-level permissions and require to choose all resources.",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Path": "/",
+        "Policies": Array [
+          Object {
+            "PolicyDocument": Object {
+              "Statement": Array [
+                Object {
+                  "Action": Array [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": Object {
+                    "Fn::Join": Array [
+                      "",
+                      Array [
+                        "arn:",
+                        Object {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":logs:",
+                        Object {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        Object {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":log-group:/aws/lambda/*",
+                      ],
+                    ],
+                  },
+                },
+                Object {
+                  "Action": Array [
+                    "s3:putBucketAcl",
+                    "s3:putEncryptionConfiguration",
+                    "s3:putBucketPolicy",
+                    "s3:CreateBucket",
+                    "s3:GetObject",
+                    "s3:PutObject",
+                    "s3:ListBucket",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": Object {
+                    "Fn::Join": Array [
+                      "",
+                      Array [
+                        "arn:",
+                        Object {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":s3:::*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "CloudWatchLogsPolicy",
+          },
+          Object {
+            "PolicyDocument": Object {
+              "Statement": Array [
+                Object {
+                  "Action": "ec2:DescribeRegions",
+                  "Effect": "Allow",
+                  "Resource": "*",
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "EC2Policy",
+          },
+        ],
+        "Tags": Array [
+          Object {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CommonResourcesCustomResourcesCustomResourceRoleDefaultPolicy5AE1B0FC": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": Array [
+                Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      "arn:",
+                      Object {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::hosting-bucket-",
+                      Object {
+                        "Ref": "AWS::Region",
+                      },
+                    ],
+                  ],
+                },
+                Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      "arn:",
+                      Object {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::hosting-bucket-",
+                      Object {
+                        "Ref": "AWS::Region",
+                      },
+                      "/sih/v6.0.0/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CommonResourcesCustomResourcesCustomResourceRoleDefaultPolicy5AE1B0FC",
+        "Roles": Array [
+          Object {
+            "Ref": "CommonResourcesCustomResourcesCustomResourceRole8958A1ED",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CommonResourcesCustomResourcesCustomResourceUuid64E7CCAD": Object {
+      "DeletionPolicy": "Delete",
+      "Properties": Object {
+        "CustomAction": "createUuid",
+        "Region": Object {
+          "Ref": "AWS::Region",
+        },
+        "ServiceToken": Object {
+          "Fn::GetAtt": Array [
+            "CommonResourcesCustomResourcesCustomResourceFunction0D924235",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::CloudFormation::CustomResource",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CommonResourcesCustomResourcesLogBucketCustomResource2445A3AB": Object {
+      "DeletionPolicy": "Delete",
+      "Properties": Object {
+        "BucketSuffix": Object {
+          "Fn::Join": Array [
+            "",
+            Array [
+              Object {
+                "Ref": "AWS::StackName",
+              },
+              "-",
+              Object {
+                "Ref": "AWS::Region",
+              },
+              "-",
+              Object {
+                "Ref": "AWS::AccountId",
+              },
+            ],
+          ],
+        },
+        "CustomAction": "createCloudFrontLoggingBucket",
+        "ServiceToken": Object {
+          "Fn::GetAtt": Array [
+            "CommonResourcesCustomResourcesCustomResourceFunction0D924235",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::CloudFormation::CustomResource",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CommonResourcesCustomResourcesPutWebsiteConfigC4E435F3": Object {
+      "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
+      "DeletionPolicy": "Delete",
+      "Properties": Object {
+        "ConfigItem": Object {
+          "apiEndpoint": Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "https://",
+                Object {
+                  "Fn::GetAtt": Array [
+                    "BackEndImageHandlerCloudFrontApiGatewayLambdaCloudFrontToApiGatewayCloudFrontDistribution03AA31B2",
+                    "DomainName",
+                  ],
+                },
+              ],
+            ],
+          },
+        },
+        "CustomAction": "putConfigFile",
+        "DestS3Bucket": Object {
+          "Ref": "FrontEndDistributionToS3S3Bucket3A171D78",
+        },
+        "DestS3key": "demo-ui-config.js",
+        "Region": Object {
+          "Ref": "AWS::Region",
+        },
+        "ServiceToken": Object {
+          "Fn::GetAtt": Array [
+            "CommonResourcesCustomResourcesCustomResourceFunction0D924235",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::CloudFormation::CustomResource",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CommonResourcesSecretsManagerPolicy45FE005E": Object {
+      "Condition": "CommonResourcesEnableSignatureCondition909DC7A1",
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "secretsmanager:GetSecretValue",
+              "Effect": "Allow",
+              "Resource": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    "arn:",
+                    Object {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":secretsmanager:",
+                    Object {
+                      "Ref": "AWS::Region",
+                    },
+                    ":",
+                    Object {
+                      "Ref": "AWS::AccountId",
+                    },
+                    ":secret:",
+                    Object {
+                      "Ref": "SecretsManagerSecretParameter",
+                    },
+                    "*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CommonResourcesSecretsManagerPolicy45FE005E",
+        "Roles": Array [
+          Object {
+            "Ref": "CommonResourcesCustomResourcesCustomResourceRole8958A1ED",
+          },
+          Object {
+            "Ref": "BackEndImageHandlerFunctionRoleABF81E5C",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "FrontEndDistributionToS3CloudFrontDistribution15FE13D0": Object {
+      "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W70",
+              "reason": "Since the distribution uses the CloudFront domain name, CloudFront automatically sets the security policy to TLSv1 regardless of the value of MinimumProtocolVersion",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "DistributionConfig": Object {
+          "Comment": "Demo UI Distribution for Serverless Image Handler",
+          "CustomErrorResponses": Array [
+            Object {
+              "ErrorCode": 403,
+              "ResponseCode": 200,
+              "ResponsePagePath": "/index.html",
+            },
+            Object {
+              "ErrorCode": 404,
+              "ResponseCode": 200,
+              "ResponsePagePath": "/index.html",
+            },
+          ],
+          "DefaultCacheBehavior": Object {
+            "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+            "Compress": true,
+            "TargetOriginId": "TestStackFrontEndDistributionToS3CloudFrontDistributionOrigin12FCDC222",
+            "ViewerProtocolPolicy": "redirect-to-https",
+          },
+          "DefaultRootObject": "index.html",
+          "Enabled": true,
+          "HttpVersion": "http2",
+          "IPV6Enabled": true,
+          "Logging": Object {
+            "Bucket": Object {
+              "Fn::Join": Array [
+                "",
+                Array [
+                  Object {
+                    "Fn::GetAtt": Array [
+                      "CommonResourcesCustomResourcesLogBucketCustomResource2445A3AB",
+                      "BucketName",
+                    ],
+                  },
+                  ".s3.",
+                  Object {
+                    "Fn::GetAtt": Array [
+                      "CommonResourcesCustomResourcesLogBucketCustomResource2445A3AB",
+                      "Region",
+                    ],
+                  },
+                  ".",
+                  Object {
+                    "Ref": "AWS::URLSuffix",
+                  },
+                ],
+              ],
+            },
+            "Prefix": "ui-cloudfront/",
+          },
+          "Origins": Array [
+            Object {
+              "DomainName": Object {
+                "Fn::GetAtt": Array [
+                  "FrontEndDistributionToS3S3Bucket3A171D78",
+                  "RegionalDomainName",
+                ],
+              },
+              "Id": "TestStackFrontEndDistributionToS3CloudFrontDistributionOrigin12FCDC222",
+              "S3OriginConfig": Object {
+                "OriginAccessIdentity": Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      "origin-access-identity/cloudfront/",
+                      Object {
+                        "Ref": "FrontEndDistributionToS3CloudFrontDistributionOrigin1S3OriginD10E575E",
+                      },
+                    ],
+                  ],
+                },
+              },
+            },
+          ],
+        },
+        "Tags": Array [
+          Object {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+      },
+      "Type": "AWS::CloudFront::Distribution",
+    },
+    "FrontEndDistributionToS3CloudFrontDistributionOrigin1S3OriginD10E575E": Object {
+      "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
+      "Properties": Object {
+        "CloudFrontOriginAccessIdentityConfig": Object {
+          "Comment": "Identity for TestStackFrontEndDistributionToS3CloudFrontDistributionOrigin12FCDC222",
+        },
+      },
+      "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+    },
+    "FrontEndDistributionToS3S3Bucket3A171D78": Object {
+      "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
+      "DeletionPolicy": "Retain",
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "W35",
+              "reason": "This S3 bucket does not require access logging.",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "BucketEncryption": Object {
+          "ServerSideEncryptionConfiguration": Array [
+            Object {
+              "ServerSideEncryptionByDefault": Object {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "LifecycleConfiguration": Object {
+          "Rules": Array [
+            Object {
+              "NoncurrentVersionTransitions": Array [
+                Object {
+                  "StorageClass": "GLACIER",
+                  "TransitionInDays": 90,
+                },
+              ],
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": Object {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": Array [
+          Object {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+        "VersioningConfiguration": Object {
+          "Status": "Enabled",
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "FrontEndDistributionToS3S3BucketPolicyF3A0315A": Object {
+      "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
+      "Metadata": Object {
+        "cfn_nag": Object {
+          "rules_to_suppress": Array [
+            Object {
+              "id": "F16",
+              "reason": "Public website bucket policy requires a wildcard principal",
+            },
+          ],
+        },
+      },
+      "Properties": Object {
+        "Bucket": Object {
+          "Ref": "FrontEndDistributionToS3S3Bucket3A171D78",
+        },
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "*",
+              "Condition": Object {
+                "Bool": Object {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": Object {
+                "AWS": "*",
+              },
+              "Resource": Array [
+                Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      Object {
+                        "Fn::GetAtt": Array [
+                          "FrontEndDistributionToS3S3Bucket3A171D78",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+                Object {
+                  "Fn::GetAtt": Array [
+                    "FrontEndDistributionToS3S3Bucket3A171D78",
+                    "Arn",
+                  ],
+                },
+              ],
+              "Sid": "HttpsOnly",
+            },
+            Object {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Principal": Object {
+                "CanonicalUser": Object {
+                  "Fn::GetAtt": Array [
+                    "FrontEndDistributionToS3CloudFrontDistributionOrigin1S3OriginD10E575E",
+                    "S3CanonicalUserId",
+                  ],
+                },
+              },
+              "Resource": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    Object {
+                      "Fn::GetAtt": Array [
+                        "FrontEndDistributionToS3S3Bucket3A171D78",
+                        "Arn",
+                      ],
+                    },
+                    "/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+  },
+}
+`;
