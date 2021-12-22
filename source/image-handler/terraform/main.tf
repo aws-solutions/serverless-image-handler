@@ -18,13 +18,13 @@ module "lambda" {
   source  = "moritzzimmer/lambda/aws"
   version = "6.1.0"
 
-  architectures                      = ["arm64"]
+  architectures                      = ["x86_64"]
   cloudwatch_lambda_insights_enabled = true
   cloudwatch_logs_retention_in_days  = 1
   description                        = "provider of cute kitty pics."
   function_name                      = local.function_name
   ignore_external_function_updates   = true
-  layers                             = ["arn:aws:lambda:${data.aws_region.current.name}:580247275435:layer:LambdaInsightsExtension-Arm64:1"]
+  layers                             = ["arn:aws:lambda:${data.aws_region.current.name}:580247275435:layer:LambdaInsightsExtension:16"]
   memory_size                        = 1024
   publish                            = true
   runtime                            = "nodejs14.x"
