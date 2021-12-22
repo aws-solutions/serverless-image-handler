@@ -31,8 +31,8 @@ exports.handler = async (event) => {
         body: JSON.stringify({
           message: "HTTP/410. Content " + request.key + " has expired.",
           code: "Gone",
-          status: 410,
-        }),
+          status: 410
+        })
       };
     } else {
       const processedRequest = await imageHandler.process(request);
@@ -63,18 +63,19 @@ exports.handler = async (event) => {
       logger.info("Image transformation was successful.", {
         statusCode: 200,
         isBase64Encoded: true,
-        headers: headers,
+        headers: headers
       });
 
       return {
         statusCode: 200,
         isBase64Encoded: true,
         headers: headers,
-        body: processedRequest,
+        body: processedRequest
       };
     }
   } catch (err) {
-    logger.error(err.message, err);
+    const log = (err.status && err.status >= 400 && err.status < 500) ? logger.warn : logger.error;
+    log(err.message, err);
 
     // Default fallback image
     if (
@@ -99,13 +100,10 @@ exports.handler = async (event) => {
           statusCode: err.status ? err.status : 500,
           isBase64Encoded: true,
           headers: headers,
-          body: defaultFallbackImage.Body.toString("base64"),
+          body: defaultFallbackImage.Body.toString("base64")
         };
       } catch (error) {
-        logger.error(
-          "Error occurred while getting the default fallback image.",
-          error
-        );
+        logger.warn("Error occurred while getting the default fallback image.", error);
       }
     }
 
@@ -114,13 +112,13 @@ exports.handler = async (event) => {
         statusCode: err.status,
         isBase64Encoded: false,
         headers: getResponseHeaders(err.status, isAlb),
-        body: JSON.stringify(err),
+        body: JSON.stringify(err)
       });
       return {
         statusCode: err.status,
         isBase64Encoded: false,
         headers: getResponseHeaders(err.status, isAlb),
-        body: JSON.stringify(err),
+        body: JSON.stringify(err)
       };
     } else {
       return {
@@ -130,8 +128,8 @@ exports.handler = async (event) => {
         body: JSON.stringify({
           message: "Internal error. Please contact the system administrator.",
           code: "InternalError",
-          status: 500,
-        }),
+          status: 500
+        })
       };
     }
   }
@@ -148,7 +146,7 @@ const getResponseHeaders = (status_code = 200, isAlb = false) => {
   const corsEnabled = process.env.CORS_ENABLED === "Yes";
   const headers = {
     "Access-Control-Allow-Methods": "GET",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization"
   };
   if (!isAlb) {
     headers["Access-Control-Allow-Credentials"] = true;

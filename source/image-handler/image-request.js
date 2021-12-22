@@ -15,72 +15,66 @@ class ImageRequest {
    * @param {object} event - Lambda request body.
    */
   async setup(event) {
-    try {
 
-      this.requestType = this.parseRequestType(event);
-      this.bucket = this.parseImageBucket(event, this.requestType);
-      this.key = this.parseImageKey(event, this.requestType);
-      this.edits = this.parseImageEdits(event, this.requestType);
-      this.cropping = this.parseCropping(event, this.requestType);
-      this.originalImage = await this.getOriginalImage(this.bucket, this.key);
-      this.headers = this.parseImageHeaders(event, this.requestType);
-      this.isAlb = event.requestContext && event.requestContext.hasOwnProperty("elb");
+    this.requestType = this.parseRequestType(event);
+    this.bucket = this.parseImageBucket(event, this.requestType);
+    this.key = this.parseImageKey(event, this.requestType);
+    this.edits = this.parseImageEdits(event, this.requestType);
+    this.cropping = this.parseCropping(event, this.requestType);
+    this.originalImage = await this.getOriginalImage(this.bucket, this.key);
+    this.headers = this.parseImageHeaders(event, this.requestType);
+    this.isAlb = event.requestContext && event.requestContext.hasOwnProperty("elb");
 
-      if (!this.headers) {
-        delete this.headers;
-      }
-
-      // If the original image is SVG file and it has any edits but no output format, change the format to WebP.
-      if (this.ContentType === "image/svg+xml" &&
-        this.edits &&
-        Object.keys(this.edits).length > 0 &&
-        !this.edits.toFormat) {
-        this.outputFormat = "png";
-      }
-
-      /* Decide the output format of the image.
-       * 1) If the format is provided, the output format is the provided format.
-       * 2) If headers contain "Accept: image/webp", the output format is webp.
-       * 3) Use the default image format for the rest of cases.
-       */
-      if (this.ContentType !== 'image/svg+xml' || this.edits.toFormat || this.outputFormat) {
-        let outputFormat = this.getOutputFormat(event);
-        if (this.edits && this.edits.toFormat) {
-          this.outputFormat = this.edits.toFormat;
-        } else if (outputFormat) {
-          this.outputFormat = outputFormat;
-        }
-      }
-
-      // Fix quality for Thumbor and Custom request type if outputFormat is different from quality type.
-      if (this.outputFormat) {
-        const requestType = ["Custom", "Thumbor"];
-        const acceptedValues = ["jpeg", "png", "webp", "tiff", "heif"];
-
-        this.ContentType = `image/${this.outputFormat}`;
-        if (
-          requestType.includes(this.requestType) &&
-          acceptedValues.includes(this.outputFormat)
-        ) {
-          let qualityKey = Object.keys(this.edits).filter((key) =>
-            acceptedValues.includes(key)
-          )[0];
-          if (qualityKey && qualityKey !== this.outputFormat) {
-            const qualityValue = this.edits[qualityKey];
-            this.edits[this.outputFormat] = qualityValue;
-            delete this.edits[qualityKey];
-          }
-        }
-      }
-
-      delete this.s3;
-
-      return this;
-    } catch (err) {
-      const log = (err.status && err.status >= 400 && err.status < 500) ? logger.warn : logger.error;
-      log(err.message, err);
-      throw err;
+    if (!this.headers) {
+      delete this.headers;
     }
+
+    // If the original image is SVG file and it has any edits but no output format, change the format to WebP.
+    if (this.ContentType === "image/svg+xml" &&
+      this.edits &&
+      Object.keys(this.edits).length > 0 &&
+      !this.edits.toFormat) {
+      this.outputFormat = "png";
+    }
+
+    /* Decide the output format of the image.
+     * 1) If the format is provided, the output format is the provided format.
+     * 2) If headers contain "Accept: image/webp", the output format is webp.
+     * 3) Use the default image format for the rest of cases.
+     */
+    if (this.ContentType !== 'image/svg+xml' || this.edits.toFormat || this.outputFormat) {
+      let outputFormat = this.getOutputFormat(event);
+      if (this.edits && this.edits.toFormat) {
+        this.outputFormat = this.edits.toFormat;
+      } else if (outputFormat) {
+        this.outputFormat = outputFormat;
+      }
+    }
+
+    // Fix quality for Thumbor and Custom request type if outputFormat is different from quality type.
+    if (this.outputFormat) {
+      const requestType = ["Custom", "Thumbor"];
+      const acceptedValues = ["jpeg", "png", "webp", "tiff", "heif"];
+
+      this.ContentType = `image/${this.outputFormat}`;
+      if (
+        requestType.includes(this.requestType) &&
+        acceptedValues.includes(this.outputFormat)
+      ) {
+        let qualityKey = Object.keys(this.edits).filter((key) =>
+          acceptedValues.includes(key)
+        )[0];
+        if (qualityKey && qualityKey !== this.outputFormat) {
+          const qualityValue = this.edits[qualityKey];
+          this.edits[this.outputFormat] = qualityValue;
+          delete this.edits[qualityKey];
+        }
+      }
+    }
+
+    delete this.s3;
+
+    return this;
   }
 
   /**
@@ -130,7 +124,7 @@ class ImageRequest {
       throw {
         status: "NoSuchKey" === err.code ? 404 : 500,
         code: err.code,
-        message: err.message,
+        message: err.message
       };
     }
   }
@@ -158,7 +152,7 @@ class ImageRequest {
             status: 403,
             code: "ImageBucket::CannotAccessBucket",
             message:
-              "The bucket you specified could not be accessed. Please check that the bucket is specified in your SOURCE_BUCKETS.",
+              "The bucket you specified could not be accessed. Please check that the bucket is specified in your SOURCE_BUCKETS."
           };
         }
       } else {
@@ -175,7 +169,7 @@ class ImageRequest {
         status: 404,
         code: "ImageBucket::CannotFindBucket",
         message:
-          "The bucket you specified could not be found. Please check the spelling of the bucket name in your request.",
+          "The bucket you specified could not be found. Please check the spelling of the bucket name in your request."
       };
     }
   }
@@ -203,7 +197,7 @@ class ImageRequest {
         status: 400,
         code: "ImageEdits::CannotParseEdits",
         message:
-          "The edits you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance.",
+          "The edits you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance."
       };
     }
   }
@@ -226,7 +220,7 @@ class ImageRequest {
         status: 400,
         code: "Cropping::CannotParseCropping",
         message:
-          "The cropping you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance.",
+          "The cropping you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance."
       };
     }
   }
@@ -267,7 +261,7 @@ class ImageRequest {
         .replace(/^\/+/, "")
         .replace(/\/+/g, "/");
 
-      if (path.match(/^\d{4}\/\d{2}\/.*\/[\w-]+\.\w+$/)){
+      if (path.match(/^\d{4}\/\d{2}\/.*\/[\w-]+\.\w+$/)) {
         path = path.replace(/(.*)\/[\w-]+(\.\w+)$/, "$1/image$2");
       }
       return decodeURIComponent(path);
@@ -278,7 +272,7 @@ class ImageRequest {
       status: 404,
       code: "ImageEdits::CannotFindImage",
       message:
-        "The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists.",
+        "The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists."
     };
   }
 
@@ -323,7 +317,7 @@ class ImageRequest {
         status: 400,
         code: "RequestTypeError",
         message:
-          "The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg, gif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.",
+          "The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg, gif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests."
       };
     }
   }
@@ -363,7 +357,7 @@ class ImageRequest {
           status: 400,
           code: "DecodeRequest::CannotDecodeRequest",
           message:
-            "The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.",
+            "The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance."
         };
       }
     } else {
@@ -371,7 +365,7 @@ class ImageRequest {
         status: 400,
         code: "DecodeRequest::CannotReadPath",
         message:
-          "The URL path you provided could not be read. Please ensure that it is properly formed according to the solution documentation.",
+          "The URL path you provided could not be read. Please ensure that it is properly formed according to the solution documentation."
       };
     }
   }
@@ -388,7 +382,7 @@ class ImageRequest {
         status: 400,
         code: "GetAllowedSourceBuckets::NoSourceBuckets",
         message:
-          "The SOURCE_BUCKETS variable could not be read. Please check that it is not empty and contains at least one source bucket, or multiple buckets separated by commas. Spaces can be provided between commas and bucket names, these will be automatically parsed out when decoding.",
+          "The SOURCE_BUCKETS variable could not be read. Please check that it is not empty and contains at least one source bucket, or multiple buckets separated by commas. Spaces can be provided between commas and bucket names, these will be automatically parsed out when decoding."
       };
     } else {
       const formatted = sourceBuckets.replace(/\s+/g, "");
