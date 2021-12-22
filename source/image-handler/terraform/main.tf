@@ -1,18 +1,8 @@
 locals {
   function_name = "image-handler"
+  environment   = "production"
   zip_package   = "../dist/image-handler.zip"
   s3_key        = "image-handler/image-handler.zip"
-}
-
-resource "aws_lambda_alias" "this" {
-  description      = "Alias for the active Lambda version"
-  function_name    = module.lambda.function_name
-  function_version = module.lambda.version
-  name             = var.docker_image_tag
-
-  lifecycle {
-    ignore_changes = [function_version]
-  }
 }
 
 resource "aws_s3_bucket" "images" {
@@ -43,7 +33,6 @@ module "lambda" {
   s3_key                             = local.s3_key
   s3_object_version                  = aws_s3_bucket_object.this.version_id
   timeout                            = 30
-  tracing_config_mode                = "Active"
 
   environment = {
     variables = {
@@ -67,7 +56,6 @@ module "lambda" {
 
 // this resource is only used for the initial `terraform apply` - all further
 // deployments are running on CodePipeline
-
 resource "aws_s3_bucket_object" "this" {
   bucket = data.aws_s3_bucket.ci.bucket
   key    = local.s3_key
@@ -76,6 +64,17 @@ resource "aws_s3_bucket_object" "this" {
 
   lifecycle {
     ignore_changes = [etag, source, version_id, tags_all]
+  }
+}
+
+resource "aws_lambda_alias" "this" {
+  description      = "Alias for the active Lambda version"
+  function_name    = module.lambda.function_name
+  function_version = module.lambda.version
+  name             = local.environment
+
+  lifecycle {
+    ignore_changes = [function_version]
   }
 }
 

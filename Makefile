@@ -2,7 +2,6 @@ SERVICE := image-handler
 TF_VAR_region ?= eu-west-1
 MODE ?= plan
 
-TF_VAR_docker_image_tag = production
 ACCOUNT = $(eval ACCOUNT := $$(shell aws --output text sts get-caller-identity --query "Account"))$(ACCOUNT)
 VERSION = $(eval VERSION := $$(shell git rev-parse --short HEAD))$(VERSION)
 
