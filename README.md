@@ -89,3 +89,4 @@ aws s3 sync ./global-s3-assets/ s3://$DIST_OUTPUT_BUCKET-$REGION/$SOLUTION_NAME/
 ## License
 Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.<br />
 SPDX-License-Identifier: Apache-2.0
+
