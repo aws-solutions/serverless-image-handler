@@ -85,49 +85,59 @@ class ImageRequest {
    */
   async getOriginalImage(bucket, key) {
     const imageLocation = {Bucket: bucket, Key: key};
-
+    let originalImage;
+    let metaData;
     try {
-      const originalImage = await this.s3.getObject(imageLocation).promise();
-
-      if (originalImage.ContentType) {
-        // If using default s3 ContentType infer from hex headers
-        if (originalImage.ContentType === 'binary/octet-stream') {
-          const imageBuffer = Buffer.from(originalImage.Body);
-          this.ContentType = this.inferImageType(imageBuffer);
-        } else {
-          this.ContentType = originalImage.ContentType;
-        }
-      } else {
-        this.ContentType = "image";
-      }
-
-      if (originalImage.Expires) {
-        this.Expires = new Date(originalImage.Expires);
-      }
-
-      if (originalImage.LastModified) {
-        this.LastModified = new Date(originalImage.LastModified);
-      }
-
-      if (originalImage.CacheControl) {
-        this.CacheControl = originalImage.CacheControl;
-      } else {
-        this.CacheControl = "max-age=31536000,public";
-      }
-
-      if (originalImage.ETag) {
-        this.ETag = originalImage.ETag;
-      }
-
-      return originalImage.Body;
-    } catch (err) {
+      metaData  = (await this.s3.headObject(imageLocation).promise())['Metadata'];
+      originalImage  = await this.s3.getObject(imageLocation).promise();
+    }
+    catch (err) {
       throw {
         status: "NoSuchKey" === err.code ? 404 : 500,
         code: err.code,
         message: err.message
       };
     }
+
+    let isGone = metaData && metaData['buzz-status-code'] && metaData['buzz-status-code'] === '410'
+
+    if (originalImage.ContentType) {
+      // If using default s3 ContentType infer from hex headers
+      if (originalImage.ContentType === 'binary/octet-stream') {
+        const imageBuffer = Buffer.from(originalImage.Body);
+        this.ContentType = this.inferImageType(imageBuffer);
+      } else {
+        this.ContentType = originalImage.ContentType;
+      }
+    } else {
+      this.ContentType = "image";
+    }
+
+    if (originalImage.Expires) {
+      this.Expires = new Date(originalImage.Expires);
+    } else if (isGone) {
+      logger.warn('Content is gone')
+      this.Expires = new Date(0);
+    }
+
+    if (originalImage.LastModified) {
+      this.LastModified = new Date(originalImage.LastModified);
+    }
+
+    if (originalImage.CacheControl) {
+      this.CacheControl = originalImage.CacheControl;
+    } else {
+      this.CacheControl = "max-age=31536000,public";
+    }
+
+    if (originalImage.ETag) {
+      this.ETag = originalImage.ETag;
+    }
+
+    return originalImage.Body;
+
   }
+
 
   /**
    * Parses the name of the appropriate Amazon S3 bucket to source the

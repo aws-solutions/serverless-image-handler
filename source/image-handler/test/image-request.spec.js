@@ -3,12 +3,14 @@
 
 const mockAws = {
   getObject: jest.fn(),
+  headObject: jest.fn(),
   getSecretValue: jest.fn()
 };
 jest.mock('aws-sdk', () => {
   return {
     S3: jest.fn(() => ({
-      getObject: mockAws.getObject
+      getObject: mockAws.getObject,
+      headObject: mockAws.headObject
     })),
     SecretsManager: jest.fn(() => ({
       getSecretValue: mockAws.getSecretValue
@@ -27,6 +29,14 @@ const ImageRequest = require('../image-request');
 describe('setup()', function () {
   beforeEach(() => {
     mockAws.getObject.mockReset();
+    // Mock
+    mockAws.headObject.mockImplementation(() => {
+      return {
+        promise() {
+          return Promise.resolve({});
+        }
+      };
+    });
   });
 
   describe('001/defaultImageRequest', function () {
