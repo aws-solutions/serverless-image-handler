@@ -85,9 +85,10 @@ class ImageRequest {
    */
   async getOriginalImage(bucket, key) {
     const imageLocation = {Bucket: bucket, Key: key};
-
     try {
       const originalImage = await this.s3.getObject(imageLocation).promise();
+      const metaData = originalImage['Metadata'];
+      const isGone = metaData && metaData['buzz-status-code'] && metaData['buzz-status-code'] === '410'
 
       if (originalImage.ContentType) {
         // If using default s3 ContentType infer from hex headers
@@ -103,6 +104,9 @@ class ImageRequest {
 
       if (originalImage.Expires) {
         this.Expires = new Date(originalImage.Expires);
+      } else if (isGone) {
+        logger.warn(`Content ${imageLocation} is gone`)
+        this.Expires = new Date(0);
       }
 
       if (originalImage.LastModified) {

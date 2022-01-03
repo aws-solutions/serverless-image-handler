@@ -240,7 +240,10 @@ describe('index', function () {
       };
       // Assert
       expect(mockS3).toHaveBeenNthCalledWith(1, {Bucket: 'source-bucket', Key: 'test.jpg'});
-      expect(mockS3).toHaveBeenNthCalledWith(2, {Bucket: 'fallback-image-bucket', Key: 'fallback-image.png'});
+      expect(mockS3).toHaveBeenNthCalledWith(2, {
+        Bucket: 'fallback-image-bucket',
+        Key: 'fallback-image.png'
+      });
       expect(result).toEqual(expectedResult);
     });
     it('004/should return an error JSON when getting the default fallback image fails if the default fallback image is enabled', async function () {
@@ -282,7 +285,10 @@ describe('index', function () {
       };
       // Assert
       expect(mockS3).toHaveBeenNthCalledWith(1, {Bucket: 'source-bucket', Key: 'test.jpg'});
-      expect(mockS3).toHaveBeenNthCalledWith(2, {Bucket: 'fallback-image-bucket', Key: 'fallback-image.png'});
+      expect(mockS3).toHaveBeenNthCalledWith(2, {
+        Bucket: 'fallback-image-bucket',
+        Key: 'fallback-image.png'
+      });
       expect(result).toEqual(expectedResult);
     });
     it('005/should return an error JSON when the default fallback image key is not provided if the default fallback image is enabled', async function () {
@@ -498,6 +504,59 @@ describe('index', function () {
     };
     // Assert
     expect(mockS3).toHaveBeenNthCalledWith(1, {Bucket: 'source-bucket', Key: 'test.jpg'});
+    expect(result).toEqual(expectedResult);
+    expect(dateNowStub).toHaveBeenCalled();
+    global.Date.now = realDateNow;
+  })
+  it('010/should return gone if status code is in metadata', async function () {
+    process.env.CORS_ENABLED = 'Yes';
+    process.env.CORS_ORIGIN = '*';
+
+    const realDateNow = Date.now.bind(global.Date);
+    const date_now_fixture = 1610986782372;
+    const dateNowStub = jest.fn(() => {
+      return date_now_fixture;
+    });
+    global.Date.now = dateNowStub;
+
+    // Arrange
+    const event = {
+      path: '/test.jpg'
+    };
+    // Mock
+    mockS3.mockReset();
+    mockS3.mockImplementationOnce(() => {
+      return {
+        promise() {
+          return Promise.resolve({
+            Body: mockImage,
+            ContentType: 'image/png',
+            ETag: '"foo"',
+            Metadata: {
+              'buzz-status-code': '410'
+            }
+          });
+        }
+      }
+    });
+    // Act
+    const result = await index.handler(event);
+    const expectedResult = {
+      statusCode: 410,
+      body: JSON.stringify({"message": "HTTP/410. Content test.jpg has expired.", "code": "Gone", "status": 410}),
+      headers: {
+        'Access-Control-Allow-Methods': 'GET',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Credentials': true,
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=7200',
+      },
+      isBase64Encoded: false,
+    };
+    // Assert
+    expect(mockS3).toHaveBeenNthCalledWith(1, {Bucket: 'source-bucket', Key: 'test.jpg'});
+
     expect(result).toEqual(expectedResult);
     expect(dateNowStub).toHaveBeenCalled();
     global.Date.now = realDateNow;

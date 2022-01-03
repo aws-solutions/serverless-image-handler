@@ -11,14 +11,14 @@
     "sharp": "0.29.2"
   },
   "devDependencies": {
-    "aws-sdk": "2.887.0",
     "jest": "^26.4.2",
+    "aws-sdk": "2.887.0",
     "sinon": "^10.0.0"
   },
   "scripts": {
     "pretest": "npm run build:init && npm install",
     "test": "jest ./**/*.spec.js --coverage --silent",
-    "build:init": "# rm -rf package-lock.json dist/ node_modules/",
+    "build:init": "rm -rf package-lock.json dist/ node_modules/ coverage/",
     "build:zip": "zip -rq image-handler.zip .",
     "build:dist": "mkdir -p dist && mv image-handler.zip dist/",
     "build": "npm run build:init && npm install --arch=x64 --platform=linux --production && npm run build:zip && npm run build:dist"
