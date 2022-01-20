@@ -48,6 +48,7 @@ export interface ImageRequestInfo {
   contentType?: string;
   expires?: string;
   lastModified?: string;
+  eTag?: string;
   cacheControl?: string;
   outputFormat?: ImageFormatTypes;
   reductionEffort?: number;

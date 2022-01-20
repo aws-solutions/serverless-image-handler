@@ -12,6 +12,7 @@ type OriginalImageInfo = Partial<{
   contentType: string;
   expires: string;
   lastModified: string;
+  eTag: string;
   cacheControl: string;
   originalImage: Buffer;
 }>;
@@ -125,6 +126,10 @@ export class ImageRequest {
 
       if (originalImage.LastModified) {
         result.lastModified = new Date(originalImage.LastModified).toUTCString();
+      }
+
+      if (originalImage.ETag) {
+        result.eTag = originalImage.ETag;
       }
 
       result.cacheControl = originalImage.CacheControl ?? 'max-age=31536000,public';

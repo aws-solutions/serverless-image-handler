@@ -42,6 +42,7 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
     headers['Expires'] = imageRequestInfo.expires;
     headers['Last-Modified'] = imageRequestInfo.lastModified;
     headers['Cache-Control'] = imageRequestInfo.cacheControl;
+    headers['ETag'] = imageRequestInfo.eTag;
 
     // Apply the custom headers overwriting any that may need overwriting
     if (imageRequestInfo.headers) {
