@@ -7,11 +7,28 @@ locals {
 
 resource "aws_s3_bucket" "images" {
   bucket        = "master-images-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
-  force_destroy = true
+  force_destroy = false
 
   versioning {
     enabled = false
   }
+
+  server_side_encryption_configuration {
+    rule {
+      bucket_key_enabled = false
+      apply_server_side_encryption_by_default {
+        sse_algorithm = "aws:kms"
+      }
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "images" {
+  block_public_acls       = true
+  block_public_policy     = true
+  bucket                  = aws_s3_bucket.images.id
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
 module "lambda" {
@@ -24,7 +41,9 @@ module "lambda" {
   description                        = "provider of cute kitty pics."
   function_name                      = local.function_name
   ignore_external_function_updates   = true
-  layers                             = ["arn:aws:lambda:${data.aws_region.current.name}:580247275435:layer:LambdaInsightsExtension:16"]
+  layers                             = [
+    "arn:aws:lambda:${data.aws_region.current.name}:580247275435:layer:LambdaInsightsExtension:16"
+  ]
   memory_size                        = 1024
   publish                            = true
   runtime                            = "nodejs14.x"
@@ -54,7 +73,7 @@ module "lambda" {
 # Deployment resources
 # ---------------------------------------------------------------------------------------------------------------------
 
-// this resource is only used for the initial `terraform apply` - all further
+// this resource is only used for the initial `terraform apply` all further
 // deployments are running on CodePipeline
 resource "aws_s3_bucket_object" "this" {
   bucket = data.aws_s3_bucket.ci.bucket
@@ -88,4 +107,35 @@ module "deployment" {
   s3_bucket                          = data.aws_s3_bucket.ci.bucket
   s3_key                             = local.s3_key
   function_name                      = local.function_name
+}
+
+
+resource "aws_s3_bucket_policy" "this" {
+  bucket = aws_s3_bucket.images.id
+  policy = data.aws_iam_policy_document.deny_insecure_transport.json
+}
+
+data "aws_iam_policy_document" "deny_insecure_transport" {
+
+  statement {
+    sid    = "denyInsecureTransport"
+    effect = "Deny"
+
+    actions = [
+      "s3:*",
+    ]
+
+    resources = [aws_s3_bucket.images.arn, "${aws_s3_bucket.images.arn}/*"]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
 }

@@ -99,8 +99,9 @@ resource "aws_route53_record" "public_v6" {
 resource "aws_lambda_permission" "with_api_gateway" {
   statement_id  = "AllowExecutionFromApiGateway"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_alias.this.arn
+  function_name = module.lambda.arn
   principal     = "apigateway.amazonaws.com"
+  qualifier     = aws_lambda_alias.this.name
   source_arn    = "arn:aws:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${aws_apigatewayv2_api.this.id}/*/*/*"
 }
 
