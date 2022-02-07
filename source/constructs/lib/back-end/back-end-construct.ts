@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LambdaRestApiProps, RestApi } from '@aws-cdk/aws-apigateway';
-import { AllowedMethods, CachePolicy, DistributionProps, IOrigin, OriginRequestPolicy, OriginSslPolicy, PriceClass, ViewerProtocolPolicy } from '@aws-cdk/aws-cloudfront';
+import { AllowedMethods, CacheHeaderBehavior, CachePolicy, DistributionProps, IOrigin, OriginRequestPolicy, OriginSslPolicy, PriceClass, ViewerProtocolPolicy } from '@aws-cdk/aws-cloudfront';
 import { HttpOrigin } from '@aws-cdk/aws-cloudfront-origins';
 import { Policy, PolicyStatement, Role, ServicePrincipal } from '@aws-cdk/aws-iam';
 import { Code, Function as LambdaFunction, Runtime } from '@aws-cdk/aws-lambda';
@@ -108,10 +108,7 @@ export class BackEnd extends Construct {
 
     const originRequestPolicy = new OriginRequestPolicy(this, 'OriginRequestPolicy', {
       originRequestPolicyName: `ServerlessImageHandler-${props.uuid}`,
-      headerBehavior: {
-        behavior: 'whitelist',
-        headers: ['origin', 'accept']
-      },
+      headerBehavior: props.autoWebP == "Yes" ? CacheHeaderBehavior.allowList('origin', 'accept') : CacheHeaderBehavior.none(),
       queryStringBehavior: {
         behavior: 'whitelist',
         queryStrings: ['signature']
