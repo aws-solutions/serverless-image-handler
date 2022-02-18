@@ -18,6 +18,8 @@ const rekognitionClient = new Rekognition(awsSdkOptions);
 const secretsManagerClient = new SecretsManager(awsSdkOptions);
 const secretProvider = new SecretProvider(secretsManagerClient);
 
+const { SAVE_OUTPUT_BUCKET } = process.env;
+
 /**
  * Image handler Lambda handler.
  * @param event The image handler request event.
@@ -29,6 +31,38 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
   const imageRequest = new ImageRequest(s3Client, secretProvider);
   const imageHandler = new ImageHandler(s3Client, rekognitionClient);
   const isAlb = event.requestContext && Object.prototype.hasOwnProperty.call(event.requestContext, 'elb');
+  let headers = getResponseHeaders(false, isAlb);
+
+  const requestType = imageRequest.parseRequestType(event);
+  const imageKey = imageRequest.parseImageKey(event, requestType);
+  const outputFormat = imageRequest.getOutputFormat(event, requestType);
+  const savedOutputCacheKey = `${imageKey}${event.path}.${outputFormat}.base64`;
+  if (SAVE_OUTPUT_BUCKET) {
+    try {
+      const params = {
+        Bucket: SAVE_OUTPUT_BUCKET,
+        Key: savedOutputCacheKey,
+      };
+      const cachedOutput = await s3Client.getObject(params).promise();
+      headers['Content-Type'] = cachedOutput.ContentType;
+      // eslint-disable-next-line dot-notation
+      headers['Expires'] = new Date(cachedOutput.Expires).toUTCString();
+      headers['Last-Modified'] =  new Date(cachedOutput.LastModified).toUTCString();
+      headers['Cache-Control'] = cachedOutput.CacheControl;
+      headers['X-From-S3-Cache'] = 'true';
+      console.info('Served from S3 cache');
+      return {
+        statusCode: StatusCodes.OK,
+        isBase64Encoded: true,
+        headers: headers,
+        // The response is already base64 encoded
+        body: cachedOutput.Body.toString('ascii'),
+      };
+      
+    } catch (err) {
+      console.error('Failed to get cached object from S3', savedOutputCacheKey, err);
+    }
+  }
 
   try {
     const imageRequestInfo = await imageRequest.setup(event);
@@ -36,7 +70,6 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
 
     const processedRequest = await imageHandler.process(imageRequestInfo);
 
-    let headers = getResponseHeaders(false, isAlb);
     headers['Content-Type'] = imageRequestInfo.contentType;
     // eslint-disable-next-line dot-notation
     headers['Expires'] = imageRequestInfo.expires;
@@ -46,6 +79,23 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
     // Apply the custom headers overwriting any that may need overwriting
     if (imageRequestInfo.headers) {
       headers = { ...headers, ...imageRequestInfo.headers };
+    }
+
+    
+    if (SAVE_OUTPUT_BUCKET) {
+      const params = { 
+        Bucket: SAVE_OUTPUT_BUCKET, 
+        Key: savedOutputCacheKey, 
+        Body: processedRequest, 
+        CacheControl: imageRequestInfo.cacheControl, 
+        ContentType: imageRequestInfo.contentType 
+      };
+      try {
+        await s3Client.upload(params).promise();
+        console.info('Saved to S3', savedOutputCacheKey);
+      } catch (err) {
+        console.error('Failed to save output to S3', err);
+      }
     }
 
     return {

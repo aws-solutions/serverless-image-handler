@@ -303,6 +303,11 @@ Object {
       "Description": "This solution automatically logs events to Amazon CloudWatch. Select the amount of time for CloudWatch logs from this solution to be retained (in days).",
       "Type": "Number",
     },
+    "SaveOutputBucketParameter": Object {
+      "Default": "",
+      "Description": "The name of the Amazon S3 bucket in which to save outputs",
+      "Type": "String",
+    },
     "SecretsManagerKeyParameter": Object {
       "Default": "",
       "Description": "The name of AWS Secrets Manager secret key. You need to create secret key with this key name. The secret value would be used to check signature.",
@@ -1137,6 +1142,9 @@ Object {
             },
             "REWRITE_MATCH_PATTERN": "",
             "REWRITE_SUBSTITUTION": "",
+            "SAVE_OUTPUT_BUCKET": Object {
+              "Ref": "SaveOutputBucketParameter",
+            },
             "SECRETS_MANAGER": Object {
               "Ref": "SecretsManagerSecretParameter",
             },
@@ -1240,6 +1248,22 @@ Object {
         },
       },
       "Type": "AWS::CloudFront::OriginRequestPolicy",
+    },
+    "BackEndSaveOutputBucketCB584CDE": Object {
+      "DeletionPolicy": "Retain",
+      "Properties": Object {
+        "BucketName": Object {
+          "Ref": "SaveOutputBucketParameter",
+        },
+        "Tags": Array [
+          Object {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Retain",
     },
     "CommonResourcesCustomResourcesCopyWebsite83738AA9": Object {
       "Condition": "CommonResourcesDeployDemoUICondition308D3B09",

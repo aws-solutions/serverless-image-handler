@@ -111,6 +111,12 @@ export class ServerlessImageHandlerStack extends Stack {
       default: PriceClass.PRICE_CLASS_ALL
     });
 
+    const saveOutputBucketParameter = new CfnParameter(this, 'SaveOutputBucketParameter', {
+      type: 'String',
+      description: 'The name of the Amazon S3 bucket in which to save outputs',
+      default: ''
+    });
+
     const solutionMapping = new CfnMapping(this, 'Solution', {
       mapping: {
         Config: {
@@ -140,7 +146,8 @@ export class ServerlessImageHandlerStack extends Stack {
       secretsManagerKey: secretsManagerKeyParameter.valueAsString,
       enableDefaultFallbackImage: enableDefaultFallbackImageParameter.valueAsString as YesNo,
       fallbackImageS3Bucket: fallbackImageS3BucketParameter.valueAsString,
-      fallbackImageS3KeyBucket: fallbackImageS3KeyParameter.valueAsString
+      fallbackImageS3KeyBucket: fallbackImageS3KeyParameter.valueAsString,
+      saveOutputBucket: saveOutputBucketParameter.valueAsString,
     };
 
     const commonResources = new CommonResources(this, 'CommonResources', {
