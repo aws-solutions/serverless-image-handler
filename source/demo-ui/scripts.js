@@ -55,7 +55,7 @@ function getPreviewImage() {
         _edits.resize.fit = _resize;
     }
     if (_fillColor !== "") { _edits.resize.background = hexToRgbA(_fillColor, 1) }
-    if (_backgroundColor !== "") { _edits.flatten = { background: hexToRgbA(_backgroundColor, undefined) }}
+    if (_backgroundColor !== "") { _edits.flatten = { background: hexToRgbA(_backgroundColor, undefined) } }
     if (_grayscale) { _edits.grayscale = _grayscale }
     if (_flip) { _edits.flip = _flip }
     if (_flop) { _edits.flop = _flop }
@@ -98,19 +98,19 @@ function getPreviewImage() {
 
 function hexToRgbA(hex, _alpha) {
     var c;
-    if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
-        c= hex.substring(1).split('');
-        if(c.length== 3){
-            c= [c[0], c[0], c[1], c[1], c[2], c[2]];
+    if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+        c = hex.substring(1).split('');
+        if (c.length == 3) {
+            c = [c[0], c[0], c[1], c[1], c[2], c[2]];
         }
-        c= '0x'+c.join('');
-        return { r: ((c>>16)&255), g: ((c>>8)&255), b: (c&255), alpha: Number(_alpha)};
+        c = '0x' + c.join('');
+        return { r: ((c >> 16) & 255), g: ((c >> 8) & 255), b: (c & 255), alpha: Number(_alpha) };
     }
     throw new Error('Bad Hex');
 }
 
 function resetEdits() {
     $('.form-control').val('');
-	document.getElementById('editor-resize-mode').selectedIndex = 0;
-	$(".form-check-input").prop('checked', false);
+    document.getElementById('editor-resize-mode').selectedIndex = 0;
+    $(".form-check-input").prop('checked', false);
 }
