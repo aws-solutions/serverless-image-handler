@@ -27,6 +27,7 @@ export interface BackEndProps extends SolutionConstructProps {
 
 export class BackEnd extends Construct {
   public domainName: string;
+  public readonly saveOutputBucket: Bucket;
 
   constructor(scope: Construct, id: string, props: BackEndProps) {
     super(scope, id);
@@ -64,7 +65,7 @@ export class BackEnd extends Construct {
       runtime: Runtime.NODEJS_14_X,
       handler: 'image-handler/index.handler',
       timeout: Duration.minutes(15),
-      memorySize: 1_024,
+      memorySize: 1_800,
       code: Code.fromBucket(sourceCodeBucket, [props.sourceCodeKeyPrefix, 'image-handler.zip'].join('/')),
       role: imageHandlerLambdaFunctionRole,
       environment: {
@@ -79,7 +80,8 @@ export class BackEnd extends Construct {
         SECRET_KEY: props.secretsManagerKey,
         ENABLE_DEFAULT_FALLBACK_IMAGE: props.enableDefaultFallbackImage,
         DEFAULT_FALLBACK_IMAGE_BUCKET: props.fallbackImageS3Bucket,
-        DEFAULT_FALLBACK_IMAGE_KEY: props.fallbackImageS3KeyBucket
+        DEFAULT_FALLBACK_IMAGE_KEY: props.fallbackImageS3KeyBucket,
+        SAVE_OUTPUT_BUCKET: props.saveOutputBucket
       }
     });
 
@@ -170,5 +172,13 @@ export class BackEnd extends Construct {
     imageHandlerCloudFrontApiGatewayLambda.apiGateway.node.tryRemoveChild('Endpoint'); // we don't need the RestApi endpoint in the outputs
 
     this.domainName = imageHandlerCloudFrontApiGatewayLambda.cloudFrontWebDistribution.distributionDomainName;
+
+    if (props.saveOutputBucket) {
+      this.saveOutputBucket = new Bucket(this, 'SaveOutputBucket', {
+        bucketName: props.saveOutputBucket,
+        versioned: false,
+        publicReadAccess: false,
+      });
+    }
   }
 }
