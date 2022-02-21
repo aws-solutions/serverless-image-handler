@@ -1157,7 +1157,7 @@ Object {
           },
         },
         "Handler": "image-handler/index.handler",
-        "MemorySize": 1024,
+        "MemorySize": 1800,
         "Role": Object {
           "Fn::GetAtt": Array [
             "BackEndImageHandlerFunctionRoleABF81E5C",

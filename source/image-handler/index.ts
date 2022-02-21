@@ -45,9 +45,13 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
       };
       const cachedOutput = await s3Client.getObject(params).promise();
       headers['Content-Type'] = cachedOutput.ContentType;
-      // eslint-disable-next-line dot-notation
-      headers['Expires'] = new Date(cachedOutput.Expires).toUTCString();
-      headers['Last-Modified'] =  new Date(cachedOutput.LastModified).toUTCString();
+      if (cachedOutput.Expires) {
+        // eslint-disable-next-line dot-notation
+        headers['Expires'] = new Date(cachedOutput.Expires).toUTCString();
+      }
+      if (cachedOutput.LastModified) {
+        headers['Last-Modified'] = new Date(cachedOutput.LastModified).toUTCString();
+      }
       headers['Cache-Control'] = cachedOutput.CacheControl;
       headers['X-From-S3-Cache'] = 'true';
       console.info('Served from S3 cache');
