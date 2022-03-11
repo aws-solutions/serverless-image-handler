@@ -28,6 +28,19 @@ const { SAVE_OUTPUT_BUCKET } = process.env;
 export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExecutionResult> {
   console.info('Received event:', JSON.stringify(event, null, 2));
 
+  // We need Google to be able to index our images for their Recipe Gallery results
+  if (event.path === '/robots.txt') {
+    return {
+      statusCode: StatusCodes.OK,
+      isBase64Encoded: false,
+      headers: {
+        'Content-Type': 'text/plain',
+        'Cache-Control': 'public,max-age=3600',
+      },
+      body: 'User-agent: *\nAllow: /\n',
+    };
+  }
+
   const imageRequest = new ImageRequest(s3Client, secretProvider);
   const imageHandler = new ImageHandler(s3Client, rekognitionClient);
   const isAlb = event.requestContext && Object.prototype.hasOwnProperty.call(event.requestContext, 'elb');
