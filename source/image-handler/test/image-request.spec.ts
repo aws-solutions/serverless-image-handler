@@ -853,6 +853,46 @@ describe('setup()', () => {
       expect(imageRequestInfo).toEqual(expectedResult);
     });
   });
+
+  describe('011/expiryDate', () => {
+    it.each([
+      {
+        path: '/eyJidWNrZXQiOiJ0ZXN0IiwicmVxdWVzdFR5cGUiOiJEZWZhdWx0Iiwia2V5IjoidGVzdC5wbmciLCJoZWFkZXJzIjp7ImV4cGlyZXMiOiJUaHUsIDAxIEphbiAxOTcwIDAwOjAwOjAwIEdNVCJ9fQ==',
+        error: {
+          code: 'ImageRequestExpired',
+          message: 'Request has expired.',
+          status: StatusCodes.FORBIDDEN,
+        },
+      },
+      {
+        path: '/eyJidWNrZXQiOiJ0ZXN0IiwicmVxdWVzdFR5cGUiOiJEZWZhdWx0Iiwia2V5IjoidGVzdC5wbmciLCJoZWFkZXJzIjp7ImV4cGlyZXMiOiJpbnZhbGlkS2V5In19',
+        error: {
+          code: 'ImageRequestExpiryFormat',
+          message: 'Request has invalid expiry date.',
+          status: StatusCodes.BAD_REQUEST,
+        }
+      }
+    ])("Should throw an error when $error.message", (async ({ path, error: expectedError }) => {
+      // Arrange
+      const event = {
+        path,
+      };
+      // Mock
+      mockAwsS3.getObject.mockImplementationOnce(() => ({
+        promise() {
+          return Promise.resolve({ Body: Buffer.from('SampleImageContent\n') });
+        }
+      }));
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+      try {
+        await imageRequest.setup(event);
+      } catch (error) {
+        // Assert
+        expect(error).toMatchObject(expectedError);
+      }
+    }));
+  });
 });
 
 describe('getOriginalImage()', () => {

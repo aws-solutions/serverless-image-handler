@@ -41,6 +41,7 @@ export class ImageRequest {
       imageRequestInfo = { ...imageRequestInfo, ...originalImage };
 
       imageRequestInfo.headers = this.parseImageHeaders(event, imageRequestInfo.requestType);
+      this.validateRequestExpires(imageRequestInfo);
 
       // If the original image is SVG file and it has any edits but no output format, change the format to WebP.
       if (imageRequestInfo.contentType === 'image/svg+xml' && imageRequestInfo.edits && Object.keys(imageRequestInfo.edits).length > 0 && !imageRequestInfo.edits.toFormat) {
@@ -441,6 +442,31 @@ export class ImageRequest {
         console.error('Error occurred while checking signature.', error);
         throw new ImageHandlerError(StatusCodes.INTERNAL_SERVER_ERROR, 'SignatureValidationFailure', 'Signature validation failed.');
       }
+    }
+  }
+
+  private validateRequestExpires(requestInfo: ImageRequestInfo): void {
+    try {
+      const expires = requestInfo.headers?.expires;
+      if (expires !== undefined) {
+        const parsedDate = new Date(expires);
+        if (isNaN(parsedDate.getTime())) {
+          throw new ImageHandlerError(StatusCodes.BAD_REQUEST, 'ImageRequestExpiryFormat', 'Request has invalid expiry date.');
+        }
+        const now = new Date();
+        if (now > parsedDate) {
+          throw new ImageHandlerError(StatusCodes.FORBIDDEN, 'ImageRequestExpired', 'Request has expired.');
+        }
+      }
+    } catch (error) {
+      if (error.code === 'ImageRequestExpired') {
+        throw error;
+      }
+      if (error.code === 'ImageRequestExpiryFormat') {
+        throw error;
+      }
+      console.error('Error occurred while checking expiry.', error);
+      throw new ImageHandlerError(StatusCodes.INTERNAL_SERVER_ERROR, 'ExpiryDateCheckFailure', 'Expiry date check failed.');
     }
   }
 }
