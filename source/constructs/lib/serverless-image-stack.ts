@@ -117,6 +117,18 @@ export class ServerlessImageHandlerStack extends Stack {
       default: ''
     });
 
+    const customDomainNamesParameter = new CfnParameter(this, 'CustomDomainNames', {
+      type: 'String',
+      description: 'Custom domain names to use on the CloudFront distribution. Comma separated',
+      default: ''
+    });
+
+    const certificateArnParameter = new CfnParameter(this, 'CertificateArn', {
+      type: 'String',
+      description: 'The ARN of the SSL certificate to use with the custom domains',
+      default: ''
+    });
+
     const solutionMapping = new CfnMapping(this, 'Solution', {
       mapping: {
         Config: {
@@ -148,6 +160,8 @@ export class ServerlessImageHandlerStack extends Stack {
       fallbackImageS3Bucket: fallbackImageS3BucketParameter.valueAsString,
       fallbackImageS3KeyBucket: fallbackImageS3KeyParameter.valueAsString,
       saveOutputBucket: saveOutputBucketParameter.valueAsString,
+      customDomainNames: customDomainNamesParameter.valueAsString,
+      certificateArn: certificateArnParameter.valueAsString,
     };
 
     const commonResources = new CommonResources(this, 'CommonResources', {
@@ -163,7 +177,6 @@ export class ServerlessImageHandlerStack extends Stack {
       logsBucket: commonResources.logsBucket,
       conditions: commonResources.conditions
     });
-
     const backEnd = new BackEnd(this, 'BackEnd', {
       sourceCodeBucketName: sourceCodeBucketName,
       sourceCodeKeyPrefix: sourceCodeKeyPrefix,
@@ -234,7 +247,11 @@ export class ServerlessImageHandlerStack extends Stack {
           {
             Label: { default: 'Auto WebP' },
             Parameters: [autoWebPParameter.logicalId]
-          }
+          },
+          {
+            Label: { default: 'Custom Domains' },
+            Parameters: [customDomainNamesParameter.logicalId, certificateArnParameter.logicalId]
+          },
         ],
         ParameterLabels: {
           [corsEnabledParameter.logicalId]: { default: 'CORS Enabled' },
@@ -249,7 +266,9 @@ export class ServerlessImageHandlerStack extends Stack {
           [enableDefaultFallbackImageParameter.logicalId]: { default: 'Enable Default Fallback Image' },
           [fallbackImageS3BucketParameter.logicalId]: { default: 'Fallback Image S3 Bucket' },
           [fallbackImageS3KeyParameter.logicalId]: { default: 'Fallback Image S3 Key' },
-          [cloudFrontPriceClassParameter.logicalId]: { default: 'CloudFront PriceClass' }
+          [cloudFrontPriceClassParameter.logicalId]: { default: 'CloudFront PriceClass' },
+          [customDomainNamesParameter.logicalId]: { default: 'Custom Domain Names' },
+          [certificateArnParameter.logicalId]: { default: 'SSL Certificate ARN' },
         }
       }
     };
