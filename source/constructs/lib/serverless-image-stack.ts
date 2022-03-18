@@ -55,7 +55,7 @@ export class ServerlessImageHandlerStack extends Stack {
     const logRetentionPeriodParameter = new CfnParameter(this, 'LogRetentionPeriodParameter', {
       type: 'Number',
       description: 'This solution automatically logs events to Amazon CloudWatch. Select the amount of time for CloudWatch logs from this solution to be retained (in days).',
-      allowedValues: ['1', '3', '5', '7', '14', '30', '60', '90', '120', '150', '180', '365', '400', '545', '731', '1827', '3653'],
+      allowedValues: ['1', '3', '5', '7', '14', '30', '60', '90', '120', '150', '180', '365', '400', '545', '731', '1827', '3653', '9999'],
       default: '1'
     });
 

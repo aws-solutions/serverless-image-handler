@@ -298,6 +298,7 @@ Object {
         "731",
         "1827",
         "3653",
+        "9999",
       ],
       "Default": "1",
       "Description": "This solution automatically logs events to Amazon CloudWatch. Select the amount of time for CloudWatch logs from this solution to be retained (in days).",
