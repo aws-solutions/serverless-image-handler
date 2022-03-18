@@ -6,6 +6,7 @@ import { AllowedMethods, CachePolicy, DistributionProps, IOrigin, OriginRequestP
 import { HttpOrigin } from '@aws-cdk/aws-cloudfront-origins';
 import { Policy, PolicyStatement, Role, ServicePrincipal } from '@aws-cdk/aws-iam';
 import { Code, Function as LambdaFunction, Runtime } from '@aws-cdk/aws-lambda';
+import { Certificate } from '@aws-cdk/aws-certificatemanager';
 import { LogGroup, RetentionDays } from '@aws-cdk/aws-logs';
 import { Bucket, IBucket } from '@aws-cdk/aws-s3';
 import { ArnFormat, Aws, Construct, Duration, Lazy, Stack } from '@aws-cdk/core';
@@ -23,6 +24,8 @@ export interface BackEndProps extends SolutionConstructProps {
   readonly logsBucket: IBucket;
   readonly uuid: string;
   readonly cloudFrontPriceClass: string;
+  readonly customDomainNames: string;
+  readonly certificateArn: string;
 }
 
 export class BackEnd extends Construct {
@@ -127,7 +130,10 @@ export class BackEnd extends Construct {
       originSslProtocols: [OriginSslPolicy.TLS_V1_1, OriginSslPolicy.TLS_V1_2]
     });
 
+    const certificate = props.certificateArn ? Certificate.fromCertificateArn(this, 'domainCert', props.certificateArn) : undefined;
+    const domainNames = props.customDomainNames.split(',').map(dn => dn.trim()).filter(dn => !!dn) || undefined;
     const cloudFrontDistributionProps: DistributionProps = {
+      certificate,
       comment: 'Image Handler Distribution for Serverless Image Handler',
       defaultBehavior: {
         origin: origin,
@@ -136,6 +142,7 @@ export class BackEnd extends Construct {
         originRequestPolicy: originRequestPolicy,
         cachePolicy: cachePolicy
       },
+      domainNames,
       priceClass: props.cloudFrontPriceClass as PriceClass,
       enableLogging: true,
       logBucket: props.logsBucket,
@@ -160,7 +167,6 @@ export class BackEnd extends Construct {
       },
       binaryMediaTypes: ['*/*']
     };
-
     const imageHandlerCloudFrontApiGatewayLambda = new CloudFrontToApiGatewayToLambda(this, 'ImageHandlerCloudFrontApiGatewayLambda', {
       existingLambdaObj: imageHandlerLambdaFunction,
       insertHttpSecurityHeaders: false,
@@ -170,9 +176,8 @@ export class BackEnd extends Construct {
     });
 
     imageHandlerCloudFrontApiGatewayLambda.apiGateway.node.tryRemoveChild('Endpoint'); // we don't need the RestApi endpoint in the outputs
-
     this.domainName = imageHandlerCloudFrontApiGatewayLambda.cloudFrontWebDistribution.distributionDomainName;
-
+    
     if (props.saveOutputBucket) {
       this.saveOutputBucket = new Bucket(this, 'SaveOutputBucket', {
         bucketName: props.saveOutputBucket,

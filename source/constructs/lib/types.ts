@@ -17,4 +17,6 @@ export interface SolutionConstructProps {
   readonly fallbackImageS3Bucket: string;
   readonly fallbackImageS3KeyBucket: string;
   readonly saveOutputBucket: string;
+  readonly customDomainNames: string;
+  readonly certificateArn: string;
 }
