@@ -19,7 +19,7 @@ type OriginalImageInfo = Partial<{
 export class ImageRequest {
   private static readonly DEFAULT_REDUCTION_EFFORT = 4;
 
-  constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) {}
+  constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) { }
 
   /**
    * Initializer function for creating a new image request, used by the image handler to perform image modifications.
@@ -29,6 +29,7 @@ export class ImageRequest {
   public async setup(event: ImageHandlerEvent): Promise<ImageRequestInfo> {
     try {
       await this.validateRequestSignature(event);
+      this.validateRequestExpires(event);
 
       let imageRequestInfo: ImageRequestInfo = <ImageRequestInfo>{};
 
@@ -41,7 +42,6 @@ export class ImageRequest {
       imageRequestInfo = { ...imageRequestInfo, ...originalImage };
 
       imageRequestInfo.headers = this.parseImageHeaders(event, imageRequestInfo.requestType);
-      this.validateRequestExpires(imageRequestInfo);
 
       // If the original image is SVG file and it has any edits but no output format, change the format to WebP.
       if (imageRequestInfo.contentType === 'image/svg+xml' && imageRequestInfo.edits && Object.keys(imageRequestInfo.edits).length > 0 && !imageRequestInfo.edits.toFormat) {
@@ -408,6 +408,19 @@ export class ImageRequest {
   }
 
   /**
+   * Creates a query string similar to API Gateway 2.0 payload's $.rawQueryString
+   * @param queryStringParameters Request's query parameters
+   * @returns URL encoded queryString
+   */
+  private recreateQueryString(queryStringParameters: ImageHandlerEvent['queryStringParameters']): string {
+    return Object
+      .entries(queryStringParameters)
+      .filter(([key]) => key !== 'signature')
+      .map(([key, value]) => [key, value].join('='))
+      .join('&');
+  }
+
+  /**
    * Validates the request's signature.
    * @param event Lambda request body.
    * @returns A promise.
@@ -424,11 +437,14 @@ export class ImageRequest {
         throw new ImageHandlerError(StatusCodes.BAD_REQUEST, 'AuthorizationQueryParametersError', 'Query-string requires the signature parameter.');
       }
 
+      const queryString = this.recreateQueryString(queryStringParameters);
+
       try {
         const { signature } = queryStringParameters;
         const secret = JSON.parse(await this.secretProvider.getSecret(SECRETS_MANAGER));
         const key = secret[SECRET_KEY];
-        const hash = createHmac('sha256', key).update(path).digest('hex');
+        const stringToSign = queryString !== '' ? [path, queryString].join('?') : path;
+        const hash = createHmac('sha256', key).update(stringToSign).digest('hex');
 
         // Signature should be made with the full path.
         if (signature !== hash) {
@@ -445,9 +461,10 @@ export class ImageRequest {
     }
   }
 
-  private validateRequestExpires(requestInfo: ImageRequestInfo): void {
+  private validateRequestExpires(event: ImageHandlerEvent): void {
     try {
-      const expires = requestInfo.headers?.expires;
+      const { queryStringParameters } = event;
+      const expires = queryStringParameters?.expires;
       if (expires !== undefined) {
         const parsedDate = new Date(expires);
         if (isNaN(parsedDate.getTime())) {

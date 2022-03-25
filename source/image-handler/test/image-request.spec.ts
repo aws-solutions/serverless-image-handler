@@ -7,7 +7,7 @@ import SecretsManager from 'aws-sdk/clients/secretsmanager';
 import S3 from 'aws-sdk/clients/s3';
 
 import { ImageRequest } from '../image-request';
-import { ImageHandlerError, RequestTypes, StatusCodes } from '../lib';
+import { ImageHandlerError, ImageHandlerEvent, RequestTypes, StatusCodes } from '../lib';
 import { SecretProvider } from '../secret-provider';
 
 describe('setup()', () => {
@@ -434,6 +434,22 @@ describe('setup()', () => {
       expect(imageRequestInfo).toEqual(expectedResult);
     });
 
+    it('Should pass when the image signature is correct with expires query string', async () => {
+      jest.useFakeTimers('modern').setSystemTime(0);
+
+      // TODO write test
+
+      expect(true).toBe(true);
+    });
+
+    it('Should throw when the image signature is incorrect with expires query string', async () => {
+      jest.useFakeTimers('modern').setSystemTime(0);
+
+      // TODO write test
+
+      expect(true).toBe(true);
+    });
+
     it('Should throw an error when queryStringParameters are missing', async () => {
       // Arrange
       const event = {
@@ -855,9 +871,15 @@ describe('setup()', () => {
   });
 
   describe('011/expiryDate', () => {
+    const baseRequest = {
+      bucket: 'test',
+      requestType: 'Default',
+      key: 'test.png',
+    };
+    const path = `/${Buffer.from(JSON.stringify(baseRequest)).toString('base64')}`;
     it.each([
       {
-        path: '/eyJidWNrZXQiOiJ0ZXN0IiwicmVxdWVzdFR5cGUiOiJEZWZhdWx0Iiwia2V5IjoidGVzdC5wbmciLCJoZWFkZXJzIjp7ImV4cGlyZXMiOiJUaHUsIDAxIEphbiAxOTcwIDAwOjAwOjAwIEdNVCJ9fQ==',
+        expires: 'Thu, 01 Jan 1970 00:00:00 GMT',
         error: {
           code: 'ImageRequestExpired',
           message: 'Request has expired.',
@@ -865,33 +887,34 @@ describe('setup()', () => {
         },
       },
       {
-        path: '/eyJidWNrZXQiOiJ0ZXN0IiwicmVxdWVzdFR5cGUiOiJEZWZhdWx0Iiwia2V5IjoidGVzdC5wbmciLCJoZWFkZXJzIjp7ImV4cGlyZXMiOiJpbnZhbGlkS2V5In19',
+        expires: 'invalidKey',
         error: {
           code: 'ImageRequestExpiryFormat',
           message: 'Request has invalid expiry date.',
           status: StatusCodes.BAD_REQUEST,
         }
       }
-    ])("Should throw an error when $error.message", (async ({ path, error: expectedError }) => {
-      // Arrange
-      const event = {
-        path,
-      };
-      // Mock
-      mockAwsS3.getObject.mockImplementationOnce(() => ({
-        promise() {
-          return Promise.resolve({ Body: Buffer.from('SampleImageContent\n') });
-        }
-      }));
-      // Act
-      const imageRequest = new ImageRequest(s3Client, secretProvider);
-      try {
-        await imageRequest.setup(event);
-      } catch (error) {
-        // Assert
-        expect(error).toMatchObject(expectedError);
-      }
-    }));
+    ] as { expires: ImageHandlerEvent['queryStringParameters']['expires'], error: object, }[])(
+      "Should throw an error when $error.message",
+      (async ({ error: expectedError, expires }) => {
+        // Arrange
+        const event: ImageHandlerEvent = {
+          path,
+          queryStringParameters: {
+            expires,
+          },
+        };
+        // Mock
+        mockAwsS3.getObject.mockImplementationOnce(() => ({
+          promise() {
+            return Promise.resolve({ Body: Buffer.from('SampleImageContent\n') });
+          }
+        }));
+        // Act
+        const imageRequest = new ImageRequest(s3Client, secretProvider);
+        await expect(imageRequest.setup(event)).rejects.toMatchObject(expectedError);
+      })
+    );
   });
 });
 
