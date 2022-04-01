@@ -87,7 +87,26 @@ function getPreviewImage() {
     console.log(request);
     // Setup encoded request
     const str = JSON.stringify(request);
-    const enc = btoa(str);
+    // const enc = btoa(str);
+    const enc = `${keyName}`;
+    let urlParams = {};
+    if (request.edits.resize != null) {
+        if (request.edits.resize.width != null) {
+            urlParams.width = request.edits.resize.width;
+        }
+        if (request.edits.resize.height != null) {
+            urlParams.height = request.edits.resize.height;
+        }
+        if (request.edits.resize.fit != null) {
+            urlParams.height = request.edits.resize.fit;
+        }
+    }
+    if (request.edits.smartCrop != null) {
+        urlParams.smartCrop = true;
+        if (request.edits.smartCrop.faceIndex != null) {
+            urlParams.faceIndex = request.edits.smartCrop.faceIndex;
+        }
+    }
     // Fill the preview image
     $(`#img-preview`).attr(`src`, `${appVariables.apiEndpoint}/${enc}`);
     // Fill the request body field
