@@ -125,7 +125,7 @@ export class ServerlessImageHandlerStack extends Stack {
     });
 
     const anonymousUsage = `${solutionMapping.findInMap('Config', 'AnonymousUsage')}`;
-    const sourceCodeBucketName = `${solutionMapping.findInMap('Config', 'S3BucketPrefix')}-${Aws.REGION}`;
+    const sourceCodeBucketName = `${solutionMapping.findInMap('Config', 'S3BucketPrefix')}`;
     const sourceCodeKeyPrefix = solutionMapping.findInMap('Config', 'S3KeyPrefix');
 
     const solutionConstructProps: SolutionConstructProps = {
