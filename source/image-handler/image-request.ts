@@ -32,7 +32,7 @@ export class ImageRequest {
 
       let imageRequestInfo: ImageRequestInfo = <ImageRequestInfo>{};
 
-      imageRequestInfo.requestType = this.parseRequestType(event);
+      imageRequestInfo.requestType = RequestTypes.QUERY; // @! this.parseRequestType(event);
       imageRequestInfo.bucket = this.parseImageBucket(event, imageRequestInfo.requestType);
       imageRequestInfo.key = this.parseImageKey(event, imageRequestInfo.requestType);
       imageRequestInfo.edits = this.parseImageEdits(event, imageRequestInfo.requestType);
@@ -171,7 +171,7 @@ export class ImageRequest {
         const sourceBuckets = this.getAllowedSourceBuckets();
         return sourceBuckets[0];
       }
-    } else if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
+    } else if (requestType === RequestTypes.QUERY || requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
       // Use the default image source bucket env var
       const sourceBuckets = this.getAllowedSourceBuckets();
       return sourceBuckets[0];
@@ -191,7 +191,35 @@ export class ImageRequest {
    * @returns The edits to be made to the original image.
    */
   public parseImageEdits(event: ImageHandlerEvent, requestType: RequestTypes): ImageEdits {
-    if (requestType === RequestTypes.DEFAULT) {
+    if (requestType === RequestTypes.QUERY) {
+      let edits: ImageEdits = {};
+      let q = event.queryStringParameters;
+      if (q != null) {
+        // resize
+        let resize: {[key: string]: any} = {
+          fit: "cover",
+          background: {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "alpha": 0
+          }
+        };
+        if (q.width != null) resize.width = parseInt(q.width);
+        if (q.height != null) resize.height = parseInt(q.height);
+        if (q.fit != null) resize.fit = q.fit;
+        if (Object.keys(resize).length > 0) {
+          edits.resize = resize;
+        }
+        // smart crop
+        if (q.smartCrop != null) {
+          let smartCrop: {[key: string]: any} = {};
+          if (q.faceIndex != null) smartCrop.faceIndex = parseInt(q.faceIndex);
+          edits.smartCrop = smartCrop;
+        }
+      }
+      return edits;
+    } else if (requestType === RequestTypes.DEFAULT) {
       const decoded = this.decodeRequest(event);
       return decoded.edits;
     } else if (requestType === RequestTypes.THUMBOR) {
@@ -217,6 +245,16 @@ export class ImageRequest {
    * @returns The name of the appropriate Amazon S3 key.
    */
   public parseImageKey(event: ImageHandlerEvent, requestType: RequestTypes): string {
+    if (requestType === RequestTypes.QUERY) {
+      let path = event.path;
+      // strip query string (not sure if there can be, but there's no spec...)
+      const qsIdx = path.indexOf('?');
+      if (qsIdx !== -1) {
+        path = path.substring(0, qsIdx);
+      }
+      return decodeURIComponent(path);
+    }
+
     if (requestType === RequestTypes.DEFAULT) {
       // Decode the image request and return the image key
       const { key } = this.decodeRequest(event);
@@ -262,6 +300,7 @@ export class ImageRequest {
     const { path } = event;
     const matchDefault = /^(\/?)([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
     const matchThumbor = /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?)(((.(?!(\.[^.\\/]+$)))*$)|.*(\.jpg$|.\.png$|\.webp$|\.tiff$|\.jpeg$|\.svg$))/i;
+
     const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION } = process.env;
     const definedEnvironmentVariables = REWRITE_MATCH_PATTERN !== '' && REWRITE_SUBSTITUTION !== '' && REWRITE_MATCH_PATTERN !== undefined && REWRITE_SUBSTITUTION !== undefined;
 

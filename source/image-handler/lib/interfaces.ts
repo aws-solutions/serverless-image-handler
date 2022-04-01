@@ -9,6 +9,7 @@ import { Headers, ImageEdits } from './types';
 export interface ImageHandlerEvent {
   path?: string;
   queryStringParameters?: {
+    [key: string]: string | null | undefined;
     signature: string;
   };
   requestContext?: {
