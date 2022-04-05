@@ -127,7 +127,8 @@ export class BackEnd extends Construct {
 
     const origin: IOrigin = new HttpOrigin(`${apiGatewayRestApi.restApiId}.execute-api.${Aws.REGION}.amazonaws.com`, {
       originPath: '/image',
-      originSslProtocols: [OriginSslPolicy.TLS_V1_1, OriginSslPolicy.TLS_V1_2]
+      originSslProtocols: [OriginSslPolicy.TLS_V1_1, OriginSslPolicy.TLS_V1_2],
+      originShieldRegion: Aws.REGION,
     });
 
     const certificate = props.certificateArn ? Certificate.fromCertificateArn(this, 'domainCert', props.certificateArn) : undefined;
