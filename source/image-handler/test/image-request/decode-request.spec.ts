@@ -43,7 +43,7 @@ describe("decodeRequest", () => {
       imageRequest.decodeRequest(event);
     } catch (error) {
       expect(error).toMatchObject({
-        status: StatusCodes.BAD_REQUEST,
+        status: StatusCodes.TRUNCATED_REQUEST,
         code: "DecodeRequest::CannotDecodeRequest",
         message:
           "The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.",
@@ -67,6 +67,28 @@ describe("decodeRequest", () => {
         code: "DecodeRequest::CannotReadPath",
         message:
           "The URL path you provided could not be read. Please ensure that it is properly formed according to the solution documentation.",
+      });
+    }
+  });
+
+  it("Should throw an error if a truncated base64-encoded path has been specified", () => {
+    // Arrange
+    const event = {
+      path: "/eyJidWNrZXQiOiJidWNrZXQtbmFtZS1",
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+
+    // Assert
+    try {
+      imageRequest.decodeRequest(event);
+    } catch (error) {
+      expect(error).toMatchObject({
+        status: StatusCodes.TRUNCATED_REQUEST,
+        code: "DecodeRequest::CannotDecodeRequest",
+        message:
+          "The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.",
       });
     }
   });

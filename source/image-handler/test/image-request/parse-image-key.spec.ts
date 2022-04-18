@@ -321,4 +321,26 @@ describe("parseImageKey", () => {
     const expectedResult = "image.jpg";
     expect(result).toEqual(expectedResult);
   });
+
+  it("Should return 400 if the key is not specified in the request", function () {
+    // Arrange
+    const event = {
+      path: "/eyJidWNrZXQiOiJhbGxvd2VkQnVja2V0MDAxIiwiZWRpdHMiOnsiZ3JheXNjYWxlIjoidHJ1ZSJ9fQ==",
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+
+    // Assert
+    try {
+      imageRequest.parseImageKey(event, RequestTypes.DEFAULT);
+    } catch (error) {
+      expect(error).toMatchObject({
+        status: StatusCodes.BAD_REQUEST,
+        code: "ImageEdits::CannotFindImage",
+        message:
+          "The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists.",
+      });
+    }
+  });
 });

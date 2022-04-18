@@ -148,26 +148,35 @@ describe("parseRequestType", () => {
     try {
       imageRequest.parseRequestType(event);
     } catch (error) {
-      parseError = error;
+      expect(error).toMatchObject({
+        status: StatusCodes.TRUNCATED_REQUEST,
+        code: "DecodeRequest::CannotDecodeRequest",
+        message:
+          "The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.",
+      });
     }
-    expect(parseError).toMatchObject({
-      status: StatusCodes.BAD_REQUEST,
-      code: "RequestTypeError",
-      message:
-        "The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg/jpeg, png, tiff/tif, webp, svg, gif, avif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.",
-    });
   });
 
-  it("Should pass if a path is provided without an extension", () => {
+  it("Should throw an error if the request is a truncated base64", () => {
     // Arrange
-    const event = { path: "/image" };
+    const event = { path: "ewogICJidWNrZXQiOiAidHQtb3JpZ2luYWwtaW1hZ2UtYnVja2V0IiwKICAia2V5" };
+
+    process.env = {};
 
     // Act
     const imageRequest = new ImageRequest(s3Client, secretProvider);
-    const result = imageRequest.parseRequestType(event);
 
     // Assert
-    const expectedResult = RequestTypes.THUMBOR;
-    expect(result).toEqual(expectedResult);
+    try {
+      imageRequest.parseRequestType(event);
+    } catch (error) {
+      expect(consoleInfoSpy).toHaveBeenCalledWith("Path is not base64 encoded.");
+      expect(error).toMatchObject({
+        status: StatusCodes.TRUNCATED_REQUEST,
+        code: "DecodeRequest::CannotDecodeRequest",
+        message:
+          "The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.",
+      });
+    }
   });
 });

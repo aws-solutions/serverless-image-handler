@@ -7,6 +7,7 @@ export enum StatusCodes {
   FORBIDDEN = 403,
   NOT_FOUND = 404,
   REQUEST_TOO_LONG = 413,
+  TRUNCATED_REQUEST = 477,
   INTERNAL_SERVER_ERROR = 500,
 }
 
