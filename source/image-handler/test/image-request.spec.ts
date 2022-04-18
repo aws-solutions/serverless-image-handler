@@ -982,9 +982,10 @@ describe('getOriginalImage()', () => {
       [0xff, 0xd8, 0xff, 0xe1],
       [0x52, 0x49, 0x46, 0x46],
       [0x49, 0x49, 0x2a, 0x00],
-      [0x4d, 0x4d, 0x00, 0x2a]
+      [0x4d, 0x4d, 0x00, 0x2a],
+      [0x41, 0x49, 0x2a, 0x00] // not recognized file header should fall back to `image` as expectFileType
     ];
-    const expectFileType = ['image/png', 'image/jpeg', 'image/jpeg', 'image/jpeg', 'image/jpeg', 'image/webp', 'image/tiff', 'image/tiff'];
+    const expectFileType = ['image/png', 'image/jpeg', 'image/jpeg', 'image/jpeg', 'image/jpeg', 'image/webp', 'image/tiff', 'image/tiff', 'image'];
 
     testFiles.forEach((test, index) => {
       it('Should pass and infer content type if there is no extension, had default s3 content type and it has a valid key and a valid bucket', async () => {
@@ -1027,28 +1028,6 @@ describe('getOriginalImage()', () => {
         expect(mockAwsS3.getObject).toHaveBeenCalledWith({ Bucket: 'validBucket', Key: 'validKey' });
         expect(result.originalImage).toEqual(Buffer.from(new Uint8Array(test)));
         expect(result.contentType).toEqual(expectFileType[index]);
-      });
-
-      it('Should fail to infer content type if there is no extension and file header is not recognized', async () => {
-        // Mock
-        mockAwsS3.getObject.mockImplementationOnce(() => ({
-          promise() {
-            return Promise.resolve({
-              ContentType: 'binary/octet-stream',
-              Body: Buffer.from(new Uint8Array(test))
-            });
-          }
-        }));
-
-        // Act
-        const imageRequest = new ImageRequest(s3Client, secretProvider);
-        try {
-          await imageRequest.getOriginalImage('validBucket', 'validKey');
-        } catch (error) {
-          // Assert
-          expect(mockAwsS3.getObject).toHaveBeenCalledWith({ Bucket: 'validBucket', Key: 'validKey' });
-          expect(error.status).toEqual(500);
-        }
       });
     });
   });
