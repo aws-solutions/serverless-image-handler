@@ -853,6 +853,48 @@ describe('setup()', () => {
       expect(imageRequestInfo).toEqual(expectedResult);
     });
   });
+
+  describe('011/invalidBase64', function() {
+    it('Should return error with invalid base64', async function() {
+      // Arrange
+      const event = {
+        path : '/eyJidWNrZXQiOiJ2YWxpZEJ1Y2tldCIsImtleSI6InZhbGlkS2V5IiwiZWRpdHMiO'
+      }
+      process.env.SOURCE_BUCKETS = 'validBucket, validBucket2';
+
+      // Mock
+      mockAwsS3.getObject.mockImplementationOnce(() => ({
+        promise() {
+          return Promise.resolve({ Body: Buffer.from('SampleImageContent\n') });
+        }
+      }));
+
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+      const expectedResult = {
+        requestType: 'Default',
+        bucket: 'validBucket',
+        key: 'validKey',
+        edits: { grayscale: true },
+        outputFormat: 'jpeg',
+        originalImage: Buffer.from('SampleImageContent\n'),
+        CacheControl: 'max-age=31536000,public',
+        ContentType: 'image/jpeg'
+      };
+
+      // Assert
+      try {
+        await imageRequest.setup(event);
+        expect(imageRequest).toEqual(expectedResult);
+      } catch (error) {
+        expect(error).toMatchObject({
+          status: 400,
+          code: 'RequestTypeError',
+          message: 'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.'
+        });
+      }
+    });
+  });
 });
 
 describe('getOriginalImage()', () => {
@@ -1008,6 +1050,33 @@ describe('getOriginalImage()', () => {
           expect(error.status).toEqual(500);
         }
       });
+    });
+  });
+
+  describe('005/elseConditionWithTruncatedBase64', function() {
+    it('Should throw an error if the method cannot determine the request type based on the three groups given', function() {
+      // Arrange
+      const event = {
+        path : '/eyJidWNrZXQiOiJ2YWxpZEJ1Y2tldCIsImtleSI6InZhbGlkS2V5IiwiZWRpdHMiO'
+      }
+      process.env = {};
+
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+
+      // Assert
+      try {
+        const result = imageRequest.parseRequestType(event);
+        // Assert
+        const notExpectedResult = 'Thumbor';
+        expect(result).not.toEqual(notExpectedResult);
+      } catch (error) {
+        expect(error).toMatchObject({
+          status: 400,
+          code: 'RequestTypeError',
+          message: 'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.'
+        });
+      }
     });
   });
 });

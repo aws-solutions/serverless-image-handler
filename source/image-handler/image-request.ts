@@ -261,7 +261,7 @@ export class ImageRequest {
   public parseRequestType(event: ImageHandlerEvent): RequestTypes {
     const { path } = event;
     const matchDefault = /^(\/?)([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
-    const matchThumbor = /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?)(((.(?!(\.[^.\\/]+$)))*$)|.*(\.jpg$|.\.png$|\.webp$|\.tiff$|\.jpeg$|\.svg$))/i;
+    const matchThumbor = /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(.+jpg|.+png|.+webp|.+tiff|.+jpeg|.+svg)$/i;
     const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION } = process.env;
     const definedEnvironmentVariables = REWRITE_MATCH_PATTERN !== '' && REWRITE_SUBSTITUTION !== '' && REWRITE_MATCH_PATTERN !== undefined && REWRITE_SUBSTITUTION !== undefined;
 
