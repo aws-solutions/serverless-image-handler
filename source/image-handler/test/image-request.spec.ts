@@ -888,9 +888,9 @@ describe('setup()', () => {
         expect(imageRequest).toEqual(expectedResult);
       } catch (error) {
         expect(error).toMatchObject({
-          status: 400,
-          code: 'RequestTypeError',
-          message: 'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.'
+          status: StatusCodes.TRUNCATED_REQUEST, // 99% of the time is because of a truncated base64 encoded string by Outlook!
+          code: 'DecodeRequest::CannotDecodeRequest',
+          message: 'The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.'
         });
       }
     });
@@ -1051,9 +1051,9 @@ describe('getOriginalImage()', () => {
         expect(result).not.toEqual(notExpectedResult);
       } catch (error) {
         expect(error).toMatchObject({
-          status: 400,
-          code: 'RequestTypeError',
-          message: 'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.'
+          status: StatusCodes.TRUNCATED_REQUEST, // 99% of the time is because of a truncated base64 encoded string by Outlook!
+          code: 'DecodeRequest::CannotDecodeRequest',
+          message: 'The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.'
         });
       }
     });
@@ -1180,6 +1180,29 @@ describe('parseImageBucket()', () => {
           status: StatusCodes.NOT_FOUND,
           code: 'ImageBucket::CannotFindBucket',
           message: 'The bucket you specified could not be found. Please check the spelling of the bucket name in your request.'
+        });
+      }
+    });
+  });
+
+  describe('007/defaultRequestType/keyNotSpecifiedInRequest', function() {
+    it('Should return 400 if the key is not specified in the request', function() {
+      // Arrange
+      const event = {
+        path : '/eyJidWNrZXQiOiJhbGxvd2VkQnVja2V0MDAxIiwiZWRpdHMiOnsiZ3JheXNjYWxlIjoidHJ1ZSJ9fQ=='
+      }
+
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+
+      // Assert
+      try {
+        imageRequest.parseImageKey(event, RequestTypes.DEFAULT);
+      } catch (error) {
+        expect(error).toEqual({
+          status: 400,
+          code: 'ImageEdits::CannotFindImage',
+          message: 'The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists.'
         });
       }
     });
@@ -1605,10 +1628,9 @@ describe('parseRequestType()', () => {
         imageRequest.parseRequestType(event);
       } catch (error) {
         expect(error).toMatchObject({
-          status: StatusCodes.BAD_REQUEST,
-          code: 'RequestTypeError',
-          message:
-            'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.'
+          status: StatusCodes.TRUNCATED_REQUEST, // 99% of the time is because of a truncated base64 encoded string by Outlook!
+          code: 'DecodeRequest::CannotDecodeRequest',
+          message: 'The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.'
         });
       }
     });
@@ -1698,7 +1720,7 @@ describe('decodeRequest()', () => {
         imageRequest.decodeRequest(event);
       } catch (error) {
         expect(error).toMatchObject({
-          status: StatusCodes.BAD_REQUEST,
+          status: StatusCodes.TRUNCATED_REQUEST,
           code: 'DecodeRequest::CannotDecodeRequest',
           message:
             'The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.'
