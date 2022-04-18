@@ -494,11 +494,15 @@ export class ImageRequest {
       return ContentTypes.AVIF;
     }
     // SVG does not have an imageSignature we can use here, would require parsing the XML to some degree
-    throw new ImageHandlerError(
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      "RequestTypeError",
-      "The file does not have an extension and the file type could not be inferred. Please ensure that your original image is of a supported file type (jpg/jpeg, png, tiff, webp, gif, avif). Inferring the image type from hex headers is not available for SVG images. Refer to the documentation for additional guidance on forming image requests."
-    );
+    // throw new ImageHandlerError(
+    //   StatusCodes.INTERNAL_SERVER_ERROR,
+    //   "RequestTypeError",
+    //   "The file does not have an extension and the file type could not be inferred. Please ensure that your original image is of a supported file type (jpg/jpeg, png, tiff, webp, gif, avif). Inferring the image type from hex headers is not available for SVG images. Refer to the documentation for additional guidance on forming image requests."
+    // );
+    // We have been uploading files for years setting up the content-type as application/octet-stream
+    // until we fix them, let's return a generic `image` instead of throwing an exception because some
+    // files doesn't match the validation implemented in this method.
+    return "image";
   }
 
   /**
