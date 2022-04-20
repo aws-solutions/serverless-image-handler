@@ -9,11 +9,11 @@
     <meta name="author" content="">
     <title>Serverless Image Handler</title>
     <script src="demo-ui-config.js"></script>
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
-    
+
     <script src="scripts.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -45,8 +45,8 @@
                     <div class="card-body">
                         <h5 class="card-title">Original Image</h5>
                         <h6 class="card-subtitle mb-2 text-muted" id="gallery-details"></h6>
-                        <img id="img-original" src="#" alt="Original Image"/>    
-                        <br>                                    
+                        <img id="img-original" src="#" alt="Original Image"/>
+                        <br>
                         <a href="#" data-toggle="tooltip" title="" data-placement="top" data-original-title="Be sure that you're providing a bucket name that's in your account and specified in your SOURCE_BUCKETS environment variable, as well as a properly-spelled image name with the file extension (ex. sample.jpg)." style="font-size:0.8em">Having trouble?</a>
                     </div>
                 </div>
@@ -93,7 +93,7 @@
                                 </div>
                                 <div class="col-sm">
                                     <div class="form-group">
-                                        <label for="editor-background-color">Background Color</label>                                        
+                                        <label for="editor-background-color">Background Color</label>
                                         <a href="#" data-toggle="tooltip" title="" data-placement="right" data-original-title="Use this to adjust the background color of a transparent image, such as a logo." style="font-size:0.8em">[?]</a>
                                         <input type="text" class="form-control" id="editor-background-color" placeholder="#FF0000">
                                     </div>
@@ -184,7 +184,7 @@
                                 <a href="#" data-toggle="tooltip" title="" data-placement="top" data-original-title="The encoded image request URL that can be used in front-end applications." style="font-size:0.8em">[?]</a>
                                 <input type="text" class="form-control" id="preview-encoded-url" placeholder="">
                             </div>
-                        </div>                        
+                        </div>
                         <a href="#" data-toggle="tooltip" title="" data-placement="top" data-original-title="Be sure that you haven't specified any parameters that might be out of range for the image you selected. Reference the debug console for additional error information." style="font-size:0.8em">Having trouble?</a>
                     </div>
                 </div>

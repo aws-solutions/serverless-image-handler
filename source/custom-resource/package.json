@@ -1,28 +1,36 @@
 {
-    "name": "custom-resource",
-    "description": "Serverless Image Handler custom resource",
-    "main": "index.js",
-    "author": {
-        "name": "aws-solutions-builder"
-    },
-    "version": "5.2.0",
-    "private": true,
-    "dependencies": {
-        "axios": "^0.21.1",
-        "uuid": "^8.3.0"
-    },
-    "devDependencies": {
-        "aws-sdk": "2.771.0",
-        "axios-mock-adapter": "^1.18.2",
-        "jest": "^26.4.2"
-    },
-    "scripts": {
-        "pretest": "npm run build:init && npm install",
-        "test": "jest test/*.spec.js --coverage --silent",
-        "build:init": "rm -rf dist && rm -rf node_modules",
-        "build:zip": "zip -rq custom-resource.zip .",
-        "build:dist": "mkdir dist && mv custom-resource.zip dist/",
-        "build": "npm run build:init && npm install --production && npm run build:zip && npm run build:dist"
-    },
-    "license": "Apache-2.0"
+  "name": "custom-resource",
+  "version": "6.0.0",
+  "private": true,
+  "description": "Serverless Image Handler custom resource",
+  "license": "Apache-2.0",
+  "author": "AWS Solutions",
+  "main": "index.js",
+  "scripts": {
+    "prebuild": "npm run clean && npm install",
+    "build": "tsc --build tsconfig.json",
+    "clean": "rm -rf node_modules/ dist/ coverage/ package-lock.json",
+    "package": "npm run build && npm prune --production && rsync -avrq ./node_modules ./dist && npm run include-solution-utils && npm run package:zip",
+    "package:zip": "cd dist && zip -q -r9 ./package.zip * -x '**/test/*' && cd ..",
+    "pretest": "npm run clean && npm install",
+    "test": "jest --coverage --silent",
+    "include-solution-utils": "npm run solution-utils:prep && npm run solution-utils:package",
+    "solution-utils:prep": "rm -rf dist/solution-utils && mkdir dist/solution-utils",
+    "solution-utils:package": "cd ../solution-utils && npm run package && cd dist/ && rsync -avrq . ../../$npm_package_name/dist/solution-utils/ && cd ../../$npm_package_name"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "moment": "^2.29.1",
+    "uuid": "^8.3.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.0",
+    "@types/node": "^16.10.3",
+    "@types/uuid": "^8.3.1",
+    "aws-sdk": "^2.1031.0",
+    "jest": "^27.0.0",
+    "ts-jest": "^27.0.0",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.3"
+  }
 }

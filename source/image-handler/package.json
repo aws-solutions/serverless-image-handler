@@ -1,28 +1,38 @@
 {
   "name": "image-handler",
-  "description": "A Lambda function for performing on-demand image edits and manipulations.",
-  "main": "index.js",
-  "author": {
-    "name": "aws-solutions-builder"
-  },
-  "version": "5.2.0",
+  "version": "6.0.0",
   "private": true,
+  "description": "A Lambda function for performing on-demand image edits and manipulations.",
+  "license": "Apache-2.0",
+  "author": "AWS Solutions",
+  "main": "index.js",
+  "scripts": {
+    "prebuild": "npm run clean && npm install --arch=x64 --platform=linux",
+    "build": "tsc --build tsconfig.json",
+    "clean": "rm -rf node_modules/ dist/ coverage/ package-lock.json",
+    "include-solution-utils": "npm run solution-utils:prep && npm run solution-utils:package",
+    "package": "npm run build && npm prune --production && rsync -avrq ./node_modules ./dist && npm run include-solution-utils && npm run package:zip",
+    "package:zip": "cd dist && zip -q -r9 ./package.zip * && cd ..",
+    "solution-utils:package": "cd ../solution-utils && npm run package && cd dist/ && rsync -avrq . ../../$npm_package_name/dist/solution-utils/ && cd ../../$npm_package_name",
+    "solution-utils:prep": "rm -rf dist/solution-utils && mkdir dist/solution-utils",
+    "pretest": "npm run clean && npm install",
+    "test": "jest --coverage --silent"
+  },
   "dependencies": {
     "color": "3.1.3",
     "color-name": "1.1.4",
     "sharp": "^0.27.0"
   },
   "devDependencies": {
-    "aws-sdk": "^2.1043.0",
-    "jest": "^26.4.2"
-  },
-  "scripts": {
-    "pretest": "npm run build:init && npm install",
-    "test": "jest test/*.spec.js --coverage --silent",
-    "build:init": "rm -rf package-lock.json dist/ node_modules/",
-    "build:zip": "zip -rq image-handler.zip .",
-    "build:dist": "mkdir dist && mv image-handler.zip dist/",
-    "build": "npm run build:init && npm install --arch=x64 --platform=linux --production && npm run build:zip && npm run build:dist"
-  },
-  "license": "Apache-2.0"
+    "@types/color": "^3.0.2",
+    "@types/color-name": "^1.1.1",
+    "@types/jest": "^27.0.0",
+    "@types/node": "^16.10.3",
+    "@types/sharp": "^0.27.0",
+    "aws-sdk": "^2.1031.0",
+    "jest": "^27.0.0",
+    "ts-jest": "^27.0.0",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.3"
+  }
 }

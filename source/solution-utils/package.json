@@ -1,0 +1,30 @@
+{
+  "name": "solution-utils",
+  "version": "6.0.0",
+  "private": true,
+  "description": "Utilities to be used within this solution",
+  "license": "Apache-2.0",
+  "author": "AWS Solutions",
+  "main": "get-options",
+  "typings": "index",
+  "files": [
+    "get-options.js",
+    "logger.js"
+  ],
+  "scripts": {
+    "build": "npm run clean && npm install && npm run build:tsc",
+    "build:tsc": "tsc --project tsconfig.json",
+    "clean": "rm -rf node_modules/ dist/ coverage/ package-lock.json",
+    "package": "npm run build && npm prune --production && rsync -avrq ./node_modules ./dist",
+    "pretest": "npm run clean && npm install",
+    "test": "jest --coverage --silent"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.0",
+    "@types/node": "^16.4.5",
+    "jest": "^27.0.4",
+    "ts-jest": "^27.0.4",
+    "ts-node": "^10.1.0",
+    "typescript": "^4.4.3"
+  }
+}
