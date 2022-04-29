@@ -32,7 +32,7 @@ resource "aws_s3_bucket_public_access_block" "images" {
 }
 
 module "lambda" {
-  source  = "moritzzimmer/lambda/aws"
+  source  = "registry.terraform.io/moritzzimmer/lambda/aws"
   version = "6.1.0"
 
   architectures                      = ["x86_64"]
@@ -44,14 +44,14 @@ module "lambda" {
   layers                             = [
     "arn:aws:lambda:${data.aws_region.current.name}:580247275435:layer:LambdaInsightsExtension:16"
   ]
-  memory_size                        = 1024
-  publish                            = true
-  runtime                            = "nodejs14.x"
-  handler                            = "index.handler"
-  s3_bucket                          = data.aws_s3_bucket.ci.bucket
-  s3_key                             = local.s3_key
-  s3_object_version                  = aws_s3_bucket_object.this.version_id
-  timeout                            = 30
+  memory_size       = 1024
+  publish           = true
+  runtime           = "nodejs14.x"
+  handler           = "index.handler"
+  s3_bucket         = data.aws_s3_bucket.ci.bucket
+  s3_key            = local.s3_key
+  s3_object_version = aws_s3_bucket_object.this.version_id
+  timeout           = 30
 
   environment = {
     variables = {

@@ -12,9 +12,15 @@ resource "aws_apigatewayv2_api" "this" {
   }
 }
 
-resource "aws_apigatewayv2_route" "this" {
+resource "aws_apigatewayv2_route" "get" {
   api_id    = aws_apigatewayv2_api.this.id
   route_key = "GET /{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.this.id}"
+}
+
+resource "aws_apigatewayv2_route" "head" {
+  api_id    = aws_apigatewayv2_api.this.id
+  route_key = "HEAD /{proxy+}"
   target    = "integrations/${aws_apigatewayv2_integration.this.id}"
 }
 
@@ -59,7 +65,13 @@ resource "aws_apigatewayv2_stage" "prod" {
   }
   route_settings {
     detailed_metrics_enabled = true
-    route_key                = aws_apigatewayv2_route.this.route_key
+    route_key                = aws_apigatewayv2_route.get.route_key
+    throttling_burst_limit   = 5000
+    throttling_rate_limit    = 10000
+  }
+  route_settings {
+    detailed_metrics_enabled = true
+    route_key                = aws_apigatewayv2_route.head.route_key
     throttling_burst_limit   = 5000
     throttling_rate_limit    = 10000
   }
