@@ -171,6 +171,40 @@ describe('setup()', function () {
       expect(imageRequest).toEqual(expectedResult);
     });
   });
+describe('004.1/path_with_coordinates', function () {
+    it('Should pass when a thumbor image request is provided and populate the ImageRequest object with the proper values', async function () {
+      // Arrange
+      const event = {
+        path: "/2021/07/Jj0nKOg0x7Cw/test-image-001.jpg"
+      }
+      process.env = {
+        SOURCE_BUCKETS: "allowedBucket001"
+      }
+      // Mock
+      mockAws.getObject.mockImplementationOnce(() => {
+        return {
+          promise() {
+            return Promise.resolve({Body: Buffer.from('SampleImageContent\n')});
+          }
+        };
+      });
+      // Act
+      const imageRequest = new ImageRequest(s3, secretsManager);
+      await imageRequest.setup(event);
+      const expectedResult = {
+        requestType: 'Thumbor',
+        bucket: 'allowedBucket001',
+        key: '2021/07/Jj0nKOg0x7Cw/image.jpg',
+        edits: {},
+        originalImage: Buffer.from('SampleImageContent\n'),
+        CacheControl: 'max-age=31536000,public',
+        ContentType: 'image'
+      }
+      // Assert
+      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'allowedBucket001', Key: '2021/07/Jj0nKOg0x7Cw/image.jpg'});
+      expect(imageRequest).toEqual(expectedResult);
+    });
+  });
 
   describe('005/customImageRequest', function () {
     it('Should pass when a custom image request is provided and populate the ImageRequest object with the proper values', async function () {
