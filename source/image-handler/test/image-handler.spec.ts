@@ -926,7 +926,7 @@ describe('applyEdits()', () => {
 
 describe('getOverlayImage()', () => {
   describe('001/validParameters', () => {
-    it.skip('Should pass if the proper bucket name and key are supplied, simulating an image file that can be retrieved', async () => {
+    it('Should pass if the proper bucket name and key are supplied, simulating an image file that can be retrieved', async () => {
       // Mock
       mockAwsS3.getObject.mockImplementationOnce(() => ({
         promise() {
