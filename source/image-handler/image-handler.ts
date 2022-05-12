@@ -6,6 +6,7 @@ import Rekognition from 'aws-sdk/clients/rekognition';
 import sharp, { FormatEnum, OverlayOptions, ResizeOptions } from 'sharp';
 
 import { BoundingBox, BoxSize, ImageEdits, ImageFitTypes, ImageFormatTypes, ImageHandlerError, ImageRequestInfo, RekognitionCompatibleImage, StatusCodes } from './lib';
+import isAnimated from 'is-animated';
 
 export class ImageHandler {
   private readonly LAMBDA_PAYLOAD_LIMIT = 6 * 1024 * 1024;
@@ -19,6 +20,11 @@ export class ImageHandler {
    */
   async process(imageRequestInfo: ImageRequestInfo): Promise<string> {
     const { originalImage, edits } = imageRequestInfo;
+    const answer = isAnimated(originalImage) ? 'Yes' : 'No';
+
+    if (answer === 'Yes') {
+      return originalImage.toString('base64');
+    }
 
     let base64EncodedImage = '';
 
