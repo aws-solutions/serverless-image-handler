@@ -157,8 +157,10 @@ const getResponseHeaders = (status_code = 200, isAlb = false) => {
   if (200 !== status_code) {
     headers["Content-Type"] = "application/json";
   }
-  if (status_code >= 400 && status_code < 500) {
-    headers["Cache-Control"] = "public, max-age=7200";
+  if (status_code === 404) {
+    headers["Cache-Control"] = "public, max-age=60";
+  } else if (status_code >= 400 && status_code < 500) {
+    headers["Cache-Control"] = "public, max-age=600";
   } else if (status_code >= 500 && status_code < 600) {
     headers["Cache-Control"] = "max-age=0, must-revalidate";
   }

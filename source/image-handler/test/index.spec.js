@@ -143,7 +143,7 @@ describe('index', function () {
           'Access-Control-Allow-Methods': 'GET',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Allow-Credentials': true,
-          "Cache-Control": "public, max-age=7200",
+          "Cache-Control": "public, max-age=60",
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -274,7 +274,7 @@ describe('index', function () {
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Allow-Credentials': true,
           'Access-Control-Allow-Origin': '*',
-          "Cache-Control": "public, max-age=7200",
+          "Cache-Control": "public, max-age=60",
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -319,7 +319,7 @@ describe('index', function () {
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Allow-Credentials': true,
           'Access-Control-Allow-Origin': '*',
-          "Cache-Control": "public, max-age=7200",
+          "Cache-Control": "public, max-age=60",
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -360,7 +360,7 @@ describe('index', function () {
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Allow-Credentials': true,
           'Access-Control-Allow-Origin': '*',
-          "Cache-Control": "public, max-age=7200",
+          "Cache-Control": "public, max-age=60",
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -404,7 +404,7 @@ describe('index', function () {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
-        "Cache-Control": "public, max-age=7200"
+        "Cache-Control": "public, max-age=60"
       },
       body: JSON.stringify({
         status: 404,
@@ -448,7 +448,7 @@ describe('index', function () {
         'Access-Control-Allow-Credentials': true,
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=7200',
+        'Cache-Control': 'public, max-age=600',
       },
       body: '{"message":"HTTP/410. Content test.jpg has expired.","code":"Gone","status":410}'
     };
@@ -550,7 +550,7 @@ describe('index', function () {
         'Access-Control-Allow-Credentials': true,
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=7200',
+        'Cache-Control': 'public, max-age=600',
       },
       isBase64Encoded: false,
     };
