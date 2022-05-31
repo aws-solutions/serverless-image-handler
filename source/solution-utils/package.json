@@ -1,6 +1,6 @@
 {
-  "name": "solution-utils",
-  "version": "6.0.0",
+  "name": "@tracktik/tt-solution-utils",
+  "version": "6.0.1",
   "private": true,
   "description": "Utilities to be used within this solution",
   "license": "Apache-2.0",

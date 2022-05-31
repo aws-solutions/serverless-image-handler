@@ -1,7 +1,9 @@
 {
-  "name": "image-handler",
-  "version": "6.0.0",
-  "private": true,
+  "name": "@tracktik/tt-image-handler",
+  "version": "6.0.1",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "description": "A Lambda function for performing on-demand image edits and manipulations.",
   "license": "Apache-2.0",
   "author": "AWS Solutions",
@@ -11,9 +13,9 @@
     "build": "tsc --build tsconfig.json",
     "clean": "rm -rf node_modules/ dist/ coverage/ package-lock.json",
     "include-solution-utils": "npm run solution-utils:prep && npm run solution-utils:package",
-    "package": "npm run build && npm prune --production && rsync -avrq ./node_modules ./dist && npm run include-solution-utils && npm run package:zip",
+    "package": "npm run build && npm prune --production && node ./dist/image-handler/package.js  && rm ./dist/image-handler/package.js ./dist/image-handler/package.js.map && rsync -avrq ./node_modules ./dist && npm run include-solution-utils",
     "package:zip": "cd dist && zip -q -r9 ./package.zip * && cd ..",
-    "solution-utils:package": "cd ../solution-utils && npm run package && cd dist/ && rsync -avrq . ../../$npm_package_name/dist/solution-utils/ && cd ../../$npm_package_name",
+    "solution-utils:package": "cd ../solution-utils && npm run package && cd dist/ && rsync -avrq . ../../image-handler/dist/solution-utils/ && cd ../../image-handler",
     "solution-utils:prep": "rm -rf dist/solution-utils && mkdir dist/solution-utils",
     "pretest": "npm run clean && npm install",
     "test": "jest --coverage --silent"
@@ -34,5 +36,10 @@
     "ts-jest": "^27.0.0",
     "ts-node": "^10.2.1",
     "typescript": "^4.4.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TrackTik/serverless-image-handler.git",
+    "directory": "source/image-handler"
   }
 }
