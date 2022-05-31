@@ -1,7 +1,10 @@
 {
-  "name": "image-handler",
+  "name": "@tracktik/tt-image-handler",
   "version": "6.2.6",
   "private": true,
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "description": "A Lambda function for performing on-demand image edits and manipulations.",
   "license": "Apache-2.0",
   "author": {
@@ -10,8 +13,15 @@
   },
   "main": "index.js",
   "scripts": {
+    "build": "npm run clean && npm install --arch=x64 --platform=linux && npm run build:tsc",
+    "build:tsc": "tsc --build tsconfig.json",
     "clean": "rm -rf node_modules/ dist/ coverage/",
-    "pretest": "npm run clean && npm ci",
+    "include-solution-utils": "npm run solution-utils:prep && npm run solution-utils:package",
+    "package": "npm run build && npm ci --omit=dev && node ./dist/image-handler/package.js && rm ./dist/image-handler/package.js ./dist/image-handler/package.js.map && rsync -avrq ./node_modules ./dist && npm run include-solution-utils",
+    "package:zip": "cd dist && zip -q -r9 ./package.zip * && cd ..",
+    "solution-utils:package": "cd ../solution-utils && npm run package && cd dist/ && rsync -avrq . ../../image-handler/dist/solution-utils/ && cd ../../image-handler",
+    "solution-utils:prep": "rm -rf dist/solution-utils && mkdir dist/solution-utils",
+    "pretest": "npm run clean && npm install",
     "test": "jest --coverage --silent",
     "bump-version": "npm version $(cat ../../VERSION.txt) --allow-same-version"
   },
@@ -36,5 +46,10 @@
   },
   "resolutions": {
     "semver": "7.5.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TrackTik/serverless-image-handler.git",
+    "directory": "source/image-handler"
   }
 }

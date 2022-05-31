@@ -1,5 +1,5 @@
 {
-  "name": "solution-utils",
+  "name": "@tracktik/tt-solution-utils",
   "version": "6.2.6",
   "private": true,
   "description": "Utilities to be used within this solution",
@@ -14,7 +14,7 @@
     "build": "npm run clean && npm install && npm run build:tsc",
     "build:tsc": "tsc --project tsconfig.json",
     "clean": "rm -rf node_modules/ dist/ coverage/",
-    "package": "npm run build && npm prune --production && rsync -avrq ./node_modules ./dist",
+    "package": "npm run build && npm ci --omit=dev && rsync -avrq ./node_modules ./dist",
     "pretest": "npm run clean && npm install",
     "test": "jest --coverage --silent",
     "bump-version": "npm version $(cat ../../VERSION.txt) --allow-same-version"
