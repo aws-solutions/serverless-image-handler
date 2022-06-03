@@ -270,6 +270,9 @@ class ImageRequest {
       if (path.match(/^\d{4}\/\d{2}\/.*\/[\w-]+\.\w+$/)) {
         path = path.replace(/(.*)\/[\w-]+(\.\w+)$/, "$1/image$2");
       }
+      if (path.endsWith("/")) {
+        path = path + "image.jpg"
+      }
       return decodeURIComponent(path);
     }
 
@@ -315,7 +318,7 @@ class ImageRequest {
     } else if (matchCustom.test(path) && definedEnvironmentVariables) {
       // use rewrite function then thumbor mappings
       return "Custom";
-    } else if (matchThumbor.test(path)) {
+    } else if (matchThumbor.test(path) || path.endsWith("/")) {
       // use thumbor mappings
       return "Thumbor";
     } else {
