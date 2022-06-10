@@ -261,7 +261,7 @@ class ImageRequest {
       }
       path = path
         .replace(/\/\d+x\d+:\d+x\d+\//g, "/")
-        .replace(/\/\d+x\d+\//g, "/")
+        .replace(/\/(\d+|__WIDTH__)x\d+\//g, "/")
         .replace(/\/(filters|roundCrop):[^\/]+/g, "/")
         .replace(/\/fit-in\//g, "/")
         .replace(/^\/+/, "")
