@@ -39,7 +39,8 @@ function getMdc({ event }) {
   }
 
   return {
-    accept: event.headers && (event.headers.accept || event.headers.Accept)
+    accept: event.headers && (event.headers.accept || event.headers.Accept),
+    user_agent: event.headers && (event.headers["User-Agent"] || event.headers["user-agent"])
   };
 }
 

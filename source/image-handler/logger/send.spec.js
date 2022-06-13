@@ -9,7 +9,8 @@ const TEST_DATA = {
 const TEST_API_GATEWAY_EVENT = {
   path: "/path/to/image.png",
   headers: {
-    accept: 'imgage/webp'
+    accept: 'image/webp',
+    'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
   },
   eventId: 12345,
 };
@@ -109,12 +110,13 @@ describe("sendMessage", () => {
       });
     });
 
-    it("should log the Cloudwatch event path to the image to be processed", () => {
+    it("should log headers", () => {
       sendMessage({level: "log", args: [], event: TEST_API_GATEWAY_EVENT});
 
       expect(getLastMessage().path).toStrictEqual(TEST_API_GATEWAY_EVENT.path)
       expect(getLastMessage().mdc).toStrictEqual({
-        accept: 'imgage/webp'
+        accept: 'image/webp',
+        user_agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
       });
     });
   });
