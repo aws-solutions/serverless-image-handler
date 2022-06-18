@@ -21,6 +21,7 @@ export interface Conditions {
   readonly enableSignatureCondition: CfnCondition;
   readonly enableDefaultFallbackImageCondition: CfnCondition;
   readonly enableCorsCondition: CfnCondition;
+  readonly enableAutoWebPCondition: CfnCondition;
 }
 
 export interface AppRegistryApplicationProps {
@@ -54,6 +55,9 @@ export class CommonResources extends Construct {
       }),
       enableCorsCondition: new CfnCondition(this, "EnableCorsCondition", {
         expression: Fn.conditionEquals(props.corsEnabled, "Yes"),
+      }),
+      enableAutoWebPCondition: new CfnCondition(this, "EnableAutoWebPCondition", {
+        expression: Fn.conditionEquals(props.autoWebP, "Yes"),
       }),
     };
 

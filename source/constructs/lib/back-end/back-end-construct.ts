@@ -5,12 +5,12 @@ import * as path from "path";
 import { LambdaRestApiProps, RestApi } from "aws-cdk-lib/aws-apigateway";
 import {
   AllowedMethods,
-  CacheHeaderBehavior,
-  CachePolicy,
-  CacheQueryStringBehavior,
+  CfnCachePolicy,
+  CfnOriginRequestPolicy,
   DistributionProps,
+  ICachePolicy,
   IOrigin,
-  OriginRequestPolicy,
+  IOriginRequestPolicy,
   OriginSslPolicy,
   PriceClass,
   ViewerProtocolPolicy,
@@ -21,11 +21,12 @@ import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { IBucket } from "aws-cdk-lib/aws-s3";
-import { ArnFormat, Aws, Duration, Lazy, Stack } from "aws-cdk-lib";
+import { ArnFormat, Aws, Duration, Lazy, Resource, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { CloudFrontToApiGatewayToLambda } from "@aws-solutions-constructs/aws-cloudfront-apigateway-lambda";
 
 import { addCfnSuppressRules } from "../../utils/utils";
+import { Conditions } from "../common-resources/common-resources-construct";
 import { SolutionConstructProps } from "../types";
 
 export interface BackEndProps extends SolutionConstructProps {
@@ -35,6 +36,7 @@ export interface BackEndProps extends SolutionConstructProps {
   readonly logsBucket: IBucket;
   readonly uuid: string;
   readonly cloudFrontPriceClass: string;
+  readonly conditions: Conditions;
 }
 
 export class BackEnd extends Construct {
@@ -135,21 +137,9 @@ export class BackEnd extends Construct {
       },
     ]);
 
-    const cachePolicy = new CachePolicy(this, "CachePolicy", {
-      cachePolicyName: `ServerlessImageHandler-${props.uuid}`,
-      defaultTtl: Duration.days(1),
-      minTtl: Duration.seconds(1),
-      maxTtl: Duration.days(365),
-      enableAcceptEncodingGzip: true,
-      headerBehavior: CacheHeaderBehavior.allowList("origin", "accept"),
-      queryStringBehavior: CacheQueryStringBehavior.allowList("signature"),
-    });
+    const cachePolicy = new CustomBackEndCachePolicy(this, "CachePolicy", props);
 
-    const originRequestPolicy = new OriginRequestPolicy(this, "OriginRequestPolicy", {
-      originRequestPolicyName: `ServerlessImageHandler-${props.uuid}`,
-      headerBehavior: CacheHeaderBehavior.allowList("origin", "accept"),
-      queryStringBehavior: CacheQueryStringBehavior.allowList("signature"),
-    });
+    const originRequestPolicy = new CustomBackEndOriginRequestPolicy(this, "OriginRequestPolicy", props);
 
     const apiGatewayRestApi = RestApi.fromRestApiId(
       this,
@@ -213,5 +203,81 @@ export class BackEnd extends Construct {
     imageHandlerCloudFrontApiGatewayLambda.apiGateway.node.tryRemoveChild("Endpoint"); // we don't need the RestApi endpoint in the outputs
 
     this.domainName = imageHandlerCloudFrontApiGatewayLambda.cloudFrontWebDistribution.distributionDomainName;
+  }
+}
+
+class CustomBackEndCachePolicy extends Resource implements ICachePolicy {
+  public readonly cachePolicyId: string;
+
+  constructor(scope: Construct, id: string, props: BackEndProps) {
+    super(scope, id, {
+      physicalName: `ServerlessImageHandler-${props.uuid}`,
+    });
+
+    const cachePolicy = new CfnCachePolicy(this, "Resource", {
+      cachePolicyConfig: {
+        name: `ServerlessImageHandler-${props.uuid}`,
+        defaultTtl: Duration.days(1).toSeconds(),
+        minTtl: Duration.seconds(1).toSeconds(),
+        maxTtl: Duration.days(365).toSeconds(),
+        parametersInCacheKeyAndForwardedToOrigin: {
+          enableAcceptEncodingGzip: true,
+          enableAcceptEncodingBrotli: false,
+          queryStringsConfig: {
+            queryStringBehavior: "whitelist",
+            queryStrings: ["signature"],
+          },
+          headersConfig: {
+            headerBehavior: "whitelist",
+          },
+          cookiesConfig: {
+            cookieBehavior: "none",
+          },
+        },
+      },
+    });
+
+    // https://github.com/aws/aws-cdk/issues/8396#issuecomment-857690411
+    cachePolicy.addOverride(
+      "Properties.CachePolicyConfig.ParametersInCacheKeyAndForwardedToOrigin.HeadersConfig.Headers",
+      {
+        "Fn::If": [props.conditions.enableAutoWebPCondition.logicalId, ["origin", "accept"], ["origin"]],
+      }
+    );
+
+    this.cachePolicyId = cachePolicy.ref;
+  }
+}
+
+class CustomBackEndOriginRequestPolicy extends Resource implements IOriginRequestPolicy {
+  public readonly originRequestPolicyId: string;
+
+  constructor(scope: Construct, id: string, props: BackEndProps) {
+    super(scope, id, {
+      physicalName: `ServerlessImageHandler-${props.uuid}`,
+    });
+
+    const originRequestPolicy = new CfnOriginRequestPolicy(this, "Resource", {
+      originRequestPolicyConfig: {
+        name: `ServerlessImageHandler-${props.uuid}`,
+        headersConfig: {
+          headerBehavior: "whitelist",
+        },
+        queryStringsConfig: {
+          queryStringBehavior: "whitelist",
+          queryStrings: ["signature"],
+        },
+        cookiesConfig: {
+          cookieBehavior: "none",
+        },
+      },
+    });
+
+    // https://github.com/aws/aws-cdk/issues/8396#issuecomment-857690411
+    originRequestPolicy.addOverride("Properties.OriginRequestPolicyConfig.HeadersConfig.Headers", {
+      "Fn::If": [props.conditions.enableAutoWebPCondition.logicalId, ["origin", "accept"], ["origin"]],
+    });
+
+    this.originRequestPolicyId = originRequestPolicy.ref;
   }
 }

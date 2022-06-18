@@ -177,6 +177,7 @@ export class ServerlessImageHandlerStack extends Stack {
       logsBucket: commonResources.logsBucket,
       uuid: commonResources.customResources.uuid,
       cloudFrontPriceClass: cloudFrontPriceClassParameter.valueAsString,
+      conditions: commonResources.conditions,
       ...solutionConstructProps,
     });
 
