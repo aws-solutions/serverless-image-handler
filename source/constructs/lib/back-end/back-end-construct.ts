@@ -140,7 +140,7 @@ export class BackEnd extends Construct {
       defaultTtl: Duration.days(1),
       minTtl: Duration.seconds(1),
       maxTtl: Duration.days(365),
-      enableAcceptEncodingGzip: true,
+      enableAcceptEncodingGzip: false,
       headerBehavior: CacheHeaderBehavior.allowList("origin", "accept"),
       queryStringBehavior: CacheQueryStringBehavior.allowList("signature"),
     });

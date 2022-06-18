@@ -395,7 +395,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
               "CookieBehavior": "none",
             },
             "EnableAcceptEncodingBrotli": false,
-            "EnableAcceptEncodingGzip": true,
+            "EnableAcceptEncodingGzip": false,
             "HeadersConfig": {
               "HeaderBehavior": "whitelist",
               "Headers": [
