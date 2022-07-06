@@ -3,6 +3,7 @@
 
 import S3 from 'aws-sdk/clients/s3';
 import { createHmac } from 'crypto';
+import { request } from 'https';
 
 import { DefaultImageRequest, ImageEdits, ImageFormatTypes, ImageHandlerError, ImageHandlerEvent, ImageRequestInfo, Headers, RequestTypes, StatusCodes } from './lib';
 import { SecretProvider } from './secret-provider';
@@ -37,7 +38,7 @@ export class ImageRequest {
       imageRequestInfo.key = this.parseImageKey(event, imageRequestInfo.requestType);
       imageRequestInfo.edits = this.parseImageEdits(event, imageRequestInfo.requestType);
 
-      const originalImage = await this.getOriginalImage(imageRequestInfo.bucket, imageRequestInfo.key);
+      const originalImage = await this.getImageFromHttps(event);
       imageRequestInfo = { ...imageRequestInfo, ...originalImage };
 
       imageRequestInfo.headers = this.parseImageHeaders(event, imageRequestInfo.requestType);
@@ -91,6 +92,36 @@ export class ImageRequest {
       console.error(error);
 
       throw error;
+    }
+  }
+
+  private async _urlToBuffer(event: ImageHandlerEvent): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const data: Uint8Array[] = [];
+      request({
+        hostname: event.headers.Host,
+        path: event.path,
+        method: 'GET'
+      }, res => {
+        res
+          .on('data', (chunk: Uint8Array) => {
+            data.push(chunk);
+          })
+          .on('end', () => {
+            resolve(Buffer.concat(data));
+          })
+          .on("error", (err) => {
+            reject(err);
+          });
+      })
+    });
+  }
+
+  public async getImageFromHttps(event: ImageHandlerEvent): Promise<OriginalImageInfo> {
+    const buffer = await this._urlToBuffer(event)
+
+    return {
+      originalImage: buffer
     }
   }
 
