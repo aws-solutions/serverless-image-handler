@@ -1205,7 +1205,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
             "Value": "S0ABC",
           },
         ],
-        "Timeout": 900,
+        "Timeout": 29,
       },
       "Type": "AWS::Lambda::Function",
     },

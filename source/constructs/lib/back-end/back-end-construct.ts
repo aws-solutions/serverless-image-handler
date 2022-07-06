@@ -89,7 +89,7 @@ export class BackEnd extends Construct {
       description: `${props.solutionName} (${props.solutionVersion}): Performs image edits and manipulations`,
       memorySize: 1024,
       runtime: Runtime.NODEJS_16_X,
-      timeout: Duration.minutes(15),
+      timeout: Duration.seconds(29),
       role: imageHandlerLambdaFunctionRole,
       entry: path.join(__dirname, "../../../image-handler/index.ts"),
       environment: {
