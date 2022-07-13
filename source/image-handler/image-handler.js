@@ -256,7 +256,7 @@ class ImageHandler {
     } catch (err) {
       throw {
         status: err.statusCode ? err.statusCode : 500,
-        code: err.code,
+        code: (err.code).toString(),
         message: err.message
       };
     }
@@ -326,7 +326,7 @@ class ImageHandler {
       } else {
         throw {
           status: err.statusCode ? err.statusCode : 500,
-          code: err.code,
+          code: (err.code).toString(),
           message: err.message
         };
       }

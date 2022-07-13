@@ -127,7 +127,7 @@ class ImageRequest {
     } catch (err) {
       throw {
         status: "NoSuchKey" === err.code ? 404 : 500,
-        code: err.code,
+        code: (err.code).toString(),
         message: err.message
       };
     }
