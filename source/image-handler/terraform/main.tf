@@ -56,6 +56,7 @@ module "lambda" {
   environment = {
     variables = {
       AUTO_WEBP      = "Yes"
+      AUTO_AVIF      = "Yes"
       CORS_ENABLED   = "Yes"
       CORS_ORIGIN    = "*"
       SOURCE_BUCKETS = aws_s3_bucket.images.bucket

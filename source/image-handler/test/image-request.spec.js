@@ -975,7 +975,7 @@ describe('parseRequestType()', function () {
         expect(error).toEqual({
           status: 400,
           code: 'RequestTypeError',
-          message: 'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg, gif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.'
+          message: 'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg, gif, avif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.'
         });
       }
     });
@@ -1189,6 +1189,41 @@ describe('getOutputFormat()', function () {
         headers: {
           Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3"
         }
+      };
+      // Act
+      const imageRequest = new ImageRequest(s3, secretsManager);
+      const result = imageRequest.getOutputFormat(event);
+      // Assert
+      expect(result).toEqual(null);
+    });
+  });
+  describe("003/AutoAVIFDisabled", function () {
+    it("Should pass if it returns null when AUTO_AVIF is disabled with accepts header including avif", function () {
+      // Arrange
+      process.env = {
+        AUTO_AVIF: "No",
+      };
+      const event = {
+        headers: {
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
+        },
+      };
+      // Act
+      const imageRequest = new ImageRequest(s3, secretsManager);
+      const result = imageRequest.getOutputFormat(event);
+      // Assert
+      expect(result).toEqual(null);
+    });
+  });
+  describe("004/AutoAVIFUnset", function () {
+    it("Should pass if it returns null when AUTO_AVIF is not set with accepts header including avif", function () {
+      // Arrange
+      const event = {
+        headers: {
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
+        },
       };
       // Act
       const imageRequest = new ImageRequest(s3, secretsManager);
