@@ -169,7 +169,7 @@ class ThumborMapping {
       this.edits.resize.background = Color(value).object();
     } else if (editKey === ('format')) {
       const formattedValue = value.replace(/[^0-9a-z]/gi, '').replace(/jpg/i, 'jpeg');
-      const acceptedValues = ['heic', 'heif', 'jpeg', 'png', 'raw', 'tiff', 'webp'];
+      const acceptedValues = ['heic', 'heif', 'jpeg', 'png', 'raw', 'tiff', 'webp', 'avif'];
       if (acceptedValues.includes(formattedValue)) {
         this.edits.toFormat = formattedValue;
       }

@@ -375,6 +375,40 @@ describe('004.1/path_with_coordinates', function () {
       expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'validBucket', Key: 'image.svg'});
       expect(imageRequest).toEqual(expectedResult);
     });
+    it('Should return Avif image when output is specified.', async function () {
+      // Arrange
+      process.env.AUTO_WEBP = "Yes"
+      const event = {
+        path: '/filters:format(avif)/image.png',
+      };
+      // Mock
+      mockAws.getObject.mockImplementationOnce(() => {
+        return {
+          promise() {
+            return Promise.resolve({
+              ContentType: 'image/png',
+              Body: Buffer.from('SampleImageContent\n')
+            });
+          }
+        };
+      });
+      // Act
+      const imageRequest = new ImageRequest(s3, secretsManager);
+      await imageRequest.setup(event);
+      const expectedResult = {
+        requestType: 'Thumbor',
+        bucket: 'validBucket',
+        key: 'image.png',
+        edits: {toFormat: 'avif'},
+        outputFormat: 'avif',
+        originalImage: Buffer.from('SampleImageContent\n'),
+        CacheControl: 'max-age=31536000,public',
+        ContentType: 'image/avif'
+      };
+      // Assert
+      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'validBucket', Key: 'image.png'});
+      expect(imageRequest).toEqual(expectedResult);
+    });
   });
   describe('009/customHeaders', function () {
     it('Should pass and return the customer headers if custom headers are provided', async function () {

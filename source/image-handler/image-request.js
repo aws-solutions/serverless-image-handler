@@ -54,7 +54,7 @@ class ImageRequest {
     // Fix quality for Thumbor and Custom request type if outputFormat is different from quality type.
     if (this.outputFormat) {
       const requestType = ["Custom", "Thumbor"];
-      const acceptedValues = ["jpeg", "png", "webp", "tiff", "heif"];
+      const acceptedValues = ["jpeg", "png", "webp", "tiff", "heif", "avif"];
 
       this.ContentType = `image/${this.outputFormat}`;
       if (
