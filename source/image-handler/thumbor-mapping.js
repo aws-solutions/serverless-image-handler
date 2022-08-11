@@ -18,7 +18,8 @@ class ThumborMapping {
    */
   process(event) {
     // Setup
-    this.path = event.path.replace('__WIDTH__', '1800');
+    this.path = event['path'] || event['rawPath'];
+    this.path = this.path.replace('__WIDTH__', '1800');
 
     // Process the Dimensions
     const dimPath = this.path.match(/\/(\d+)x(\d+)\//);

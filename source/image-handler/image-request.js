@@ -243,7 +243,7 @@ class ImageRequest {
     }
 
     if (requestType === "Thumbor" || requestType === "Custom") {
-      let {path} = event;
+      let path = event['path'] || event['rawPath'];
 
       if (requestType === "Custom") {
         const matchPattern = process.env.REWRITE_MATCH_PATTERN;
@@ -293,7 +293,7 @@ class ImageRequest {
    * @param {object} event - Lambda request body.
    */
   parseRequestType(event) {
-    const path = event["path"];
+    const path = event["path"] || event['rawPath'];
     const matchDefault = new RegExp(/^(\/?)([0-9a-zA-Z+\/]{4})*(([0-9a-zA-Z+\/]{2}==)|([0-9a-zA-Z+\/]{3}=))?$/);
     const matchThumbor = new RegExp(/^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(\.+jpg|\.+png|\.+webp|\.tiff|\.jpeg|\.svg|\.gif|\.avif)$/i);
     const matchCustom = new RegExp(/(\/?)(.*)(jpg|png|webp|tiff|jpeg|svg|gif|avif)/i);
@@ -313,7 +313,6 @@ class ImageRequest {
     }
 
     if (matchDefault.test(path) && isBase64Encoded) {  // use sharp
-      // use sharp
       return "Default";
     } else if (matchCustom.test(path) && definedEnvironmentVariables) {
       // use rewrite function then thumbor mappings
@@ -407,13 +406,11 @@ class ImageRequest {
   getOutputFormat(event) {
     const autoWebP = process.env.AUTO_WEBP;
     const autoAvif = process.env.AUTO_AVIF;
-    let accept = event.headers
-      ? event.headers.Accept || event.headers.accept
-      : [];
-    if (autoWebP === "Yes" && accept && accept.includes("image/webp")) {
-      return "webp";
-    } else if (autoAvif === "Yes" && accept && accept.includes("image/avif")) {
+    let accept = event.headers ? event.headers.Accept || event.headers.accept : [];
+    if (autoAvif === "Yes" && accept && accept.includes("image/avif")) {
       return "avif";
+    } else if (autoWebP === "Yes" && accept && accept.includes("image/webp")) {
+      return "webp";
     } else if (this.requestType === "Default") {
       const decoded = this.decodeRequest(event);
       return decoded.outputFormat;

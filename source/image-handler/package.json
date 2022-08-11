@@ -19,7 +19,7 @@
     "pretest": "npm run build:init && npm install",
     "test": "jest ./**/*.spec.js --coverage --silent",
     "build:init": "rm -rf package-lock.json dist/ node_modules/ coverage/",
-    "build:zip": "zip -rq image-handler.zip .",
+    "build:zip": "zip --recurse-paths image-handler.zip --quiet . --exclude 'terraform/*'",
     "build:dist": "mkdir -p dist && mv image-handler.zip dist/",
     "build": "npm run build:init && npm install --arch=x64 --platform=linux --production && npm run build:zip && npm run build:dist"
   },
