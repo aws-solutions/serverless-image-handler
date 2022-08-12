@@ -4,3 +4,7 @@ variable "region" {
     error_message = "Only Ireland region is currently supported."
   }
 }
+
+variable "app_suffix" {
+  description = "Deployment variant"
+}

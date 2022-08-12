@@ -1,34 +1,8 @@
 locals {
-  function_name = "image-handler"
+  function_name = "image-handler${var.app_suffix}"
   environment   = "production"
   zip_package   = "../dist/image-handler.zip"
-  s3_key        = "image-handler/image-handler.zip"
-}
-
-resource "aws_s3_bucket" "images" {
-  bucket        = "master-images-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
-  force_destroy = false
-
-  versioning {
-    enabled = false
-  }
-
-  server_side_encryption_configuration {
-    rule {
-      bucket_key_enabled = false
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "aws:kms"
-      }
-    }
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "images" {
-  block_public_acls       = true
-  block_public_policy     = true
-  bucket                  = aws_s3_bucket.images.id
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+  s3_key        = "image-handler/${local.function_name}.zip"
 }
 
 module "lambda" {
@@ -50,13 +24,12 @@ module "lambda" {
   handler           = "index.handler"
   s3_bucket         = data.aws_s3_bucket.ci.bucket
   s3_key            = local.s3_key
-  s3_object_version = aws_s3_bucket_object.this.version_id
+  s3_object_version = aws_s3_object.this.version_id
   timeout           = 30
 
   environment = {
     variables = {
       AUTO_WEBP      = "Yes"
-      AUTO_AVIF      = "Yes"
       CORS_ENABLED   = "Yes"
       CORS_ORIGIN    = "*"
       SOURCE_BUCKETS = aws_s3_bucket.images.bucket
@@ -70,13 +43,18 @@ module "lambda" {
   }
 }
 
+resource "aws_lambda_function_url" "images" {
+  authorization_type = "NONE"
+  function_name      = aws_lambda_alias.this.function_name
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Deployment resources
 # ---------------------------------------------------------------------------------------------------------------------
 
 // this resource is only used for the initial `terraform apply` all further
 // deployments are running on CodePipeline
-resource "aws_s3_bucket_object" "this" {
+resource "aws_s3_object" "this" {
   bucket = data.aws_s3_bucket.ci.bucket
   key    = local.s3_key
   source = fileexists(local.zip_package) ? local.zip_package : null
@@ -108,35 +86,4 @@ module "deployment" {
   s3_bucket                          = data.aws_s3_bucket.ci.bucket
   s3_key                             = local.s3_key
   function_name                      = local.function_name
-}
-
-
-resource "aws_s3_bucket_policy" "this" {
-  bucket = aws_s3_bucket.images.id
-  policy = data.aws_iam_policy_document.deny_insecure_transport.json
-}
-
-data "aws_iam_policy_document" "deny_insecure_transport" {
-
-  statement {
-    sid    = "denyInsecureTransport"
-    effect = "Deny"
-
-    actions = [
-      "s3:*",
-    ]
-
-    resources = [aws_s3_bucket.images.arn, "${aws_s3_bucket.images.arn}/*"]
-
-    principals {
-      type        = "*"
-      identifiers = ["*"]
-    }
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-      values   = ["false"]
-    }
-  }
 }
