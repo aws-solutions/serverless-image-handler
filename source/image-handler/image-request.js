@@ -113,10 +113,10 @@ class ImageRequest {
         this.LastModified = new Date(originalImage.LastModified);
       }
 
-      if (originalImage.CacheControl) {
+      if (originalImage.CacheControl && 'max-age=31536000,public' !== originalImage.CacheControl) {
         this.CacheControl = originalImage.CacheControl;
       } else {
-        this.CacheControl = "max-age=31536000,public";
+        this.CacheControl = "public, max-age=31536000, immutable";
       }
 
       if (originalImage.ETag) {
@@ -340,6 +340,7 @@ class ImageRequest {
     if (requestType === "Default") {
       const decoded = this.decodeRequest(event);
       if (decoded.headers) {
+        delete decoded.headers['Cache-Control'];
         return decoded.headers;
       }
     }

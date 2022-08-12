@@ -56,7 +56,7 @@ describe('setup()', function () {
         edits: {grayscale: true},
         outputFormat: 'jpeg',
         originalImage: Buffer.from('SampleImageContent\n'),
-        CacheControl: 'max-age=31536000,public',
+        CacheControl: 'public, max-age=31536000, immutable',
         ContentType: 'image/jpeg'
       };
       // Assert
@@ -91,7 +91,7 @@ describe('setup()', function () {
         edits: {toFormat: 'png'},
         outputFormat: 'png',
         originalImage: Buffer.from('SampleImageContent\n'),
-        CacheControl: 'max-age=31536000,public',
+        CacheControl: 'public, max-age=31536000, immutable',
         ContentType: 'image/png'
       }
       // Assert
@@ -125,7 +125,7 @@ describe('setup()', function () {
         key: 'test-image-001.jpg',
         edits: {grayscale: true},
         originalImage: Buffer.from('SampleImageContent\n'),
-        CacheControl: 'max-age=31536000,public',
+        CacheControl: 'public, max-age=31536000, immutable',
         ContentType: 'image'
       }
       // Assert
@@ -162,7 +162,7 @@ describe('setup()', function () {
           png: {quality: 50}
         },
         originalImage: Buffer.from('SampleImageContent\n'),
-        CacheControl: 'max-age=31536000,public',
+        CacheControl: 'public, max-age=31536000, immutable',
         outputFormat: 'png',
         ContentType: 'image/png'
       }
@@ -197,7 +197,7 @@ describe('004.1/path_with_coordinates', function () {
         key: '2021/07/Jj0nKOg0x7Cw/image.jpg',
         edits: {},
         originalImage: Buffer.from('SampleImageContent\n'),
-        CacheControl: 'max-age=31536000,public',
+        CacheControl: 'public, max-age=31536000, immutable',
         ContentType: 'image'
       }
       // Assert
@@ -302,7 +302,7 @@ describe('004.1/path_with_coordinates', function () {
         key: 'image.svg',
         edits: {},
         originalImage: Buffer.from('SampleImageContent\n'),
-        CacheControl: 'max-age=31536000,public',
+        CacheControl: 'public, max-age=31536000, immutable',
         ContentType: 'image/svg+xml'
       };
       // Assert
@@ -335,7 +335,7 @@ describe('004.1/path_with_coordinates', function () {
         edits: {resize: {width: 100, height: 100}},
         outputFormat: 'png',
         originalImage: Buffer.from('SampleImageContent\n'),
-        CacheControl: 'max-age=31536000,public',
+        CacheControl: 'public, max-age=31536000, immutable',
         ContentType: 'image/png'
       };
       // Assert
@@ -368,7 +368,7 @@ describe('004.1/path_with_coordinates', function () {
         edits: {toFormat: 'jpeg'},
         outputFormat: 'jpeg',
         originalImage: Buffer.from('SampleImageContent\n'),
-        CacheControl: 'max-age=31536000,public',
+        CacheControl: 'public, max-age=31536000, immutable',
         ContentType: 'image/jpeg'
       };
       // Assert
@@ -402,7 +402,7 @@ describe('004.1/path_with_coordinates', function () {
         edits: {toFormat: 'avif'},
         outputFormat: 'avif',
         originalImage: Buffer.from('SampleImageContent\n'),
-        CacheControl: 'max-age=31536000,public',
+        CacheControl: 'public, max-age=31536000, immutable',
         ContentType: 'image/avif'
       };
       // Assert
@@ -432,10 +432,10 @@ describe('004.1/path_with_coordinates', function () {
         requestType: 'Default',
         bucket: 'validBucket',
         key: 'validKey',
-        headers: {'Cache-Control': 'max-age=31536000,public'},
+        headers: {},
         outputFormat: 'jpeg',
         originalImage: Buffer.from('SampleImageContent\n'),
-        CacheControl: 'max-age=31536000,public',
+        CacheControl: 'public, max-age=31536000, immutable',
         ContentType: 'image/jpeg'
       };
       // Assert
@@ -717,7 +717,7 @@ describe('parseImageEdits()', function () {
           height: 201
         },
         originalImage: Buffer.from('SampleImageContent\n'),
-        CacheControl: 'max-age=31536000,public',
+        CacheControl: 'public, max-age=31536000, immutable',
         ContentType: 'image'
       }
       // Assert
@@ -758,7 +758,7 @@ describe('parseImageEdits()', function () {
           }
         },
         originalImage: Buffer.from('SampleImageContent\n'),
-        CacheControl: 'max-age=31536000,public',
+        CacheControl: 'public, max-age=31536000, immutable',
         ContentType: 'image'
       }
       // Assert
@@ -931,7 +931,7 @@ describe('parseImageKey()', function () {
         key: '2021/04/media_id/image.jpg',
         edits: {},
         originalImage: Buffer.from('SampleImageContent\n'),
-        CacheControl: 'max-age=31536000,public',
+        CacheControl: 'public, max-age=31536000, immutable',
         ContentType: 'image'
       }
       // Assert
@@ -1020,7 +1020,7 @@ describe('parseRequestType()', function () {
 // parseImageHeaders()
 // ----------------------------------------------------------------------------
 describe('parseImageHaders()', function () {
-  it('001/Should return headers if headers are provided for a sample base64-encoded image request', function () {
+  it('001/Should ignore headers if headers are provided for a sample base64-encoded image request', function () {
     // Arrange
     const event = {
       path: '/eyJidWNrZXQiOiJ2YWxpZEJ1Y2tldCIsImtleSI6InZhbGlkS2V5IiwiaGVhZGVycyI6eyJDYWNoZS1Db250cm9sIjoibWF4LWFnZT0zMTUzNjAwMCxwdWJsaWMifSwib3V0cHV0Rm9ybWF0IjoianBlZyJ9'
@@ -1029,9 +1029,7 @@ describe('parseImageHaders()', function () {
     const imageRequest = new ImageRequest(s3, secretsManager);
     const result = imageRequest.parseImageHeaders(event, 'Default');
     // Assert
-    const expectedResult = {
-      'Cache-Control': 'max-age=31536000,public'
-    };
+    const expectedResult = {};
     expect(result).toEqual(expectedResult);
   });
   it('001/Should retrun undefined if headers are not provided for a base64-encoded image request', function () {

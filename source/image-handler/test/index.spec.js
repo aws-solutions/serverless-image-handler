@@ -52,7 +52,7 @@ describe('index', function () {
           'Access-Control-Allow-Credentials': true,
           'Content-Type': 'image/jpeg',
           'Expires': undefined,
-          'Cache-Control': 'max-age=31536000,public',
+          'Cache-Control': 'public, max-age=31536000, immutable',
           'Last-Modified': undefined
         },
         body: mockImage.toString('base64')
@@ -76,7 +76,7 @@ describe('index', function () {
           'Access-Control-Allow-Credentials': true,
           'Content-Type': 'image/jpeg',
           'Expires': undefined,
-          'Cache-Control': 'max-age=31536000,public',
+          'Cache-Control': 'public, max-age=31536000, immutable',
           'Last-Modified': undefined,
           'Custom-Header': 'CustomValue'
         },
@@ -105,7 +105,7 @@ describe('index', function () {
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Content-Type': 'image/jpeg',
           'Expires': undefined,
-          'Cache-Control': 'max-age=31536000,public',
+          'Cache-Control': 'public, max-age=31536000, immutable',
           'Last-Modified': undefined
         },
         body: mockImage.toString('base64')
@@ -496,7 +496,7 @@ describe('index', function () {
         'Access-Control-Allow-Credentials': true,
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'image/png',
-        'Cache-Control': 'max-age=30,public',
+        'Cache-Control': 'public, max-age=30, immutable',
         Expires: new Date(date_now_fixture + 30999).toUTCString(),
         ETag: '"foo"'
       },

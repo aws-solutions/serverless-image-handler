@@ -47,8 +47,7 @@ exports.handler = async (event) => {
           31536000,
           Math.floor((request.Expires.getTime() - now) / 1000)
         );
-        headers["Cache-Control"] =
-          "max-age=" + seconds_until_expiry + ",public";
+        headers["Cache-Control"] = "public, max-age=" + seconds_until_expiry + ", immutable";
       } else {
         headers["Cache-Control"] = request.CacheControl;
       }

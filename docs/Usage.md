@@ -45,8 +45,8 @@ $ curl -v 'https://images.t-online.de/4k_hdr.jpg'
 
 #### Cache-Control
 
-By default, every item has a `Cache-Control: max-age=31536000,public`. Images are probably 
-mutable within the CMS, so there is no `immutable` flag at the moment.
+By default, every item has a `Cache-Control: public, max-age=31536000, immutable`. Images are immutable 
+within the CMS, so there is a `immutable` flag at the moment.
 If the image has an expiry date in the CMS, there should be a `Expires` header present and the
 `Cache-Control` will be reduced accordingly.
 
