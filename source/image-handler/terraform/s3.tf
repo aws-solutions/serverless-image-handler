@@ -11,7 +11,7 @@ resource "aws_s3_bucket_versioning" "images" {
   bucket = aws_s3_bucket.images.bucket
 
   versioning_configuration {
-    status = "Disabled"
+    status = "Suspended"
   }
 }
 

@@ -43,9 +43,10 @@ module "lambda" {
   }
 }
 
-resource "aws_lambda_function_url" "images" {
+resource "aws_lambda_function_url" "production" {
   authorization_type = "NONE"
   function_name      = aws_lambda_alias.this.function_name
+  qualifier          = aws_lambda_alias.this.name
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
