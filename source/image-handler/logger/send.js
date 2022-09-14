@@ -18,7 +18,7 @@ function createMessage(payload) {
     "@timestamp": new Date().toISOString(),
     level: payload.level.toUpperCase(),
     message: getMessage(payload),
-    path: payload.event && payload.event.path,
+    path: payload.event && (payload.event["path"] || payload.event["rawPath"]),
     mdc: getMdc(payload),
     ...addIfExists("data", getData(payload)),
     ...addIfExists("exception", getExceptions(payload)),
