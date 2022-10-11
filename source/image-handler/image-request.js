@@ -40,7 +40,8 @@ class ImageRequest {
     /* Decide the output format of the image.
      * 1) If the format is provided, the output format is the provided format.
      * 2) If headers contain "Accept: image/webp", the output format is webp.
-     * 3) Use the default image format for the rest of cases.
+     * 3) If headers contain "Accept: image/avif", the output format is webp.
+     * 4) Use the default image format for the rest of cases.
      */
     if (this.ContentType !== 'image/svg+xml' || this.edits.toFormat || this.outputFormat) {
       let outputFormat = this.getOutputFormat(event);
@@ -262,7 +263,7 @@ class ImageRequest {
       path = path
         .replace(/\/\d+x\d+:\d+x\d+\//g, "/")
         .replace(/\/(\d+|__WIDTH__)x\d+\//g, "/")
-        .replace(/\/(filters|roundCrop):[^\/]+/g, "/")
+        .replace(/\/filters:[^\/]+/g, "/")
         .replace(/\/fit-in\//g, "/")
         .replace(/^\/+/, "")
         .replace(/\/+/g, "/");

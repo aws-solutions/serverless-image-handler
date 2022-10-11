@@ -578,7 +578,6 @@ describe('applyEdits()', () => {
 
       const edits = {
         roundCrop: true
-
       };
 
       // Act
@@ -640,7 +639,7 @@ describe('getOverlayImage()', () => {
       const result = await imageHandler.getOverlayImage('validBucket', 'validKey', '100', '100', '20', metadata);
       // Assert
       expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'validBucket', Key: 'validKey'});
-      expect(result).toEqual(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAsTAAALEwEAmpwYAAAADUlEQVQImWP4z8CQCgAEZgFll19D6QAAAABJRU5ErkJggg==', 'base64'));
+      expect(result).toEqual(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAsTAAALEwEAmpwYAAAADUlEQVR4nGP4z8CQCgAEZgFltQhIfQAAAABJRU5ErkJggg==', 'base64'));
     });
   });
   describe('002/imageDoesNotExist', () => {

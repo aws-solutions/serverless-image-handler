@@ -67,6 +67,11 @@ class ThumborMapping {
       }
     }
 
+    // Parse roundCrop
+    if (this.path.includes('/roundCrop:true/')) {
+      this.edits.roundCrop = true;
+    }
+
     // Parse the image path
     let edits = this.path.match(/filters:[^)]+/g);
     if (!edits) {
@@ -255,7 +260,7 @@ class ThumborMapping {
       if (allowedPosPattern.test(yPos) || !isNaN(yPos)) {
         this.edits.overlayWith.options['top'] = yPos;
       }
-    } else if (editKey === 'round') {
+    } else if (editKey === 'roundCrop') {
         // Rounded crops, with optional coordinates
         const roundedImages = value.match(/(\d+)x(\d+)(:(\d+)x(\d+))?/);
         if (roundedImages) {
@@ -269,6 +274,8 @@ class ThumborMapping {
             if (!isNaN(top)) this.edits.roundCrop.top = top;
             if (!isNaN(r_x)) this.edits.roundCrop.rx = r_x;
             if (!isNaN(r_y)) this.edits.roundCrop.ry = r_y;
+        } else if (value === 'true' || value === '') {
+          this.edits.roundCrop = {};
         }
     } else {
       return undefined;

@@ -964,4 +964,30 @@ describe('mapFilter()', function() {
             expect(thumborMapping).toEqual(expectedResult);
         });
     });
+    describe('037/simple_round', function() {
+        it('Should pass if undefined is returned for an unsupported filter', function() {
+            // Arrange
+            const edit = 'filters:roundCrop()';
+            const filetype = 'jpg';
+            // Act
+            const thumborMapping = new ThumborMapping();
+            thumborMapping.mapFilter(edit, filetype);
+            // Assert
+            const expectedResult = {edits: {roundCrop: {}}};
+            expect(thumborMapping).toEqual(expectedResult);
+        });
+    });
+    describe('038/simple_round', function() {
+        it('Should pass if undefined is returned for an unsupported filter', function() {
+            // Arrange
+            const edit = 'filters:roundCrop(true)';
+            const filetype = 'jpg';
+            // Act
+            const thumborMapping = new ThumborMapping();
+            thumborMapping.mapFilter(edit, filetype);
+            // Assert
+            const expectedResult = {edits: {roundCrop: {}}};
+            expect(thumborMapping).toEqual(expectedResult);
+        });
+    });
 })

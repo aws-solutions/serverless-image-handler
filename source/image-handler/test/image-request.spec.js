@@ -729,7 +729,7 @@ describe('parseImageEdits()', function () {
     it('Should pass when a thumbor image request is provided and populate the ImageRequest object with the proper values for roundCrop', async function () {
       // Arrange
       const event = {
-        path: "/filters:round(1x2:3x4)/test-image-001.jpg"
+        path: "/filters:roundCrop(1x2:3x4)/test-image-001.jpg"
       }
       process.env = {
         SOURCE_BUCKETS: "allowedBucket001, allowedBucket002"
