@@ -114,36 +114,76 @@ the original image ratio. You can either set both `WIDTH` and `HEIGHT` or limit 
   `/fit-in/666x0/`
 
 ![resized](https://images.t-online.de/fit-in/666x0/4k_hdr.jpg)
-https://images.t-online.de/fit-in/666x0/4k_hdr.jpg
+
+[`https://images.t-online.de/fit-in/666x0/4k_hdr.jpg`](https://images.t-online.de/fit-in/666x0/4k_hdr.jpg)
 
 ### Cropping `/${X}x${Y}:${WIDTH}x${HEIGHT}/`
 
 starting from a `Point(x, y)` cut a rectangle sized `width x height`, without further resizing. 
 
 ![crop](https://images.t-online.de/1800x1450:888x500/4k_hdr.jpg)
-https://images.t-online.de/1800x1450:888x500/4k_hdr.jpg
+
+[`https://images.t-online.de/1800x1450:888x500/4k_hdr.jpg`](https://images.t-online.de/1800x1450:888x500/4k_hdr.jpg)
 
 ### Effects `/filters:blur(7)/`
 
 ![crop](https://images.t-online.de/1800x1450:888x500/filters:blur(7)/4k_hdr.jpg)
-https://images.t-online.de/1800x1450:888x500/filters:blur(7)/4k_hdr.jpg
+
+[`https://images.t-online.de/1800x1450:888x500/filters:blur(7)/4k_hdr.jpg`](https://images.t-online.de/1800x1450:888x500/filters:blur(7)/4k_hdr.jpg)
 
 ### Effects `/filters:grayscale()/`
 
 ![crop](https://images.t-online.de/1800x1450:888x500/filters:grayscale()/4k_hdr.jpg)
-https://images.t-online.de/1800x1450:888x500/filters:grayscale()/4k_hdr.jpg
+
+[`https://images.t-online.de/1800x1450:888x500/filters:grayscale()/4k_hdr.jpg`](https://images.t-online.de/1800x1450:888x500/filters:grayscale()/4k_hdr.jpg)
 
 ### Effects `/filters:quality(0-100)/`
 
 change the quality, [default is 80][output options]
 
 ![crop](https://images.t-online.de/1800x1450:888x500/filters:quality(1)/4k_hdr.jpg)
-https://images.t-online.de/1800x1450:888x500/filters:quality(1)/4k_hdr.jpg
+
+[`https://images.t-online.de/1800x1450:888x500/filters:quality(1)/4k_hdr.jpg`](https://images.t-online.de/1800x1450:888x500/filters:quality(1)/4k_hdr.jpg)
 
 ### Effects `/filters:rotate(0-360)/`
 
 ![crop](https://images.t-online.de/1800x1450:888x500/filters:rotate(180)/4k_hdr.jpg)
-https://images.t-online.de/1800x1450:888x500/filters:rotate(180)/4k_hdr.jpg
+
+[`https://images.t-online.de/1800x1450:888x500/filters:rotate(180)/4k_hdr.jpg`](https://images.t-online.de/1800x1450:888x500/filters:rotate(180)/4k_hdr.jpg)
+
+### Effects `/filters:roundCrop()/`
+
+![crop](https://images.t-online.de/1800x1450:888x500/filters:roundCrop()/4k_hdr.jpg)
+
+[`https://images.t-online.de/1800x1450:888x500/filters:roundCrop()/4k_hdr.jpg`](https://images.t-online.de/1800x1450:888x500/filters:roundCrop()/4k_hdr.jpg)
+
+Again, you can create custom ellipsis by specifying the coordinates like before: `/${X}x${Y}:${WIDTH}x${HEIGHT}/`
+
+![crop](https://images.t-online.de/1800x1450:888x500/filters:roundCrop(444x250:300x75)/4k_hdr.jpg)
+
+[`https://images.t-online.de/1800x1450:888x500/filters:roundCrop(444x250:300x75)/4k_hdr.jpg`](https://images.t-online.de/1800x1450:888x500/filters:roundCrop(444x250:300x75)/4k_hdr.jpg)
+
+It is suggested to force _PNG_ as format, as _JPEG_ does not (?) support transparent backgrounds.
+So in case a _JPEG_ is used (like here) and your Browser does not support _WEBP_, there will be a
+black frame.
+
+#### PNG
+
+![crop](https://images.t-online.de/1800x1450:888x500/filters:roundCrop()/filters:format(png)/4k_hdr.jpg)
+
+[`https://images.t-online.de/1800x1450:888x500/filters:roundCrop()/filters:format(png)/4k_hdr.jpg`](https://images.t-online.de/1800x1450:888x500/filters:roundCrop()/filters:format(png)/4k_hdr.jpg)
+
+#### JPEG
+
+![crop](https://images.t-online.de/1800x1450:888x500/filters:roundCrop()/filters:format(jpeg)/4k_hdr.jpg)
+
+[`https://images.t-online.de/1800x1450:888x500/filters:roundCrop()/filters:format(jpeg)/4k_hdr.jpg`](https://images.t-online.de/1800x1450:888x500/filters:roundCrop()/filters:format(jpeg)/4k_hdr.jpg)
+
+### Effects `/filters:rotate(180)/`
+
+![crop](https://images.t-online.de/1800x1450:888x500/filters:roundCrop()/4k_hdr.jpg)
+
+[`https://images.t-online.de/1800x1450:888x500/filters:rotate(180)/4k_hdr.jpg`](https://images.t-online.de/1800x1450:888x500/filters:rotate(180)/4k_hdr.jpg)
 
 ## Try it out
 
