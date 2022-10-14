@@ -18,6 +18,7 @@ export interface ImageHandlerEvent {
 }
 
 export interface DefaultImageRequest {
+  presignedUrl?: string;
   bucket?: string;
   key: string;
   edits?: ImageEdits;

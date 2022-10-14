@@ -18,6 +18,8 @@ type OriginalImageInfo = Partial<{
 
 export class ImageRequest {
   private static readonly DEFAULT_REDUCTION_EFFORT = 4;
+  private static readonly MATCH_PRESIGNED_URL = 'https://(.?[^.]*).(.?[^/]*)/([^?]*)';
+
 
   constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) {}
 
@@ -152,7 +154,17 @@ export class ImageRequest {
     if (requestType === RequestTypes.DEFAULT) {
       // Decode the image request
       const request = this.decodeRequest(event);
-
+      
+      if (request.presignedUrl !== undefined){
+        const regexForPreSignedURL = new RegExp(ImageRequest.MATCH_PRESIGNED_URL);
+        var regexGroups = regexForPreSignedURL.exec(request.presignedUrl);
+        
+        if (regexGroups !== null && Object.keys(regexGroups).length >= 3) {
+          const bucketName = regexGroups[1];
+          return bucketName;
+        }
+      } 
+      
       if (request.bucket !== undefined) {
         // Check the provided bucket against the allowed list
         const sourceBuckets = this.getAllowedSourceBuckets();
@@ -218,9 +230,21 @@ export class ImageRequest {
    */
   public parseImageKey(event: ImageHandlerEvent, requestType: RequestTypes): string {
     if (requestType === RequestTypes.DEFAULT) {
-      // Decode the image request and return the image key
-      const { key } = this.decodeRequest(event);
-      return key;
+      
+      // Decode the image request
+      const request = this.decodeRequest(event);
+      
+      if (request.presignedUrl !== undefined){
+        const regexForPreSignedURL = new RegExp(ImageRequest.MATCH_PRESIGNED_URL);
+        var regexGroups = regexForPreSignedURL.exec(request.presignedUrl);
+        
+        if (regexGroups !== null && Object.keys(regexGroups).length >= 3) {
+          const keyName = regexGroups[3];
+          return keyName;
+        }
+      } 
+
+      return request.key;
     }
 
     if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {

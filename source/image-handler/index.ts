@@ -31,6 +31,8 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
   const isAlb = event.requestContext && Object.prototype.hasOwnProperty.call(event.requestContext, 'elb');
 
   try {
+    // Add JWT auth validation
+
     const imageRequestInfo = await imageRequest.setup(event);
     console.info(imageRequestInfo);
 
