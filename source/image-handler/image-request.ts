@@ -341,6 +341,12 @@ export class ImageRequest {
       const { presignedUrl } = this.decodeRequest(event);
       if (presignedUrl) {
         return presignedUrl;
+      }else {
+        throw new ImageHandlerError(
+          StatusCodes.BAD_REQUEST,
+          'DecodeRequest::CannotReadPresignedUrl',
+          'The Presigned URL you provided could not be read. Please ensure that it is properly formed according to the solution documentation.'
+        );
       }
   }
 
