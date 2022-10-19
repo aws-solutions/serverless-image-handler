@@ -13,26 +13,14 @@
 
  function importOriginalImageFromPreSignedURL() {
     const presignedUrl = $(`#txt-presigned-url`).first().val();
-    const regexForPreSignedURL = new RegExp('https://(.?[^.]*).(.?[^/]*)/([^?]*)');
-    var regexGroups = regexForPreSignedURL.exec(presignedUrl);
-  
-    if (regexGroups !== null && Object.keys(regexGroups).length >= 3) {
-      // Gather the bucket name and image key
-      const bucketName = regexGroups[1];
-      const keyName = regexGroups[3];
-  
-      if (bucketName !== undefined && keyName !== undefined) {
-        // Assemble the image request
-        const request = {
-          bucket: bucketName,
-          key: keyName
-        };
-        const strRequest = JSON.stringify(request);
-        const encRequest = btoa(strRequest);
-        // Import the image data into the element
-        $(`#img-original`).attr(`src`, `${appVariables.apiEndpoint}/${encRequest}`).attr(`data-bucket`, bucketName).attr(`data-key`, keyName);
-      }
-    }
+
+    const request = {
+      presignedUrl: presignedUrl
+    };
+    const strRequest = JSON.stringify(request);
+    const encRequest = btoa(strRequest);
+    // Import the image data into the element
+    $(`#img-original`).attr(`src`, `${appVariables.apiEndpoint}/${encRequest}`).attr(`data-presignedurl`, presignedUrl);
   }
   
   function importOriginalImage() {
@@ -122,7 +110,7 @@
       delete _edits.resize;
     }
     // Gather the bucket and key names
-    const presignedUrl = $(`#txt-presigned-url`).first().val();
+    const presignedUrl = $(`#img-original`).first().attr(`data-presignedurl`);
     // const bucketName = $(`#img-original`).first().attr(`data-bucket`);
     // const keyName = $(`#img-original`).first().attr(`data-key`);
     // Set up the request body
@@ -141,11 +129,17 @@
     // Encode using base64
     const enc = btoa(str);
     // Fill the preview image
-    $(`#img-preview`).attr(`src`, `${appVariables.apiEndpoint}/${enc}`);
-    // Fill the request body field
-    $(`#preview-request-body`).html(JSON.stringify(request, undefined, 2));
-    // Fill the encoded URL field
-    $(`#preview-encoded-url`).val(`${appVariables.apiEndpoint}/${enc}`);
+    const req = `${appVariables.apiEndpoint}/${enc}`;
+    fetch(req)
+      .then((response) => response.json())
+      .then((data) => {
+        $(`#img-preview`).attr(`src`, data.presignedUrl);
+        // Fill the request body field
+        $(`#preview-request-body`).html(JSON.stringify(request, undefined, 2));
+        // Fill the encoded URL field
+        $(`#preview-encoded-url`).val(req);
+        $(`#preview-response-body`).html(JSON.stringify(data, undefined, 2));
+      });
   }
   
   function hexToRgbA(hex, _alpha) {
