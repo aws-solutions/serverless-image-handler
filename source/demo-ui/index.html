@@ -38,16 +38,6 @@
                             </div>
                             <button id="btn-import-original" type="button" class="btn btn-primary" onclick="importOriginalImageFromPreSignedURL()">Import from pre-signed URL</button>
                         </form>
-                        <hr>
-                        <form>
-                            <div class="form-group">
-                                <small id="lbl-bucket-name" class="form-text text-muted">Enter the name of an Amazon S3 bucket in your account that contains original image files.</small>
-                                <input type="text" class="form-control" id="txt-bucket-name" aria-describedby="lbl-bucket-name" placeholder="Bucket name">
-                                <small id="lbl-key-name" class="form-text text-muted">Enter the name of an original image file (with extension) stored in the above Amazon S3 bucket.</small>
-                                <input type="text" class="form-control" id="txt-key-name" aria-describedby="lbl-key-name" placeholder="Image key">
-                            </div>
-                            <button id="btn-import-original" type="button" class="btn btn-primary" onclick="importOriginalImage()">Import bucket name and image key</button>
-                        </form>
                     </div>
                 </div>
                 <div class="card card-original-image">
@@ -65,6 +55,15 @@
                     <div class="card-body">
                         <h5 class="card-title">Editor</h5>
                         <form>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm">
+                                    <div class="form-group">
+                                        <label for="editor-width">Authorization Bearer Token</label>
+                                        <input type="text" class="form-control" id="editor-jwt" placeholder="eyJhb...">
+                                    </div>
+                                </div>
+                            </div>
                             <hr>
                             <div class="row">
                                 <div class="col-sm">

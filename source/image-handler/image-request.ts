@@ -21,7 +21,7 @@ export class ImageRequest {
   private static readonly DEFAULT_REDUCTION_EFFORT = 4;
   private static readonly MATCH_PRESIGNED_URL = 'https://(.?[^.]*).(.?[^/]*)/([^?]*)';
 
-  constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) {}
+  constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) { }
 
   /**
    * Initializer function for creating a new image request, used by the image handler to perform image modifications.
@@ -39,7 +39,7 @@ export class ImageRequest {
       imageRequestInfo.bucket = this.parseImageBucket(event, imageRequestInfo.requestType);
       imageRequestInfo.key = this.parseImageKey(event, imageRequestInfo.requestType);
       imageRequestInfo.edits = this.parseImageEdits(event, imageRequestInfo.requestType);
-      
+
       const originalImage = await this.getOriginalImage(imageRequestInfo.bucket, imageRequestInfo.key, imageRequestInfo.presignedUrl);
       imageRequestInfo = { ...imageRequestInfo, ...originalImage };
 
@@ -111,14 +111,13 @@ export class ImageRequest {
           method: 'get',
           url: presignedUrl,
           responseType: 'arraybuffer'
-        })
-          .then(function (originalImage) {
-            //const imageBuffer = Buffer.from(response.data as Uint8Array);
-            return Buffer.from(originalImage.data as Uint8Array);
-          });
-          result.contentType = this.inferImageType(imageBuffer);
-          result.cacheControl = 'max-age=31536000,public';
-          result.originalImage = imageBuffer;
+        }).then(function (originalImage) {
+          //const imageBuffer = Buffer.from(response.data as Uint8Array);
+          return Buffer.from(originalImage.data as Uint8Array);
+        });
+        result.contentType = this.inferImageType(imageBuffer);
+        result.cacheControl = 'max-age=31536000,public';
+        result.originalImage = imageBuffer;
       }
       else {
         const imageLocation = { Bucket: bucket, Key: key };
@@ -169,17 +168,17 @@ export class ImageRequest {
     if (requestType === RequestTypes.DEFAULT) {
       // Decode the image request
       const request = this.decodeRequest(event);
-      
-      if (request.presignedUrl !== undefined){
+
+      if (request.presignedUrl !== undefined) {
         const regexForPreSignedURL = new RegExp(ImageRequest.MATCH_PRESIGNED_URL);
         var regexGroups = regexForPreSignedURL.exec(request.presignedUrl);
-        
+
         if (regexGroups !== null && Object.keys(regexGroups).length >= 3) {
           const bucketName = regexGroups[1];
           return bucketName;
         }
-      } 
-      
+      }
+
       if (request.bucket !== undefined) {
         // Check the provided bucket against the allowed list
         const sourceBuckets = this.getAllowedSourceBuckets();
@@ -245,19 +244,19 @@ export class ImageRequest {
    */
   public parseImageKey(event: ImageHandlerEvent, requestType: RequestTypes): string {
     if (requestType === RequestTypes.DEFAULT) {
-      
+
       // Decode the image request
       const request = this.decodeRequest(event);
-      
-      if (request.presignedUrl !== undefined){
+
+      if (request.presignedUrl !== undefined) {
         const regexForPreSignedURL = new RegExp(ImageRequest.MATCH_PRESIGNED_URL);
         var regexGroups = regexForPreSignedURL.exec(request.presignedUrl);
-        
+
         if (regexGroups !== null && Object.keys(regexGroups).length >= 3) {
           const keyName = regexGroups[3];
           return keyName;
         }
-      } 
+      }
 
       return request.key;
     }
@@ -337,17 +336,17 @@ export class ImageRequest {
    * @returns The presigned url string to be sent with the response.
    */
   public parsePresignedUrl(event: ImageHandlerEvent): string {
-      // Decode the image request
-      const { presignedUrl } = this.decodeRequest(event);
-      if (presignedUrl) {
-        return presignedUrl;
-      }else {
-        throw new ImageHandlerError(
-          StatusCodes.BAD_REQUEST,
-          'DecodeRequest::CannotReadPresignedUrl',
-          'The Presigned URL you provided could not be read. Please ensure that it is properly formed according to the solution documentation.'
-        );
-      }
+    // Decode the image request
+    const { presignedUrl } = this.decodeRequest(event);
+    if (presignedUrl) {
+      return presignedUrl;
+    } else {
+      throw new ImageHandlerError(
+        StatusCodes.BAD_REQUEST,
+        'DecodeRequest::CannotReadPresignedUrl',
+        'The Presigned URL you provided could not be read. Please ensure that it is properly formed according to the solution documentation.'
+      );
+    }
   }
 
   /**

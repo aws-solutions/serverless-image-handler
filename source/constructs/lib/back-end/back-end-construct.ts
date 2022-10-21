@@ -52,6 +52,10 @@ export class BackEnd extends Construct {
         new PolicyStatement({
           actions: ['rekognition:DetectFaces', 'rekognition:DetectModerationLabels'],
           resources: ['*']
+        }),
+        new PolicyStatement({
+          actions: ['ssm:GetParameter'],
+          resources: [Stack.of(this).formatArn({ service: 'ssm', resource: 'parameter', resourceName: '/pn-services/*', region: '', account: '' })]
         })
       ]
     });
@@ -98,7 +102,7 @@ export class BackEnd extends Construct {
       enableAcceptEncodingGzip: true,
       headerBehavior: {
         behavior: 'whitelist',
-        headers: ['origin', 'accept']
+        headers: ['origin', 'accept', 'Authorization']
       },
       queryStringBehavior: {
         behavior: 'whitelist',
