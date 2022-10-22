@@ -255,7 +255,7 @@ export class ImageHandler {
    * @param hRatio The height rate of the overlay image.
    * @param alpha The transparency alpha to the overlay.
    * @param sourceImageMetadata The metadata of the source image.
-   * @returns An image to bo ber used as an overlay.
+   * @returns An image to be used as an overlay.
    */
   public async getOverlayImage(bucket: string, key: string, wRatio: string, hRatio: string, alpha: string, sourceImageMetadata: sharp.Metadata): Promise<Buffer> {
     const params = { Bucket: bucket, Key: key };
