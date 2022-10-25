@@ -7,7 +7,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { handler } from '../index';
-import { ImageHandlerError, ImageHandlerEvent, StatusCodes } from '../lib';
+import { ImageHandlerEvent, StatusCodes } from '../lib';
 
 describe('index', () => {
   // Arrange
@@ -15,8 +15,8 @@ describe('index', () => {
   process.env.DEFAULT_PRESIGNED_URL_EXPIRES = '600';
 
   const mockPresignedUrlRequest = '/eyJwcmVzaWduZWRVcmwiOiJodHRwczovL3BuLnMzLmFtYXpvbmF3cy5jb20vcG4vbW9jay9pbWFnZT9YLUFtei1FeHBpcmVzPTYwMCJ9';
+  const mockPresignedUrlEditsRequest = '/eyJwcmVzaWduZWRVcmwiOiJodHRwczovL3BhdGllbnRub3ctZGV2ZWxvcG1lbnQtdXMtZWFzdC0yLnMzLnVzLWVhc3QtMi5hbWF6b25hd3MuY29tL3BhdGllbnRub3dfcGF0aWVudG5vd19kb3dubG9hZF8yL1VzZXJzL1Byb2ZpbGUvMT9YLUFtei1FeHBpcmVzPTYwMCZYLUFtei1TZWN1cml0eS1Ub2tlbj1JUW9KYjNKcFoybHVYMlZqRU83JTJGJTJGJTJGJTJGJTJGJTJGJTJGJTJGJTJGJTJGd0VhQ1hWekxXVmhjM1F0TWlKSU1FWUNJUURPeEQ1UjExeVk2aXpNQzNSQW9FcDNhNXYxSFhYV3BFak9mMUVhZ2tjSnF3SWhBTzdpSE1XNXAwc1EwcCUyQndSSEVsSmsxUnZYd2hDbktoNnNhQTdFbmdrejh6S3BBRUNNZiUyRiUyRiUyRiUyRiUyRiUyRiUyRiUyRiUyRiUyRndFUUFCb01OekV3TlRZek5qZ3lNekkySWd6T1A2bTB1a0RBSVF0dDhYNHE1QU15UGIlMkI0YyUyRlhaaHdvaUkwUU5pREVxdVhLUUxrNUpaQW5Gb3Vpc0R2OXc1ZCUyQm9mVUZkWkZJWVJXU3BjNFcxNGpMSU1aaGxQM2l3dXdYeTM5WUdhRmhqMlNLc3FoZTlnU2lxbU1qQ1JNWlZ6dEVhMXZaeVhtRUZONWJMbkNadHY2Y0VGSVJWJTJCU3Ftb0NRenpFRU52bzAlMkJFa2t4bzA0a3Y5NFJ1a2ZLUmc0aDJxRXU3WmlRZnB4NjlUQVNYbkhpUU5aOEtKSTB0Nm52dEFvVWN6b2hONVI5JTJCRlFMNTJnVyUyRnNyMkFhJTJGd1NMT3dQcEd3Rk9TbGcwTzY5b0hncjBoOENDcjRTbWZNSUQ1cEZtR3dkJTJCdUlqMWVadkJGYzJQUm1UaHRIM1ZibHp1bTJMVGtlYnlYSGhrR1IxJTJCJTJGWkJ2VnczN2FnRWRtQk9UVHNLNDRFSkNRWGpKRFQ0V0ZxWVNlJTJGbGhJOHZHTDFqS0RCTWt6TzhVRFVNcWpaZzFuaGwlMkZwbm5UN3ZGVkxXVnNQbjhlWWRtVyUyRiUyRjZ4RjdHQUpYZ1FZTWxlNGdsZnB2MksyN2p3azQ4OEVqOGhla21uaDJyQ0R5aXVxbDhFZGtLUEc5alUyYkJwekhMTGNxUnJTcGQlMkJOWng0NUhPZGIxZlJEeEZ2QlV6MmZocWd3d2lOT2klMkJsdE5LYjlnWiUyQkhQaVZycXA4RjNmZXB4aHhNJTJCRTRCS25TNlJSUTIlMkZxemNERGJGQ0pEbVZsMUhZOGxGSkVmREtUMzNXdmVmZnJrbThMUFB2TkluNFNRJTJGUGFpazV4NFpYdmNhNnZ6ckFOVGhoNjBUJTJGN2xZdmVrZXZQTjBFZUd4TGZCaHVHSmNURVhWc01KdWQzSm9HT3FRQlJmandGRVF0WTFrTU52Rkg3aDFMWk02dElHRUQ5VjFrRE84ZlRSWEZmSHl2MW5YUWN3WDhYJTJGQzJhU2VScmNITlJSd3RnUnhmRjRYb1o1RlBDVGcxNGczYm9BcXlXbllpTjE1NGVrUFBLRlhHYmpuakcyMUNsdnBsZ2IlMkJhd1l1ejdKSWppemZHbXBiT01HS1dXWmI2UzlxSE9hTUVBaGZaenJPU0Z6WlZOTHhmaXFTTXd0OWFkY2x3YWw2ZiUyRmdCd3g1UnNCcXRza05ZbnRtcTdBTHdQb0cxVEdwbyUzRCZYLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFTSUEySzRIRkxBTEVTTEJDTVdTLzIwMjIxMDI1L3VzLWVhc3QtMi9zMy9hd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDIyMTAyNVQwMzQ2MDRaJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCZYLUFtei1TaWduYXR1cmU9YTU3NzE0Zjc0MjVlMWRiOWVkNmJhZjU5ZmM3MmQ1MTkyMzRmM2I5YWNmYWE0ZjQ0NzdhODU3MjI2MGQ3YmZhYSIsImVkaXRzIjp7InJlc2l6ZSI6eyJ3aWR0aCI6MjAsImhlaWdodCI6MjAsImZpdCI6Im91dHNpZGUifX19';
   const mockPresignedUrl = 'https://pn.s3.amazonaws.com/pn/mock/image?X-Amz-Expires=600';
-  const mockImage = Buffer.from('SampleImageContent\n');
   const imageBuffer = fs.readFileSync(
     path.resolve(__dirname, '../test/image/25x15.png'),
   )
@@ -75,7 +75,6 @@ describe('index', () => {
 
     it('002/should return the presigned URL when provided', async () => {
       // Arrange
-      const mockPresignedUrlEditsRequest = 'eyJwcmVzaWduZWRVcmwiOiJodHRwczovL3BhdGllbnRub3ctZGV2ZWxvcG1lbnQtdXMtZWFzdC0yLnMzLnVzLWVhc3QtMi5hbWF6b25hd3MuY29tL3BhdGllbnRub3dfcGF0aWVudG5vd19kb3dubG9hZF8yL1VzZXJzL1Byb2ZpbGUvMT9YLUFtei1FeHBpcmVzPTYwMCZYLUFtei1TZWN1cml0eS1Ub2tlbj1JUW9KYjNKcFoybHVYMlZqRU83JTJGJTJGJTJGJTJGJTJGJTJGJTJGJTJGJTJGJTJGd0VhQ1hWekxXVmhjM1F0TWlKSU1FWUNJUURPeEQ1UjExeVk2aXpNQzNSQW9FcDNhNXYxSFhYV3BFak9mMUVhZ2tjSnF3SWhBTzdpSE1XNXAwc1EwcCUyQndSSEVsSmsxUnZYd2hDbktoNnNhQTdFbmdrejh6S3BBRUNNZiUyRiUyRiUyRiUyRiUyRiUyRiUyRiUyRiUyRiUyRndFUUFCb01OekV3TlRZek5qZ3lNekkySWd6T1A2bTB1a0RBSVF0dDhYNHE1QU15UGIlMkI0YyUyRlhaaHdvaUkwUU5pREVxdVhLUUxrNUpaQW5Gb3Vpc0R2OXc1ZCUyQm9mVUZkWkZJWVJXU3BjNFcxNGpMSU1aaGxQM2l3dXdYeTM5WUdhRmhqMlNLc3FoZTlnU2lxbU1qQ1JNWlZ6dEVhMXZaeVhtRUZONWJMbkNadHY2Y0VGSVJWJTJCU3Ftb0NRenpFRU52bzAlMkJFa2t4bzA0a3Y5NFJ1a2ZLUmc0aDJxRXU3WmlRZnB4NjlUQVNYbkhpUU5aOEtKSTB0Nm52dEFvVWN6b2hONVI5JTJCRlFMNTJnVyUyRnNyMkFhJTJGd1NMT3dQcEd3Rk9TbGcwTzY5b0hncjBoOENDcjRTbWZNSUQ1cEZtR3dkJTJCdUlqMWVadkJGYzJQUm1UaHRIM1ZibHp1bTJMVGtlYnlYSGhrR1IxJTJCJTJGWkJ2VnczN2FnRWRtQk9UVHNLNDRFSkNRWGpKRFQ0V0ZxWVNlJTJGbGhJOHZHTDFqS0RCTWt6TzhVRFVNcWpaZzFuaGwlMkZwbm5UN3ZGVkxXVnNQbjhlWWRtVyUyRiUyRjZ4RjdHQUpYZ1FZTWxlNGdsZnB2MksyN2p3azQ4OEVqOGhla21uaDJyQ0R5aXVxbDhFZGtLUEc5alUyYkJwekhMTGNxUnJTcGQlMkJOWng0NUhPZGIxZlJEeEZ2QlV6MmZocWd3d2lOT2klMkJsdE5LYjlnWiUyQkhQaVZycXA4RjNmZXB4aHhNJTJCRTRCS25TNlJSUTIlMkZxemNERGJGQ0pEbVZsMUhZOGxGSkVmREtUMzNXdmVmZnJrbThMUFB2TkluNFNRJTJGUGFpazV4NFpYdmNhNnZ6ckFOVGhoNjBUJTJGN2xZdmVrZXZQTjBFZUd4TGZCaHVHSmNURVhWc01KdWQzSm9HT3FRQlJmandGRVF0WTFrTU52Rkg3aDFMWk02dElHRUQ5VjFrRE84ZlRSWEZmSHl2MW5YUWN3WDhYJTJGQzJhU2VScmNITlJSd3RnUnhmRjRYb1o1RlBDVGcxNGczYm9BcXlXbllpTjE1NGVrUFBLRlhHYmpuakcyMUNsdnBsZ2IlMkJhd1l1ejdKSWppemZHbXBiT01HS1dXWmI2UzlxSE9hTUVBaGZaenJPU0Z6WlZOTHhmaXFTTXd0OWFkY2x3YWw2ZiUyRmdCd3g1UnNCcXRza05ZbnRtcTdBTHdQb0cxVEdwbyUzRCZYLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFTSUEySzRIRkxBTEVTTEJDTVdTLzIwMjIxMDI1L3VzLWVhc3QtMi9zMy9hd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDIyMTAyNVQwMzQ2MDRaJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCZYLUFtei1TaWduYXR1cmU9YTU3NzE0Zjc0MjVlMWRiOWVkNmJhZjU5ZmM3MmQ1MTkyMzRmM2I5YWNmYWE0ZjQ0NzdhODU3MjI2MGQ3YmZhYSIsImVkaXRzIjp7InJlc2l6ZSI6eyJ3aWR0aCI6MjAsImhlaWdodCI6MjAsImZpdCI6Im91dHNpZGUifX19';
       const event: ImageHandlerEvent = {
         path: mockPresignedUrlEditsRequest,
         headers: { Authorization: 'Bearer abc123' }
@@ -105,20 +104,20 @@ describe('index', () => {
   });
 
   describe('TC: Error', () => {
-    it('001/should return an error JSON when an error occurs', async () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('001/should return an error when no Authorization provided', async () => {
       // Arrange
-      const event: ImageHandlerEvent = { path: '/test.jpg' };
-      // Mock
-      mockAwsS3.getObject.mockImplementationOnce(() => ({
-        promise() {
-          return Promise.reject(new ImageHandlerError(StatusCodes.NOT_FOUND, 'NoSuchKey', 'NoSuchKey error happened.'));
-        }
-      }));
+      const event: ImageHandlerEvent = {
+        path: mockPresignedUrlRequest
+      };
 
       // Act
       const result = await handler(event);
       const expectedResult = {
-        statusCode: StatusCodes.NOT_FOUND,
+        statusCode: StatusCodes.UNAUTHORIZED,
         isBase64Encoded: false,
         headers: {
           'Access-Control-Allow-Methods': 'GET',
@@ -127,29 +126,28 @@ describe('index', () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          status: StatusCodes.NOT_FOUND,
-          code: 'NoSuchKey',
-          message: `The image test.jpg does not exist or the request may not be base64 encoded properly.`
+          message: 'Unauthorized. Check the bearer token on your authorization header.',
+          code: 'Unauthorized',
+          status: StatusCodes.UNAUTHORIZED
         })
       };
 
       // Assert
-      expect(mockAwsS3.getObject).toHaveBeenCalledWith({ Bucket: 'source-bucket', Key: 'test.jpg' });
       expect(result).toEqual(expectedResult);
     });
 
-    it('002/should return 500 error when there is no error status in the error', async () => {
+    it('002/should return an error when provided expired Authorization', async () => {
       // Arrange
       const event: ImageHandlerEvent = {
-        path: 'eyJidWNrZXQiOiJzb3VyY2UtYnVja2V0Iiwia2V5IjoidGVzdC5qcGciLCJlZGl0cyI6eyJ3cm9uZ0ZpbHRlciI6dHJ1ZX19'
+        path: mockPresignedUrlRequest,
+        headers: { Authorization: 'Bearer abc123' }
       };
 
       // Mock
-      mockAwsS3.getObject.mockImplementationOnce(() => ({
+      mockAwsParameterStore.getParameter.mockImplementationOnce(() => ({
         promise() {
           return Promise.resolve({
-            Body: mockImage,
-            ContentType: 'image/jpeg'
+            Parameter: { Value: 'parameter1' },
           });
         }
       }));
@@ -157,7 +155,7 @@ describe('index', () => {
       // Act
       const result = await handler(event);
       const expectedResult = {
-        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+        statusCode: StatusCodes.UNAUTHORIZED,
         isBase64Encoded: false,
         headers: {
           'Access-Control-Allow-Methods': 'GET',
@@ -166,176 +164,14 @@ describe('index', () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          message: 'Internal error. Please contact the system administrator.',
-          code: 'InternalError',
-          status: StatusCodes.INTERNAL_SERVER_ERROR
+          message: 'Unauthorized. Check the bearer token on your authorization header.',
+          code: 'Unauthorized',
+          status: StatusCodes.UNAUTHORIZED
         })
       };
 
       // Assert
-      expect(mockAwsS3.getObject).toHaveBeenCalledWith({ Bucket: 'source-bucket', Key: 'test.jpg' });
       expect(result).toEqual(expectedResult);
     });
-
-    // it('003/should return the default fallback image when an error occurs if the default fallback image is enabled', async () => {
-    //   // Arrange
-    //   process.env.ENABLE_DEFAULT_FALLBACK_IMAGE = 'Yes';
-    //   process.env.DEFAULT_FALLBACK_IMAGE_BUCKET = 'fallback-image-bucket';
-    //   process.env.DEFAULT_FALLBACK_IMAGE_KEY = 'fallback-image.png';
-    //   process.env.CORS_ENABLED = 'Yes';
-    //   process.env.CORS_ORIGIN = '*';
-    //   const event: ImageHandlerEvent = {
-    //     path: '/test.jpg'
-    //   };
-    //   // Mock
-    //   mockAwsS3.getObject.mockReset();
-    //   mockAwsS3.getObject
-    //     .mockImplementationOnce(() => ({
-    //       promise() {
-    //         return Promise.reject(new ImageHandlerError(StatusCodes.INTERNAL_SERVER_ERROR, 'UnknownError', null));
-    //       }
-    //     }))
-    //     .mockImplementationOnce(() => ({
-    //       promise() {
-    //         return Promise.resolve({
-    //           Body: mockFallbackImage,
-    //           ContentType: 'image/png'
-    //         });
-    //       }
-    //     }));
-    //   // Act
-    //   const result = await handler(event);
-    //   const expectedResult = {
-    //     statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-    //     isBase64Encoded: true,
-    //     headers: {
-    //       'Access-Control-Allow-Methods': 'GET',
-    //       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    //       'Access-Control-Allow-Credentials': true,
-    //       'Access-Control-Allow-Origin': '*',
-    //       'Content-Type': 'image/png',
-    //       'Cache-Control': 'max-age=31536000,public',
-    //       'Last-Modified': undefined
-    //     },
-    //     body: mockFallbackImage.toString('base64')
-    //   };
-    //   // Assert
-    //   expect(mockAwsS3.getObject).toHaveBeenNthCalledWith(1, { Bucket: 'source-bucket', Key: 'test.jpg' });
-    //   expect(mockAwsS3.getObject).toHaveBeenNthCalledWith(2, { Bucket: 'fallback-image-bucket', Key: 'fallback-image.png' });
-    //   expect(result).toEqual(expectedResult);
-    // });
-
-
-    // it('004/should return an error JSON when getting the default fallback image fails if the default fallback image is enabled', async () => {
-    //   // Arrange
-    //   const event: ImageHandlerEvent = {
-    //     path: '/test.jpg'
-    //   };
-    //   // Mock
-    //   mockAwsS3.getObject.mockReset();
-    //   mockAwsS3.getObject.mockImplementation(() => ({
-    //     promise() {
-    //       return Promise.reject(new ImageHandlerError(StatusCodes.NOT_FOUND, 'NoSuchKey', 'NoSuchKey error happened.'));
-    //     }
-    //   }));
-    //   // Act
-    //   const result = await handler(event);
-    //   const expectedResult = {
-    //     statusCode: StatusCodes.NOT_FOUND,
-    //     isBase64Encoded: false,
-    //     headers: {
-    //       'Access-Control-Allow-Methods': 'GET',
-    //       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    //       'Access-Control-Allow-Credentials': true,
-    //       'Access-Control-Allow-Origin': '*',
-    //       'Content-Type': 'application/json'
-    //     },
-    //     body: JSON.stringify({
-    //       status: StatusCodes.NOT_FOUND,
-    //       code: 'NoSuchKey',
-    //       message: `The image test.jpg does not exist or the request may not be base64 encoded properly.`
-    //     })
-    //   };
-    //   // Assert
-    //   expect(mockAwsS3.getObject).toHaveBeenNthCalledWith(1, { Bucket: 'source-bucket', Key: 'test.jpg' });
-    //   expect(mockAwsS3.getObject).toHaveBeenNthCalledWith(2, { Bucket: 'fallback-image-bucket', Key: 'fallback-image.png' });
-    //   expect(result).toEqual(expectedResult);
-    // });
-
-    // it('005/should return an error JSON when the default fallback image key is not provided if the default fallback image is enabled', async () => {
-    //   // Arrange
-    //   process.env.DEFAULT_FALLBACK_IMAGE_KEY = '';
-    //   const event: ImageHandlerEvent = {
-    //     path: '/test.jpg'
-    //   };
-
-    //   // Mock
-    //   mockAwsS3.getObject.mockImplementationOnce(() => ({
-    //     promise() {
-    //       return Promise.reject(new ImageHandlerError(StatusCodes.NOT_FOUND, 'NoSuchKey', 'NoSuchKey error happened.'));
-    //     }
-    //   }));
-
-    //   // Act
-    //   const result = await handler(event);
-    //   const expectedResult = {
-    //     statusCode: StatusCodes.NOT_FOUND,
-    //     isBase64Encoded: false,
-    //     headers: {
-    //       'Access-Control-Allow-Methods': 'GET',
-    //       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    //       'Access-Control-Allow-Credentials': true,
-    //       'Access-Control-Allow-Origin': '*',
-    //       'Content-Type': 'application/json'
-    //     },
-    //     body: JSON.stringify({
-    //       status: StatusCodes.NOT_FOUND,
-    //       code: 'NoSuchKey',
-    //       message: `The image test.jpg does not exist or the request may not be base64 encoded properly.`
-    //     })
-    //   };
-
-    //   // Assert
-    //   expect(mockAwsS3.getObject).toHaveBeenCalledWith({ Bucket: 'source-bucket', Key: 'test.jpg' });
-    //   expect(result).toEqual(expectedResult);
-    // });
-
-    // it('006/should return an error JSON when the default fallback image bucket is not provided if the default fallback image is enabled', async () => {
-    //   // Arrange
-    //   process.env.DEFAULT_FALLBACK_IMAGE_BUCKET = '';
-    //   const event: ImageHandlerEvent = {
-    //     path: '/test.jpg'
-    //   };
-
-    //   // Mock
-    //   mockAwsS3.getObject.mockImplementationOnce(() => ({
-    //     promise() {
-    //       return Promise.reject(new ImageHandlerError(StatusCodes.NOT_FOUND, 'NoSuchKey', 'NoSuchKey error happened.'));
-    //     }
-    //   }));
-
-    //   // Act
-    //   const result = await handler(event);
-    //   const expectedResult = {
-    //     statusCode: StatusCodes.NOT_FOUND,
-    //     isBase64Encoded: false,
-    //     headers: {
-    //       'Access-Control-Allow-Methods': 'GET',
-    //       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    //       'Access-Control-Allow-Credentials': true,
-    //       'Access-Control-Allow-Origin': '*',
-    //       'Content-Type': 'application/json'
-    //     },
-    //     body: JSON.stringify({
-    //       status: StatusCodes.NOT_FOUND,
-    //       code: 'NoSuchKey',
-    //       message: `The image test.jpg does not exist or the request may not be base64 encoded properly.`
-    //     })
-    //   };
-
-    //   // Assert
-    //   expect(mockAwsS3.getObject).toHaveBeenCalledWith({ Bucket: 'source-bucket', Key: 'test.jpg' });
-    //   expect(result).toEqual(expectedResult);
-    // });
   });
 });

@@ -113,29 +113,6 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
     };
   } catch (error) {
     console.error(error);
-
-    // Default fallback image
-    const { ENABLE_DEFAULT_FALLBACK_IMAGE, DEFAULT_FALLBACK_IMAGE_BUCKET, DEFAULT_FALLBACK_IMAGE_KEY } = process.env;
-    if (ENABLE_DEFAULT_FALLBACK_IMAGE === 'Yes' && !isNullOrWhiteSpace(DEFAULT_FALLBACK_IMAGE_BUCKET) && !isNullOrWhiteSpace(DEFAULT_FALLBACK_IMAGE_KEY)) {
-      try {
-        const defaultFallbackImage = await s3Client.getObject({ Bucket: DEFAULT_FALLBACK_IMAGE_BUCKET, Key: DEFAULT_FALLBACK_IMAGE_KEY }).promise();
-
-        const headers = getResponseHeaders(false, isAlb);
-        headers['Content-Type'] = defaultFallbackImage.ContentType;
-        headers['Last-Modified'] = defaultFallbackImage.LastModified;
-        headers['Cache-Control'] = 'max-age=31536000,public';
-
-        return {
-          statusCode: error.status ? error.status : StatusCodes.INTERNAL_SERVER_ERROR,
-          isBase64Encoded: true,
-          headers: headers,
-          body: defaultFallbackImage.Body.toString('base64')
-        };
-      } catch (error) {
-        console.error('Error occurred while getting the default fallback image.', error);
-      }
-    }
-
     if (error.status) {
       return {
         statusCode: error.status,
