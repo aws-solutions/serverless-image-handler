@@ -5,5 +5,8 @@ module.exports = {
     '^.+\\.tsx?$': 'ts-jest'
   },
   coverageReporters: ['text', ['lcov', { projectRoot: '../' }]],
-  setupFiles: ['./test/setJestEnvironmentVariables.ts']
+  setupFiles: ['./test/setJestEnvironmentVariables.ts'],
+  moduleNameMapper: {
+    '^axios$': require.resolve('axios'),
+  },
 };

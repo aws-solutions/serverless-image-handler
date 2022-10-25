@@ -107,9 +107,7 @@ export class ImageRequest {
     try {
       const result: OriginalImageInfo = {};
       if (presignedUrl !== null) {
-        const imageBuffer = await axios({
-          method: 'get',
-          url: presignedUrl,
+        const imageBuffer = await axios.get(presignedUrl, {
           responseType: 'arraybuffer'
         }).then(function (originalImage) {
           //const imageBuffer = Buffer.from(response.data as Uint8Array);
@@ -117,33 +115,6 @@ export class ImageRequest {
         });
         result.contentType = this.inferImageType(imageBuffer);
         result.cacheControl = 'max-age=31536000,public';
-        result.originalImage = imageBuffer;
-      }
-      else {
-        const imageLocation = { Bucket: bucket, Key: key };
-        const originalImage = await this.s3Client.getObject(imageLocation).promise();
-        const imageBuffer = Buffer.from(originalImage.Body as Uint8Array);
-
-        if (originalImage.ContentType) {
-          // If using default S3 ContentType infer from hex headers
-          if (['binary/octet-stream', 'application/octet-stream'].includes(originalImage.ContentType)) {
-            result.contentType = this.inferImageType(imageBuffer);
-          } else {
-            result.contentType = originalImage.ContentType;
-          }
-        } else {
-          result.contentType = 'image';
-        }
-
-        if (originalImage.Expires) {
-          result.expires = new Date(originalImage.Expires).toUTCString();
-        }
-
-        if (originalImage.LastModified) {
-          result.lastModified = new Date(originalImage.LastModified).toUTCString();
-        }
-
-        result.cacheControl = originalImage.CacheControl ?? 'max-age=31536000,public';
         result.originalImage = imageBuffer;
       }
       return result;
@@ -178,29 +149,6 @@ export class ImageRequest {
           return bucketName;
         }
       }
-
-      if (request.bucket !== undefined) {
-        // Check the provided bucket against the allowed list
-        const sourceBuckets = this.getAllowedSourceBuckets();
-
-        if (sourceBuckets.includes(request.bucket) || request.bucket.match(new RegExp('^' + sourceBuckets[0] + '$'))) {
-          return request.bucket;
-        } else {
-          throw new ImageHandlerError(
-            StatusCodes.FORBIDDEN,
-            'ImageBucket::CannotAccessBucket',
-            'The bucket you specified could not be accessed. Please check that the bucket is specified in your SOURCE_BUCKETS.'
-          );
-        }
-      } else {
-        // Try to use the default image source bucket env var
-        const sourceBuckets = this.getAllowedSourceBuckets();
-        return sourceBuckets[0];
-      }
-    } else if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
-      // Use the default image source bucket env var
-      const sourceBuckets = this.getAllowedSourceBuckets();
-      return sourceBuckets[0];
     } else {
       throw new ImageHandlerError(
         StatusCodes.NOT_FOUND,
@@ -392,25 +340,6 @@ export class ImageRequest {
         'DecodeRequest::CannotReadPath',
         'The URL path you provided could not be read. Please ensure that it is properly formed according to the solution documentation.'
       );
-    }
-  }
-
-  /**
-   * Returns a formatted image source bucket allowed list as specified in the SOURCE_BUCKETS environment variable of the image handler Lambda function.
-   * Provides error handling for missing/invalid values.
-   * @returns A formatted image source bucket.
-   */
-  public getAllowedSourceBuckets(): string[] {
-    const { SOURCE_BUCKETS } = process.env;
-
-    if (SOURCE_BUCKETS === undefined) {
-      throw new ImageHandlerError(
-        StatusCodes.BAD_REQUEST,
-        'GetAllowedSourceBuckets::NoSourceBuckets',
-        'The SOURCE_BUCKETS variable could not be read. Please check that it is not empty and contains at least one source bucket, or multiple buckets separated by commas. Spaces can be provided between commas and bucket names, these will be automatically parsed out when decoding.'
-      );
-    } else {
-      return SOURCE_BUCKETS.replace(/\s+/g, '').split(',');
     }
   }
 
