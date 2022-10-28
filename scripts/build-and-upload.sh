@@ -27,5 +27,5 @@ echo "--------------------------------------------------------------------------
 echo "[Sync] Upload built files to $S3_PATH"
 echo "------------------------------------------------------------------------------"
 
-aws s3 sync regional-s3-assets/ "$S3_PATH" >&2
-aws s3 sync global-s3-assets/ "$S3_PATH" >&2
+aws s3 sync --sse AES256 regional-s3-assets/ "$S3_PATH" >&2
+aws s3 sync --sse AES256 global-s3-assets/ "$S3_PATH" >&2
