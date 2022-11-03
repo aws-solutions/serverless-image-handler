@@ -2,8 +2,9 @@
 
 **Note**: If you want to use the solution without building from source, navigate to [Solution Landing Page](https://aws.amazon.com/solutions/implementations/serverless-image-handler/).
 
-## Table of Content
+## Table of Contents
 
+- [Customized Implementation for Grano](#customized-implementation-for-grano)
 - [Solution Overview](#solution-overview)
 - [Architecture Diagram](#architecture-diagram)
 - [AWS CDK and Solutions Constructs](#aws-cdk-and-solutions-constructs)
@@ -17,6 +18,24 @@
 - [Collection of operational metrics](#collection-of-operational-metrics)
 - [External Contributors](#external-contributors)
 - [License](#license)
+
+# Solution Overview
+
+This is Grano's customized implementation of the serverless-image-handler. This fork of the original solution was created so
+we can implement more aggressive optimizations to get around AWS Lambda's 6 MB limit, which is easily surpassed with our images.
+
+The original code and folder structure has been retained as much as possible, in order to avoid conflicts when updating this repo
+in the future. Scripts have been added to deploy this stack to Grano's AWS resources.
+
+## Deployment
+
+In order to deploy the grano-serverless-image-handler, the solution files must be built and uploaded to S3. After this the stack can be deployed. There are scripts to handle this process.
+
+The `build.sh` script runs unit tests and build the solution files. Lambda files are built to `deployment/regional-s3-assets` and the CloudFormation template for the stack is built to `deployment/global-s3-assets`.
+
+The `upload.sh` script uploads the built files (both regional and global) to S3. The bucket is named `grano-serverless-image-handler-bucket-eu-west-1` (the region is required to be in the of the bucket). Inside the bucket, the path of the files will be `grano-serverless-image-handler/<VERSION>/` where the version is the version number found in `source/package.json`.
+
+The `stack` script will create and execute a changeset for the `grano-serverless-image-handler` stack. The template used to create the changeset is fetched from the S3. Executing the changeset requires admin credentials, so separating these steps allows someone with developer credentials to build and upload the files, while an admin can just update/create the stack. Parameters for the template are found in `configurations/grano-serverless-image-handler.json`.
 
 # Solution Overview
 
