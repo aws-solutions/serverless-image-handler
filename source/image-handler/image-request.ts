@@ -18,7 +18,7 @@ type OriginalImageInfo = Partial<{
 
 export class ImageRequest {
   private static readonly DEFAULT_REDUCTION_EFFORT = 4;
-  private static readonly WEBP_MIME_TYPES = [];
+  private static readonly WEBP_MIME_TYPES = ['image/webp', 'image/*', '*/*'];
 
   constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) {}
 
