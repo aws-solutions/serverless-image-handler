@@ -18,6 +18,7 @@ type OriginalImageInfo = Partial<{
 
 export class ImageRequest {
   private static readonly DEFAULT_REDUCTION_EFFORT = 4;
+  private static readonly WEBP_MIME_TYPES = ['image/webp', 'image/*', '*/*'];
 
   constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) {}
 
@@ -366,7 +367,7 @@ export class ImageRequest {
   public getOutputFormat(event: ImageHandlerEvent, requestType: RequestTypes = undefined): ImageFormatTypes {
     const { AUTO_WEBP } = process.env;
 
-    if (AUTO_WEBP === 'Yes' && event.headers.Accept && event.headers.Accept.includes('image/webp')) {
+    if (AUTO_WEBP === 'Yes' && this.isWebpAccepted(event.headers)) {
       return ImageFormatTypes.WEBP;
     } else if (requestType === RequestTypes.DEFAULT) {
       const decoded = this.decodeRequest(event);
@@ -442,5 +443,9 @@ export class ImageRequest {
         throw new ImageHandlerError(StatusCodes.INTERNAL_SERVER_ERROR, 'SignatureValidationFailure', 'Signature validation failed.');
       }
     }
+  }
+
+  private isWebpAccepted(headers: Headers): boolean {
+    return !!headers.Accept && ImageRequest.WEBP_MIME_TYPES.some(mimeType => headers.Accept.includes(mimeType));
   }
 }

@@ -1755,6 +1755,23 @@ describe('getOutputFormat()', () => {
       // Assert
       expect(result).toEqual('webp');
     });
+
+    it('Should pass if it returns "webp" for an accepts header which accepts any MIME type', () => {
+      // Arrange
+      const event = {
+        headers: {
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/apng,*/*;q=0.8,application/signed-exchange;v=b3'
+        }
+      };
+      process.env.AUTO_WEBP = 'Yes';
+
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+      const result = imageRequest.getOutputFormat(event);
+
+      // Assert
+      expect(result).toEqual('webp');
+    });
   });
 
   describe('002/AcceptsHeaderDoesNotIncludeWebP', () => {
@@ -1762,7 +1779,7 @@ describe('getOutputFormat()', () => {
       // Arrange
       const event = {
         headers: {
-          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/apng,*/*;q=0.8,application/signed-exchange;v=b3'
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/apng;q=0.8,application/signed-exchange;v=b3'
         }
       };
       process.env.AUTO_WEBP = 'Yes';

@@ -1,0 +1,32 @@
+{
+	"Parameters": {
+		"CorsEnabledParameter": "No",
+		"CorsOriginParameter": "*",
+		"SourceBucketsParameter": "images-granoshop, images-mygrano-dev",
+		"DeployDemoUIParameter": "No",
+		"LogRetentionPeriodParameter": "1",
+		"AutoWebPParameter": "Yes",
+		"EnableSignatureParameter": "Yes",
+		"SecretsManagerSecretParameter": "serverless-image-handler",
+		"SecretsManagerKeyParameter": "SignatureKey",
+		"EnableDefaultFallbackImageParameter": "No",
+		"FallbackImageS3BucketParameter": "",
+		"FallbackImageS3KeyParameter": "thumb.mygrano.fi",
+		"CloudFrontPriceClassParameter": "PriceClass_100"
+	},
+	"Tags": {
+		"cost_center": "8330 ecomm",
+		"environment": "develop",
+		"project": "ecom"
+	},
+	"StackPolicy": {
+		"Statement": [
+			{
+				"Effect": "Allow",
+				"Action": "Update:*",
+				"Principal": "*",
+				"Resource": "*"
+			}
+		]
+	}
+}
