@@ -33,7 +33,7 @@ In order to deploy the grano-serverless-image-handler, the solution files must b
 
 The `build.sh` script runs unit tests and build the solution files. Lambda files are built to `deployment/regional-s3-assets` and the CloudFormation template for the stack is built to `deployment/global-s3-assets`.
 
-The `upload.sh` script uploads the built files (both regional and global) to S3. The bucket is named `grano-serverless-image-handler-bucket-eu-west-1` (the region is required to be in the of the bucket). Inside the bucket, the path of the files will be `grano-serverless-image-handler/<VERSION>/` where the version is the version number found in `source/package.json`.
+The `upload.sh` script uploads the built files (both regional and global) to S3. The bucket is named `grano-serverless-image-handler-bucket-eu-west-1` (the region is required to be in the name of the bucket). Inside the bucket, the path of the files will be `grano-serverless-image-handler/<VERSION>/` where the version is the version number found in `source/package.json`.
 
 The `stack` script will create and execute a changeset for the `grano-serverless-image-handler` stack. The template used to create the changeset is fetched from the S3. Executing the changeset requires admin credentials, so separating these steps allows someone with developer credentials to build and upload the files, while an admin can just update/create the stack. Parameters for the template are found in `configurations/grano-serverless-image-handler.json`.
 
