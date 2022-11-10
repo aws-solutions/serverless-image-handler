@@ -1,15 +1,15 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { CustomResourceActions, CustomResourceRequestTypes, StatusTypes } from './enums';
-import { ResourcePropertyTypes } from './types';
+import { CustomResourceActions, CustomResourceRequestTypes, StatusTypes } from "./enums";
+import { ResourcePropertyTypes } from "./types";
 
 export interface CustomResourceRequestPropertiesBase {
   CustomAction: CustomResourceActions;
 }
 
 export interface SendMetricsRequestProperties extends CustomResourceRequestPropertiesBase {
-  AnonymousData: 'Yes' | 'No';
+  AnonymousData: "Yes" | "No";
   UUID: string;
   CorsEnabled: string;
   SourceBuckets: string;

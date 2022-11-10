@@ -1,10 +1,10 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import sharp from 'sharp';
+import sharp from "sharp";
 
-import { ImageFormatTypes, RequestTypes, StatusCodes } from './enums';
-import { Headers, ImageEdits } from './types';
+import { ImageFormatTypes, RequestTypes, StatusCodes } from "./enums";
+import { Headers, ImageEdits } from "./types";
 
 export interface ImageHandlerEvent {
   path?: string;
@@ -22,7 +22,7 @@ export interface DefaultImageRequest {
   key: string;
   edits?: ImageEdits;
   outputFormat?: ImageFormatTypes;
-  reductionEffort?: number;
+  effort?: number;
   headers?: Headers;
 }
 
@@ -50,7 +50,7 @@ export interface ImageRequestInfo {
   lastModified?: string;
   cacheControl?: string;
   outputFormat?: ImageFormatTypes;
-  reductionEffort?: number;
+  effort?: number;
 }
 
 export interface RekognitionCompatibleImage {

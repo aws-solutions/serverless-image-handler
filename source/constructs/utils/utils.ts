@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { CfnCondition, CfnResource, Resource } from '@aws-cdk/core';
+import { CfnCondition, CfnResource, Resource } from "aws-cdk-lib";
 
 interface CfnNagSuppressRule {
   id: string;
@@ -14,7 +14,7 @@ interface CfnNagSuppressRule {
  * @param rules The CFN NAG suppress rules.
  */
 export function addCfnSuppressRules(resource: Resource | CfnResource | undefined, rules: CfnNagSuppressRule[]) {
-  if (typeof resource === 'undefined') return;
+  if (typeof resource === "undefined") return;
 
   if (resource instanceof Resource) {
     resource = resource.node.defaultChild as CfnResource;
@@ -23,7 +23,7 @@ export function addCfnSuppressRules(resource: Resource | CfnResource | undefined
   if (resource.cfnOptions.metadata?.cfn_nag?.rules_to_suppress) {
     resource.cfnOptions.metadata.cfn_nag.rules_to_suppress.push(...rules);
   } else {
-    resource.addMetadata('cfn_nag', { rules_to_suppress: rules });
+    resource.addMetadata("cfn_nag", { rules_to_suppress: rules });
   }
 }
 
@@ -33,11 +33,11 @@ export function addCfnSuppressRules(resource: Resource | CfnResource | undefined
  * @param condition The CDK condition.
  */
 export function addCfnCondition(resource: Resource | CfnResource | undefined, condition: CfnCondition) {
-  if (typeof resource === 'undefined') return;
+  if (typeof resource === "undefined") return;
 
   if (resource instanceof Resource) {
     resource = resource.node.defaultChild as CfnResource;
   }
 
-  (resource as CfnResource).cfnOptions.condition = condition;
+  resource.cfnOptions.condition = condition;
 }

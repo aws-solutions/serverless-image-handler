@@ -9,20 +9,22 @@ export const mockAwsS3 = {
   headBucket: jest.fn(),
   createBucket: jest.fn(),
   putBucketEncryption: jest.fn(),
-  putBucketPolicy: jest.fn()
+  putBucketPolicy: jest.fn(),
 };
 
-jest.mock('aws-sdk/clients/s3', () => jest.fn(() => ({ ...mockAwsS3 })));
+jest.mock("aws-sdk/clients/s3", () => jest.fn(() => ({ ...mockAwsS3 })));
 
 export const mockAwsSecretManager = {
-  getSecretValue: jest.fn()
+  getSecretValue: jest.fn(),
 };
 
-jest.mock('aws-sdk/clients/secretsmanager', () => jest.fn(() => ({ ...mockAwsSecretManager })));
+jest.mock("aws-sdk/clients/secretsmanager", () => jest.fn(() => ({ ...mockAwsSecretManager })));
 
 export const mockAwsRekognition = {
   detectFaces: jest.fn(),
-  detectModerationLabels: jest.fn()
+  detectModerationLabels: jest.fn(),
 };
 
-jest.mock('aws-sdk/clients/rekognition', () => jest.fn(() => ({ ...mockAwsRekognition })));
+jest.mock("aws-sdk/clients/rekognition", () => jest.fn(() => ({ ...mockAwsRekognition })));
+
+export const consoleInfoSpy = jest.spyOn(console, "info");
