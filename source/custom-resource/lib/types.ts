@@ -9,8 +9,8 @@ import {
   CreateLoggingBucketRequestProperties,
   CustomResourceRequestPropertiesBase,
   PutConfigRequestProperties,
-  SendMetricsRequestProperties
-} from './interfaces';
+  SendMetricsRequestProperties,
+} from "./interfaces";
 
 export type ResourcePropertyTypes =
   | CustomResourceRequestPropertiesBase
