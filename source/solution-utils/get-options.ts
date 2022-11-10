@@ -10,7 +10,7 @@
 export function getOptions(options: Record<string, unknown> = {}): Record<string, unknown> {
   const { SOLUTION_ID, SOLUTION_VERSION } = process.env;
   if (SOLUTION_ID && SOLUTION_VERSION) {
-    if (SOLUTION_ID.trim() !== '' && SOLUTION_VERSION.trim() !== '') {
+    if (SOLUTION_ID.trim() !== "" && SOLUTION_VERSION.trim() !== "") {
       options.customUserAgent = `AwsSolution/${SOLUTION_ID}/${SOLUTION_VERSION}`;
     }
   }

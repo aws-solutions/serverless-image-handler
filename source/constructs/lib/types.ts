@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-export type YesNo = 'Yes' | 'No';
+export type YesNo = "Yes" | "No";
 
 export interface SolutionConstructProps {
   readonly corsEnabled: string;

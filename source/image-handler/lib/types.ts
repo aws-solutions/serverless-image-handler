@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { StatusCodes } from './enums';
+import { StatusCodes } from "./enums";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Headers = Record<string, any>;

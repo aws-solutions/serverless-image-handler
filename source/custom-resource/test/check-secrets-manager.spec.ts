@@ -1,30 +1,36 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { mockAwsSecretManager, mockContext } from './mock';
-import { CustomResourceActions, CustomResourceRequestTypes, CheckSecretManagerRequestProperties, CustomResourceRequest, CustomResourceError } from '../lib';
-import { handler } from '../index';
+import { mockAwsSecretManager, mockContext } from "./mock";
+import {
+  CustomResourceActions,
+  CustomResourceRequestTypes,
+  CheckSecretManagerRequestProperties,
+  CustomResourceRequest,
+  CustomResourceError,
+} from "../lib";
+import { handler } from "../index";
 
-describe('CHECK_SECRETS_MANAGER', () => {
+describe("CHECK_SECRETS_MANAGER", () => {
   // Mock event data
   const event: CustomResourceRequest = {
     RequestType: CustomResourceRequestTypes.CREATE,
-    ResponseURL: '/cfn-response',
-    PhysicalResourceId: 'mock-physical-id',
-    StackId: 'mock-stack-id',
-    ServiceToken: 'mock-service-token',
-    RequestId: 'mock-request-id',
-    LogicalResourceId: 'mock-logical-resource-id',
-    ResourceType: 'mock-resource-type',
+    ResponseURL: "/cfn-response",
+    PhysicalResourceId: "mock-physical-id",
+    StackId: "mock-stack-id",
+    ServiceToken: "mock-service-token",
+    RequestId: "mock-request-id",
+    LogicalResourceId: "mock-logical-resource-id",
+    ResourceType: "mock-resource-type",
     ResourceProperties: {
       CustomAction: CustomResourceActions.CHECK_SECRETS_MANAGER,
-      SecretsManagerName: 'secrets-manager-name',
-      SecretsManagerKey: 'secrets-manager-key'
-    }
+      SecretsManagerName: "secrets-manager-name",
+      SecretsManagerKey: "secrets-manager-key",
+    },
   };
   const secret = {
     SecretString: '{"secrets-manager-key":"secret-ingredient"}',
-    ARN: 'arn:of:secrets:managers:secret'
+    ARN: "arn:of:secrets:managers:secret",
   };
 
   beforeEach(() => {
@@ -39,7 +45,7 @@ describe('CHECK_SECRETS_MANAGER', () => {
     mockAwsSecretManager.getSecretValue.mockImplementation(() => ({
       promise() {
         return Promise.resolve(secret);
-      }
+      },
     }));
 
     const result = await handler(event, mockContext);
@@ -47,97 +53,97 @@ describe('CHECK_SECRETS_MANAGER', () => {
     expect.assertions(1);
 
     expect(result).toEqual({
-      Status: 'SUCCESS',
+      Status: "SUCCESS",
       Data: {
-        Message: 'Secrets Manager validated.',
-        ARN: secret.ARN
-      }
+        Message: "Secrets Manager validated.",
+        ARN: secret.ARN,
+      },
     });
   });
 
-  it('Should return failed when secretName is not provided', async () => {
-    (event.ResourceProperties as CheckSecretManagerRequestProperties).SecretsManagerName = '';
+  it("Should return failed when secretName is not provided", async () => {
+    (event.ResourceProperties as CheckSecretManagerRequestProperties).SecretsManagerName = "";
 
     const result = await handler(event, mockContext);
 
     expect.assertions(1);
 
     expect(result).toEqual({
-      Status: 'FAILED',
+      Status: "FAILED",
       Data: {
         Error: {
-          Code: 'SecretNotProvided',
-          Message: 'You need to provide AWS Secrets Manager secret.'
-        }
-      }
+          Code: "SecretNotProvided",
+          Message: "You need to provide AWS Secrets Manager secret.",
+        },
+      },
     });
   });
 
-  it('Should return failed when secretKey is not provided', async () => {
+  it("Should return failed when secretKey is not provided", async () => {
     const resourceProperties = event.ResourceProperties as CheckSecretManagerRequestProperties;
-    resourceProperties.SecretsManagerName = 'secrets-manager-name';
-    resourceProperties.SecretsManagerKey = '';
+    resourceProperties.SecretsManagerName = "secrets-manager-name";
+    resourceProperties.SecretsManagerKey = "";
 
     const result = await handler(event, mockContext);
 
     expect.assertions(1);
 
     expect(result).toEqual({
-      Status: 'FAILED',
+      Status: "FAILED",
       Data: {
         Error: {
-          Code: 'SecretKeyNotProvided',
-          Message: 'You need to provide AWS Secrets Manager secret key.'
-        }
-      }
+          Code: "SecretKeyNotProvided",
+          Message: "You need to provide AWS Secrets Manager secret key.",
+        },
+      },
     });
   });
 
-  it('Should return failed when secret key does not exist', async () => {
+  it("Should return failed when secret key does not exist", async () => {
     mockAwsSecretManager.getSecretValue.mockImplementation(() => ({
       promise() {
         return Promise.resolve(secret);
-      }
+      },
     }));
 
     const resourceProperties = event.ResourceProperties as CheckSecretManagerRequestProperties;
-    resourceProperties.SecretsManagerKey = 'none-existing-key';
+    resourceProperties.SecretsManagerKey = "none-existing-key";
 
     const result = await handler(event, mockContext);
 
     expect.assertions(1);
 
     expect(result).toEqual({
-      Status: 'FAILED',
+      Status: "FAILED",
       Data: {
         Error: {
-          Code: 'SecretKeyNotFound',
-          Message: `AWS Secrets Manager secret requires ${resourceProperties.SecretsManagerKey} key.`
-        }
-      }
+          Code: "SecretKeyNotFound",
+          Message: `AWS Secrets Manager secret requires ${resourceProperties.SecretsManagerKey} key.`,
+        },
+      },
     });
   });
 
-  it('Should return failed when GetSecretValue fails', async () => {
+  it("Should return failed when GetSecretValue fails", async () => {
     mockAwsSecretManager.getSecretValue.mockImplementation(() => ({
       promise() {
-        return Promise.reject(new CustomResourceError('InternalServerError', 'GetSecretValue failed.'));
-      }
+        return Promise.reject(new CustomResourceError("InternalServerError", "GetSecretValue failed."));
+      },
     }));
-    (event.ResourceProperties as CheckSecretManagerRequestProperties).SecretsManagerName = 'secrets-manager-key';
+    (event.ResourceProperties as CheckSecretManagerRequestProperties).SecretsManagerName = "secrets-manager-key";
 
     const result = await handler(event, mockContext);
 
     expect.assertions(1);
 
     expect(result).toEqual({
-      Status: 'FAILED',
+      Status: "FAILED",
       Data: {
         Error: {
-          Code: 'InternalServerError',
-          Message: 'GetSecretValue failed.'
-        }
-      }
+          Code: "InternalServerError",
+          Message: "GetSecretValue failed.",
+        },
+      },
     });
   });
 });

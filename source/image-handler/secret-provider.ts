@@ -1,13 +1,16 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import SecretsManager from 'aws-sdk/clients/secretsmanager';
+import SecretsManager from "aws-sdk/clients/secretsmanager";
 
 /**
  * Class provides cached access to the Secret Manager.
  */
 export class SecretProvider {
-  private readonly cache: { secretId: string; secret: string } = { secretId: null, secret: null };
+  private readonly cache: { secretId: string; secret: string } = {
+    secretId: null,
+    secret: null,
+  };
 
   constructor(private readonly secretsManager: SecretsManager) {}
 
