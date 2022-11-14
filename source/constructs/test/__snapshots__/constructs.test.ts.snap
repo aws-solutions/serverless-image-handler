@@ -507,7 +507,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
             "ViewerProtocolPolicy": "https-only",
           },
           "Enabled": true,
-          "HttpVersion": "http2",
+          "HttpVersion": "http2_and_3",
           "IPV6Enabled": true,
           "Logging": {
             "Bucket": {
@@ -1866,7 +1866,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
           "DefaultRootObject": "index.html",
           "Enabled": true,
-          "HttpVersion": "http2",
+          "HttpVersion": "http2_and_3",
           "IPV6Enabled": true,
           "Logging": {
             "Bucket": {
