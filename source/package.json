@@ -1,0 +1,26 @@
+{
+  "name": "source",
+  "version": "6.1.0",
+  "private": true,
+  "description": "ESLint and prettier dependencies to be used within the solution",
+  "license": "Apache-2.0",
+  "author": "AWS Solutions",
+  "scripts": {
+    "lint": "npx eslint . --ext .ts",
+    "prettier-format": "npx prettier --config .prettierrc.yml '**/*.ts' --write"
+  },
+  "devDependencies": {
+    "@types/node": "^18.8.0",
+    "@typescript-eslint/eslint-plugin": "^5.38.1",
+    "@typescript-eslint/parser": "^5.38.1",
+    "eslint": "^8.24.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-header": "^3.1.1",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jsdoc": "^39.3.6",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "~2.7.1"
+  }
+}

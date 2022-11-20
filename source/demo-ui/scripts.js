@@ -50,12 +50,11 @@ function getPreviewImage() {
     const _edits = {}
     _edits.resize = {};
     if (_resize !== "Disabled") {
-        if (_width !== "") { _edits.resize.width = Number(_width) }
-        if (_height !== "") { _edits.resize.height = Number(_height) }
-        _edits.resize.fit = _resize;
+        handleResize(_width, _edits, _height, _resize);
     }
+    
     if (_fillColor !== "") { _edits.resize.background = hexToRgbA(_fillColor, 1) }
-    if (_backgroundColor !== "") { _edits.flatten = { background: hexToRgbA(_backgroundColor, undefined) }}
+    if (_backgroundColor !== "") { _edits.flatten = { background: hexToRgbA(_backgroundColor, undefined) } }
     if (_grayscale) { _edits.grayscale = _grayscale }
     if (_flip) { _edits.flip = _flip }
     if (_flop) { _edits.flop = _flop }
@@ -69,11 +68,9 @@ function getPreviewImage() {
         _edits.tint = rgb
     }
     if (_smartCrop) {
-        _edits.smartCrop = {};
-        if (_smartCropIndex !== "") { _edits.smartCrop.faceIndex = Number(_smartCropIndex) }
-        if (_smartCropPadding !== "") { _edits.smartCrop.padding = Number(_smartCropPadding) }
+        handleSmartCrop(_edits, _smartCropIndex, _smartCropPadding);
     }
-    if (Object.keys(_edits.resize).length === 0) { delete _edits.resize };
+    if (Object.keys(_edits.resize).length === 0) { delete _edits.resize }
     // Gather the bucket and key names
     const bucketName = $(`#img-original`).first().attr(`data-bucket`);
     const keyName = $(`#img-original`).first().attr(`data-key`);
@@ -83,7 +80,7 @@ function getPreviewImage() {
         key: keyName,
         edits: _edits
     }
-    if (Object.keys(request.edits).length === 0) { delete request.edits };
+    if (Object.keys(request.edits).length === 0) { delete request.edits }
     console.log(request);
     // Setup encoded request
     const str = JSON.stringify(request);
@@ -96,21 +93,33 @@ function getPreviewImage() {
     $(`#preview-encoded-url`).val(`${appVariables.apiEndpoint}/${enc}`);
 }
 
+function handleSmartCrop(_edits, _smartCropIndex, _smartCropPadding) {
+    _edits.smartCrop = {};
+    if (_smartCropIndex !== "") { _edits.smartCrop.faceIndex = Number(_smartCropIndex); }
+    if (_smartCropPadding !== "") { _edits.smartCrop.padding = Number(_smartCropPadding); }
+}
+
+function handleResize(_width, _edits, _height, _resize) {
+    if (_width !== "") { _edits.resize.width = Number(_width); }
+    if (_height !== "") { _edits.resize.height = Number(_height); }
+    _edits.resize.fit = _resize;
+}
+
 function hexToRgbA(hex, _alpha) {
-    var c;
-    if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
-        c= hex.substring(1).split('');
-        if(c.length== 3){
-            c= [c[0], c[0], c[1], c[1], c[2], c[2]];
+    let c;
+    if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+        c = hex.substring(1).split('');
+        if (c.length == 3) {
+            c = [c[0], c[0], c[1], c[1], c[2], c[2]];
         }
-        c= '0x'+c.join('');
-        return { r: ((c>>16)&255), g: ((c>>8)&255), b: (c&255), alpha: Number(_alpha)};
+        c = '0x' + c.join('');
+        return { r: ((c >> 16) & 255), g: ((c >> 8) & 255), b: (c & 255), alpha: Number(_alpha) };
     }
     throw new Error('Bad Hex');
 }
 
 function resetEdits() {
     $('.form-control').val('');
-	document.getElementById('editor-resize-mode').selectedIndex = 0;
-	$(".form-check-input").prop('checked', false);
+    document.getElementById('editor-resize-mode').selectedIndex = 0;
+    $(".form-check-input").prop('checked', false);
 }
