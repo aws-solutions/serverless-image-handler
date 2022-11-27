@@ -278,15 +278,18 @@ export class ImageRequest {
       if (requestType === RequestTypes.CUSTOM) {
         const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION } = process.env;
 
-        if (typeof REWRITE_MATCH_PATTERN === "string") {
-          const patternStrings = REWRITE_MATCH_PATTERN.split("/");
-          const flags = patternStrings.pop();
-          const parsedPatternString = REWRITE_MATCH_PATTERN.slice(1, REWRITE_MATCH_PATTERN.length - 1 - flags.length);
-          const regExp = new RegExp(parsedPatternString, flags);
+        const REWRITE_MATCH_PATTERNS = this.parseJson(REWRITE_MATCH_PATTERN);
+        const REWRITE_SUBSTITUTIONS = this.parseJson(REWRITE_SUBSTITUTION);
 
-          path = path.replace(regExp, REWRITE_SUBSTITUTION);
-        } else {
-          path = path.replace(REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION);
+        for (let k = 0; k < REWRITE_MATCH_PATTERNS.length; k++) {
+          let matchPattern = REWRITE_MATCH_PATTERNS[k]
+          if (typeof (matchPattern) === 'string') {
+            let regExp = this.generateRegExp(matchPattern);
+            path = path.replace(regExp, REWRITE_SUBSTITUTIONS[k]);
+            if (this.generateRegExp(matchPattern).test(path)) break;
+          } else {
+            path = path.replace(matchPattern, REWRITE_SUBSTITUTIONS[k]);
+          }
         }
       }
 
@@ -303,6 +306,20 @@ export class ImageRequest {
     );
   }
 
+  parseJson(str) {
+    try {
+      return JSON.parse(str);
+    } catch (e) {
+      return [str];
+    }
+  }
+
+  generateRegExp(matchPattern) {
+    const patternStrings = matchPattern.split('/');
+    const flags = patternStrings.pop();
+    const parsedPatternString = matchPattern.slice(1, matchPattern.length - 1 - flags.length);
+    return new RegExp(parsedPatternString, flags);
+  }
   /**
    * Determines how to handle the request being made based on the URL path prefix to the image request.
    * Categorizes a request as either "image" (uses the Sharp library), "thumbor" (uses Thumbor mapping), or "custom" (uses the rewrite function).
