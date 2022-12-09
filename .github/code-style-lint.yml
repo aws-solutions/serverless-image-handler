@@ -1,0 +1,31 @@
+# Workflow that runs prettier code style check.
+name: Code Style and Lint
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  prettier:
+    name: Style Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - uses: actions/checkout@v3
+      - run: npx --y prettier --config source/.prettierrc.yml --check 'source/**/*.ts'
+  linter:
+    name: Lint Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: |
+          cd source && npm i --only=dev
+          npx --y eslint . --ext .ts
