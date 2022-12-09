@@ -8,6 +8,7 @@ on: push
 jobs:
   pipeline-job:
     name: Pipeline Job
+    if: github.repository_owner == 'aws-solutions'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
