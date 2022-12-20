@@ -1,0 +1,6 @@
+node_modules/*
+CONTRIBUTING.md:46
+CODE_OF_CONDUCT.md:4
+Config
+coverage/*
+.zip
