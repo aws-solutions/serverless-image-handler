@@ -15,7 +15,7 @@ module "lambda" {
   description                        = "provider of cute kitty pics."
   function_name                      = local.function_name
   ignore_external_function_updates   = true
-  layers                             = [
+  layers = [
     "arn:aws:lambda:${data.aws_region.current.name}:580247275435:layer:LambdaInsightsExtension:16"
   ]
   memory_size       = 1024

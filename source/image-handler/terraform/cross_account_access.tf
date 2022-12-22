@@ -44,7 +44,7 @@ resource "aws_iam_policy" "s3_org_access" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = ["s3:*Object"]
+        Action   = ["s3:*Object"] # FIXME (MaNa, buzz-end): can we restrict this to concrete actions?  https://aquasecurity.github.io/tfsec/v1.28.1/checks/aws/iam/no-policy-wildcards/
         Effect   = "Allow"
         Resource = "${aws_s3_bucket.images.arn}/${each.key}/*"
         Sid : "ImageWriteAssetsAccessTeam${replace(title(each.key), "-", "")}"

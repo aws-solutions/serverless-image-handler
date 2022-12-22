@@ -1,16 +1,19 @@
 data "aws_iam_policy_document" "rekognition" {
   statement {
-    actions   = [
+    actions = [
       "rekognition:DetectFaces"
     ]
     resources = [
       "*"
     ]
   }
+
   statement {
-    actions   = [
+    # FIXME (MaNa, buzz-end): can we restrict this to concrete actions?  https://aquasecurity.github.io/tfsec/v1.28.1/checks/aws/iam/no-policy-wildcards/
+    actions = [
       "s3:*"
     ]
+
     resources = [
       aws_s3_bucket.images.arn,
       "${aws_s3_bucket.images.arn}/*"

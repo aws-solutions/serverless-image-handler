@@ -15,6 +15,7 @@ resource "aws_s3_bucket_versioning" "images" {
   }
 }
 
+#tfsec:ignore:aws-s3-encryption-customer-key
 resource "aws_s3_bucket_server_side_encryption_configuration" "images" {
   bucket = aws_s3_bucket.images.bucket
   rule {
@@ -36,10 +37,6 @@ resource "aws_s3_bucket_public_access_block" "images" {
 resource "aws_s3_bucket_policy" "this" {
   bucket = aws_s3_bucket.images.id
   policy = data.aws_iam_policy_document.deny_insecure_transport.json
-}
-
-data "aws_s3_bucket_policy" "this" {
-  bucket = aws_s3_bucket.images.id
 }
 
 data "aws_iam_policy_document" "deny_insecure_transport" {

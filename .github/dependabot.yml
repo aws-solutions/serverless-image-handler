@@ -1,4 +1,5 @@
 version: 2
+
 updates:
   # Enable version updates for npm
   - package-ecosystem: "npm"
@@ -11,6 +12,13 @@ updates:
 
   - package-ecosystem: "github-actions"
     directory: "/"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "stroeer/teams/buzz-end"
+
+  - package-ecosystem: "terraform"
+    directory: "/source/image-handler/terraform"
     schedule:
       interval: "weekly"
     reviewers:
