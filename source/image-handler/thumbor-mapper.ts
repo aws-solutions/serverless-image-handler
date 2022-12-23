@@ -73,6 +73,7 @@ export class ThumborMapper {
    * @param filterValue The specified color value
    * @param currentEdits The edits to be performed
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapBGColor(filterValue: string, currentEdits: Record<string, any>): void {
     const color = !ColorName[filterValue] ? `#${filterValue}` : filterValue;
 
@@ -84,6 +85,7 @@ export class ThumborMapper {
    * @param filterValue The blur value provided
    * @param currentEdits The edits to be performed
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapBlur(filterValue: string, currentEdits: Record<string, any>): void {
     const [radius, sigma] = filterValue.split(",").map((x) => (x === "" ? NaN : Number(x)));
     currentEdits.blur = !isNaN(sigma) ? sigma : radius / 2;
@@ -94,6 +96,7 @@ export class ThumborMapper {
    * @param filterValue the convolution value provided
    * @param currentEdits the edits to be performed
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapConvolution(filterValue: string, currentEdits: Record<string, any>): void {
     const values = filterValue.split(",");
     const matrix = values[0].split(";").map((str) => Number(str));
@@ -112,6 +115,7 @@ export class ThumborMapper {
    * @param filterValue The fill value provided
    * @param currentEdits The edits to be performed
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapFill(filterValue: string, currentEdits: Record<string, any>): void {
     if (currentEdits.resize === undefined) {
       currentEdits.resize = {};
@@ -131,6 +135,7 @@ export class ThumborMapper {
    * @param filterValue The output format
    * @param currentEdits The edits to be provided
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapFormat(filterValue: string, currentEdits: Record<string, any>): void {
     const imageFormatType = filterValue.replace(/[^0-9a-z]/gi, "").replace(/jpg/i, "jpeg") as ImageFormatTypes;
     const acceptedValues = [
@@ -153,6 +158,7 @@ export class ThumborMapper {
    * Adds withoutEnlargement option to resize in currentEdits object
    * @param currentEdits The edits to be perforemd
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapNoUpscale(currentEdits: Record<string, any>): void {
     if (currentEdits.resize === undefined) {
       currentEdits.resize = {};
@@ -166,6 +172,7 @@ export class ThumborMapper {
    * @param filterValue The ratio value
    * @param currentEdits The edits to be performed
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapResizeRatio(filterValue: string, currentEdits: Record<string, any>): void {
     if (currentEdits.resize === undefined) {
       currentEdits.resize = {};
@@ -186,6 +193,7 @@ export class ThumborMapper {
    * @param currentEdits The edits to be performed
    * @param fileFormat The image format
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapQuality(filterValue: string, currentEdits: Record<string, any>, fileFormat: ImageFormatTypes): void {
     const toSupportedImageFormatType = (format: ImageFormatTypes): ImageFormatTypes => {
       if ([ImageFormatTypes.JPG, ImageFormatTypes.JPEG].includes(format)) {
@@ -201,7 +209,6 @@ export class ThumborMapper {
       ) {
         return format;
       }
-      return;
     };
 
     // trying to get a target image type base on `fileFormat` passed to the current method.
@@ -218,6 +225,7 @@ export class ThumborMapper {
    * Maps stretch fit to the current edits
    * @param currentEdits The edits to be performed
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapStretch(currentEdits: Record<string, any>): void {
     if (currentEdits.resize === undefined) {
       currentEdits.resize = {};
@@ -233,6 +241,7 @@ export class ThumborMapper {
    * Maps upscale fit to the current edits
    * @param currentEdits The edits to be performed
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapUpscale(currentEdits: Record<string, any>): void {
     if (currentEdits.resize === undefined) {
       currentEdits.resize = {};
@@ -241,6 +250,7 @@ export class ThumborMapper {
     currentEdits.resize.fit = ImageFitTypes.INSIDE;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapWatermark(filterValue: string, currentEdits: Record<string, any>): void {
     const options = filterValue.replace(/\s+/g, "").split(",");
     const [bucket, key, xPos, yPos, alpha, wRatio, hRatio] = options;
@@ -367,7 +377,7 @@ export class ThumborMapper {
    * @returns image edits associated with crop.
    */
   private mapCrop(path: string): ImageEdits {
-    const pathCropMatchResult = path.match(/\d+x\d+:\d+x\d+/g);
+    const pathCropMatchResult = path.match(/\d{1,6}x\d{1,6}:\d{1,6}x\d{1,6}/g);
 
     if (pathCropMatchResult) {
       const [leftTopPoint, rightBottomPoint] = pathCropMatchResult[0].split(":");
