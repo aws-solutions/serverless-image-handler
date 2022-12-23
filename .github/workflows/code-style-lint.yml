@@ -4,14 +4,14 @@ name: Code Style and Lint
 on:
   push: 
     branches:
-      - develop
-      - feature/eslint
+      - 'develop'
+      - 'feature/eslint'
 
   pull_request:
     types: [opened, edited, reopened, synchronize]
     branches:
-      - develop
-      - feature/eslint
+      - 'develop'
+      - 'feature/eslint'
 
 jobs:
   prettier:
