@@ -11,7 +11,7 @@
     "sourceType": "module",
     "project": "**/tsconfig.json"
   },
-  "ignorePatterns": ["**/*.js"],
+  "ignorePatterns": ["**/*.js", "**/node_modules/**"],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
@@ -38,6 +38,8 @@
 
     "jsdoc/require-param-type": ["off"],
     "jsdoc/require-returns-type": ["off"],
-    "jsdoc/newline-after-description": ["off"]
+    "jsdoc/newline-after-description": ["off"],
+
+    "import/no-unresolved": 1 // warn only on Unable to resolve path import/no-unresolved
   }
 }

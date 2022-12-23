@@ -162,6 +162,7 @@ export async function handler(event: CustomResourceRequest, context: LambdaConte
  * @param resourceProperties the parameters to include in the function to be performed
  */
 async function performRequest(
+  // eslint-disable-next-line @typescript-eslint/ban-types
   functionToPerform: Function,
   requestType: CustomResourceRequestTypes,
   allowedRequestTypes: CustomResourceRequestTypes[],
