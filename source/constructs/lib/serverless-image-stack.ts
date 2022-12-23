@@ -169,8 +169,8 @@ export class ServerlessImageHandlerStack extends Stack {
       solutionId: props.solutionId,
       solutionVersion: props.solutionVersion,
       solutionDisplayName: props.solutionDisplayName,
-      sourceCodeBucketName: sourceCodeBucketName,
-      sourceCodeKeyPrefix: sourceCodeKeyPrefix,
+      sourceCodeBucketName,
+      sourceCodeKeyPrefix,
       ...solutionConstructProps,
     });
 
@@ -180,8 +180,8 @@ export class ServerlessImageHandlerStack extends Stack {
     });
 
     const backEnd = new BackEnd(this, "BackEnd", {
-      sourceCodeBucketName: sourceCodeBucketName,
-      sourceCodeKeyPrefix: sourceCodeKeyPrefix,
+      sourceCodeBucketName,
+      sourceCodeKeyPrefix,
       solutionVersion: props.solutionVersion,
       solutionDisplayName: props.solutionDisplayName,
       secretsManagerPolicy: commonResources.secretsManagerPolicy,
