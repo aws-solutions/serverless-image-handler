@@ -4,19 +4,14 @@ name: Code Style and Lint
 on:
   push: 
     branches:
-      - 'develop'
-      - 'feature/eslint'
-
+      - '*'
   pull_request:
     types: [opened, edited, reopened, synchronize]
-    branches:
-      - 'develop'
-      - 'feature/eslint'
 
 jobs:
   prettier:
     name: Style Check
-    #if: ${{ (github.repository_owner != 'aws-solutions' && github.event_name == 'push') || (github.repository_owner == 'aws-solutions' && github.event_name == 'pull_request') }}
+    if: ${{ (github.repository_owner != 'aws-solutions' && github.event_name == 'push') || (github.repository_owner == 'aws-solutions' && github.event_name == 'pull_request') }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -26,7 +21,7 @@ jobs:
       - run: npx --y prettier --config source/.prettierrc.yml --check 'source/**/*.ts'
   linter:
     name: Lint Check
-    #if: ${{ (github.repository_owner != 'aws-solutions' && github.event_name == 'push') || (github.repository_owner == 'aws-solutions' && github.event_name == 'pull_request') }}
+    if: ${{ (github.repository_owner != 'aws-solutions' && github.event_name == 'push') || (github.repository_owner == 'aws-solutions' && github.event_name == 'pull_request') }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
