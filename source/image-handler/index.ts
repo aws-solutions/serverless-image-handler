@@ -51,7 +51,7 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
     return {
       statusCode: StatusCodes.OK,
       isBase64Encoded: true,
-      headers: headers,
+      headers,
       body: processedRequest,
     };
   } catch (error) {
@@ -80,7 +80,7 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
         return {
           statusCode: error.status ? error.status : StatusCodes.INTERNAL_SERVER_ERROR,
           isBase64Encoded: true,
-          headers: headers,
+          headers,
           body: defaultFallbackImage.Body.toString("base64"),
         };
       } catch (error) {

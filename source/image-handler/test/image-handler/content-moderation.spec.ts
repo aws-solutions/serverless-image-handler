@@ -13,7 +13,7 @@ import { ImageEdits, ImageHandlerError, StatusCodes } from "../../lib";
 
 const s3Client = new S3();
 const rekognitionClient = new Rekognition();
-//jest spy
+// jest spy
 const blurSpy = jest.spyOn(sharp.prototype, "blur");
 
 describe("contentModeration", () => {

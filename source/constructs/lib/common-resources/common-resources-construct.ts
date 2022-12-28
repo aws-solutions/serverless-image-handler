@@ -107,7 +107,7 @@ export class CommonResources extends Construct {
       attributeGroupName: Aws.STACK_NAME,
       description: "Attribute group for solution information",
       attributes: {
-        applicationType: applicationType,
+        applicationType,
         version: props.solutionVersion,
         solutionID: props.solutionId,
         solutionName: props.applicationName,
