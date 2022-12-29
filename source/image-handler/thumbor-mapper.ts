@@ -54,18 +54,37 @@ export class ThumborMapper {
     } else {
       let parsedPath = "";
 
-      if (typeof REWRITE_MATCH_PATTERN === "string") {
-        const patternStrings = REWRITE_MATCH_PATTERN.split("/");
-        const flags = patternStrings.pop();
-        const parsedPatternString = REWRITE_MATCH_PATTERN.slice(1, REWRITE_MATCH_PATTERN.length - 1 - flags.length);
-        const regExp = new RegExp(parsedPatternString, flags);
-        parsedPath = path.replace(regExp, REWRITE_SUBSTITUTION);
-      } else {
-        parsedPath = path.replace(REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION);
+      const REWRITE_MATCH_PATTERNS = this.parseJson(REWRITE_MATCH_PATTERN);
+      const REWRITE_SUBSTITUTIONS = this.parseJson(REWRITE_SUBSTITUTION);
+
+      for (let k = 0; k < REWRITE_MATCH_PATTERNS.length; k++) {
+        const matchPattern = REWRITE_MATCH_PATTERNS[k];
+        if (typeof matchPattern === "string") {
+          const regExp = this.generateRegExp(matchPattern);
+          parsedPath = path.replace(regExp, REWRITE_SUBSTITUTIONS[k]);
+          if (this.generateRegExp(matchPattern).test(path)) break;
+        } else {
+          parsedPath = path.replace(matchPattern, REWRITE_SUBSTITUTIONS[k]);
+        }
       }
 
       return parsedPath;
     }
+  }
+
+  parseJson(str: string) {
+    try {
+      return JSON.parse(str);
+    } catch (e) {
+      return [str];
+    }
+  }
+
+  generateRegExp(matchPattern: string) {
+    const patternStrings = matchPattern.split("/");
+    const flags = patternStrings.pop();
+    const parsedPatternString = matchPattern.slice(1, matchPattern.length - 1 - flags.length);
+    return new RegExp(parsedPatternString, flags);
   }
 
   /**
