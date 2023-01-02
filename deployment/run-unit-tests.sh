@@ -53,6 +53,7 @@ declare -a lambda_packages=(
   "constructs"
   "image-handler"
   "custom-resource"
+  "solution-utils"
 )
 
 export overrideWarningsEnabled=false
