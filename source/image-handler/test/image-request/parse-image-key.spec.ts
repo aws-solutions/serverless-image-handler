@@ -240,6 +240,27 @@ describe("parseImageKey", () => {
     expect(result).toEqual(expectedResult);
   });
 
+  it("Should pass if an image key value is provided in the custom request format - confirm key retrieval when multiple image rewrite specified", () => {
+    // Arrange
+    const event = {
+      path: "/thumb/test.jpg",
+    };
+
+    process.env = {
+      REWRITE_MATCH_PATTERN: '["//thumb/g","//small/g","//large/g"]',
+      REWRITE_SUBSTITUTION:
+        '["/300x300/filters:quality(80)","/fit-in/600x600/filters:quality(80)","/fit-in/1200x1200/filters:quality(80)"]',
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseImageKey(event, RequestTypes.CUSTOM);
+
+    // Assert
+    const expectedResult = "test.jpg";
+    expect(result).toEqual(expectedResult);
+  });
+
   it("Should throw an error if an unrecognized requestType is passed into the function as a parameter", () => {
     // Arrange
     const event = {

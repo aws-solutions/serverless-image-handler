@@ -18,6 +18,7 @@ import {
 } from "./lib";
 import { SecretProvider } from "./secret-provider";
 import { ThumborMapper } from "./thumbor-mapper";
+import { parseJson, generateRegExp } from "../solution-utils/helpers";
 
 type OriginalImageInfo = Partial<{
   contentType: string;
@@ -278,15 +279,18 @@ export class ImageRequest {
       if (requestType === RequestTypes.CUSTOM) {
         const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION } = process.env;
 
-        if (typeof REWRITE_MATCH_PATTERN === "string") {
-          const patternStrings = REWRITE_MATCH_PATTERN.split("/");
-          const flags = patternStrings.pop();
-          const parsedPatternString = REWRITE_MATCH_PATTERN.slice(1, REWRITE_MATCH_PATTERN.length - 1 - flags.length);
-          const regExp = new RegExp(parsedPatternString, flags);
+        const REWRITE_MATCH_PATTERNS = parseJson(REWRITE_MATCH_PATTERN);
+        const REWRITE_SUBSTITUTIONS = parseJson(REWRITE_SUBSTITUTION);
 
-          path = path.replace(regExp, REWRITE_SUBSTITUTION);
-        } else {
-          path = path.replace(REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION);
+        for (let k = 0; k < REWRITE_MATCH_PATTERNS.length; k++) {
+          const matchPattern = REWRITE_MATCH_PATTERNS[k];
+          if (typeof matchPattern === "string") {
+            const regExp = generateRegExp(matchPattern);
+            path = path.replace(regExp, REWRITE_SUBSTITUTIONS[k]);
+            if (generateRegExp(matchPattern).test(path)) break;
+          } else {
+            path = path.replace(matchPattern, REWRITE_SUBSTITUTIONS[k]);
+          }
         }
       }
 

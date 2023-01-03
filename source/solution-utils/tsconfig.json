@@ -10,6 +10,6 @@
     "sourceMap": true,
     "types": ["node", "@types/jest"]
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "test/helpers.spec.ts"],
   "exclude": ["package", "dist", "**/*.map"]
 }

@@ -24,6 +24,7 @@ describe("getOptions", () => {
   });
 
   it("will return an empty object when environment variables are missing", () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getOptions } = require("../get-options");
     expect.assertions(4);
 
@@ -42,6 +43,7 @@ describe("getOptions", () => {
   });
 
   it("will return an object with the custom user agent string", () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getOptions } = require("../get-options");
     expect.assertions(1);
     expect(getOptions()).toEqual({

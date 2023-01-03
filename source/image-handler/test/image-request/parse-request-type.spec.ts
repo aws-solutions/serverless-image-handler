@@ -88,6 +88,24 @@ describe("parseRequestType", () => {
     expect(result).toEqual(expectedResult);
   });
 
+  it("Should pass if the method detects a custom request with multiple rewrite patterns", () => {
+    // Arrange
+    const event = { path: "/additionalImageRequestParameters/image.jpg" };
+    process.env = {
+      REWRITE_MATCH_PATTERN: '["//thumb/g","//small/g","//large/g"]',
+      REWRITE_SUBSTITUTION:
+        '["/300x300/filters:quality(80)","/fit-in/600x600/filters:quality(80)","/fit-in/1200x1200/filters:quality(80)"]',
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseRequestType(event);
+
+    // Assert
+    const expectedResult = RequestTypes.CUSTOM;
+    expect(result).toEqual(expectedResult);
+  });
+
   it("Should throw an error if the method cannot determine the request type based on the three groups given", () => {
     // Arrange
     const event = { path: "12x12e24d234r2ewxsad123d34r.bmp" };
