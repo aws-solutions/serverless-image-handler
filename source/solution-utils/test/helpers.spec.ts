@@ -25,7 +25,7 @@ describe("helpers", () => {
     expect(result).toEqual(expectedResult);
   });
 
-  it("Should pass if the proper result is returned for tbd", () => {
+  it("Should pass if the proper result is returned for a singe entry", () => {
     const result = parseJson("filter:");
 
     const expectedResult = ["filter:"];
