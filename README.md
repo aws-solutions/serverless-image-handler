@@ -86,11 +86,7 @@ chmod +x build-s3-dist.sh
 
 ## Deploy
 
-- If it does not already exist, create the Amazon S3 bucket called $BUCKET_NAME in your account which will be used to store the distributable files.
-- Deploy the distributable files to the Amazon S3 bucket in your account. Make sure you are uploading the files in `deployment/global-s3-assets` and `deployment/regional-s3-assets` to `$BUCKET_NAME/$SOLUTION_NAME/$VERSION`.
-- An example looks like the following
-  - `aws s3 cp  global-s3-assets/$SOLUTION_NAME.template s3://$BUCKET_NAME/$SOLUTION_NAME/$VERSION/`
-  - `aws s3 cp  regional-s3-assets/ s3://$BUCKET_NAME/$SOLUTION_NAME/$VERSION/ --recursive`
+- Deploy the distributable to the Amazon S3 bucket in your account. Make sure you are uploading the files in `deployment/global-s3-assets` and `deployment/regional-s3-assets` to `$BUCKET_NAME/$SOLUTION_NAME/$VERSION`.
 - Get the link of the solution template uploaded to your Amazon S3 bucket.
 - Deploy the solution to your account by launching a new AWS CloudFormation stack using the link of the solution template in Amazon S3.
 
