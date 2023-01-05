@@ -46,7 +46,7 @@ In addition to the AWS Solutions Constructs, the solution uses AWS CDK directly 
 ## Prerequisites for Customization
 
 - [AWS Command Line Interface](https://aws.amazon.com/cli/)
-- Node.js 14.x or later
+- Node.js 16.x or later
 
 ### 1. Clone the repository
 
