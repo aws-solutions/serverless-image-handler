@@ -26,21 +26,22 @@ Contributions via pull requests are much appreciated. Before sending us a pull r
 1. You check existing open, and recently merged, pull requests to make sure someone else hasn't addressed the problem already.
 1. You open an issue to discuss any significant work - we would hate for your time to be wasted.
 1. Note that the head of the develop branch contains latest features being developed for the solution.
-1. Changes in this branch will be unstable* and are not recommended for production deployments (*unstable doesn’t mean non-deployable or broken, but it hasn’t been completely vetted by testing).
+1. Changes in this branch will be unstable and are not recommended for production deployments.
 
 To send us a pull request, please:
 
+1. Fork the repository.
 1. Modify the source; please focus on the specific change you are contributing.
+1. Add new unit tests for the new code.
 1. Run _npx npm run prettier-format_ in _source_ to ensure that code format standards are maintained.
-1. Ensure local tests pass.
 1. If your changes include new capabilities, include in the PR description text that can be folded into the solution documentation.
 1. Commit to your fork using clear commit messages.
+1. Ensure that github Actions pass for all Required tasks.
 1. In your repository _Security_ section, ensure that security advisories are enabled and address any Dependabot issues that appear.
 1. Send us a pull request, answering any default questions in the pull request interface.
-1. Pay attention to any automated CI failures reported in the pull request, and stay involved in the conversation.
 1. If the changes are complex or may involve additional communication, we may create a feature branch specific to your PR and ask you to rebase using that branch.
 
-GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
+GitHub provides additional documentation on [forking a repository](https://help.github.com/articles/fork-a-repo/) and [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
 
 ## Finding contributions to work on
 
