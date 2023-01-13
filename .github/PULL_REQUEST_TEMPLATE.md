@@ -8,6 +8,7 @@
 
 
 **Checklist**
+- [ ] :wave: I have added unit tests for all code changes.
 - [ ] :wave: I have run the unit tests, and all unit tests have passed.
 - [ ] :warning: This pull request might incur a breaking change.
 
