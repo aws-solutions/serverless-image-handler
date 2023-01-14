@@ -18,6 +18,7 @@ import {
 } from "./lib";
 import { SecretProvider } from "./secret-provider";
 import { ThumborMapper } from "./thumbor-mapper";
+import { parseJson, generateRegExp } from "../solution-utils/helpers";
 
 type OriginalImageInfo = Partial<{
   contentType: string;
@@ -278,15 +279,15 @@ export class ImageRequest {
       if (requestType === RequestTypes.CUSTOM) {
         const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION } = process.env;
 
-        const REWRITE_MATCH_PATTERNS = this.parseJson(REWRITE_MATCH_PATTERN);
-        const REWRITE_SUBSTITUTIONS = this.parseJson(REWRITE_SUBSTITUTION);
+        const REWRITE_MATCH_PATTERNS = parseJson(REWRITE_MATCH_PATTERN);
+        const REWRITE_SUBSTITUTIONS = parseJson(REWRITE_SUBSTITUTION);
 
         for (let k = 0; k < REWRITE_MATCH_PATTERNS.length; k++) {
-          let matchPattern = REWRITE_MATCH_PATTERNS[k]
-          if (typeof (matchPattern) === 'string') {
-            let regExp = this.generateRegExp(matchPattern);
+          const matchPattern = REWRITE_MATCH_PATTERNS[k];
+          if (typeof matchPattern === "string") {
+            const regExp = generateRegExp(matchPattern);
             path = path.replace(regExp, REWRITE_SUBSTITUTIONS[k]);
-            if (this.generateRegExp(matchPattern).test(path)) break;
+            if (generateRegExp(matchPattern).test(path)) break;
           } else {
             path = path.replace(matchPattern, REWRITE_SUBSTITUTIONS[k]);
           }
@@ -306,20 +307,6 @@ export class ImageRequest {
     );
   }
 
-  parseJson(str) {
-    try {
-      return JSON.parse(str);
-    } catch (e) {
-      return [str];
-    }
-  }
-
-  generateRegExp(matchPattern) {
-    const patternStrings = matchPattern.split('/');
-    const flags = patternStrings.pop();
-    const parsedPatternString = matchPattern.slice(1, matchPattern.length - 1 - flags.length);
-    return new RegExp(parsedPatternString, flags);
-  }
   /**
    * Determines how to handle the request being made based on the URL path prefix to the image request.
    * Categorizes a request as either "image" (uses the Sharp library), "thumbor" (uses Thumbor mapping), or "custom" (uses the rewrite function).

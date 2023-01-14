@@ -72,6 +72,54 @@ describe("parseImageEdits", () => {
     expect(result).toEqual(expectedResult);
   });
 
+  it("Should pass if the proper result is returned for a sample custom-type image request - multipe image rewrite - confirm correct replacement - 1", () => {
+    // Arrange
+    const event = {
+      path: "/thumb/beach-100x100.jpg",
+    };
+
+    /**
+     * a custom request soecifying thumb should return a replacement using the first substitution entry
+     */
+    process.env = {
+      REWRITE_MATCH_PATTERN: '["//thumb/g","//small/g","//large/g"]',
+      REWRITE_SUBSTITUTION:
+        '["/300x300/filters:quality(80)","/fit-in/600x600/filters:quality(80)","/fit-in/1200x1200/filters:quality(80)"]',
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseImageEdits(event, RequestTypes.CUSTOM);
+
+    // Assert
+    const expectedResult = { jpeg: { quality: 80 }, resize: { height: 300, width: 300 } };
+    expect(result).toEqual(expectedResult);
+  });
+
+  it("Should pass if the proper result is returned for a sample custom-type image request - multipe image rewrite - confirm correct replacement - 2", () => {
+    // Arrange
+    const event = {
+      path: "/large/test.jpg",
+    };
+
+    /**
+     * a custom request specifying large should return a replacement using the third substitution entry which includes a resize
+     */
+    process.env = {
+      REWRITE_MATCH_PATTERN: '["//thumb/g","//small/g","//large/g"]',
+      REWRITE_SUBSTITUTION:
+        '["/300x300/filters:quality(80)","/fit-in/600x600/filters:quality(80)","/fit-in/1200x1200/filters:quality(100)"]',
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseImageEdits(event, RequestTypes.CUSTOM);
+
+    // Assert
+    const expectedResult = { jpeg: { quality: 100 }, resize: { height: 1200, width: 1200, fit: "inside" } };
+    expect(result).toEqual(expectedResult);
+  });
+
   it("Should throw an error if a requestType is not specified and/or the image edits cannot be parsed", () => {
     // Arrange
     const event = {
