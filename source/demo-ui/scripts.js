@@ -18,7 +18,7 @@ function importOriginalImage() {
     // Assemble the image request
     const request = {
         bucket: bucketName,
-        key: keyName
+        key: encodeURIComponent(keyName)
     }
     const strRequest = JSON.stringify(request);
     const encRequest = btoa(strRequest);
@@ -77,7 +77,7 @@ function getPreviewImage() {
     // Set up the request body
     const request = {
         bucket: bucketName,
-        key: keyName,
+        key: encodeURIComponent(keyName),
         edits: _edits
     }
     if (Object.keys(request.edits).length === 0) { delete request.edits }

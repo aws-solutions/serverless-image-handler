@@ -443,7 +443,7 @@ export class ImageHandler {
     alpha: string,
     sourceImageMetadata: sharp.Metadata
   ): Promise<Buffer> {
-    const params = { Bucket: bucket, Key: key };
+    const params = { Bucket: bucket, Key: decodeURIComponent(key) };
     try {
       const { width, height } = sourceImageMetadata;
       const overlayImage: S3.GetObjectOutput = await this.s3Client.getObject(params).promise();
