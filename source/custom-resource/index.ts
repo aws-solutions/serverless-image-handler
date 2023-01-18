@@ -4,7 +4,7 @@
 import EC2, { DescribeRegionsRequest } from "aws-sdk/clients/ec2";
 import S3, { CreateBucketRequest, PutBucketEncryptionRequest, PutBucketPolicyRequest } from "aws-sdk/clients/s3";
 import SecretsManager from "aws-sdk/clients/secretsmanager";
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { RawAxiosRequestConfig, AxiosResponse } from "axios";
 import { createHash } from "crypto";
 import moment from "moment";
 import { v4 } from "uuid";
@@ -240,7 +240,7 @@ async function sendCloudFormationResponse(
     Data: response.Data,
   });
 
-  const config: AxiosRequestConfig = {
+  const config: RawAxiosRequestConfig = {
     headers: {
       "Content-Type": "",
       "Content-Length": responseBody.length,
@@ -292,7 +292,7 @@ async function sendAnonymousMetric(
 
     const payloadStr = JSON.stringify(payload);
 
-    const config: AxiosRequestConfig = {
+    const config: RawAxiosRequestConfig = {
       headers: {
         "content-type": "application/json",
         "content-length": payloadStr.length,

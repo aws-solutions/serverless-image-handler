@@ -9,7 +9,6 @@
 
 # dependencies
 **/node_modules
-**/package-lock.json
 
 # test assets
 **/coverage
@@ -25,3 +24,4 @@ demo-ui-config.js
 # System Files
 **/.DS_Store
 **/.vscode
+**/.idea
