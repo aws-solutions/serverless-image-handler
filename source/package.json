@@ -7,7 +7,10 @@
   "author": "AWS Solutions",
   "scripts": {
     "lint": "npx eslint . --ext .ts",
-    "prettier-format": "npx prettier --config .prettierrc.yml '**/*.ts' --write"
+    "prettier-format": "npx prettier --config .prettierrc.yml '**/*.ts' --write",
+    "build:custom-resource":"cd ./custom-resource && npm run package",
+    "build:image-handler":"cd ./image-handler && npm run package",
+    "build:all": "npm run build:custom-resource && npm run build:image-handler"
   },
   "devDependencies": {
     "@types/node": "^18.8.0",

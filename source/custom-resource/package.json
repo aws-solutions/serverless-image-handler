@@ -11,7 +11,7 @@
     "build": "tsc --build tsconfig.json",
     "clean": "rm -rf node_modules/ dist/ coverage/",
     "package": "npm run build && npm prune --production && rsync -avrq ./node_modules ./dist && npm run include-solution-utils && npm run package:zip",
-    "package:zip": "cd dist && zip -q -r9 ./package.zip * -x '**/test/*' && cd ..",
+    "package:zip": "cd dist && zip -q -r9 ./$npm_package_name.zip * -x '**/test/*' && cd ..",
     "pretest": "npm run clean && npm install",
     "test": "jest --coverage --silent",
     "include-solution-utils": "npm run solution-utils:prep && npm run solution-utils:package",

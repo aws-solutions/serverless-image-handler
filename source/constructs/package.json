@@ -8,8 +8,8 @@
   },
   "scripts": {
     "cdk": "cdk",
-    "clean": "rm -rf node_modules/ cdk.out/ coverage/",
-    "clean-synth": "npm run clean && npm install && npm run cdk synth --asset-metadata false --path-metadata false --json false",
+    "clean:install": "rm -rf node_modules/ cdk.out/ coverage/ && npm ci",
+    "cdk:synth": "npm run clean:install && overrideWarningsEnabled=false npx cdk synth --asset-metadata false --path-metadata false --json false",
     "pretest": "npm run clean && npm install",
     "build": "tsc",
     "watch": "tsc -w",

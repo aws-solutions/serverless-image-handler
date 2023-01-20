@@ -12,7 +12,7 @@
     "clean": "rm -rf node_modules/ dist/ coverage/",
     "include-solution-utils": "npm run solution-utils:prep && npm run solution-utils:package",
     "package": "npm run build && npm prune --production && rsync -avrq ./node_modules ./dist && npm run include-solution-utils && npm run package:zip",
-    "package:zip": "cd dist && zip -q -r9 ./package.zip * && cd ..",
+    "package:zip": "cd dist && zip -q -r9 ./$npm_package_name.zip * && cd ..",
     "solution-utils:package": "cd ../solution-utils && npm run package && cd dist/ && rsync -avrq . ../../$npm_package_name/dist/solution-utils/ && cd ../../$npm_package_name",
     "solution-utils:prep": "rm -rf dist/solution-utils && mkdir dist/solution-utils",
     "pretest": "npm run clean && npm install",
