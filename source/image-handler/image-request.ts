@@ -291,7 +291,12 @@ export class ImageRequest {
       }
 
       return decodeURIComponent(
-        path.replace(/\/\d+x\d+:\d+x\d+\/|(?<=\/)\d+x\d+\/|filters:[^/]+|\/fit-in(?=\/)|^\/+/g, "").replace(/^\/+/, "")
+        path
+          .replace(
+            /\/\d+x\d+:\d+x\d+\/|(?<=\/)\d+x\d+\/|filters:watermark\(.*\)|filters:[^/]+|\/fit-in(?=\/)|^\/+/g,
+            ""
+          )
+          .replace(/^\/+/, "")
       );
     }
 
