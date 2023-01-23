@@ -1,6 +1,6 @@
 {
   "name": "custom-resource",
-  "version": "6.1.0",
+  "version": "6.1.1",
   "private": true,
   "description": "Serverless Image Handler custom resource",
   "license": "Apache-2.0",
