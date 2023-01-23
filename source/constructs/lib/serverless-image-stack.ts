@@ -11,12 +11,9 @@ import { FrontEndConstruct as FrontEnd } from "./front-end/front-end-construct";
 import { SolutionConstructProps, YesNo } from "./types";
 
 export interface ServerlessImageHandlerStackProps extends StackProps {
-  readonly description: string;
   readonly solutionId: string;
   readonly solutionName: string;
   readonly solutionVersion: string;
-  readonly solutionDisplayName: string;
-  readonly solutionAssetHostingBucketNamePrefix: string;
 }
 
 export class ServerlessImageHandlerStack extends Stack {
@@ -139,8 +136,6 @@ export class ServerlessImageHandlerStack extends Stack {
           AnonymousUsage: "Yes",
           SolutionId: props.solutionId,
           Version: props.solutionVersion,
-          S3BucketPrefix: props.solutionAssetHostingBucketNamePrefix,
-          S3KeyPrefix: `${props.solutionName}/${props.solutionVersion}`,
         },
       },
       lazy: true,
@@ -168,7 +163,7 @@ export class ServerlessImageHandlerStack extends Stack {
     const commonResources = new CommonResources(this, "CommonResources", {
       solutionId: props.solutionId,
       solutionVersion: props.solutionVersion,
-      solutionDisplayName: props.solutionDisplayName,
+      solutionDisplayName: props.solutionName,
       sourceCodeBucketName,
       sourceCodeKeyPrefix,
       ...solutionConstructProps,
@@ -183,7 +178,7 @@ export class ServerlessImageHandlerStack extends Stack {
       sourceCodeBucketName,
       sourceCodeKeyPrefix,
       solutionVersion: props.solutionVersion,
-      solutionDisplayName: props.solutionDisplayName,
+      solutionDisplayName: props.solutionName,
       secretsManagerPolicy: commonResources.secretsManagerPolicy,
       logsBucket: commonResources.logsBucket,
       uuid: commonResources.customResources.uuid,
@@ -217,7 +212,7 @@ export class ServerlessImageHandlerStack extends Stack {
     });
 
     commonResources.appRegistryApplication({
-      description: props.description,
+      description: `${props.solutionId} - ${props.solutionName}. Version ${props.solutionVersion}`,
       solutionVersion: props.solutionVersion,
       solutionId: props.solutionId,
       applicationName: props.solutionName,

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This assumes all of the OS-level configuration has been completed and git repo has already been cloned
+# The script is for aws-solutions internal purposes only
 #
 # This script should be run from the repo's deployment directory
 # cd deployment
@@ -44,13 +44,33 @@ rm -rf "$build_dist_dir"
 mkdir -p "$build_dist_dir"
 
 headline "[Package] CDK project into a CloudFormation template"
-export SOLUTION_BUCKET_NAME_PLACEHOLDER=$1
-export SOLUTION_NAME_PLACEHOLDER=$2
-export SOLUTION_VERSION_PLACEHOLDER=$3
-
 cd "$cdk_source_dir"
 npm run clean:install
 overrideWarningsEnabled=false npx cdk synth --asset-metadata false --path-metadata false --json false>"$template_dist_dir"/"$2".template
+
+#TODO update lambda in cfn template to refer to solutions s3 assets (using cdk solution helper)
+# Run the helper to clean-up the templates and remove unnecessary CDK elements
+cd "$template_dir"
+node "$template_dir"/cdk-solution-helper/index
+
+# Find and replace bucket_name, solution_name, and version
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # Mac OS
+    replace="s/%%LAMBDA_BUCKET%%/$1/g"
+    sed -i '' -e "$replace" "$template_dist_dir"/*.template
+    replace="s/%%SOLUTION_NAME%%/$2/g"
+    sed -i '' -e "$replace" "$template_dist_dir"/*.template
+    replace="s/%%VERSION%%/$3/g"
+    sed -i '' -e "$replace" "$template_dist_dir"/*.template
+else
+    # Other linux
+    replace="s/%%LAMBDA_BUCKET%%/$1/g"
+    sed -i -e "$replace" "$template_dist_dir"/*.template
+    replace="s/%%SOLUTION_NAME%%/$2/g"
+    sed -i -e "$replace" "$template_dist_dir"/*.template
+    replace="s/%%VERSION%%/$3/g"
+    sed -i -e "$replace" "$template_dist_dir"/*.template
+fi
 
 headline "[Package] Lambda binaries and copy to build_dist_dir"
 cd "$source_dir"
