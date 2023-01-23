@@ -24,6 +24,18 @@ describe("inferImageType", () => {
     expect(result).toEqual("image/jpeg");
   });
 
+  it('Should pass if it returns "image/jpeg for a magic number of FFD8FFED"', () => {
+    // Arrange
+    const imageBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xed, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.inferImageType(imageBuffer);
+
+    // Assert
+    expect(result).toEqual("image/jpeg");
+  });
+
   it("Should pass throw an exception", () => {
     // Arrange
     const imageBuffer = Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);

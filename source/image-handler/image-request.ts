@@ -445,6 +445,7 @@ export class ImageRequest {
         return ContentTypes.PNG;
       case "FFD8FFDB":
       case "FFD8FFE0":
+      case "FFD8FFED":
       case "FFD8FFEE":
       case "FFD8FFE1":
         return ContentTypes.JPEG;
