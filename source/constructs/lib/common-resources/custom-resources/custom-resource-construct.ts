@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Effect, Policy, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { Code, Function as LambdaFunction, Runtime } from "aws-cdk-lib/aws-lambda";
+import { Function as LambdaFunction, Runtime } from "aws-cdk-lib/aws-lambda";
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Bucket, IBucket } from "aws-cdk-lib/aws-s3";
 import { ArnFormat, Aws, CfnCondition, CfnResource, CustomResource, Duration, Lazy, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
@@ -10,6 +11,7 @@ import { addCfnSuppressRules } from "../../../utils/utils";
 
 import { SolutionConstructProps } from "../../types";
 import { CommonResourcesProps, Conditions } from "../common-resources-construct";
+import path from "path";
 
 export interface CustomResourcesConstructProps extends CommonResourcesProps {
   readonly conditions: Conditions;
@@ -120,14 +122,13 @@ export class CustomResourcesConstruct extends Construct {
 
     props.secretsManagerPolicy.attachToRole(this.customResourceRole);
 
-    this.customResourceLambda = new LambdaFunction(this, "CustomResourceFunction", {
+    this.customResourceLambda = new NodejsFunction(this, "CustomResourceFunction", {
       description: `${props.solutionDisplayName} (${props.solutionVersion}): Custom resource`,
       runtime: Runtime.NODEJS_16_X,
-      handler: "custom-resource/index.handler",
       timeout: Duration.minutes(1),
       memorySize: 128,
-      code: Code.fromBucket(this.sourceCodeBucket, [props.sourceCodeKeyPrefix, "custom-resource.zip"].join("/")),
       role: this.customResourceRole,
+      entry: path.join(__dirname, "../../../custom-resource/index.ts"),
       environment: {
         SOLUTION_ID: props.solutionId,
         RETRY_SECONDS: "5",
