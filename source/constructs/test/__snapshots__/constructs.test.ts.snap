@@ -36,7 +36,6 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       ],
     },
   },
-  "Description": "Serverless Image Handler Stack",
   "Metadata": {
     "AWS::CloudFormation::Interface": {
       "ParameterGroups": [
@@ -1163,24 +1162,17 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       "Properties": {
         "Code": {
           "S3Bucket": {
-            "Fn::Join": [
-              "",
-              [
-                "hosting-bucket-",
-                {
-                  "Ref": "AWS::Region",
-                },
-              ],
-            ],
+            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "sih/v6.1.0/image-handler.zip",
+          "S3Key": "81baf2ab3a41584170190dc0f2ce62f50e091a14cab8fd069cb3aebe903297c5.zip",
         },
-        "Description": "Serverless Image Handler Test (v6.1.0): Performs image edits and manipulations",
+        "Description": "sih (v6.1.0): Performs image edits and manipulations",
         "Environment": {
           "Variables": {
             "AUTO_WEBP": {
               "Ref": "AutoWebPParameter",
             },
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
             "CORS_ENABLED": {
               "Ref": "CorsEnabledParameter",
             },
@@ -1212,7 +1204,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
             },
           },
         },
-        "Handler": "image-handler/index.handler",
+        "Handler": "index.handler",
         "MemorySize": 1024,
         "Role": {
           "Fn::GetAtt": [
@@ -1304,41 +1296,6 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
         },
       },
       "Type": "AWS::CloudFront::OriginRequestPolicy",
-    },
-    "CommonResourcesCustomResourcesCopyWebsite83738AA9": {
-      "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
-      "DeletionPolicy": "Delete",
-      "Properties": {
-        "CustomAction": "copyS3assets",
-        "DestS3Bucket": {
-          "Ref": "FrontEndDistributionToS3S3Bucket3A171D78",
-        },
-        "ManifestKey": "sih/v6.1.0/demo-ui-manifest.json",
-        "Region": {
-          "Ref": "AWS::Region",
-        },
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "CommonResourcesCustomResourcesCustomResourceFunction0D924235",
-            "Arn",
-          ],
-        },
-        "SourceS3Bucket": {
-          "Fn::Join": [
-            "",
-            [
-              "hosting-bucket-",
-              {
-                "Ref": "AWS::Region",
-              },
-            ],
-          ],
-        },
-        "SourceS3key": "sih/v6.1.0/demo-ui",
-        "Version": "v6.1.0",
-      },
-      "Type": "AWS::CloudFormation::CustomResource",
-      "UpdateReplacePolicy": "Delete",
     },
     "CommonResourcesCustomResourcesCustomResourceAnonymousMetric51363F57": {
       "DeletionPolicy": "Delete",
@@ -1449,7 +1406,6 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
     },
     "CommonResourcesCustomResourcesCustomResourceFunction0D924235": {
       "DependsOn": [
-        "CommonResourcesCustomResourcesCustomResourceRoleDefaultPolicy5AE1B0FC",
         "CommonResourcesCustomResourcesCustomResourceRole8958A1ED",
       ],
       "Metadata": {
@@ -1473,27 +1429,20 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       "Properties": {
         "Code": {
           "S3Bucket": {
-            "Fn::Join": [
-              "",
-              [
-                "hosting-bucket-",
-                {
-                  "Ref": "AWS::Region",
-                },
-              ],
-            ],
+            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "sih/v6.1.0/custom-resource.zip",
+          "S3Key": "9625fed5ea187a6addea35fa263bbcf7c41761dc08a4b22045b90f5e8e1ab3f5.zip",
         },
-        "Description": "Serverless Image Handler Test (v6.1.0): Custom resource",
+        "Description": "sih (v6.1.0): Custom resource",
         "Environment": {
           "Variables": {
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
             "RETRY_SECONDS": "5",
             "SOLUTION_ID": "S0ABC",
             "SOLUTION_VERSION": "v6.1.0",
           },
         },
-        "Handler": "custom-resource/index.handler",
+        "Handler": "index.handler",
         "MemorySize": 128,
         "Role": {
           "Fn::GetAtt": [
@@ -1621,63 +1570,6 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       },
       "Type": "AWS::IAM::Role",
     },
-    "CommonResourcesCustomResourcesCustomResourceRoleDefaultPolicy5AE1B0FC": {
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": [
-                "s3:GetObject*",
-                "s3:GetBucket*",
-                "s3:List*",
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:",
-                      {
-                        "Ref": "AWS::Partition",
-                      },
-                      ":s3:::hosting-bucket-",
-                      {
-                        "Ref": "AWS::Region",
-                      },
-                    ],
-                  ],
-                },
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:",
-                      {
-                        "Ref": "AWS::Partition",
-                      },
-                      ":s3:::hosting-bucket-",
-                      {
-                        "Ref": "AWS::Region",
-                      },
-                      "/sih/v6.1.0/*",
-                    ],
-                  ],
-                },
-              ],
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "CommonResourcesCustomResourcesCustomResourceRoleDefaultPolicy5AE1B0FC",
-        "Roles": [
-          {
-            "Ref": "CommonResourcesCustomResourcesCustomResourceRole8958A1ED",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
-    },
     "CommonResourcesCustomResourcesCustomResourceUuid64E7CCAD": {
       "DeletionPolicy": "Delete",
       "Properties": {
@@ -1693,6 +1585,43 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
         },
       },
       "Type": "AWS::CloudFormation::CustomResource",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CommonResourcesCustomResourcesDeployWebsiteAwsCliLayerBC025F39": {
+      "Properties": {
+        "Content": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
+          },
+          "S3Key": "5d8d1d0aacea23824c62f362e1e3c14b7dd14a31c71b53bfae4d14a6373c5510.zip",
+        },
+        "Description": "/opt/awscli/aws",
+      },
+      "Type": "AWS::Lambda::LayerVersion",
+    },
+    "CommonResourcesCustomResourcesDeployWebsiteCustomResourceECB9B136": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DestinationBucketName": {
+          "Ref": "FrontEndDistributionToS3S3Bucket3A171D78",
+        },
+        "Prune": true,
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn",
+          ],
+        },
+        "SourceBucketNames": [
+          {
+            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
+          },
+        ],
+        "SourceObjectKeys": [
+          "b17ee622b8fe21bd9a4189063340647fbb783d07261ea136b83db1d58255b0b2.zip",
+        ],
+      },
+      "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
     },
     "CommonResourcesCustomResourcesLogBucketCustomResource2445A3AB": {
@@ -1808,6 +1737,190 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
           {
             "Ref": "BackEndImageHandlerFunctionRoleABF81E5C",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536": {
+      "DependsOn": [
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+      ],
+      "Metadata": {
+        "cfn_nag": {
+          "rules_to_suppress": [
+            {
+              "id": "W58",
+              "reason": "The function does have permission to write CloudWatch Logs.",
+            },
+            {
+              "id": "W89",
+              "reason": "The Lambda function does not require any VPC connection at all.",
+            },
+            {
+              "id": "W92",
+              "reason": "The Lambda function does not require ReservedConcurrentExecutions.",
+            },
+          ],
+        },
+      },
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
+          },
+          "S3Key": "2bc265c5e0569aeb24a6349c15bd54e76e845892376515e036627ab0cc70bb64.zip",
+        },
+        "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "CommonResourcesCustomResourcesDeployWebsiteAwsCliLayerBC025F39",
+          },
+        ],
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+            "Arn",
+          ],
+        },
+        "Runtime": "python3.9",
+        "Tags": [
+          {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::",
+                      {
+                        "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
+                      },
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":s3:::",
+                      {
+                        "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*",
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FrontEndDistributionToS3S3Bucket3A171D78",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FrontEndDistributionToS3S3Bucket3A171D78",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "Roles": [
+          {
+            "Ref": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
           },
         ],
       },
@@ -1981,6 +2094,10 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "RestrictPublicBuckets": true,
         },
         "Tags": [
+          {
+            "Key": "aws-cdk:cr-owned:d2c34063",
+            "Value": "true",
+          },
           {
             "Key": "SolutionId",
             "Value": "S0ABC",
