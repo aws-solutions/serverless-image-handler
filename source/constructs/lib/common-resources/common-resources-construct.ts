@@ -13,9 +13,7 @@ import * as appreg from "@aws-cdk/aws-servicecatalogappregistry-alpha";
 export interface CommonResourcesProps extends SolutionConstructProps {
   readonly solutionId: string;
   readonly solutionVersion: string;
-  readonly solutionDisplayName: string;
-  readonly sourceCodeBucketName: string;
-  readonly sourceCodeKeyPrefix: string;
+  readonly solutionName: string;
 }
 
 export interface Conditions {

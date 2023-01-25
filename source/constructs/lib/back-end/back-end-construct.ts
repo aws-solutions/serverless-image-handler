@@ -30,9 +30,7 @@ import { SolutionConstructProps } from "../types";
 
 export interface BackEndProps extends SolutionConstructProps {
   readonly solutionVersion: string;
-  readonly solutionDisplayName: string;
-  readonly sourceCodeBucketName: string;
-  readonly sourceCodeKeyPrefix: string;
+  readonly solutionName: string;
   readonly secretsManagerPolicy: Policy;
   readonly logsBucket: IBucket;
   readonly uuid: string;
@@ -88,7 +86,7 @@ export class BackEnd extends Construct {
     imageHandlerLambdaFunctionRole.attachInlinePolicy(imageHandlerLambdaFunctionRolePolicy);
 
     const imageHandlerLambdaFunction = new NodejsFunction(this, "ImageHandlerLambdaFunction", {
-      description: `${props.solutionDisplayName} (${props.solutionVersion}): Performs image edits and manipulations`,
+      description: `${props.solutionName} (${props.solutionVersion}): Performs image edits and manipulations`,
       memorySize: 1024,
       runtime: Runtime.NODEJS_16_X,
       timeout: Duration.minutes(15),

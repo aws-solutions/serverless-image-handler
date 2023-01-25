@@ -56,21 +56,20 @@ node "$template_dir"/cdk-solution-helper/index
 # Find and replace bucket_name, solution_name, and version
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # Mac OS
-    replace="s/%%LAMBDA_BUCKET%%/$1/g"
-    sed -i '' -e "$replace" "$template_dist_dir"/*.template
-    replace="s/%%SOLUTION_NAME%%/$2/g"
-    sed -i '' -e "$replace" "$template_dist_dir"/*.template
-    replace="s/%%VERSION%%/$3/g"
-    sed -i '' -e "$replace" "$template_dist_dir"/*.template
+    SEDARG=''
 else
     # Other linux
-    replace="s/%%LAMBDA_BUCKET%%/$1/g"
-    sed -i -e "$replace" "$template_dist_dir"/*.template
-    replace="s/%%SOLUTION_NAME%%/$2/g"
-    sed -i -e "$replace" "$template_dist_dir"/*.template
-    replace="s/%%VERSION%%/$3/g"
-    sed -i -e "$replace" "$template_dist_dir"/*.template
+    SEDARG="-e"
 fi
+
+replace="s/%%LAMBDA_BUCKET%%/$1/g"
+sed -i "$SEDARG" "$replace" "$template_dist_dir"/*.template
+
+replace="s/%%SOLUTION_NAME%%/$2/g"
+sed -i "$SEDARG" "$replace" "$template_dist_dir"/*.template
+
+replace="s/%%VERSION%%/$3/g"
+sed -i "$SEDARG" "$replace" "$template_dist_dir"/*.template
 
 headline "[Package] Lambda binaries and copy to build_dist_dir"
 cd "$source_dir"

@@ -4,6 +4,6 @@
     "aws-cdk:enableDiffNoFail": "true",
     "solutionId": "SO0023",
     "solutionVersion": "custom-6.2.0",
-    "solutionName": "Serverless Image Handler"
+    "solutionName": "serverless-image-handler"
   }
 }

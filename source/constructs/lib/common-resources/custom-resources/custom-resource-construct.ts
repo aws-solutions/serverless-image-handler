@@ -1,17 +1,18 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import * as path from "path";
 import { Effect, Policy, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { Function as LambdaFunction, Runtime } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Bucket, IBucket } from "aws-cdk-lib/aws-s3";
+import { BucketDeployment, Source as S3Source } from "aws-cdk-lib/aws-s3-deployment";
 import { ArnFormat, Aws, CfnCondition, CfnResource, CustomResource, Duration, Lazy, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { addCfnSuppressRules } from "../../../utils/utils";
 
 import { SolutionConstructProps } from "../../types";
 import { CommonResourcesProps, Conditions } from "../common-resources-construct";
-import path from "path";
 
 export interface CustomResourcesConstructProps extends CommonResourcesProps {
   readonly conditions: Conditions;
@@ -44,8 +45,6 @@ export interface SetupValidateSecretsManagerProps {
 
 export class CustomResourcesConstruct extends Construct {
   private readonly solutionVersion: string;
-  private readonly sourceCodeBucket: IBucket;
-  private readonly sourceCodeKeyPrefix: string;
   private readonly conditions: Conditions;
   private readonly customResourceRole: Role;
   private readonly customResourceLambda: LambdaFunction;
@@ -54,8 +53,6 @@ export class CustomResourcesConstruct extends Construct {
   constructor(scope: Construct, id: string, props: CustomResourcesConstructProps) {
     super(scope, id);
 
-    this.sourceCodeBucket = Bucket.fromBucketName(this, "ImageHandlerLambdaSource", props.sourceCodeBucketName);
-    this.sourceCodeKeyPrefix = props.sourceCodeKeyPrefix;
     this.solutionVersion = props.solutionVersion;
     this.conditions = props.conditions;
 
@@ -123,12 +120,12 @@ export class CustomResourcesConstruct extends Construct {
     props.secretsManagerPolicy.attachToRole(this.customResourceRole);
 
     this.customResourceLambda = new NodejsFunction(this, "CustomResourceFunction", {
-      description: `${props.solutionDisplayName} (${props.solutionVersion}): Custom resource`,
+      description: `${props.solutionName} (${props.solutionVersion}): Custom resource`,
       runtime: Runtime.NODEJS_16_X,
       timeout: Duration.minutes(1),
       memorySize: 128,
       role: this.customResourceRole,
-      entry: path.join(__dirname, "../../../custom-resource/index.ts"),
+      entry: path.join(__dirname, "../../../../custom-resource/index.ts"),
       environment: {
         SOLUTION_ID: props.solutionId,
         RETRY_SECONDS: "5",
@@ -178,24 +175,14 @@ export class CustomResourcesConstruct extends Construct {
     );
   }
 
+  // TODO website deployment from local
   public setupCopyWebsiteCustomResource(props: SetupCopyWebsiteCustomResourceProps) {
-    // Allows the custom resource to read the static assets for the front-end from the source code bucket
-    this.sourceCodeBucket.grantRead(this.customResourceLambda, `${this.sourceCodeKeyPrefix}/*`);
-
-    this.createCustomResource(
-      "CopyWebsite",
-      this.customResourceLambda,
-      {
-        CustomAction: "copyS3assets",
-        Region: Aws.REGION,
-        ManifestKey: [this.sourceCodeKeyPrefix, "demo-ui-manifest.json"].join("/"),
-        SourceS3Bucket: this.sourceCodeBucket.bucketName,
-        SourceS3key: [this.sourceCodeKeyPrefix, "demo-ui"].join("/"),
-        DestS3Bucket: props.hostingBucket.bucketName,
-        Version: this.solutionVersion,
-      },
-      this.conditions.deployUICondition
-    );
+    // Allows the custom resource to read the static assets for the front-end from the local
+    /* eslint-disable no-new */
+    new BucketDeployment(this, "DeployWebsite", {
+      sources: [S3Source.asset(path.join(__dirname, "../../../../demo-ui"))],
+      destinationBucket: props.hostingBucket,
+    });
   }
 
   public setupPutWebsiteConfigCustomResource(props: SetupPutWebsiteConfigCustomResourceProps) {

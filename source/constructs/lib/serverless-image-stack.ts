@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PriceClass } from "aws-cdk-lib/aws-cloudfront";
-import { Aspects, Aws, CfnMapping, CfnOutput, CfnParameter, Stack, StackProps, Tags } from "aws-cdk-lib";
+import { Aspects, CfnMapping, CfnOutput, CfnParameter, Stack, StackProps, Tags } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { SuppressLambdaFunctionCfnRulesAspect } from "../utils/aspects";
 import { BackEnd } from "./back-end/back-end-construct";
@@ -142,8 +142,6 @@ export class ServerlessImageHandlerStack extends Stack {
     });
 
     const anonymousUsage = `${solutionMapping.findInMap("Config", "AnonymousUsage")}`;
-    const sourceCodeBucketName = `${solutionMapping.findInMap("Config", "S3BucketPrefix")}-${Aws.REGION}`;
-    const sourceCodeKeyPrefix = solutionMapping.findInMap("Config", "S3KeyPrefix");
 
     const solutionConstructProps: SolutionConstructProps = {
       corsEnabled: corsEnabledParameter.valueAsString,
@@ -163,9 +161,7 @@ export class ServerlessImageHandlerStack extends Stack {
     const commonResources = new CommonResources(this, "CommonResources", {
       solutionId: props.solutionId,
       solutionVersion: props.solutionVersion,
-      solutionDisplayName: props.solutionName,
-      sourceCodeBucketName,
-      sourceCodeKeyPrefix,
+      solutionName: props.solutionName,
       ...solutionConstructProps,
     });
 
@@ -175,10 +171,8 @@ export class ServerlessImageHandlerStack extends Stack {
     });
 
     const backEnd = new BackEnd(this, "BackEnd", {
-      sourceCodeBucketName,
-      sourceCodeKeyPrefix,
       solutionVersion: props.solutionVersion,
-      solutionDisplayName: props.solutionName,
+      solutionName: props.solutionName,
       secretsManagerPolicy: commonResources.secretsManagerPolicy,
       logsBucket: commonResources.logsBucket,
       uuid: commonResources.customResources.uuid,
