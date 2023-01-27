@@ -4,9 +4,9 @@
 #
 # This script should be run from the repo's deployment directory
 # cd deployment
-# ./build-s3-dist.sh source-bucket-base-name trademarked-solution-name version-code
+# ./build-s3-dist.sh trademarked-solution-name source-bucket-base-name version-code
 #
-# For example: ./build-s3-dist.sh solutions my-solution v1.0.0
+# For example: ./build-s3-dist.sh my-solution solutions v1.0.0
 # Parameters:
 #  - source-bucket-base-name: Name for the S3 bucket location where the template will source the Lambda
 #    code from. The template will append '-[region_name]' to this bucket name.
@@ -20,7 +20,7 @@ set -e
 # Check to see if input has been provided:
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
     echo "Please provide the base source bucket name, trademark approved solution name and version where the lambda code will eventually reside."
-    echo "For example: ./build-s3-dist.sh solutions trademarked-solution-name v1.0.0"
+    echo "For example: ./build-s3-dist.sh trademarked-solution-name solutions v1.0.0"
     exit 1
 fi
 
@@ -46,30 +46,11 @@ mkdir -p "$build_dist_dir"
 headline "[Package] CDK project into a CloudFormation template"
 cd "$cdk_source_dir"
 npm run clean:install
-overrideWarningsEnabled=false npx cdk synth --asset-metadata false --path-metadata false --json false>"$template_dist_dir"/"$2".template
+overrideWarningsEnabled=false npx cdk synth --asset-metadata false --path-metadata false>"$template_dist_dir"/"$1".template
 
-#TODO update lambda in cfn template to refer to solutions s3 assets (using cdk solution helper)
 # Run the helper to clean-up the templates and remove unnecessary CDK elements
 cd "$template_dir"
-node "$template_dir"/cdk-solution-helper/index
-
-# Find and replace bucket_name, solution_name, and version
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # Mac OS
-    SEDARG=''
-else
-    # Other linux
-    SEDARG="-e"
-fi
-
-replace="s/%%LAMBDA_BUCKET%%/$1/g"
-sed -i "$SEDARG" "$replace" "$template_dist_dir"/*.template
-
-replace="s/%%SOLUTION_NAME%%/$2/g"
-sed -i "$SEDARG" "$replace" "$template_dist_dir"/*.template
-
-replace="s/%%VERSION%%/$3/g"
-sed -i "$SEDARG" "$replace" "$template_dist_dir"/*.template
+npx ts-node "$template_dir"/cdk-solution-helper/index $"template_dist_dir" "$1" "$2" "$3"
 
 headline "[Package] Lambda binaries and copy to build_dist_dir"
 cd "$source_dir"
