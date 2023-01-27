@@ -175,9 +175,8 @@ export class CustomResourcesConstruct extends Construct {
     );
   }
 
-  // TODO website deployment from local
   public setupCopyWebsiteCustomResource(props: SetupCopyWebsiteCustomResourceProps) {
-    // Allows the custom resource to read the static assets for the front-end from the local
+    // Stage static assets for the front-end from the local
     /* eslint-disable no-new */
     new BucketDeployment(this, "DeployWebsite", {
       sources: [S3Source.asset(path.join(__dirname, "../../../../demo-ui"))],
