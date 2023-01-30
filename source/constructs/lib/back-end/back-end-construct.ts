@@ -106,19 +106,10 @@ export class BackEnd extends Construct {
         DEFAULT_FALLBACK_IMAGE_BUCKET: props.fallbackImageS3Bucket,
         DEFAULT_FALLBACK_IMAGE_KEY: props.fallbackImageS3KeyBucket,
       },
+      depsLockFilePath: path.join(__dirname, "../../../image-handler/package-lock.json"),
       bundling: {
         externalModules: ["sharp"],
-        commandHooks: {
-          beforeBundling(inputDir: string, outputDir: string): string[] {
-            return [];
-          },
-          beforeInstall(inputDir: string, outputDir: string): string[] {
-            return [];
-          },
-          afterBundling(inputDir: string, outputDir: string): string[] {
-            return [`cd ${outputDir}`, "npm install --arch=x64 --platform=linux sharp"];
-          },
-        },
+        nodeModules: ["sharp"],
       },
     });
 
