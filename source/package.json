@@ -9,11 +9,8 @@
     "lint": "npx eslint . --ext .ts",
     "prettier-format": "npx prettier --config .prettierrc.yml '**/*.ts' --write",
     "install:custom-resource": "cd ./custom-resource && npm run clean && npm ci",
-    "install:image-handler": "cd ./image-handler && npm run clean && npm ci",
-    "install:dependencies": "npm run install:custom-resource && npm run install:image-handler",
-    "build:custom-resource": "cd ./custom-resource && npm run package",
-    "build:image-handler": "cd ./image-handler && npm run package",
-    "build:all": "npm run build:custom-resource && npm run build:image-handler"
+    "install:image-handler": "cd ./image-handler && npm run clean && npm ci && npm run install:SharpForLambda",
+    "install:dependencies": "npm run install:custom-resource && npm run install:image-handler"
   },
   "devDependencies": {
     "@types/node": "^18.8.0",
