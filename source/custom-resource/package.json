@@ -8,7 +8,7 @@
   "main": "index.js",
   "scripts": {
     "clean": "rm -rf node_modules/ dist/ coverage/",
-    "pretest": "npm run clean && npm install",
+    "pretest": "npm run clean && npm ci",
     "test": "jest --coverage --silent"
   },
   "dependencies": {
