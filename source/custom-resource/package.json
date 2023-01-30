@@ -7,16 +7,9 @@
   "author": "AWS Solutions",
   "main": "index.js",
   "scripts": {
-    "prebuild": "npm run clean && npm install",
-    "build": "tsc --build tsconfig.json",
     "clean": "rm -rf node_modules/ dist/ coverage/",
-    "package": "npm run build && npm prune --production && rsync -avrq ./node_modules ./dist && npm run include-solution-utils && npm run package:zip",
-    "package:zip": "cd dist && zip -q -r9 ./$npm_package_name.zip * -x '**/test/*' && cd ..",
     "pretest": "npm run clean && npm install",
-    "test": "jest --coverage --silent",
-    "include-solution-utils": "npm run solution-utils:prep && npm run solution-utils:package",
-    "solution-utils:prep": "rm -rf dist/solution-utils && mkdir dist/solution-utils",
-    "solution-utils:package": "cd ../solution-utils && npm run package && cd dist/ && rsync -avrq . ../../$npm_package_name/dist/solution-utils/ && cd ../../$npm_package_name"
+    "test": "jest --coverage --silent"
   },
   "dependencies": {
     "axios": "^1.0.0",
