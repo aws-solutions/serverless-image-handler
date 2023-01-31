@@ -10,7 +10,7 @@
     "cdk": "cdk",
     "clean:install": "rm -rf node_modules/ cdk.out/ coverage/ && npm ci && cd ../ && npm run install:dependencies",
     "cdk:synth": "npm run clean:install && overrideWarningsEnabled=false npx cdk synth --asset-metadata false --path-metadata false --json false",
-    "pretest": "npm run clean:install",
+    "pretest": "rm -rf node_modules/ cdk.out/ coverage/ && npm ci",
     "build": "tsc",
     "watch": "tsc -w",
     "test": "overrideWarningsEnabled=false jest --coverage"
