@@ -62,6 +62,7 @@ headline "[Package] Generate public template"
 # Run the helper to clean-up the templates and remove unnecessary CDK elements
 cd "$template_dir"
 npx ts-node "$template_dir"/cdk-solution-helper/template-builder/index "$template_dist_dir" "$solution_name" "$asset_bucket" "$solution_version"
+mv "$template_dist_dir"/*.template.json "$template_dist_dir"/"$solution_name".template
 
 headline "[Package] Generate public assets for lambda and ui"
 npx ts-node "$template_dir"/cdk-solution-helper/asset-package/index "$staging_dist_dir" "$build_dist_dir"

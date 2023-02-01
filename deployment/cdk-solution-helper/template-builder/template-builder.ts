@@ -8,21 +8,20 @@ import * as path from "path";
 import { DefaultStackSynthesizer } from "aws-cdk-lib";
 
 export class TemplateBuilder {
-  private readonly templateDirectory: string;
-  readonly solutionName: string;
-  readonly solutionVersion: string;
-  readonly lambdaAssetBucketName: string;
-  constructor(templateDirectory: string, solutionName: string, lambdaAssetBucketName: string, solutionVersion: string) {
-    this.templateDirectory = templateDirectory;
-    this.solutionName = solutionName;
-    this.solutionVersion = solutionVersion;
-    this.lambdaAssetBucketName = lambdaAssetBucketName;
-  }
+  constructor(
+    readonly templateDirectory: string,
+    readonly solutionName: string,
+    readonly lambdaAssetBucketName: string,
+    readonly solutionVersion: string
+  ) {}
 
   async getTemplateFilePaths() {
     try {
       const allFiles = await readdir(this.templateDirectory);
-      return allFiles.filter((file) => path.extname(file) === ".template");
+      const templatePaths = allFiles
+        .filter((file) => path.extname(file) === ".template")
+        .map((file) => path.join(this.templateDirectory, file));
+      return templatePaths;
     } catch (err) {
       console.error(err);
       return [];

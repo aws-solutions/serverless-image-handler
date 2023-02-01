@@ -8,12 +8,12 @@ async function handler() {
   for (const path of assetFilePaths) {
     await assetPackager.createZip(path);
   }
-  await assetPackager.moveZips(outputPath)
+  await assetPackager.moveZips(outputPath);
 }
 
 handler()
-    .then(() => console.log("all assets packaged"))
-    .catch((err) => {
-      console.error(err);
-      throw err;
-    });
+  .then(() => console.log("all assets packaged"))
+  .catch((err) => {
+    console.error(err);
+    throw err;
+  });

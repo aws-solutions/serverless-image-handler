@@ -1,13 +1,14 @@
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { readdir, lstat, rename } from "node:fs/promises";
 import path from "path";
 import AdmZip from "adm-zip";
 
 export class AssetPackager {
-  private readonly cdkAssetPath: string;
-
-  constructor(assetPath: string) {
-    this.cdkAssetPath = assetPath;
-  }
+  constructor(readonly cdkAssetPath: string) {}
   async getCDKAssetFiles() {
     try {
       const allFiles = await readdir(this.cdkAssetPath);
