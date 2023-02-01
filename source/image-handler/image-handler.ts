@@ -30,6 +30,7 @@ export class ImageHandler {
    * @param options Additional sharp options to be applied
    * @returns A Sharp image object
    */
+  // eslint-disable-next-line @typescript-eslint/ban-types
   private async instantiateSharpImage(originalImage: Buffer, edits: ImageEdits, options: Object): Promise<sharp.Sharp> {
     let image: sharp.Sharp = null;
 
@@ -294,7 +295,7 @@ export class ImageHandler {
   }
 
   /**
-   * @param param
+   * @param param Value of corner to check
    * @returns Boolean identifying whether roundCrop parameters are valid
    */
   private validRoundCropParam(param: number) {
@@ -442,7 +443,7 @@ export class ImageHandler {
     alpha: string,
     sourceImageMetadata: sharp.Metadata
   ): Promise<Buffer> {
-    const params = { Bucket: bucket, Key: key };
+    const params = { Bucket: bucket, Key: decodeURIComponent(key) };
     try {
       const { width, height } = sourceImageMetadata;
       const overlayImage: S3.GetObjectOutput = await this.s3Client.getObject(params).promise();
@@ -508,8 +509,8 @@ export class ImageHandler {
 
     // Calculate the smart crop area
     return {
-      left: left,
-      top: top,
+      left,
+      top,
       width: extractWidth,
       height: extractHeight,
     };
@@ -520,6 +521,10 @@ export class ImageHandler {
    * @param response the response from a Rekognition detectFaces API call
    * @param faceIndex the index number of the face detected
    * @param boundingBox the box bounds
+   * @param boundingBox.Height height of bounding box
+   * @param boundingBox.Left left side of bounding box
+   * @param boundingBox.Top top of bounding box
+   * @param boundingBox.Width width of bounding box
    */
   private handleBounds(
     response: Rekognition.DetectFacesResponse,
@@ -664,6 +669,6 @@ export class ImageHandler {
       imageBuffer = await image.toBuffer({ resolveWithObject: true });
     }
 
-    return { imageBuffer: imageBuffer, format: format };
+    return { imageBuffer, format };
   }
 }

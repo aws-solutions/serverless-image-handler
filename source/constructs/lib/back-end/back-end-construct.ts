@@ -155,11 +155,11 @@ export class BackEnd extends Construct {
     const cloudFrontDistributionProps: DistributionProps = {
       comment: "Image Handler Distribution for Serverless Image Handler",
       defaultBehavior: {
-        origin: origin,
+        origin,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
         viewerProtocolPolicy: ViewerProtocolPolicy.HTTPS_ONLY,
-        originRequestPolicy: originRequestPolicy,
-        cachePolicy: cachePolicy,
+        originRequestPolicy,
+        cachePolicy,
       },
       priceClass: props.cloudFrontPriceClass as PriceClass,
       enableLogging: true,
@@ -192,9 +192,9 @@ export class BackEnd extends Construct {
       {
         existingLambdaObj: imageHandlerLambdaFunction,
         insertHttpSecurityHeaders: false,
-        logGroupProps: logGroupProps,
-        cloudFrontDistributionProps: cloudFrontDistributionProps,
-        apiGatewayProps: apiGatewayProps,
+        logGroupProps,
+        cloudFrontDistributionProps,
+        apiGatewayProps,
       }
     );
 

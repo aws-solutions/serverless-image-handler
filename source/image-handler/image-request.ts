@@ -269,7 +269,7 @@ export class ImageRequest {
     if (requestType === RequestTypes.DEFAULT) {
       // Decode the image request and return the image key
       const { key } = this.decodeRequest(event);
-      return key;
+      return decodeURIComponent(key);
     }
 
     if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
@@ -348,11 +348,12 @@ export class ImageRequest {
     }
   }
 
+  // eslint-disable-next-line jsdoc/require-returns-check
   /**
    * Parses the headers to be sent with the response.
    * @param event Lambda request body.
    * @param requestType Image handler request type.
-   * @returns The headers to be sent with the response.
+   * @returns (optional) The headers to be sent with the response.
    */
   public parseImageHeaders(event: ImageHandlerEvent, requestType: RequestTypes): Headers {
     if (requestType === RequestTypes.DEFAULT) {

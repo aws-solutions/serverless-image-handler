@@ -1,0 +1,36 @@
+# Workflow that runs prettier code style check.
+name: Code Style and Lint
+
+on:
+  push: 
+    branches:
+      - '*'
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  prettier:
+    name: Style Check
+    if: ${{ (github.repository_owner != 'aws-solutions' && github.event_name == 'push') || (github.repository_owner == 'aws-solutions' && github.event_name == 'pull_request') }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - uses: actions/checkout@v3
+      - run: npx --y prettier --config source/.prettierrc.yml --check 'source/**/*.ts'
+  linter:
+    name: Lint Check
+    if: ${{ (github.repository_owner != 'aws-solutions' && github.event_name == 'push') || (github.repository_owner == 'aws-solutions' && github.event_name == 'pull_request') }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: |
+          cd source && npm i
+          npx --y eslint . --ext .ts

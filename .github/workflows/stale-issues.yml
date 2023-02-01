@@ -1,0 +1,22 @@
+name: Close Stale Issues and PRs
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  close-issues:
+    name: Close Stale Issues
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v3
+        with:
+          days-before-stale: 90
+          days-before-close: 7
+          stale-issue-message: This issue has not received a response in a while. If you want to keep this issue open, please leave a comment below and auto-close will be canceled.
+          close-issue-message: This issue was closed because it has been inactive for 7 days since being marked as stale.
+          stale-pr-message: This pr has not received a response in a while. If you want to keep this issue open, please leave a comment below and auto-close will be canceled.
+          close-pr-message: This pr was closed because it has been inactive for 7 days since being marked as stale.

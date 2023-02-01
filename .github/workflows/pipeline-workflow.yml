@@ -1,0 +1,26 @@
+name: Pipeline Workflow
+
+env:
+  REGION: us-east-1
+
+on: push
+
+jobs:
+  pipeline-job:
+    name: Pipeline Job
+    if: github.repository_owner == 'aws-solutions'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.DISPATCHER_ROLE_ARN }}
+          aws-region: ${{ env.REGION }}
+          role-duration-seconds: 900
+          role-session-name: OIDCSession
+      - name: Run CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
+        with:
+          project-name: ${{ secrets.DISPATCHER_CODEBUILD_PROJECT_NAME }}
