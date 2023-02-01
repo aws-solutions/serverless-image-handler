@@ -7,7 +7,7 @@ import { readdir, readFile } from "node:fs/promises";
 import * as path from "path";
 import { DefaultStackSynthesizer } from "aws-cdk-lib";
 
-export class CdkSolutionHelper {
+export class TemplateBuilder {
   private readonly templateDirectory: string;
   readonly solutionName: string;
   readonly solutionVersion: string;
@@ -56,7 +56,10 @@ export class CdkSolutionHelper {
   updateBucketReference(template: string) {
     // CDK uses default ${Qualifier} to create S3 buckets
     // The placeholders cdk-${Qualifier}-assets-${AWS::AccountId}-${AWS::Region} will be replaced
-    const updatedTemplate = template.replaceAll(`cdk-${DefaultStackSynthesizer.DEFAULT_QUALIFIER}-assets-\${AWS::AccountId}-\${AWS::Region}`, `${this.lambdaAssetBucketName}-\${AWS::Region}`);
+    const updatedTemplate = template.replaceAll(
+      `cdk-${DefaultStackSynthesizer.DEFAULT_QUALIFIER}-assets-\${AWS::AccountId}-\${AWS::Region}`,
+      `${this.lambdaAssetBucketName}-\${AWS::Region}`
+    );
     return updatedTemplate;
   }
 }
