@@ -333,6 +333,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "Fn::Join": [
             "-",
             [
+              "AppRegistry",
               {
                 "Ref": "AWS::StackName",
               },
@@ -1825,7 +1826,15 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
         },
         "Description": "Attribute group for solution information",
         "Name": {
-          "Ref": "AWS::StackName",
+          "Fn::Join": [
+            "",
+            [
+              "AppRegistry-",
+              {
+                "Ref": "AWS::StackName",
+              },
+            ],
+          ],
         },
         "Tags": {
           "SolutionId": "S0ABC",

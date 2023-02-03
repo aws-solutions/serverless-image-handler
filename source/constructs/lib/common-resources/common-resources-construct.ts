@@ -93,7 +93,7 @@ export class CommonResources extends Construct {
     const applicationType = "AWS-Solutions";
 
     const application = new appreg.Application(stack, "AppRegistry", {
-      applicationName: Fn.join("-", [Aws.STACK_NAME, Aws.REGION, Aws.ACCOUNT_ID]),
+      applicationName: Fn.join("-", ["AppRegistry", Aws.STACK_NAME, Aws.REGION, Aws.ACCOUNT_ID]),
       description: `Service Catalog application to track and manage all your resources for the solution ${props.applicationName}`,
     });
     application.associateStack(stack);
@@ -104,7 +104,7 @@ export class CommonResources extends Construct {
     Tags.of(application).add("Solutions:ApplicationType", applicationType);
 
     const attributeGroup = new appreg.AttributeGroup(stack, "DefaultApplicationAttributes", {
-      attributeGroupName: Aws.STACK_NAME,
+      attributeGroupName: `AppRegistry-${Aws.STACK_NAME}`,
       description: "Attribute group for solution information",
       attributes: {
         applicationType,
