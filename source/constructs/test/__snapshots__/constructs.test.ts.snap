@@ -333,7 +333,9 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "Fn::Join": [
             "-",
             [
-              "sih",
+              {
+                "Ref": "AWS::StackName",
+              },
               {
                 "Ref": "AWS::Region",
               },
