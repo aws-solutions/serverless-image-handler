@@ -274,7 +274,7 @@ export class ImageRequest {
     if (requestType === RequestTypes.DEFAULT) {
       // Decode the image request and return the image key
       const { key } = this.decodeRequest(event);
-      return decodeURIComponent(key);
+      return key;
     }
 
     if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {

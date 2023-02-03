@@ -18,10 +18,13 @@ function importOriginalImage() {
     // Assemble the image request
     const request = {
         bucket: bucketName,
-        key: encodeURIComponent(keyName)
+        key: keyName
     }
     const strRequest = JSON.stringify(request);
-    const encRequest = btoa(strRequest);
+    const encRequest = btoa(encodeURIComponent(strRequest).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+        return String.fromCharCode(parseInt(p1, 16))
+    }));
+    
     // Import the image data into the element
     $(`#img-original`)
         .attr(`src`, `${appVariables.apiEndpoint}/${encRequest}`)
@@ -77,14 +80,18 @@ function getPreviewImage() {
     // Set up the request body
     const request = {
         bucket: bucketName,
-        key: encodeURIComponent(keyName),
+        key: keyName,
         edits: _edits
     }
     if (Object.keys(request.edits).length === 0) { delete request.edits }
     console.log(request);
     // Setup encoded request
     const str = JSON.stringify(request);
-    const enc = btoa(str);
+
+    const enc = btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+        return String.fromCharCode(parseInt(p1, 16))
+    }));
+
     // Fill the preview image
     $(`#img-preview`).attr(`src`, `${appVariables.apiEndpoint}/${enc}`);
     // Fill the request body field
