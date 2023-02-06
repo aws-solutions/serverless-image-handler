@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - package-lock.json for all modules [#426](https://github.com/aws-solutions/serverless-image-handler/pull/426)
 - github workflows for running unit test, eslint and prettier formatting, cdk nag, security scans [#402](https://github.com/aws-solutions/serverless-image-handler/pull/402)
 - demo-ui unicode support [#416](https://github.com/aws-solutions/serverless-image-handler/issues/416)
+- support for multiple cloudformation stack deployments in the same region
 
 ### Changed
 
