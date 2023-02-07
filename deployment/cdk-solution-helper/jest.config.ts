@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// TODO check for base reference config file
 import type { Config } from "jest";
 
 const config: Config = {

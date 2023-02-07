@@ -14,9 +14,8 @@ phases:
       - echo "Starting build `date` in `pwd`"
       - chmod +x ./build-s3-dist.sh && ./build-s3-dist.sh $DIST_OUTPUT_BUCKET $SOLUTION_NAME $VERSION
       - echo "Build completed `date`"
-      - echo "Starting open-source-dist `date` in `pwd`"
-      - chmod +x ./build-open-source-dist.sh && ./build-open-source-dist.sh $SOLUTION_NAME
-      - echo "Open Source Dist completed `date`"
+      - echo "touch open-source-dist `date` in `pwd`"
+      - touch ./build-open-source-dist.sh
   post_build:
     commands:
       - echo "Retrieving next stage buildspec `date` in `pwd`"
