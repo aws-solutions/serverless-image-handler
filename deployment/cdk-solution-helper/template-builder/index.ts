@@ -6,8 +6,14 @@
 import { writeFile } from "node:fs/promises";
 import { TemplateBuilder } from "./template-builder";
 
-async function handler() {
-  const CDKHelper = new TemplateBuilder(process.argv[2], process.argv[3], process.argv[4], process.argv[5]);
+export async function handler(
+  templatePath: string | undefined,
+  solutionName: string | undefined,
+  lambdaBucket: string | undefined,
+  version: string | undefined
+) {
+  if (!templatePath || !solutionName || !lambdaBucket || !version) throw new Error("undefined arguments");
+  const CDKHelper = new TemplateBuilder(templatePath, solutionName, lambdaBucket, version);
   const templatePaths = await CDKHelper.getTemplateFilePaths();
   for (const path of templatePaths) {
     const templateContents = await CDKHelper.parseJsonTemplate(path);
@@ -19,9 +25,17 @@ async function handler() {
   }
 }
 
-handler()
-  .then(() => console.log("written all cfn templates"))
-  .catch((err) => {
-    console.error(err);
-    throw err;
-  });
+if (require.main === module) {
+  // this module was run directly from the command line, getting command line arguments
+  // e.g. npx ts-node index.ts templatePath mySolution lambdaAssetBucketName myVersion
+  const templatePath = process.argv[3];
+  const solutionName = process.argv[4];
+  const lambdaBucketName = process.argv[5];
+  const version = process.argv[6];
+  handler(templatePath, solutionName, lambdaBucketName, version)
+    .then(() => console.log("written all cfn templates"))
+    .catch((err) => {
+      console.error(err);
+      throw err;
+    });
+}

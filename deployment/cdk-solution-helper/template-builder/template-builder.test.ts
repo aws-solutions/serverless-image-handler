@@ -3,4 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// TODO add unit tests
+import { handler } from "./index";
+
+describe("Handler Tests", () => {
+  it("should ", async function () {
+    // Arrange, Act
+    // Assert
+  });
+});

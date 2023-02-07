@@ -30,13 +30,15 @@ export class TemplateBuilder {
 
   updateLambdaAssetReference(template: Record<string, any>) {
     const lambdaResourceKeys = Object.keys(template.Resources).filter(
-      (key) => template.Resources[key].Type === "AWS::Lambda::Function"
+      (key) =>
+        template.Resources[key].Type === "AWS::Lambda::Function" ||
+        template.Resources[key].Type === "AWS::Lambda::LayerVersion"
     );
     lambdaResourceKeys.forEach((resourceKey) => {
       const lambdaFunction = template.Resources[resourceKey];
       const assetProperty = lambdaFunction.Properties.Code;
       const artifactHash = assetProperty.S3Key;
-      assetProperty.S3Key = `${this.solutionName}/${this.solutionVersion}/asset${artifactHash}`;
+      assetProperty.S3Key = `${this.solutionName}/${this.solutionVersion}/${artifactHash}`;
       assetProperty.S3Bucket = {
         "Fn::Sub": `${this.lambdaAssetBucketName}-\${AWS::Region}`,
       };

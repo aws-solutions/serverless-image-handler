@@ -1,19 +1,30 @@
-import { AssetPackager } from "./asset-packager";
-import * as path from "path";
-async function handler() {
-  const cdkAssetPath = process.argv[2];
-  const outputPath = process.argv[3];
-  const assetPackager = new AssetPackager(cdkAssetPath);
-  const assetFilePaths = await assetPackager.getCDKAssetFiles();
-  for (const path of assetFilePaths) {
-    await assetPackager.createZip(path);
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { CDKAssetPackager } from "./asset-packager";
+import path from "path";
+
+export async function handler(cdkAssetFolderPath: string | undefined, outputPath: string | undefined) {
+  if (!cdkAssetFolderPath || !outputPath) throw new Error("undefined input path");
+  const assetPackager = new CDKAssetPackager(cdkAssetFolderPath);
+  const assetPaths = await assetPackager.getAssetPaths();
+  for (const path of assetPaths) {
+    await assetPackager.createAssetZip(path);
   }
   await assetPackager.moveZips(outputPath);
 }
 
-handler()
-  .then(() => console.log("all assets packaged"))
-  .catch((err) => {
-    console.error(err);
-    throw err;
-  });
+if (require.main === module) {
+  // this module was run directly from the command line, getting command line arguments
+  // e.g. npx ts-node index.ts cdkAssetPath outputPath
+  const cdkAssetPath = process.argv[3];
+  const outputPath = process.argv[4];
+  handler(cdkAssetPath, outputPath)
+    .then(() => console.log("all assets packaged"))
+    .catch((err) => {
+      console.error(err);
+      throw err;
+    });
+}
