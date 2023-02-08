@@ -7,17 +7,24 @@ import { writeFile } from "node:fs/promises";
 import { TemplateBuilder } from "./template-builder";
 
 export async function handler(
-  templatePath: string | undefined,
+  templateDirectoryPath: string | undefined,
   solutionName: string | undefined,
   lambdaBucket: string | undefined,
   version: string | undefined
 ) {
-  if (!templatePath || !solutionName || !lambdaBucket || !version) throw new Error("undefined arguments");
-  const CDKHelper = new TemplateBuilder(templatePath, solutionName, lambdaBucket, version);
+  if (!templateDirectoryPath || !solutionName || !lambdaBucket || !version)
+    throw new Error("undefined arguments");
+  const CDKHelper = new TemplateBuilder(
+    templateDirectoryPath,
+    solutionName,
+    lambdaBucket,
+    version
+  );
   const templatePaths = await CDKHelper.getTemplateFilePaths();
   for (const path of templatePaths) {
     const templateContents = await CDKHelper.parseJsonTemplate(path);
-    const templateWithUpdatedLambdaCodeReference = await CDKHelper.updateLambdaAssetReference(templateContents);
+    const templateWithUpdatedLambdaCodeReference =
+      await CDKHelper.updateLambdaAssetReference(templateContents);
     const templateWithUpdatedBucketReference = CDKHelper.updateBucketReference(
       JSON.stringify(templateWithUpdatedLambdaCodeReference, null, 2)
     );

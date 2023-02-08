@@ -11,7 +11,12 @@ const config: Config = {
   transform: {
     "^.+\\.(t)sx?$": "ts-jest",
   },
-  collectCoverageFrom: ["**/*.ts", "!**/*.test.ts", "!./jest.config.ts", "!./jest.setup.ts"],
+  collectCoverageFrom: [
+    "**/*.ts",
+    "!**/*.test.ts",
+    "!./jest.config.ts",
+    "!./jest.setup.ts",
+  ],
   coverageReporters: [["lcov", { projectRoot: "../" }], "text"],
 };
 
