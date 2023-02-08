@@ -10,10 +10,10 @@
     "cdk": "cdk",
     "clean:install": "rm -rf node_modules/ cdk.out/ coverage/ && npm ci && cd ../ && npm run install:dependencies",
     "cdk:synth": "npm run clean:install && overrideWarningsEnabled=false npx cdk synth --asset-metadata false --path-metadata false --json false",
-    "pretest": "rm -rf node_modules/ cdk.out/ coverage/ && npm ci",
+    "pretest": "npm run clean:install",
     "build": "tsc",
     "watch": "tsc -w",
-    "test": "overrideWarningsEnabled=false jest --coverage"
+    "test": "overrideWarningsEnabled=false jest --coverage -u"
   },
   "devDependencies": {
     "@aws-cdk/aws-servicecatalogappregistry-alpha": "2.39.1-alpha.0",

@@ -7,9 +7,17 @@ import { readdir, lstat, rename } from "node:fs/promises";
 import path from "path";
 import AdmZip from "adm-zip";
 
+/**
+ * @description Class to help with packaging and staging cdk assets
+ * on solution internal pipelines
+ */
 export class CDKAssetPackager {
   constructor(private readonly assetFolderPath: string) {}
 
+  /**
+   * @description get cdk asset paths
+   * All cdk generated assets are prepended with "asset"
+   */
   async getAssetPaths() {
     try {
       const allFiles = await readdir(this.assetFolderPath);
@@ -24,7 +32,7 @@ export class CDKAssetPackager {
   }
 
   /**
-   * @description goes down 1 level deep to create zip
+   * @description goes down 1 level deep to create zip // TODO package modules not bundled
    * @param folderPath
    */
   async createAssetZip(folderPath: string) {
@@ -38,6 +46,10 @@ export class CDKAssetPackager {
     }
   }
 
+  /**
+   * @description moves zips to staging output directory in internal pipelines
+   * @param outputPath
+   */
   async moveZips(outputPath: string) {
     const allFiles = await readdir(this.assetFolderPath);
     const allZipPaths = allFiles.filter((file) => path.extname(file) === ".zip");
