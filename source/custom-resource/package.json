@@ -1,6 +1,6 @@
 {
   "name": "custom-resource",
-  "version": "6.0.0",
+  "version": "6.1.1",
   "private": true,
   "description": "Serverless Image Handler custom resource",
   "license": "Apache-2.0",
@@ -9,7 +9,7 @@
   "scripts": {
     "prebuild": "npm run clean && npm install",
     "build": "tsc --build tsconfig.json",
-    "clean": "rm -rf node_modules/ dist/ coverage/ package-lock.json",
+    "clean": "rm -rf node_modules/ dist/ coverage/",
     "package": "npm run build && npm prune --production && rsync -avrq ./node_modules ./dist && npm run include-solution-utils && npm run package:zip",
     "package:zip": "cd dist && zip -q -r9 ./package.zip * -x '**/test/*' && cd ..",
     "pretest": "npm run clean && npm install",
@@ -19,18 +19,18 @@
     "solution-utils:package": "cd ../solution-utils && npm run package && cd dist/ && rsync -avrq . ../../$npm_package_name/dist/solution-utils/ && cd ../../$npm_package_name"
   },
   "dependencies": {
-    "axios": "^0.21.1",
-    "moment": "^2.29.1",
-    "uuid": "^8.3.0"
+    "axios": "^1.0.0",
+    "moment": "^2.29.4",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@types/jest": "^27.0.0",
-    "@types/node": "^16.10.3",
-    "@types/uuid": "^8.3.1",
-    "aws-sdk": "^2.1031.0",
-    "jest": "^27.0.0",
-    "ts-jest": "^27.0.0",
-    "ts-node": "^10.2.1",
-    "typescript": "^4.4.3"
+    "@types/jest": "^29.1.1",
+    "@types/node": "^18.8.4",
+    "@types/uuid": "^8.3.4",
+    "aws-sdk": "^2.1229.0",
+    "jest": "^29.1.2",
+    "ts-jest": "^29.0.3",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.4"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "solution-utils",
-  "version": "6.0.0",
+  "version": "6.1.1",
   "private": true,
   "description": "Utilities to be used within this solution",
   "license": "Apache-2.0",
@@ -14,17 +14,17 @@
   "scripts": {
     "build": "npm run clean && npm install && npm run build:tsc",
     "build:tsc": "tsc --project tsconfig.json",
-    "clean": "rm -rf node_modules/ dist/ coverage/ package-lock.json",
+    "clean": "rm -rf node_modules/ dist/ coverage/",
     "package": "npm run build && npm prune --production && rsync -avrq ./node_modules ./dist",
     "pretest": "npm run clean && npm install",
     "test": "jest --coverage --silent"
   },
   "devDependencies": {
-    "@types/jest": "^27.0.0",
-    "@types/node": "^16.4.5",
-    "jest": "^27.0.4",
-    "ts-jest": "^27.0.4",
+    "@types/jest": "^29.1.1",
+    "@types/node": "^18.8.2",
+    "jest": "^29.1.2",
+    "ts-jest": "^29.0.3",
     "ts-node": "^10.1.0",
-    "typescript": "^4.4.3"
+    "typescript": "^4.8.4"
   }
 }

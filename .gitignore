@@ -18,10 +18,10 @@
 # misc
 **/npm-debug.log
 **/testem.log
-**/package-lock.json
 **/.vscode/settings.json
 demo-ui-config.js
 
 # System Files
 **/.DS_Store
 **/.vscode
+**/.idea

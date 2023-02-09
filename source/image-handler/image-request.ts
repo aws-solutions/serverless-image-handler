@@ -1,12 +1,23 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import S3 from 'aws-sdk/clients/s3';
-import { createHmac } from 'crypto';
+import S3 from "aws-sdk/clients/s3";
+import { createHmac } from "crypto";
 
-import { DefaultImageRequest, ImageEdits, ImageFormatTypes, ImageHandlerError, ImageHandlerEvent, ImageRequestInfo, Headers, RequestTypes, StatusCodes } from './lib';
-import { SecretProvider } from './secret-provider';
-import { ThumborMapper } from './thumbor-mapper';
+import {
+  ContentTypes,
+  DefaultImageRequest,
+  Headers,
+  ImageEdits,
+  ImageFormatTypes,
+  ImageHandlerError,
+  ImageHandlerEvent,
+  ImageRequestInfo,
+  RequestTypes,
+  StatusCodes,
+} from "./lib";
+import { SecretProvider } from "./secret-provider";
+import { ThumborMapper } from "./thumbor-mapper";
 
 type OriginalImageInfo = Partial<{
   contentType: string;
@@ -17,9 +28,65 @@ type OriginalImageInfo = Partial<{
 }>;
 
 export class ImageRequest {
-  private static readonly DEFAULT_REDUCTION_EFFORT = 4;
+  private static readonly DEFAULT_EFFORT = 4;
 
-  constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) { }
+  constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) {}
+
+  /**
+   * Determines the output format of an image
+   * @param imageRequestInfo Initialized image request information
+   * @param event Lambda requrest body
+   */
+  private determineOutputFormat(imageRequestInfo: ImageRequestInfo, event: ImageHandlerEvent): void {
+    const outputFormat = this.getOutputFormat(event, imageRequestInfo.requestType);
+    // if webp check reduction effort, if invalid value, use 4 (default in sharp)
+    if (outputFormat === ImageFormatTypes.WEBP && imageRequestInfo.requestType === RequestTypes.DEFAULT) {
+      const decoded = this.decodeRequest(event);
+      if (typeof decoded.effort !== "undefined") {
+        const effort = Math.trunc(decoded.effort);
+        const isValid = !isNaN(effort) && effort >= 0 && effort <= 6;
+        imageRequestInfo.effort = isValid ? effort : ImageRequest.DEFAULT_EFFORT;
+      }
+    }
+    if (imageRequestInfo.edits && imageRequestInfo.edits.toFormat) {
+      imageRequestInfo.outputFormat = imageRequestInfo.edits.toFormat;
+    } else if (outputFormat) {
+      imageRequestInfo.outputFormat = outputFormat;
+    }
+  }
+
+  /**
+   * Fix quality for Thumbor and Custom request type if outputFormat is different from quality type.
+   * @param imageRequestInfo Initialized image request information
+   */
+  private fixQuality(imageRequestInfo: ImageRequestInfo): void {
+    if (imageRequestInfo.outputFormat) {
+      const requestType = [RequestTypes.CUSTOM, RequestTypes.THUMBOR];
+      const acceptedValues = [
+        ImageFormatTypes.JPEG,
+        ImageFormatTypes.PNG,
+        ImageFormatTypes.WEBP,
+        ImageFormatTypes.TIFF,
+        ImageFormatTypes.HEIF,
+        ImageFormatTypes.GIF,
+      ];
+
+      imageRequestInfo.contentType = `image/${imageRequestInfo.outputFormat}`;
+      if (
+        requestType.includes(imageRequestInfo.requestType) &&
+        acceptedValues.includes(imageRequestInfo.outputFormat)
+      ) {
+        const qualityKey = Object.keys(imageRequestInfo.edits).filter((key) =>
+          acceptedValues.includes(key as ImageFormatTypes)
+        )[0];
+
+        if (qualityKey && qualityKey !== imageRequestInfo.outputFormat) {
+          imageRequestInfo.edits[imageRequestInfo.outputFormat] = imageRequestInfo.edits[qualityKey];
+          delete imageRequestInfo.edits[qualityKey];
+        }
+      }
+    }
+  }
 
   /**
    * Initializer function for creating a new image request, used by the image handler to perform image modifications.
@@ -43,8 +110,13 @@ export class ImageRequest {
 
       imageRequestInfo.headers = this.parseImageHeaders(event, imageRequestInfo.requestType);
 
-      // If the original image is SVG file and it has any edits but no output format, change the format to WebP.
-      if (imageRequestInfo.contentType === 'image/svg+xml' && imageRequestInfo.edits && Object.keys(imageRequestInfo.edits).length > 0 && !imageRequestInfo.edits.toFormat) {
+      // If the original image is SVG file and it has any edits but no output format, change the format to PNG.
+      if (
+        imageRequestInfo.contentType === ContentTypes.SVG &&
+        imageRequestInfo.edits &&
+        Object.keys(imageRequestInfo.edits).length > 0 &&
+        !imageRequestInfo.edits.toFormat
+      ) {
         imageRequestInfo.outputFormat = ImageFormatTypes.PNG;
       }
 
@@ -53,39 +125,16 @@ export class ImageRequest {
        * 2) If headers contain "Accept: image/webp", the output format is webp.
        * 3) Use the default image format for the rest of cases.
        */
-      if (imageRequestInfo.contentType !== 'image/svg+xml' || imageRequestInfo.edits.toFormat || imageRequestInfo.outputFormat) {
-        const outputFormat = this.getOutputFormat(event, imageRequestInfo.requestType);
-        // if webp check reduction effort, if invalid value, use 4 (default in sharp)
-        if (outputFormat === ImageFormatTypes.WEBP && imageRequestInfo.requestType === RequestTypes.DEFAULT) {
-          const decoded = this.decodeRequest(event);
-          if (typeof decoded.reductionEffort !== 'undefined') {
-            const reductionEffort = Math.trunc(decoded.reductionEffort);
-            const isValid = !isNaN(reductionEffort) && reductionEffort >= 0 && reductionEffort <= 6;
-            imageRequestInfo.reductionEffort = isValid ? reductionEffort : ImageRequest.DEFAULT_REDUCTION_EFFORT;
-          }
-        }
-        if (imageRequestInfo.edits && imageRequestInfo.edits.toFormat) {
-          imageRequestInfo.outputFormat = imageRequestInfo.edits.toFormat;
-        } else if (outputFormat) {
-          imageRequestInfo.outputFormat = outputFormat;
-        }
+      if (
+        imageRequestInfo.contentType !== ContentTypes.SVG ||
+        imageRequestInfo.edits.toFormat ||
+        imageRequestInfo.outputFormat
+      ) {
+        this.determineOutputFormat(imageRequestInfo, event);
       }
 
       // Fix quality for Thumbor and Custom request type if outputFormat is different from quality type.
-      if (imageRequestInfo.outputFormat) {
-        const requestType = [RequestTypes.CUSTOM, RequestTypes.THUMBOR];
-        const acceptedValues = [ImageFormatTypes.JPEG, ImageFormatTypes.PNG, ImageFormatTypes.WEBP, ImageFormatTypes.TIFF, ImageFormatTypes.HEIF];
-
-        imageRequestInfo.contentType = `image/${imageRequestInfo.outputFormat}`;
-        if (requestType.includes(imageRequestInfo.requestType) && acceptedValues.includes(imageRequestInfo.outputFormat)) {
-          const qualityKey = Object.keys(imageRequestInfo.edits).filter(key => acceptedValues.includes(key as ImageFormatTypes))[0];
-
-          if (qualityKey && qualityKey !== imageRequestInfo.outputFormat) {
-            imageRequestInfo.edits[imageRequestInfo.outputFormat] = imageRequestInfo.edits[qualityKey];
-            delete imageRequestInfo.edits[qualityKey];
-          }
-        }
-      }
+      this.fixQuality(imageRequestInfo);
 
       return imageRequestInfo;
     } catch (error) {
@@ -111,13 +160,13 @@ export class ImageRequest {
 
       if (originalImage.ContentType) {
         // If using default S3 ContentType infer from hex headers
-        if (['binary/octet-stream', 'application/octet-stream'].includes(originalImage.ContentType)) {
+        if (["binary/octet-stream", "application/octet-stream"].includes(originalImage.ContentType)) {
           result.contentType = this.inferImageType(imageBuffer);
         } else {
           result.contentType = originalImage.ContentType;
         }
       } else {
-        result.contentType = 'image';
+        result.contentType = "image";
       }
 
       if (originalImage.Expires) {
@@ -128,14 +177,14 @@ export class ImageRequest {
         result.lastModified = new Date(originalImage.LastModified).toUTCString();
       }
 
-      result.cacheControl = originalImage.CacheControl ?? 'max-age=31536000,public';
+      result.cacheControl = originalImage.CacheControl ?? "max-age=31536000,public";
       result.originalImage = imageBuffer;
 
       return result;
     } catch (error) {
       let status = StatusCodes.INTERNAL_SERVER_ERROR;
       let message = error.message;
-      if (error.code === 'NoSuchKey') {
+      if (error.code === "NoSuchKey") {
         status = StatusCodes.NOT_FOUND;
         message = `The image ${key} does not exist or the request may not be base64 encoded properly.`;
       }
@@ -158,13 +207,13 @@ export class ImageRequest {
         // Check the provided bucket against the allowed list
         const sourceBuckets = this.getAllowedSourceBuckets();
 
-        if (sourceBuckets.includes(request.bucket) || request.bucket.match(new RegExp('^' + sourceBuckets[0] + '$'))) {
+        if (sourceBuckets.includes(request.bucket) || request.bucket.match(new RegExp("^" + sourceBuckets[0] + "$"))) {
           return request.bucket;
         } else {
           throw new ImageHandlerError(
             StatusCodes.FORBIDDEN,
-            'ImageBucket::CannotAccessBucket',
-            'The bucket you specified could not be accessed. Please check that the bucket is specified in your SOURCE_BUCKETS.'
+            "ImageBucket::CannotAccessBucket",
+            "The bucket you specified could not be accessed. Please check that the bucket is specified in your SOURCE_BUCKETS."
           );
         }
       } else {
@@ -179,8 +228,8 @@ export class ImageRequest {
     } else {
       throw new ImageHandlerError(
         StatusCodes.NOT_FOUND,
-        'ImageBucket::CannotFindBucket',
-        'The bucket you specified could not be found. Please check the spelling of the bucket name in your request.'
+        "ImageBucket::CannotFindBucket",
+        "The bucket you specified could not be found. Please check the spelling of the bucket name in your request."
       );
     }
   }
@@ -205,8 +254,8 @@ export class ImageRequest {
     } else {
       throw new ImageHandlerError(
         StatusCodes.BAD_REQUEST,
-        'ImageEdits::CannotParseEdits',
-        'The edits you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance.'
+        "ImageEdits::CannotParseEdits",
+        "The edits you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance."
       );
     }
   }
@@ -230,8 +279,8 @@ export class ImageRequest {
       if (requestType === RequestTypes.CUSTOM) {
         const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION } = process.env;
 
-        if (typeof REWRITE_MATCH_PATTERN === 'string') {
-          const patternStrings = REWRITE_MATCH_PATTERN.split('/');
+        if (typeof REWRITE_MATCH_PATTERN === "string") {
+          const patternStrings = REWRITE_MATCH_PATTERN.split("/");
           const flags = patternStrings.pop();
           const parsedPatternString = REWRITE_MATCH_PATTERN.slice(1, REWRITE_MATCH_PATTERN.length - 1 - flags.length);
           const regExp = new RegExp(parsedPatternString, flags);
@@ -242,14 +291,16 @@ export class ImageRequest {
         }
       }
 
-      return decodeURIComponent(path.replace(/\/\d+x\d+:\d+x\d+\/|(?<=\/)\d+x\d+\/|filters:[^/]+|\/fit-in(?=\/)|^\/+/g, '').replace(/^\/+/, ''));
+      return decodeURIComponent(
+        path.replace(/\/\d+x\d+:\d+x\d+\/|(?<=\/)\d+x\d+\/|filters:[^/]+|\/fit-in(?=\/)|^\/+/g, "").replace(/^\/+/, "")
+      );
     }
 
     // Return an error for all other conditions
     throw new ImageHandlerError(
       StatusCodes.NOT_FOUND,
-      'ImageEdits::CannotFindImage',
-      'The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists.'
+      "ImageEdits::CannotFindImage",
+      "The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists."
     );
   }
 
@@ -262,16 +313,21 @@ export class ImageRequest {
   public parseRequestType(event: ImageHandlerEvent): RequestTypes {
     const { path } = event;
     const matchDefault = /^(\/?)([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
-    const matchThumbor = /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?)(((.(?!(\.[^.\\/]+$)))*$)|.*(\.jpg$|.\.png$|\.webp$|\.tiff$|\.jpeg$|\.svg$))/i;
+    const matchThumbor =
+      /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?)(((.(?!(\.[^.\\/]+$)))*$)|.*(\.jpg$|\.jpeg$|.\.png$|\.webp$|\.tiff$|\.tif$|\.svg$|\.gif$))/i;
     const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION } = process.env;
-    const definedEnvironmentVariables = REWRITE_MATCH_PATTERN !== '' && REWRITE_SUBSTITUTION !== '' && REWRITE_MATCH_PATTERN !== undefined && REWRITE_SUBSTITUTION !== undefined;
+    const definedEnvironmentVariables =
+      REWRITE_MATCH_PATTERN !== "" &&
+      REWRITE_SUBSTITUTION !== "" &&
+      REWRITE_MATCH_PATTERN !== undefined &&
+      REWRITE_SUBSTITUTION !== undefined;
 
     // Check if path is base 64 encoded
     let isBase64Encoded = true;
     try {
       this.decodeRequest(event);
     } catch (error) {
-      console.error(error);
+      console.info("Path is not base64 encoded.");
       isBase64Encoded = false;
     }
 
@@ -287,17 +343,18 @@ export class ImageRequest {
     } else {
       throw new ImageHandlerError(
         StatusCodes.BAD_REQUEST,
-        'RequestTypeError',
-        'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.'
+        "RequestTypeError",
+        "The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg, gif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests."
       );
     }
   }
 
+  // eslint-disable-next-line jsdoc/require-returns-check
   /**
    * Parses the headers to be sent with the response.
    * @param event Lambda request body.
    * @param requestType Image handler request type.
-   * @returns The headers to be sent with the response.
+   * @returns (optional) The headers to be sent with the response.
    */
   public parseImageHeaders(event: ImageHandlerEvent, requestType: RequestTypes): Headers {
     if (requestType === RequestTypes.DEFAULT) {
@@ -318,23 +375,23 @@ export class ImageRequest {
     const { path } = event;
 
     if (path) {
-      const encoded = path.charAt(0) === '/' ? path.slice(1) : path;
-      const toBuffer = Buffer.from(encoded, 'base64');
+      const encoded = path.charAt(0) === "/" ? path.slice(1) : path;
+      const toBuffer = Buffer.from(encoded, "base64");
       try {
         // To support European characters, 'ascii' was removed.
         return JSON.parse(toBuffer.toString());
       } catch (error) {
         throw new ImageHandlerError(
           StatusCodes.BAD_REQUEST,
-          'DecodeRequest::CannotDecodeRequest',
-          'The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.'
+          "DecodeRequest::CannotDecodeRequest",
+          "The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance."
         );
       }
     } else {
       throw new ImageHandlerError(
         StatusCodes.BAD_REQUEST,
-        'DecodeRequest::CannotReadPath',
-        'The URL path you provided could not be read. Please ensure that it is properly formed according to the solution documentation.'
+        "DecodeRequest::CannotReadPath",
+        "The URL path you provided could not be read. Please ensure that it is properly formed according to the solution documentation."
       );
     }
   }
@@ -350,11 +407,11 @@ export class ImageRequest {
     if (SOURCE_BUCKETS === undefined) {
       throw new ImageHandlerError(
         StatusCodes.BAD_REQUEST,
-        'GetAllowedSourceBuckets::NoSourceBuckets',
-        'The SOURCE_BUCKETS variable could not be read. Please check that it is not empty and contains at least one source bucket, or multiple buckets separated by commas. Spaces can be provided between commas and bucket names, these will be automatically parsed out when decoding.'
+        "GetAllowedSourceBuckets::NoSourceBuckets",
+        "The SOURCE_BUCKETS variable could not be read. Please check that it is not empty and contains at least one source bucket, or multiple buckets separated by commas. Spaces can be provided between commas and bucket names, these will be automatically parsed out when decoding."
       );
     } else {
-      return SOURCE_BUCKETS.replace(/\s+/g, '').split(',');
+      return SOURCE_BUCKETS.replace(/\s+/g, "").split(",");
     }
   }
 
@@ -367,7 +424,7 @@ export class ImageRequest {
   public getOutputFormat(event: ImageHandlerEvent, requestType: RequestTypes = undefined): ImageFormatTypes {
     const { AUTO_WEBP } = process.env;
 
-    if (AUTO_WEBP === 'Yes' && event.headers.Accept && event.headers.Accept.includes('image/webp')) {
+    if (AUTO_WEBP === "Yes" && event.headers.Accept && event.headers.Accept.includes(ContentTypes.WEBP)) {
       return ImageFormatTypes.WEBP;
     } else if (requestType === RequestTypes.DEFAULT) {
       const decoded = this.decodeRequest(event);
@@ -383,26 +440,27 @@ export class ImageRequest {
    * @returns The output format.
    */
   public inferImageType(imageBuffer: Buffer): string {
-    const imageSignature = imageBuffer.slice(0, 4).toString('hex').toUpperCase();
+    const imageSignature = imageBuffer.slice(0, 4).toString("hex").toUpperCase();
     switch (imageSignature) {
-      case '89504E47':
-        return 'image/png';
-      case 'FFD8FFDB':
-      case 'FFD8FFE0':
-      case 'FFD8FFEE':
-      case 'FFD8FFE1':
-        return 'image/jpeg';
-      case '52494646':
-        return 'image/webp';
-      case '49492A00':
-        return 'image/tiff';
-      case '4D4D002A':
-        return 'image/tiff';
+      case "89504E47":
+        return ContentTypes.PNG;
+      case "FFD8FFDB":
+      case "FFD8FFE0":
+      case "FFD8FFEE":
+      case "FFD8FFE1":
+        return ContentTypes.JPEG;
+      case "52494646":
+        return ContentTypes.WEBP;
+      case "49492A00":
+      case "4D4D002A":
+        return ContentTypes.TIFF;
+      case "47494638":
+        return ContentTypes.GIF;
       default:
         throw new ImageHandlerError(
           StatusCodes.INTERNAL_SERVER_ERROR,
-          'RequestTypeError',
-          'The file does not have an extension and the file type could not be inferred. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg). Refer to the documentation for additional guidance on forming image requests.'
+          "RequestTypeError",
+          "The file does not have an extension and the file type could not be inferred. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg). Refer to the documentation for additional guidance on forming image requests."
         );
     }
   }
@@ -430,11 +488,15 @@ export class ImageRequest {
     const { ENABLE_SIGNATURE, SECRETS_MANAGER, SECRET_KEY } = process.env;
 
     // Checks signature enabled
-    if (ENABLE_SIGNATURE === 'Yes') {
+    if (ENABLE_SIGNATURE === "Yes") {
       const { path, queryStringParameters } = event;
 
       if (!queryStringParameters?.signature) {
-        throw new ImageHandlerError(StatusCodes.BAD_REQUEST, 'AuthorizationQueryParametersError', 'Query-string requires the signature parameter.');
+        throw new ImageHandlerError(
+          StatusCodes.BAD_REQUEST,
+          "AuthorizationQueryParametersError",
+          "Query-string requires the signature parameter."
+        );
       }
 
       const queryString = this.recreateQueryString(queryStringParameters);
@@ -448,15 +510,19 @@ export class ImageRequest {
 
         // Signature should be made with the full path.
         if (signature !== hash) {
-          throw new ImageHandlerError(StatusCodes.FORBIDDEN, 'SignatureDoesNotMatch', 'Signature does not match.');
+          throw new ImageHandlerError(StatusCodes.FORBIDDEN, "SignatureDoesNotMatch", "Signature does not match.");
         }
       } catch (error) {
-        if (error.code === 'SignatureDoesNotMatch') {
+        if (error.code === "SignatureDoesNotMatch") {
           throw error;
         }
 
-        console.error('Error occurred while checking signature.', error);
-        throw new ImageHandlerError(StatusCodes.INTERNAL_SERVER_ERROR, 'SignatureValidationFailure', 'Signature validation failed.');
+        console.error("Error occurred while checking signature.", error);
+        throw new ImageHandlerError(
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          "SignatureValidationFailure",
+          "Signature validation failed."
+        );
       }
     }
   }

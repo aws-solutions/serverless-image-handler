@@ -7,5 +7,5 @@
  * @returns `true` if the `str` parameter is null or empty, or if value consists exclusively of white-space characters.
  */
 export function isNullOrWhiteSpace(str: string): boolean {
-  return !str || str.replace(/\s/g, '') === '';
+  return !str || str.replace(/\s/g, "") === "";
 }

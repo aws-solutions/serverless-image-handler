@@ -9,7 +9,7 @@ export enum LoggingLevel {
   WARN = 2,
   INFO = 3,
   DEBUG = 4,
-  VERBOSE = 5
+  VERBOSE = 5,
 }
 
 /**
@@ -27,7 +27,7 @@ export default class Logger {
   constructor(name: string, loggingLevel: string | LoggingLevel) {
     this.name = name;
 
-    if (typeof loggingLevel === 'string' || !loggingLevel) {
+    if (typeof loggingLevel === "string" || !loggingLevel) {
       this.loggingLevel = LoggingLevel[loggingLevel] || LoggingLevel.ERROR;
     } else {
       this.loggingLevel = loggingLevel;

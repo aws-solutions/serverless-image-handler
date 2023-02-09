@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.1.1] - 2023-02-09
+
+### Added
+
+- package-lock.json for all modules [#426](https://github.com/aws-solutions/serverless-image-handler/pull/426)
+- github workflows for running unit test, eslint and prettier formatting, cdk nag, security scans [#402](https://github.com/aws-solutions/serverless-image-handler/pull/402)
+- demo-ui unicode support [#416](https://github.com/aws-solutions/serverless-image-handler/issues/416)
+- support for multiple cloudformation stack deployments in the same region [#438](https://github.com/aws-solutions/serverless-image-handler/pull/438)
+
+### Changed
+
+- axios version update to 1.2.3 [#425](https://github.com/aws-solutions/serverless-image-handler/pull/425)
+- json5 version update to 1.0.2 [#428](https://github.com/aws-solutions/serverless-image-handler/pull/428)
+- CodeQL advisory resolutions
+- contributing guidelines
+
+## [6.1.0] - 2022-11-10
+
+### Added
+
+- gif support
+- tif support
+- AWS Service Catalog AppRegistry
+
+### Changed
+
+- package version updates
+- CDK v2 migration
+- node 16.x Lambda runtimes
+
 ## [6.0.0] - 2021-12-21
 
 ### ⚠ BREAKING CHANGES

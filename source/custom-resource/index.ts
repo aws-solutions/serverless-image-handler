@@ -1,16 +1,16 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import EC2, { DescribeRegionsRequest } from 'aws-sdk/clients/ec2';
-import S3, { CreateBucketRequest, PutBucketEncryptionRequest, PutBucketPolicyRequest } from 'aws-sdk/clients/s3';
-import SecretsManager from 'aws-sdk/clients/secretsmanager';
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { createHash } from 'crypto';
-import moment from 'moment';
-import { v4 } from 'uuid';
+import EC2, { DescribeRegionsRequest } from "aws-sdk/clients/ec2";
+import S3, { CreateBucketRequest, PutBucketEncryptionRequest, PutBucketPolicyRequest } from "aws-sdk/clients/s3";
+import SecretsManager from "aws-sdk/clients/secretsmanager";
+import axios, { RawAxiosRequestConfig, AxiosResponse } from "axios";
+import { createHash } from "crypto";
+import moment from "moment";
+import { v4 } from "uuid";
 
-import { getOptions } from '../solution-utils/get-options';
-import { isNullOrWhiteSpace } from '../solution-utils/helpers';
+import { getOptions } from "../solution-utils/get-options";
+import { isNullOrWhiteSpace } from "../solution-utils/helpers";
 import {
   CheckFallbackImageRequestProperties,
   CheckSecretManagerRequestProperties,
@@ -26,9 +26,10 @@ import {
   LambdaContext,
   MetricPayload,
   PutConfigRequestProperties,
+  ResourcePropertyTypes,
   SendMetricsRequestProperties,
-  StatusTypes
-} from './lib';
+  StatusTypes,
+} from "./lib";
 
 const awsSdkOptions = getOptions();
 const s3Client = new S3(awsSdkOptions);
@@ -36,7 +37,7 @@ const ec2Client = new EC2(awsSdkOptions);
 const secretsManager = new SecretsManager(awsSdkOptions);
 
 const { SOLUTION_ID, SOLUTION_VERSION, AWS_REGION, RETRY_SECONDS } = process.env;
-const METRICS_ENDPOINT = 'https://metrics.awssolutionsbuilder.com/generic';
+const METRICS_ENDPOINT = "https://metrics.awssolutionsbuilder.com/generic";
 const RETRY_COUNT = 3;
 
 /**
@@ -46,58 +47,94 @@ const RETRY_COUNT = 3;
  * @returns Processed request response.
  */
 export async function handler(event: CustomResourceRequest, context: LambdaContext) {
-  console.info('Received event:', JSON.stringify(event, null, 2));
+  console.info("Received event:", JSON.stringify(event, null, 2));
 
   const { RequestType, ResourceProperties } = event;
   const response: CompletionStatus = {
     Status: StatusTypes.SUCCESS,
-    Data: {}
+    Data: {},
   };
 
   try {
     switch (ResourceProperties.CustomAction) {
       case CustomResourceActions.SEND_ANONYMOUS_METRIC: {
         const requestProperties: SendMetricsRequestProperties = ResourceProperties as SendMetricsRequestProperties;
-        if (requestProperties.AnonymousData === 'Yes') {
+        if (requestProperties.AnonymousData === "Yes") {
           response.Data = await sendAnonymousMetric(requestProperties, RequestType);
         }
         break;
       }
-      case CustomResourceActions.PUT_CONFIG_FILE:
-        if ([CustomResourceRequestTypes.CREATE, CustomResourceRequestTypes.UPDATE].includes(RequestType)) {
-          response.Data = await putConfigFile(ResourceProperties as PutConfigRequestProperties);
-        }
+      case CustomResourceActions.PUT_CONFIG_FILE: {
+        const allowedRequestTypes = [CustomResourceRequestTypes.CREATE, CustomResourceRequestTypes.UPDATE];
+        await performRequest(
+          putConfigFile,
+          RequestType,
+          allowedRequestTypes,
+          response,
+          ResourceProperties as PutConfigRequestProperties
+        );
         break;
-      case CustomResourceActions.COPY_S3_ASSETS:
-        if ([CustomResourceRequestTypes.CREATE, CustomResourceRequestTypes.UPDATE].includes(RequestType)) {
-          response.Data = await copyS3Assets(ResourceProperties as CopyS3AssetsRequestProperties);
-        }
+      }
+      case CustomResourceActions.COPY_S3_ASSETS: {
+        const allowedRequestTypes = [CustomResourceRequestTypes.CREATE, CustomResourceRequestTypes.UPDATE];
+        await performRequest(
+          copyS3Assets,
+          RequestType,
+          allowedRequestTypes,
+          response,
+          ResourceProperties as CopyS3AssetsRequestProperties
+        );
         break;
-      case CustomResourceActions.CREATE_UUID:
-        if ([CustomResourceRequestTypes.CREATE].includes(RequestType)) {
-          response.Data = await generateUUID();
-        }
+      }
+      case CustomResourceActions.CREATE_UUID: {
+        const allowedRequestTypes = [CustomResourceRequestTypes.CREATE];
+        await performRequest(generateUUID, RequestType, allowedRequestTypes, response);
         break;
-      case CustomResourceActions.CHECK_SOURCE_BUCKETS:
-        if ([CustomResourceRequestTypes.CREATE, CustomResourceRequestTypes.UPDATE].includes(RequestType)) {
-          response.Data = await validateBuckets(ResourceProperties as CheckSourceBucketsRequestProperties);
-        }
+      }
+      case CustomResourceActions.CHECK_SOURCE_BUCKETS: {
+        const allowedRequestTypes = [CustomResourceRequestTypes.CREATE, CustomResourceRequestTypes.UPDATE];
+        await performRequest(
+          validateBuckets,
+          RequestType,
+          allowedRequestTypes,
+          response,
+          ResourceProperties as CheckSourceBucketsRequestProperties
+        );
         break;
-      case CustomResourceActions.CHECK_SECRETS_MANAGER:
-        if ([CustomResourceRequestTypes.CREATE, CustomResourceRequestTypes.UPDATE].includes(RequestType)) {
-          response.Data = await checkSecretsManager(ResourceProperties as CheckSecretManagerRequestProperties);
-        }
+      }
+      case CustomResourceActions.CHECK_SECRETS_MANAGER: {
+        const allowedRequestTypes = [CustomResourceRequestTypes.CREATE, CustomResourceRequestTypes.UPDATE];
+        await performRequest(
+          checkSecretsManager,
+          RequestType,
+          allowedRequestTypes,
+          response,
+          ResourceProperties as CheckSecretManagerRequestProperties
+        );
         break;
-      case CustomResourceActions.CHECK_FALLBACK_IMAGE:
-        if ([CustomResourceRequestTypes.CREATE, CustomResourceRequestTypes.UPDATE].includes(RequestType)) {
-          response.Data = await checkFallbackImage(ResourceProperties as CheckFallbackImageRequestProperties);
-        }
+      }
+      case CustomResourceActions.CHECK_FALLBACK_IMAGE: {
+        const allowedRequestTypes = [CustomResourceRequestTypes.CREATE, CustomResourceRequestTypes.UPDATE];
+        await performRequest(
+          checkFallbackImage,
+          RequestType,
+          allowedRequestTypes,
+          response,
+          ResourceProperties as CheckFallbackImageRequestProperties
+        );
         break;
-      case CustomResourceActions.CREATE_LOGGING_BUCKET:
-        if ([CustomResourceRequestTypes.CREATE].includes(RequestType)) {
-          response.Data = await createCloudFrontLoggingBucket(ResourceProperties as CreateLoggingBucketRequestProperties);
-        }
+      }
+      case CustomResourceActions.CREATE_LOGGING_BUCKET: {
+        const allowedRequestTypes = [CustomResourceRequestTypes.CREATE];
+        await performRequest(
+          createCloudFrontLoggingBucket,
+          RequestType,
+          allowedRequestTypes,
+          response,
+          ResourceProperties as CreateLoggingBucketRequestProperties
+        );
         break;
+      }
       default:
         break;
     }
@@ -106,8 +143,8 @@ export async function handler(event: CustomResourceRequest, context: LambdaConte
 
     response.Status = StatusTypes.FAILED;
     response.Data.Error = {
-      Code: error.code ?? 'CustomResourceError',
-      Message: error.message ?? 'Custom resource error occurred.'
+      Code: error.code ?? "CustomResourceError",
+      Message: error.message ?? "Custom resource error occurred.",
     };
   } finally {
     await sendCloudFormationResponse(event, context.logStreamName, response);
@@ -117,12 +154,33 @@ export async function handler(event: CustomResourceRequest, context: LambdaConte
 }
 
 /**
+ *
+ * @param functionToPerform a function to perform
+ * @param requestType the type of request
+ * @param allowedRequestTypes the type or requests to allow
+ * @param response the response object
+ * @param resourceProperties the parameters to include in the function to be performed
+ */
+async function performRequest(
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  functionToPerform: Function,
+  requestType: CustomResourceRequestTypes,
+  allowedRequestTypes: CustomResourceRequestTypes[],
+  response: CompletionStatus,
+  resourceProperties?: ResourcePropertyTypes
+): Promise<void> {
+  if (allowedRequestTypes.includes(requestType)) {
+    response.Data = await functionToPerform(resourceProperties);
+  }
+}
+
+/**
  * Suspends for the specified amount of seconds.
  * @param timeOut The number of seconds for which the call is suspended.
  * @returns Sleep promise.
  */
 async function sleep(timeOut: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, timeOut));
+  return new Promise((resolve) => setTimeout(resolve, timeOut));
 }
 
 /**
@@ -141,21 +199,21 @@ function getRetryTimeout(attempt: number): number {
  * @returns Content type.
  */
 function getContentType(filename: string): string {
-  let contentType = '';
-  if (filename.endsWith('.html')) {
-    contentType = 'text/html';
-  } else if (filename.endsWith('.css')) {
-    contentType = 'text/css';
-  } else if (filename.endsWith('.png')) {
-    contentType = 'image/png';
-  } else if (filename.endsWith('.svg')) {
-    contentType = 'image/svg+xml';
-  } else if (filename.endsWith('.jpg')) {
-    contentType = 'image/jpeg';
-  } else if (filename.endsWith('.js')) {
-    contentType = 'application/javascript';
+  let contentType = "";
+  if (filename.endsWith(".html")) {
+    contentType = "text/html";
+  } else if (filename.endsWith(".css")) {
+    contentType = "text/css";
+  } else if (filename.endsWith(".png")) {
+    contentType = "image/png";
+  } else if (filename.endsWith(".svg")) {
+    contentType = "image/svg+xml";
+  } else if (filename.endsWith(".jpg")) {
+    contentType = "image/jpeg";
+  } else if (filename.endsWith(".js")) {
+    contentType = "application/javascript";
   } else {
-    contentType = 'binary/octet-stream';
+    contentType = "binary/octet-stream";
   }
   return contentType;
 }
@@ -167,7 +225,11 @@ function getContentType(filename: string): string {
  * @param response Response completion status.
  * @returns The promise of the sent request.
  */
-async function sendCloudFormationResponse(event: CustomResourceRequest, logStreamName: string, response: CompletionStatus): Promise<AxiosResponse> {
+async function sendCloudFormationResponse(
+  event: CustomResourceRequest,
+  logStreamName: string,
+  response: CompletionStatus
+): Promise<AxiosResponse> {
   const responseBody = JSON.stringify({
     Status: response.Status,
     Reason: `See the details in CloudWatch Log Stream: ${logStreamName}`,
@@ -175,14 +237,14 @@ async function sendCloudFormationResponse(event: CustomResourceRequest, logStrea
     StackId: event.StackId,
     RequestId: event.RequestId,
     LogicalResourceId: event.LogicalResourceId,
-    Data: response.Data
+    Data: response.Data,
   });
 
-  const config: AxiosRequestConfig = {
+  const config: RawAxiosRequestConfig = {
     headers: {
-      'Content-Type': '',
-      'Content-Length': responseBody.length
-    }
+      "Content-Type": "",
+      "Content-Length": responseBody.length,
+    },
   };
 
   return axios.put(event.ResponseURL, responseBody, config);
@@ -194,19 +256,25 @@ async function sendCloudFormationResponse(event: CustomResourceRequest, logStrea
  * @param requestType The request type.
  * @returns Promise message object.
  */
-async function sendAnonymousMetric(requestProperties: SendMetricsRequestProperties, requestType: CustomResourceRequestTypes): Promise<{ Message: string; Data: MetricPayload }> {
-  const result: { Message: string; Data: MetricPayload } = { Message: '', Data: undefined };
+async function sendAnonymousMetric(
+  requestProperties: SendMetricsRequestProperties,
+  requestType: CustomResourceRequestTypes
+): Promise<{ Message: string; Data: MetricPayload }> {
+  const result: { Message: string; Data: MetricPayload } = {
+    Message: "",
+    Data: undefined,
+  };
 
   try {
     const numberOfSourceBuckets =
-      requestProperties.SourceBuckets?.split(',')
-        .map(x => x.trim())
-        .filter(x => !isNullOrWhiteSpace(x)).length || 0;
+      requestProperties.SourceBuckets?.split(",")
+        .map((x) => x.trim())
+        .filter((x) => !isNullOrWhiteSpace(x)).length || 0;
     const payload: MetricPayload = {
       Solution: SOLUTION_ID,
       Version: SOLUTION_VERSION,
       UUID: requestProperties.UUID,
-      TimeStamp: moment.utc().format('YYYY-MM-DD HH:mm:ss.S'),
+      TimeStamp: moment.utc().format("YYYY-MM-DD HH:mm:ss.S"),
       Data: {
         Region: AWS_REGION,
         Type: requestType,
@@ -216,31 +284,31 @@ async function sendAnonymousMetric(requestProperties: SendMetricsRequestProperti
         LogRetentionPeriod: requestProperties.LogRetentionPeriod,
         AutoWebP: requestProperties.AutoWebP,
         EnableSignature: requestProperties.EnableSignature,
-        EnableDefaultFallbackImage: requestProperties.EnableDefaultFallbackImage
-      }
+        EnableDefaultFallbackImage: requestProperties.EnableDefaultFallbackImage,
+      },
     };
 
     result.Data = payload;
 
     const payloadStr = JSON.stringify(payload);
 
-    const config: AxiosRequestConfig = {
+    const config: RawAxiosRequestConfig = {
       headers: {
-        'content-type': 'application/json',
-        'content-length': payloadStr.length
-      }
+        "content-type": "application/json",
+        "content-length": payloadStr.length,
+      },
     };
 
-    console.info('Sending anonymous metric', payloadStr);
+    console.info("Sending anonymous metric", payloadStr);
     const response = await axios.post(METRICS_ENDPOINT, payloadStr, config);
     console.info(`Anonymous metric response: ${response.statusText} (${response.status})`);
 
-    result.Message = 'Anonymous data was sent successfully.';
+    result.Message = "Anonymous data was sent successfully.";
   } catch (err) {
-    console.error('Error sending anonymous metric');
+    console.error("Error sending anonymous metric");
     console.error(err);
 
-    result.Message = 'Anonymous data was sent failed.';
+    result.Message = "Anonymous data was sent failed.";
   }
 
   return result;
@@ -251,7 +319,9 @@ async function sendAnonymousMetric(requestProperties: SendMetricsRequestProperti
  * @param requestProperties The request properties.
  * @returns Result of the putting config file.
  */
-async function putConfigFile(requestProperties: PutConfigRequestProperties): Promise<{ Message: string; Content: string }> {
+async function putConfigFile(
+  requestProperties: PutConfigRequestProperties
+): Promise<{ Message: string; Content: string }> {
   const { ConfigItem, DestS3Bucket, DestS3key } = requestProperties;
 
   console.info(`Attempting to save content blob destination location: ${DestS3Bucket}/${DestS3key}`);
@@ -259,7 +329,7 @@ async function putConfigFile(requestProperties: PutConfigRequestProperties): Pro
 
   const configFieldValues = Object.entries(ConfigItem)
     .map(([key, value]) => `${key}: '${value}'`)
-    .join(',\n');
+    .join(",\n");
 
   const content = `'use strict';\n\nconst appVariables = {\n${configFieldValues}\n};`;
 
@@ -268,7 +338,7 @@ async function putConfigFile(requestProperties: PutConfigRequestProperties): Pro
     Bucket: DestS3Bucket,
     Body: content,
     Key: DestS3key,
-    ContentType: getContentType(DestS3key)
+    ContentType: getContentType(DestS3key),
   };
 
   for (let retry = 1; retry <= RETRY_COUNT; retry++) {
@@ -282,17 +352,20 @@ async function putConfigFile(requestProperties: PutConfigRequestProperties): Pro
     } catch (error) {
       if (retry === RETRY_COUNT || error.code !== ErrorCodes.ACCESS_DENIED) {
         console.info(`Error occurred while putting ${DestS3key} into ${DestS3Bucket} bucket.`, error);
-        throw new CustomResourceError('ConfigFileCreationFailure', `Saving config file to ${DestS3Bucket}/${DestS3key} failed.`);
+        throw new CustomResourceError(
+          "ConfigFileCreationFailure",
+          `Saving config file to ${DestS3Bucket}/${DestS3key} failed.`
+        );
       } else {
-        console.info('Waiting for retry...');
+        console.info("Waiting for retry...");
         await sleep(getRetryTimeout(retry));
       }
     }
   }
 
   return {
-    Message: 'Config file uploaded.',
-    Content: content
+    Message: "Config file uploaded.",
+    Content: content,
   };
 }
 
@@ -301,7 +374,9 @@ async function putConfigFile(requestProperties: PutConfigRequestProperties): Pro
  * @param requestProperties The request properties.
  * @returns The result of copying assets.
  */
-async function copyS3Assets(requestProperties: CopyS3AssetsRequestProperties): Promise<{ Message: string; Manifest: { Files: string[] } }> {
+async function copyS3Assets(
+  requestProperties: CopyS3AssetsRequestProperties
+): Promise<{ Message: string; Manifest: { Files: string[] } }> {
   const { ManifestKey, SourceS3Bucket, SourceS3key, DestS3Bucket } = requestProperties;
 
   console.info(`Source bucket: ${SourceS3Bucket}`);
@@ -315,7 +390,7 @@ async function copyS3Assets(requestProperties: CopyS3AssetsRequestProperties): P
     try {
       const getParams = {
         Bucket: SourceS3Bucket,
-        Key: ManifestKey
+        Key: ManifestKey,
       };
       const response = await s3Client.getObject(getParams).promise();
       manifest = JSON.parse(response.Body.toString());
@@ -323,12 +398,12 @@ async function copyS3Assets(requestProperties: CopyS3AssetsRequestProperties): P
       break;
     } catch (error) {
       if (retry === RETRY_COUNT || error.code !== ErrorCodes.ACCESS_DENIED) {
-        console.error('Error occurred while getting manifest file.');
+        console.error("Error occurred while getting manifest file.");
         console.error(error);
 
-        throw new CustomResourceError('GetManifestFailure', 'Copy of website assets failed.');
+        throw new CustomResourceError("GetManifestFailure", "Copy of website assets failed.");
       } else {
-        console.info('Waiting for retry...');
+        console.info("Waiting for retry...");
 
         await sleep(getRetryTimeout(retry));
       }
@@ -343,7 +418,7 @@ async function copyS3Assets(requestProperties: CopyS3AssetsRequestProperties): P
           Bucket: DestS3Bucket,
           CopySource: `${SourceS3Bucket}/${SourceS3key}/${fileName}`,
           Key: fileName,
-          ContentType: getContentType(fileName)
+          ContentType: getContentType(fileName),
         };
 
         console.debug(`Copying ${fileName} to ${DestS3Bucket}`);
@@ -352,14 +427,14 @@ async function copyS3Assets(requestProperties: CopyS3AssetsRequestProperties): P
     );
 
     return {
-      Message: 'Copy assets completed.',
-      Manifest: { Files: manifest.files }
+      Message: "Copy assets completed.",
+      Manifest: { Files: manifest.files },
     };
   } catch (error) {
-    console.error('Error occurred while copying assets.');
+    console.error("Error occurred while copying assets.");
     console.error(error);
 
-    throw new CustomResourceError('CopyAssetsFailure', 'Copy of website assets failed.');
+    throw new CustomResourceError("CopyAssetsFailure", "Copy of website assets failed.");
   }
 }
 
@@ -378,11 +453,11 @@ async function generateUUID(): Promise<{ UUID: string }> {
  */
 async function validateBuckets(requestProperties: CheckSourceBucketsRequestProperties): Promise<{ Message: string }> {
   const { SourceBuckets } = requestProperties;
-  const buckets = SourceBuckets.replace(/\s/g, '');
+  const buckets = SourceBuckets.replace(/\s/g, "");
 
   console.info(`Attempting to check if the following buckets exist: ${buckets}`);
 
-  const checkBuckets = buckets.split(',');
+  const checkBuckets = buckets.split(",");
   const errorBuckets = [];
 
   for (const bucket of checkBuckets) {
@@ -399,12 +474,12 @@ async function validateBuckets(requestProperties: CheckSourceBucketsRequestPrope
   }
 
   if (errorBuckets.length === 0) {
-    return { Message: 'Buckets validated.' };
+    return { Message: "Buckets validated." };
   } else {
-    const commaSeparatedErrors = errorBuckets.join(',');
+    const commaSeparatedErrors = errorBuckets.join(",");
 
     throw new CustomResourceError(
-      'BucketNotFound',
+      "BucketNotFound",
       `Could not find the following source bucket(s) in your account: ${commaSeparatedErrors}. Please specify at least one source bucket that exists within your account and try again. If specifying multiple source buckets, please ensure that they are comma-separated.`
     );
   }
@@ -415,18 +490,20 @@ async function validateBuckets(requestProperties: CheckSourceBucketsRequestPrope
  * @param requestProperties The request properties.
  * @returns ARN of the AWS Secrets Manager secret.
  */
-async function checkSecretsManager(requestProperties: CheckSecretManagerRequestProperties): Promise<{ Message: string; ARN: string }> {
+async function checkSecretsManager(
+  requestProperties: CheckSecretManagerRequestProperties
+): Promise<{ Message: string; ARN: string }> {
   const { SecretsManagerName, SecretsManagerKey } = requestProperties;
 
   if (isNullOrWhiteSpace(SecretsManagerName)) {
-    throw new CustomResourceError('SecretNotProvided', 'You need to provide AWS Secrets Manager secret.');
+    throw new CustomResourceError("SecretNotProvided", "You need to provide AWS Secrets Manager secret.");
   }
 
   if (isNullOrWhiteSpace(SecretsManagerKey)) {
-    throw new CustomResourceError('SecretKeyNotProvided', 'You need to provide AWS Secrets Manager secret key.');
+    throw new CustomResourceError("SecretKeyNotProvided", "You need to provide AWS Secrets Manager secret key.");
   }
 
-  let arn = '';
+  let arn = "";
 
   for (let retry = 1; retry <= RETRY_COUNT; retry++) {
     try {
@@ -434,18 +511,23 @@ async function checkSecretsManager(requestProperties: CheckSecretManagerRequestP
       const secretString = JSON.parse(response.SecretString);
 
       if (!Object.prototype.hasOwnProperty.call(secretString, SecretsManagerKey)) {
-        throw new CustomResourceError('SecretKeyNotFound', `AWS Secrets Manager secret requires ${SecretsManagerKey} key.`);
+        throw new CustomResourceError(
+          "SecretKeyNotFound",
+          `AWS Secrets Manager secret requires ${SecretsManagerKey} key.`
+        );
       }
 
       arn = response.ARN;
       break;
     } catch (error) {
       if (retry === RETRY_COUNT) {
-        console.error(`AWS Secrets Manager secret or signature might not exist: ${SecretsManagerName}/${SecretsManagerKey}`);
+        console.error(
+          `AWS Secrets Manager secret or signature might not exist: ${SecretsManagerName}/${SecretsManagerKey}`
+        );
 
         throw error;
       } else {
-        console.info('Waiting for retry...');
+        console.info("Waiting for retry...");
 
         await sleep(getRetryTimeout(retry));
       }
@@ -453,8 +535,8 @@ async function checkSecretsManager(requestProperties: CheckSecretManagerRequestP
   }
 
   return {
-    Message: 'Secrets Manager validated.',
-    ARN: arn
+    Message: "Secrets Manager validated.",
+    ARN: arn,
   };
 }
 
@@ -463,15 +545,17 @@ async function checkSecretsManager(requestProperties: CheckSecretManagerRequestP
  * @param requestProperties The request properties.
  * @returns The result of validation.
  */
-async function checkFallbackImage(requestProperties: CheckFallbackImageRequestProperties): Promise<{ Message: string; Data: unknown }> {
+async function checkFallbackImage(
+  requestProperties: CheckFallbackImageRequestProperties
+): Promise<{ Message: string; Data: unknown }> {
   const { FallbackImageS3Bucket, FallbackImageS3Key } = requestProperties as CheckFallbackImageRequestProperties;
 
   if (isNullOrWhiteSpace(FallbackImageS3Bucket)) {
-    throw new CustomResourceError('S3BucketNotProvided', 'You need to provide the default fallback image bucket.');
+    throw new CustomResourceError("S3BucketNotProvided", "You need to provide the default fallback image bucket.");
   }
 
   if (isNullOrWhiteSpace(FallbackImageS3Key)) {
-    throw new CustomResourceError('S3KeyNotProvided', 'You need to provide the default fallback image object key.');
+    throw new CustomResourceError("S3KeyNotProvided", "You need to provide the default fallback image object key.");
   }
 
   let data = {};
@@ -482,14 +566,16 @@ async function checkFallbackImage(requestProperties: CheckFallbackImageRequestPr
       break;
     } catch (error) {
       if (retry === RETRY_COUNT || ![ErrorCodes.ACCESS_DENIED, ErrorCodes.FORBIDDEN].includes(error.code)) {
-        console.error(`Either the object does not exist or you don't have permission to access the object: ${FallbackImageS3Bucket}/${FallbackImageS3Key}`);
+        console.error(
+          `Either the object does not exist or you don't have permission to access the object: ${FallbackImageS3Bucket}/${FallbackImageS3Key}`
+        );
 
         throw new CustomResourceError(
-          'FallbackImageError',
+          "FallbackImageError",
           `Either the object does not exist or you don't have permission to access the object: ${FallbackImageS3Bucket}/${FallbackImageS3Key}`
         );
       } else {
-        console.info('Waiting for retry...');
+        console.info("Waiting for retry...");
 
         await sleep(getRetryTimeout(retry));
       }
@@ -497,8 +583,8 @@ async function checkFallbackImage(requestProperties: CheckFallbackImageRequestPr
   }
 
   return {
-    Message: 'The default fallback image validated.',
-    Data: data
+    Message: "The default fallback image validated.",
+    Data: data,
   };
 }
 
@@ -508,20 +594,31 @@ async function checkFallbackImage(requestProperties: CheckFallbackImageRequestPr
  * @returns Bucket name of the created bucket.
  */
 async function createCloudFrontLoggingBucket(requestProperties: CreateLoggingBucketRequestProperties) {
-  const logBucketSuffix = createHash('md5').update(`${requestProperties.BucketSuffix}${moment.utc().valueOf()}`).digest('hex');
+  const logBucketSuffix = createHash("md5")
+    .update(`${requestProperties.BucketSuffix}${moment.utc().valueOf()}`)
+    .digest("hex");
   const bucketName = `serverless-image-handler-logs-${logBucketSuffix.substring(0, 8)}`.toLowerCase();
 
   // the S3 bucket will be created in 'us-east-1' if the current region is in opt-in regions,
   // because CloudFront does not currently deliver access logs to opt-in region buckets
   const isOptInRegion = await checkRegionOptInStatus(AWS_REGION);
-  const targetRegion = isOptInRegion ? 'us-east-1' : AWS_REGION;
-  console.info(`The opt-in status of the '${AWS_REGION}' region is '${isOptInRegion ? 'opted-in' : 'opt-in-not-required'}'`);
+  const targetRegion = isOptInRegion ? "us-east-1" : AWS_REGION;
+  console.info(
+    `The opt-in status of the '${AWS_REGION}' region is '${isOptInRegion ? "opted-in" : "opt-in-not-required"}'`
+  );
 
   // create bucket
   try {
-    const s3Client = new S3({ ...awsSdkOptions, apiVersion: '2006-03-01', region: targetRegion });
+    const s3Client = new S3({
+      ...awsSdkOptions,
+      apiVersion: "2006-03-01",
+      region: targetRegion,
+    });
 
-    const createBucketRequestParams: CreateBucketRequest = { Bucket: bucketName, ACL: 'log-delivery-write' };
+    const createBucketRequestParams: CreateBucketRequest = {
+      Bucket: bucketName,
+      ACL: "log-delivery-write",
+    };
     await s3Client.createBucket(createBucketRequestParams).promise();
 
     console.info(`Successfully created bucket '${bucketName}' in '${targetRegion}' region`);
@@ -533,11 +630,13 @@ async function createCloudFrontLoggingBucket(requestProperties: CreateLoggingBuc
   }
 
   // add encryption to bucket
-  console.info('Adding Encryption...');
+  console.info("Adding Encryption...");
   try {
     const putBucketEncryptionRequestParams: PutBucketEncryptionRequest = {
       Bucket: bucketName,
-      ServerSideEncryptionConfiguration: { Rules: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: 'AES256' } }] }
+      ServerSideEncryptionConfiguration: {
+        Rules: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: "AES256" } }],
+      },
     };
 
     await s3Client.putBucketEncryption(putBucketEncryptionRequestParams).promise();
@@ -552,18 +651,24 @@ async function createCloudFrontLoggingBucket(requestProperties: CreateLoggingBuc
 
   // add policy to bucket
   try {
-    console.info('Adding policy...');
+    console.info("Adding policy...");
 
     const bucketPolicyStatement = {
       Resource: `arn:aws:s3:::${bucketName}/*`,
-      Action: '*',
-      Effect: 'Deny',
-      Principal: '*',
-      Sid: 'HttpsOnly',
-      Condition: { Bool: { 'aws:SecureTransport': 'false' } }
+      Action: "*",
+      Effect: "Deny",
+      Principal: "*",
+      Sid: "HttpsOnly",
+      Condition: { Bool: { "aws:SecureTransport": "false" } },
     };
-    const bucketPolicy = { Version: '2012-10-17', Statement: [bucketPolicyStatement] };
-    const putBucketPolicyRequestParams: PutBucketPolicyRequest = { Bucket: bucketName, Policy: JSON.stringify(bucketPolicy) };
+    const bucketPolicy = {
+      Version: "2012-10-17",
+      Statement: [bucketPolicyStatement],
+    };
+    const putBucketPolicyRequestParams: PutBucketPolicyRequest = {
+      Bucket: bucketName,
+      Policy: JSON.stringify(bucketPolicy),
+    };
 
     await s3Client.putBucketPolicy(putBucketPolicyRequestParams).promise();
 
@@ -586,7 +691,7 @@ async function createCloudFrontLoggingBucket(requestProperties: CreateLoggingBuc
 async function checkRegionOptInStatus(region: string): Promise<boolean> {
   const describeRegionsRequestParams: DescribeRegionsRequest = {
     RegionNames: [region],
-    Filters: [{ Name: 'opt-in-status', Values: ['opted-in'] }]
+    Filters: [{ Name: "opt-in-status", Values: ["opted-in"] }],
   };
   const describeRegionsResponse = await ec2Client.describeRegions(describeRegionsRequestParams).promise();
 
