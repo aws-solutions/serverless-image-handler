@@ -40,11 +40,11 @@ const __asset1 = "asset.1";
 const __asset2 = "asset.2.zip";
 
 describe("CDKAssetPackager", () => {
-  beforeEach(function () {
-    readdirMock.mockClear();
-  });
-
   describe("getAssetPaths", function () {
+    beforeEach(function () {
+      readdirMock.mockClear();
+    });
+
     it("should return empty array for invalid path", async function () {
       readdirMock.mockRejectedValue("invalid path");
       expect(await assetPackager.getAssetPaths()).toEqual([]);
@@ -79,7 +79,9 @@ describe("CDKAssetPackager", () => {
       });
 
       // Act, Assert
-      await expect(assetPackager.createAssetZip(__assetPath)).resolves.toBeUndefined();
+      await expect(
+        assetPackager.createAssetZip(__assetPath)
+      ).resolves.toBeUndefined();
       expect(readdirMock).toBeCalledTimes(0);
     });
 
@@ -93,15 +95,21 @@ describe("CDKAssetPackager", () => {
       writeZipMock.mockResolvedValue(undefined);
 
       // Act, Assert
-      await expect(assetPackager.createAssetZip(__asset1)).resolves.toBeUndefined();
+      await expect(
+        assetPackager.createAssetZip(__asset1)
+      ).resolves.toBeUndefined();
       expect(readdirMock).toBeCalled();
       expect(addLocalFileMock).toBeCalledTimes(2);
-      expect(writeZipMock).toBeCalledWith(`${path.join(__assetPath, __asset1)}.zip`);
+      expect(writeZipMock).toBeCalledWith(
+        `${path.join(__assetPath, __asset1)}.zip`
+      );
     });
 
     it("should throw error if error encountered", async function () {
       lstatMock.mockRejectedValue(new Error("error encountered"));
-      await expect(assetPackager.createAssetZip("")).rejects.toThrowError("error encountered");
+      await expect(assetPackager.createAssetZip("")).rejects.toThrowError(
+        "error encountered"
+      );
     });
   });
 
@@ -122,7 +130,9 @@ describe("CDKAssetPackager", () => {
 
     it("should throw error if error encountered", async function () {
       readdirMock.mockRejectedValue(new Error("error encountered"));
-      await expect(assetPackager.moveZips("")).rejects.toThrowError("error encountered");
+      await expect(assetPackager.moveZips("")).rejects.toThrowError(
+        "error encountered"
+      );
     });
   });
 });

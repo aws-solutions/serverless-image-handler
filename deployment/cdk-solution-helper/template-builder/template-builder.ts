@@ -19,7 +19,7 @@ export class TemplateBuilder {
     try {
       const allFiles = await readdir(this.templateDirectory);
       const templatePaths = allFiles
-        .filter((file) => path.extname(file) === ".template")
+        .filter((file) => file.includes(".template.json"))
         .map((file) => path.join(this.templateDirectory, file));
       return templatePaths;
     } catch (err) {
