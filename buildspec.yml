@@ -6,6 +6,7 @@ phases:
       nodejs: 16
   pre_build:
     commands:
+      - npm install -g npm@9.4.2
       - echo "Installing dependencies and executing unit tests - `pwd`"
       - cd deployment && chmod +x ./run-unit-tests.sh && ./run-unit-tests.sh
       - echo "Installing dependencies and executing unit tests completed `date`"

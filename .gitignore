@@ -2,6 +2,7 @@
 **/dist
 **/global-s3-assets
 **/regional-s3-assets
+**/staging
 **/open-source
 **/.zip
 **/tmp

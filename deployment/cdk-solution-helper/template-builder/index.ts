@@ -35,10 +35,13 @@ export async function handler(
 if (require.main === module) {
   // this module was run directly from the command line, getting command line arguments
   // e.g. npx ts-node index.ts templatePath mySolution lambdaAssetBucketName myVersion
-  const templatePath = process.argv[3];
-  const solutionName = process.argv[4];
-  const lambdaBucketName = process.argv[5];
-  const version = process.argv[6];
+  const templatePath = process.argv[2];
+  const solutionName = process.argv[3];
+  const lambdaBucketName = process.argv[4];
+  const version = process.argv[5];
+  console.log(
+    `********here: ${templatePath} ${solutionName} ${lambdaBucketName} ${version}`
+  );
   handler(templatePath, solutionName, lambdaBucketName, version)
     .then(() => console.log("written all cfn templates"))
     .catch((err) => {
