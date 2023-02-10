@@ -32,15 +32,14 @@ export class CDKAssetPackager {
   }
 
   /**
-   * @description goes down 1 level deep to create zip // TODO package modules not bundled
+   * @description creates zip from folder
    * @param folderPath
    */
   async createAssetZip(folderPath: string) {
     const isDir = (await lstat(folderPath)).isDirectory();
     if (isDir) {
       const zip = new AdmZip();
-      const allFiles = await readdir(folderPath);
-      for (const file of allFiles) zip.addLocalFile(path.join(folderPath, file));
+      zip.addLocalFolder(path.join(folderPath, "./"));
       const zipName = `${folderPath.split("/").pop()}.zip`;
       zip.writeZip(path.join(this.assetFolderPath, zipName));
     }
@@ -52,9 +51,14 @@ export class CDKAssetPackager {
    */
   async moveZips(outputPath: string) {
     const allFiles = await readdir(this.assetFolderPath);
-    const allZipPaths = allFiles.filter((file) => path.extname(file) === ".zip");
+    const allZipPaths = allFiles.filter(
+      (file) => path.extname(file) === ".zip"
+    );
     for (const zipPath of allZipPaths) {
-      await rename(path.join(this.assetFolderPath, zipPath), path.join(outputPath, zipPath.split("asset.").pop()!));
+      await rename(
+        path.join(this.assetFolderPath, zipPath),
+        path.join(outputPath, zipPath.split("asset.").pop()!)
+      );
       // remove cdk prepended string "asset.*"
     }
   }

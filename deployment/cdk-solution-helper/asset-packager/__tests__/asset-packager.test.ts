@@ -4,7 +4,7 @@
  */
 
 const readdirMock = jest.fn();
-const addLocalFileMock = jest.fn();
+const addLocalFolderMock = jest.fn();
 const renameMock = jest.fn();
 const writeZipMock = jest.fn();
 const lstatMock = jest.fn();
@@ -27,7 +27,7 @@ jest
       ...originalModule,
       __esModule: true,
       default: jest.fn(() => ({
-        addLocalFile: addLocalFileMock,
+        addLocalFolder: addLocalFolderMock,
         writeZip: writeZipMock,
       })),
     };
@@ -68,7 +68,7 @@ describe("CDKAssetPackager", () => {
     beforeEach(function () {
       readdirMock.mockClear();
       lstatMock.mockClear();
-      addLocalFileMock.mockClear();
+      addLocalFolderMock.mockClear();
       writeZipMock.mockClear();
     });
 
@@ -82,7 +82,7 @@ describe("CDKAssetPackager", () => {
       await expect(
         assetPackager.createAssetZip(__assetPath)
       ).resolves.toBeUndefined();
-      expect(readdirMock).toBeCalledTimes(0);
+      expect(addLocalFolderMock).toBeCalledTimes(0);
     });
 
     it("should zip assets in the folder for valid path", async function () {
@@ -90,16 +90,14 @@ describe("CDKAssetPackager", () => {
       lstatMock.mockResolvedValue({
         isDirectory: () => true,
       });
-      readdirMock.mockResolvedValue(["01", "02"]);
-      addLocalFileMock.mockResolvedValue(undefined);
+      addLocalFolderMock.mockResolvedValue(undefined);
       writeZipMock.mockResolvedValue(undefined);
 
       // Act, Assert
       await expect(
         assetPackager.createAssetZip(__asset1)
       ).resolves.toBeUndefined();
-      expect(readdirMock).toBeCalled();
-      expect(addLocalFileMock).toBeCalledTimes(2);
+      expect(addLocalFolderMock).toBeCalledTimes(1);
       expect(writeZipMock).toBeCalledWith(
         `${path.join(__assetPath, __asset1)}.zip`
       );
