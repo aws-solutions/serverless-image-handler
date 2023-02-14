@@ -548,7 +548,7 @@ async function checkSecretsManager(
 async function checkFallbackImage(
   requestProperties: CheckFallbackImageRequestProperties
 ): Promise<{ Message: string; Data: unknown }> {
-  const { FallbackImageS3Bucket, FallbackImageS3Key } = requestProperties as CheckFallbackImageRequestProperties;
+  const { FallbackImageS3Bucket, FallbackImageS3Key } = requestProperties;
 
   if (isNullOrWhiteSpace(FallbackImageS3Bucket)) {
     throw new CustomResourceError("S3BucketNotProvided", "You need to provide the default fallback image bucket.");

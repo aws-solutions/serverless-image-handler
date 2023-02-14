@@ -5,14 +5,7 @@ import S3 from "aws-sdk/clients/s3";
 import SecretsManager from "aws-sdk/clients/secretsmanager";
 
 import { ImageRequest } from "../../image-request";
-import {
-  ContentTypes,
-  ImageHandlerEvent,
-  ImageFormatTypes,
-  ImageRequestInfo,
-  RequestTypes,
-  StatusCodes,
-} from "../../lib";
+import { ImageFormatTypes, ImageRequestInfo, RequestTypes } from "../../lib";
 import { SecretProvider } from "../../secret-provider";
 
 const imageRequestInfo: ImageRequestInfo = {
