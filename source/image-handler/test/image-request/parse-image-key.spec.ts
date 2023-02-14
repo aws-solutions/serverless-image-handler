@@ -261,4 +261,34 @@ describe("parseImageKey", () => {
       });
     }
   });
+
+  it("Should pass if an image key value is provided in the thumbor request format with a watermark containing a slash", () => {
+    // Arrange
+    const event = {
+      path: "/fit-in/400x400/filters:watermark(bucket,folder/key.png,0,0)/image.jpg",
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseImageKey(event, RequestTypes.THUMBOR);
+
+    // Assert
+    const expectedResult = "image.jpg";
+    expect(result).toEqual(expectedResult);
+  });
+
+  it("Should pass if an image key value is provided in the thumbor request format with a watermark not containing a slash", () => {
+    // Arrange
+    const event = {
+      path: "/fit-in/400x400/filters:watermark(bucket,key.png,0,0)/image.jpg",
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseImageKey(event, RequestTypes.THUMBOR);
+
+    // Assert
+    const expectedResult = "image.jpg";
+    expect(result).toEqual(expectedResult);
+  });
 });
