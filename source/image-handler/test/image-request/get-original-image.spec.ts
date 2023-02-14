@@ -16,6 +16,7 @@ describe("getOriginalImage", () => {
   const secretProvider = new SecretProvider(secretsManager);
 
   beforeEach(() => {
+    jest.setTimeout(60000);
     jest.resetAllMocks();
   });
 
@@ -41,6 +42,17 @@ describe("getOriginalImage", () => {
       Key: "validKey",
     });
     expect(result.originalImage).toEqual(Buffer.from("SampleImageContent\n"));
+  });
+
+  it("Should pass if a valid image URL is given", async () => {
+    // Mock
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = await imageRequest.getOriginalImage("", "https://upload.wikimedia.org/wikipedia/commons/c/ca/1x1.png")
+
+    // Assert
+    expect(result).toBeTruthy;
+    expect(result.originalImage).toBeInstanceOf(Buffer);
   });
 
   it("Should throw an error if an invalid bucket or key name is provided, simulating a non-existent original image", async () => {
