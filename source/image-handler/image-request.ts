@@ -19,6 +19,20 @@ import {
 import { SecretProvider } from "./secret-provider";
 import { ThumborMapper } from "./thumbor-mapper";
 
+import https from 'https';
+import http from 'http';
+import { URL } from "url";
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; //5 MB limit
+const ALLOWED_CONTENT_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/bmp',
+];
+
 type OriginalImageInfo = Partial<{
   contentType: string;
   expires: string;
@@ -143,6 +157,49 @@ export class ImageRequest {
     }
   }
 
+  public isValidURL(str: string) {
+    try {
+      new URL(str);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  public async getImageBytes(url: string) {
+    return new Promise((resolve, reject) => {
+      const protocol = url.startsWith('https') ? https : http;
+      protocol.get(url, {headers: {'User-Agent': 'Mozilla/5.0'}}, response => {
+        if (response.statusCode !== 200) {
+          reject(new Error(`Failed to get the image, status code: ${response.statusCode}`));
+          return;
+        }
+        const contentType = response.headers['content-type'];
+        if (!ALLOWED_CONTENT_TYPES.includes(contentType)) {
+          reject(new Error(`Invalid content type, only the following content types are allowed: ${ALLOWED_CONTENT_TYPES.join(', ')}`));
+          return;
+        }
+        let chunks = [];
+        let currentSize = 0;
+        response.on('data', (chunk: any) => {
+          chunks.push(chunk);
+          currentSize += chunk.length;
+          if (currentSize > MAX_IMAGE_SIZE) {
+            console.log('here', currentSize)
+            reject(new Error(`The image is too large, the maximum allowed size is ${MAX_IMAGE_SIZE} bytes`));
+            response.destroy();  
+          }
+        });
+        response.on('end', () => {
+          resolve(Buffer.concat(chunks));
+        });
+      })
+      .on('error', error => {
+        reject(error);
+      });
+    });
+  }
+
   /**
    * Gets the original image from an Amazon S3 bucket.
    * @param bucket The name of the bucket containing the image.
@@ -154,29 +211,41 @@ export class ImageRequest {
       const result: OriginalImageInfo = {};
 
       const imageLocation = { Bucket: bucket, Key: key };
-      const originalImage = await this.s3Client.getObject(imageLocation).promise();
-      const imageBuffer = Buffer.from(originalImage.Body as Uint8Array);
+      let imageBuffer: Buffer;
 
-      if (originalImage.ContentType) {
-        // If using default S3 ContentType infer from hex headers
-        if (["binary/octet-stream", "application/octet-stream"].includes(originalImage.ContentType)) {
-          result.contentType = this.inferImageType(imageBuffer);
-        } else {
-          result.contentType = originalImage.ContentType;
-        }
-      } else {
+      if (this.isValidURL(key)) {
+        let imgBytes = await this.getImageBytes(key);
+        imageBuffer = Buffer.from(imgBytes as Uint8Array);
+
+        // console.log(<Uint8Array>imageBuffer)
         result.contentType = "image";
-      }
 
-      if (originalImage.Expires) {
-        result.expires = new Date(originalImage.Expires).toUTCString();
-      }
+      } else {
+        const originalImage = await this.s3Client.getObject(imageLocation).promise();
+        imageBuffer = Buffer.from(originalImage.Body as Uint8Array);
 
-      if (originalImage.LastModified) {
-        result.lastModified = new Date(originalImage.LastModified).toUTCString();
+        if (originalImage.ContentType) {
+          // If using default S3 ContentType infer from hex headers
+          if (["binary/octet-stream", "application/octet-stream"].includes(originalImage.ContentType)) {
+            result.contentType = this.inferImageType(imageBuffer);
+          } else {
+            result.contentType = originalImage.ContentType;
+          }
+        } else {
+          result.contentType = "image";
+        }
+  
+        if (originalImage.Expires) {
+          result.expires = new Date(originalImage.Expires).toUTCString();
+        }
+  
+        if (originalImage.LastModified) {
+          result.lastModified = new Date(originalImage.LastModified).toUTCString();
+        }
+        
       }
-
-      result.cacheControl = originalImage.CacheControl ?? "max-age=31536000,public";
+      
+      result.cacheControl = "max-age=31536000,public";
       result.originalImage = imageBuffer;
 
       return result;
