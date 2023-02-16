@@ -26,6 +26,7 @@ This software includes third party software subject to the following copyrights:
 @types/uuid under the Massachusetts Institute of Technology (MIT) license
 @typescript-eslint/eslint-plugin under the Massachusetts Institute of Technology (MIT) license
 @typescript-eslint/parser under the BSD 2-Clause license
+adm-zip under the Massachusetts Institute of Technology (MIT) license
 aws-cdk under the Apache License 2.0
 aws-sdk under the Apache License 2.0
 axios under the Massachusetts Institute of Technology (MIT) license

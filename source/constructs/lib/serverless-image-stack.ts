@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PriceClass } from "aws-cdk-lib/aws-cloudfront";
-import { Aspects, Aws, CfnMapping, CfnOutput, CfnParameter, Stack, StackProps, Tags } from "aws-cdk-lib";
+import { Aspects, CfnMapping, CfnOutput, CfnParameter, Stack, StackProps, Tags } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { SuppressLambdaFunctionCfnRulesAspect } from "../utils/aspects";
 import { BackEnd } from "./back-end/back-end-construct";
@@ -11,12 +11,9 @@ import { FrontEndConstruct as FrontEnd } from "./front-end/front-end-construct";
 import { SolutionConstructProps, YesNo } from "./types";
 
 export interface ServerlessImageHandlerStackProps extends StackProps {
-  readonly description: string;
   readonly solutionId: string;
   readonly solutionName: string;
   readonly solutionVersion: string;
-  readonly solutionDisplayName: string;
-  readonly solutionAssetHostingBucketNamePrefix: string;
 }
 
 export class ServerlessImageHandlerStack extends Stack {
@@ -139,16 +136,12 @@ export class ServerlessImageHandlerStack extends Stack {
           AnonymousUsage: "Yes",
           SolutionId: props.solutionId,
           Version: props.solutionVersion,
-          S3BucketPrefix: props.solutionAssetHostingBucketNamePrefix,
-          S3KeyPrefix: `${props.solutionName}/${props.solutionVersion}`,
         },
       },
       lazy: true,
     });
 
     const anonymousUsage = `${solutionMapping.findInMap("Config", "AnonymousUsage")}`;
-    const sourceCodeBucketName = `${solutionMapping.findInMap("Config", "S3BucketPrefix")}-${Aws.REGION}`;
-    const sourceCodeKeyPrefix = solutionMapping.findInMap("Config", "S3KeyPrefix");
 
     const solutionConstructProps: SolutionConstructProps = {
       corsEnabled: corsEnabledParameter.valueAsString,
@@ -168,9 +161,7 @@ export class ServerlessImageHandlerStack extends Stack {
     const commonResources = new CommonResources(this, "CommonResources", {
       solutionId: props.solutionId,
       solutionVersion: props.solutionVersion,
-      solutionDisplayName: props.solutionDisplayName,
-      sourceCodeBucketName,
-      sourceCodeKeyPrefix,
+      solutionName: props.solutionName,
       ...solutionConstructProps,
     });
 
@@ -180,10 +171,8 @@ export class ServerlessImageHandlerStack extends Stack {
     });
 
     const backEnd = new BackEnd(this, "BackEnd", {
-      sourceCodeBucketName,
-      sourceCodeKeyPrefix,
       solutionVersion: props.solutionVersion,
-      solutionDisplayName: props.solutionDisplayName,
+      solutionName: props.solutionName,
       secretsManagerPolicy: commonResources.secretsManagerPolicy,
       logsBucket: commonResources.logsBucket,
       uuid: commonResources.customResources.uuid,
@@ -217,7 +206,7 @@ export class ServerlessImageHandlerStack extends Stack {
     });
 
     commonResources.appRegistryApplication({
-      description: props.description,
+      description: `${props.solutionId} - ${props.solutionName}. Version ${props.solutionVersion}`,
       solutionVersion: props.solutionVersion,
       solutionId: props.solutionId,
       applicationName: props.solutionName,
