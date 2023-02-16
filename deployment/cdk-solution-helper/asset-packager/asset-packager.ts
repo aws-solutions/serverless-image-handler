@@ -51,14 +51,9 @@ export class CDKAssetPackager {
    */
   async moveZips(outputPath: string) {
     const allFiles = await readdir(this.assetFolderPath);
-    const allZipPaths = allFiles.filter(
-      (file) => path.extname(file) === ".zip"
-    );
+    const allZipPaths = allFiles.filter((file) => path.extname(file) === ".zip");
     for (const zipPath of allZipPaths) {
-      await rename(
-        path.join(this.assetFolderPath, zipPath),
-        path.join(outputPath, zipPath.split("asset.").pop()!)
-      );
+      await rename(path.join(this.assetFolderPath, zipPath), path.join(outputPath, zipPath.split("asset.").pop()!));
       // remove cdk prepended string "asset.*"
     }
   }

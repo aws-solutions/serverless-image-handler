@@ -6,12 +6,8 @@
 import { CDKAssetPackager } from "./asset-packager";
 import path from "path";
 
-export async function handler(
-  cdkAssetFolderPath: string | undefined,
-  outputPath: string | undefined
-) {
-  if (!cdkAssetFolderPath || !outputPath)
-    throw new Error("undefined input path");
+export async function handler(cdkAssetFolderPath: string | undefined, outputPath: string | undefined) {
+  if (!cdkAssetFolderPath || !outputPath) throw new Error("undefined input path");
   const assetPackager = new CDKAssetPackager(cdkAssetFolderPath);
   const assetPaths = await assetPackager.getAssetPaths();
   for (const path of assetPaths) {

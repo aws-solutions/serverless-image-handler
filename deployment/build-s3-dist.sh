@@ -1,26 +1,12 @@
 #!/bin/bash
-#
 # The script is for aws-solutions internal purposes only
-#
-# This script should be run from the repo's deployment directory
-# cd deployment
-# ./build-s3-dist.sh trademarked-solution-name source-bucket-base-name version-code
-#
-# For example: ./build-s3-dist.sh my-solution solutions v1.0.0
-# Parameters:
-#  - source-bucket-base-name: Name for the S3 bucket location where the template will source the Lambda
-#    code from. The template will append '-[region_name]' to this bucket name.
-#    The template will then expect the source code to be located in the solutions-[region_name] bucket
-#  - trademarked-solution-name: name of the solution for consistency
-#  - version-code: version of the package
 
 [ "$DEBUG" == 'true' ] && set -x
 set -e
 
 # Check to see if input has been provided:
-if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
-    echo "Please provide the base source bucket name, trademark approved solution name and version where the lambda code will eventually reside."
-    echo "For example: ./build-s3-dist.sh trademarked-solution-name solutions v1.0.0"
+if [ -z "$DIST_OUTPUT_BUCKET" ] || [ -z "$SOLUTION_NAME" ] || [ -z "$VERSION" ]; then
+    echo "Please provide the base source bucket name, trademark approved solution name and version through environment variables"
     exit 1
 fi
 
@@ -31,10 +17,7 @@ function headline(){
 }
 
 headline "[Init] Setting up paths and variables"
-solution_name="$1"
-asset_bucket="$2"
-solution_version="$3"
-deployment_dir="$PWD"
+deployment_dir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 staging_dist_dir="$deployment_dir/staging"
 template_dist_dir="$deployment_dir/global-s3-assets"
 build_dist_dir="$deployment_dir/regional-s3-assets"
@@ -55,13 +38,9 @@ npm run clean:install
 overrideWarningsEnabled=false npx cdk synth --quiet --asset-metadata false --path-metadata --output="$staging_dist_dir"
 cd "$staging_dist_dir"
 rm tree.json manifest.json cdk.out ./*.assets.json
-cp "$staging_dist_dir"/*.template.json "$template_dist_dir"/
+cp "$staging_dist_dir"/*.template.json "$template_dist_dir"/"$SOLUTION_NAME".template
 rm ./*.template.json
 
-headline "[Package] Generate public template"
-cd "$deployment_dir"
-npx ts-node "$deployment_dir"/cdk-solution-helper/template-builder/index "$template_dist_dir" "$solution_name" "$asset_bucket" "$solution_version"
-mv "$template_dist_dir"/*.template.json "$template_dist_dir"/"$solution_name".template
-
 headline "[Package] Generate public assets for lambda and ui"
-npx ts-node "$deployment_dir"/cdk-solution-helper/asset-packager/index "$staging_dist_dir" "$build_dist_dir"
+cd "$deployment_dir"/cdk-solution-helper/asset-packager && npm ci
+npx ts-node ./index "$staging_dist_dir" "$build_dist_dir"

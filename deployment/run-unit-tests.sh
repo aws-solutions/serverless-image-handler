@@ -15,7 +15,7 @@ function headline(){
 }
 
 headline "[Setup] Configure paths"
-template_dir="$PWD"
+template_dir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cdk_dir="$template_dir/../source/constructs"
 image_handler_dir="$template_dir/../source/image-handler"
 custom_resource_dir="$template_dir/../source/custom-resource"

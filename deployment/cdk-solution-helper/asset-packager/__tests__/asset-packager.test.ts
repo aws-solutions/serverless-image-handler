@@ -79,9 +79,7 @@ describe("CDKAssetPackager", () => {
       });
 
       // Act, Assert
-      await expect(
-        assetPackager.createAssetZip(__assetPath)
-      ).resolves.toBeUndefined();
+      await expect(assetPackager.createAssetZip(__assetPath)).resolves.toBeUndefined();
       expect(addLocalFolderMock).toBeCalledTimes(0);
     });
 
@@ -94,20 +92,14 @@ describe("CDKAssetPackager", () => {
       writeZipMock.mockResolvedValue(undefined);
 
       // Act, Assert
-      await expect(
-        assetPackager.createAssetZip(__asset1)
-      ).resolves.toBeUndefined();
+      await expect(assetPackager.createAssetZip(__asset1)).resolves.toBeUndefined();
       expect(addLocalFolderMock).toBeCalledTimes(1);
-      expect(writeZipMock).toBeCalledWith(
-        `${path.join(__assetPath, __asset1)}.zip`
-      );
+      expect(writeZipMock).toBeCalledWith(`${path.join(__assetPath, __asset1)}.zip`);
     });
 
     it("should throw error if error encountered", async function () {
       lstatMock.mockRejectedValue(new Error("error encountered"));
-      await expect(assetPackager.createAssetZip("")).rejects.toThrowError(
-        "error encountered"
-      );
+      await expect(assetPackager.createAssetZip("")).rejects.toThrowError("error encountered");
     });
   });
 
@@ -128,9 +120,7 @@ describe("CDKAssetPackager", () => {
 
     it("should throw error if error encountered", async function () {
       readdirMock.mockRejectedValue(new Error("error encountered"));
-      await expect(assetPackager.moveZips("")).rejects.toThrowError(
-        "error encountered"
-      );
+      await expect(assetPackager.moveZips("")).rejects.toThrowError("error encountered");
     });
   });
 });
