@@ -8,12 +8,12 @@
   },
   "scripts": {
     "cdk": "cdk",
-    "clean": "rm -rf node_modules/ cdk.out/ coverage/",
-    "clean-synth": "npm run clean && npm install && npm run cdk synth --asset-metadata false --path-metadata false --json false",
-    "pretest": "npm run clean && npm install",
+    "clean:install": "rm -rf node_modules/ cdk.out/ coverage/ && npm ci && cd ../ && npm run install:dependencies",
+    "cdk:synth": "npm run clean:install && overrideWarningsEnabled=false npx cdk synth --asset-metadata false --path-metadata false --json false",
+    "pretest": "npm run clean:install",
     "build": "tsc",
     "watch": "tsc -w",
-    "test": "jest --coverage"
+    "test": "overrideWarningsEnabled=false jest --coverage -u"
   },
   "devDependencies": {
     "@aws-cdk/aws-servicecatalogappregistry-alpha": "2.39.1-alpha.0",
@@ -23,9 +23,10 @@
     "@aws-solutions-constructs/core": "2.25.0",
     "@types/jest": "^29.1.1",
     "@types/node": "^18.8.2",
-    "aws-cdk-lib": "2.44.0",
-    "aws-cdk": "2.44.0",
+    "aws-cdk": "^2.61.1",
+    "aws-cdk-lib": "^2.61.1",
     "constructs": "^10.1.122",
+    "esbuild": "^0.17.4",
     "jest": "^29.1.2",
     "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",
