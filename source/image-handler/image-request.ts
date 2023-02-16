@@ -26,11 +26,11 @@ import { URL } from "url";
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; //5 MB limit
 const ALLOWED_CONTENT_TYPES = [
   'image/jpeg',
-  'image/jpg',
+  'image/tiff',
   'image/png',
   'image/gif',
   'image/webp',
-  'image/bmp',
+  'image/svg+xml',
 ];
 
 type OriginalImageInfo = Partial<{
@@ -217,8 +217,8 @@ export class ImageRequest {
         let imgBytes = await this.getImageBytes(key);
         imageBuffer = Buffer.from(imgBytes as Uint8Array);
 
-        // console.log(<Uint8Array>imageBuffer)
-        result.contentType = "image";
+        result.contentType = this.inferImageType(imageBuffer);
+        // console.log(result.contentType)
 
       } else {
         const originalImage = await this.s3Client.getObject(imageLocation).promise();
