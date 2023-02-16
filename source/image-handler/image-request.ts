@@ -269,7 +269,7 @@ export class ImageRequest {
     if (requestType === RequestTypes.DEFAULT) {
       // Decode the image request and return the image key
       const { key } = this.decodeRequest(event);
-      return decodeURIComponent(key);
+      return key;
     }
 
     if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
@@ -291,7 +291,12 @@ export class ImageRequest {
       }
 
       return decodeURIComponent(
-        path.replace(/\/\d+x\d+:\d+x\d+\/|(?<=\/)\d+x\d+\/|filters:[^/]+|\/fit-in(?=\/)|^\/+/g, "").replace(/^\/+/, "")
+        path
+          .replace(
+            /\/\d+x\d+:\d+x\d+\/|(?<=\/)\d+x\d+\/|filters:watermark\(.*\)|filters:[^/]+|\/fit-in(?=\/)|^\/+/g,
+            ""
+          )
+          .replace(/^\/+/, "")
       );
     }
 
@@ -445,6 +450,7 @@ export class ImageRequest {
         return ContentTypes.PNG;
       case "FFD8FFDB":
       case "FFD8FFE0":
+      case "FFD8FFED":
       case "FFD8FFEE":
       case "FFD8FFE1":
         return ContentTypes.JPEG;
