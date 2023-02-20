@@ -15,6 +15,10 @@ repos:
       - id: terraform_tfsec
         args:
           - --args=--minimum-severity HIGH --exclude-downloaded-modules
+      - id: terraform_providers_lock
+        args:
+          - --args=-platform=linux_amd64
+          - --args=-platform=darwin_amd64
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.3.0
     hooks:

@@ -29,8 +29,8 @@ export TF_VAR_region
 export TF_VAR_app_suffix
 tf ::
 	rm -f $(WORK_DIR)/terraform/.terraform/terraform.tfstate || true
-	if [ "true" == "$(DO_TF_UPGRADE)" ]; then terraform -chdir=$(WORK_DIR)/terraform providers lock -platform=darwin_amd64 -platform=linux_amd64; fi
 	terraform -chdir=$(WORK_DIR)/terraform init -reconfigure -upgrade=$(DO_TF_UPGRADE) $(TF_BACKEND_CFG)
+	if [ "true" == "$(DO_TF_UPGRADE)" ]; then terraform -chdir=$(WORK_DIR)/terraform providers lock -platform=darwin_amd64 -platform=linux_amd64; fi
 	terraform -chdir=$(WORK_DIR)/terraform $(MODE)
 
 invoke :: # invoke the running docker lambda by posting a sample API-GW-Event

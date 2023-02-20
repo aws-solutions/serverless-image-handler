@@ -7,25 +7,21 @@ locals {
 
 module "lambda" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
-  version = "6.9.1"
+  version = "6.10.0"
 
-  architectures                      = ["x86_64"]
-  cloudwatch_lambda_insights_enabled = true
-  cloudwatch_logs_retention_in_days  = 1
-  description                        = "provider of cute kitty pics."
-  function_name                      = local.function_name
-  ignore_external_function_updates   = true
-  layers = [
-    "arn:aws:lambda:${data.aws_region.current.name}:580247275435:layer:LambdaInsightsExtension:16"
-  ]
-  memory_size       = 1024
-  publish           = true
-  runtime           = "nodejs14.x"
-  handler           = "index.handler"
-  s3_bucket         = data.aws_s3_bucket.ci.bucket
-  s3_key            = local.s3_key
-  s3_object_version = aws_s3_object.this.version_id
-  timeout           = 30
+  architectures                     = ["x86_64"]
+  cloudwatch_logs_retention_in_days = 1
+  description                       = "provider of cute kitty pics."
+  function_name                     = local.function_name
+  ignore_external_function_updates  = true
+  memory_size                       = 1024
+  publish                           = true
+  runtime                           = "nodejs14.x"
+  handler                           = "index.handler"
+  s3_bucket                         = data.aws_s3_bucket.ci.bucket
+  s3_key                            = local.s3_key
+  s3_object_version                 = aws_s3_object.this.version_id
+  timeout                           = 30
 
   environment = {
     variables = {
@@ -79,12 +75,13 @@ resource "aws_lambda_alias" "this" {
 
 module "deployment" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws//modules/deployment"
-  version = "6.9.1"
+  version = "6.10.0"
 
-  alias_name                         = aws_lambda_alias.this.name
-  codestar_notifications_target_arn  = data.aws_sns_topic.notifications.arn
-  codepipeline_artifact_store_bucket = data.aws_s3_bucket.pipeline_artifacts.bucket
-  s3_bucket                          = data.aws_s3_bucket.ci.bucket
-  s3_key                             = local.s3_key
-  function_name                      = local.function_name
+  alias_name                                  = aws_lambda_alias.this.name
+  codebuild_cloudwatch_logs_retention_in_days = 7
+  codestar_notifications_target_arn           = data.aws_sns_topic.notifications.arn
+  codepipeline_artifact_store_bucket          = data.aws_s3_bucket.pipeline_artifacts.bucket
+  s3_bucket                                   = data.aws_s3_bucket.ci.bucket
+  s3_key                                      = local.s3_key
+  function_name                               = local.function_name
 }
