@@ -34,7 +34,7 @@ mkdir -p "$build_dist_dir"
 
 headline "[Build] Synthesize cdk template and assets"
 cd "$cdk_source_dir"
-npm run clean:install
+npm run clean:cdkout
 overrideWarningsEnabled=false npx cdk synth --quiet --asset-metadata false --path-metadata --output="$staging_dist_dir"
 cd "$staging_dist_dir"
 rm tree.json manifest.json cdk.out ./*.assets.json

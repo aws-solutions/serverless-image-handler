@@ -3,6 +3,10 @@
 
 import { App, DefaultStackSynthesizer } from "aws-cdk-lib";
 import { ServerlessImageHandlerStack } from "../lib/serverless-image-stack";
+import { InstallDependencies } from "../utils/utils";
+
+// Install dependencies of cdk project
+InstallDependencies();
 
 // CDK and default deployment
 let synthesizer = new DefaultStackSynthesizer({
