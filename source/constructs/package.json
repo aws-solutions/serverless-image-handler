@@ -23,7 +23,7 @@
     "@aws-solutions-constructs/aws-cloudfront-s3": "2.25.0",
     "@aws-solutions-constructs/core": "2.25.0",
     "@types/jest": "^29.1.1",
-    "@types/node": "^18.14.1",
+    "@types/node": "^18.8.2",
     "aws-cdk": "^2.61.1",
     "aws-cdk-lib": "^2.61.1",
     "child_process": "^1.0.2",
