@@ -52,4 +52,4 @@ jobs:
           name: image-handler.zip
 
       - name: Deploy function code
-        run: aws lambda update-function-code --function-name POC-ServerlessImageHandle-BackEndImageHandlerLambd-h2yJWH02kKat --zip-file fileb://`pwd`/image-handler.zip --publish
+        run: aws lambda update-function-code --function-name ServerlessImageHandler-BackEndImageHandlerLambdaFu-lu73MvzUX5ql --zip-file fileb://`pwd`/image-handler.zip --publish
