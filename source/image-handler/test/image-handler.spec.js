@@ -211,6 +211,38 @@ describe('process()', () => {
       }
     });
   });
+  describe('009/zeroCropping', function () {
+    it('Should throw an error if crop with zero width/height is requested.', async function () {
+      // Arrange
+      const request = {
+        requestType: "default",
+        bucket: "sample-bucket",
+        key: "sample-image-001.jpg",
+        // 1 by 1 sample image
+        originalImage: fs.readFileSync('./test/image/test.jpg'),
+        cropping: {
+          left: 0,
+          top: 0,
+          width: 0,
+          height: 0
+        },
+        edits: {}
+      };
+      // Act
+      const imageHandler = new ImageHandler(s3, rekognition);
+      try {
+        await imageHandler.process(request);
+      } catch (error) {
+        // Assert
+        expect(error).toEqual({
+          status: 400,
+          code: 'CropHasZeroDimension',
+          message: 'The cropping with dimension 0x0 is invalid'
+        });
+      }
+    });
+  });
+
 });
 
 // ----------------------------------------------------------------------------

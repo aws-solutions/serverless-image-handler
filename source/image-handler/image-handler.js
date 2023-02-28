@@ -53,6 +53,13 @@ class ImageHandler {
               `The cropping ${cropping.left},${cropping.top}x${cropping.width}:${cropping.height} is outside the image boundary of ${width}x${height}`
           };
         }
+        if (cropping.width === 0 || cropping.height === 0) {
+          throw {
+            status: 400,
+            code: "CropHasZeroDimension",
+            message: `The cropping with dimension ${cropping.width}x${cropping.height} is invalid`
+          }
+        }
         image = await this.applyCropping(image, cropping);
       }
       if (hasEdits) {
@@ -62,8 +69,17 @@ class ImageHandler {
       if (request.outputFormat !== undefined) {
         image.toFormat(request.outputFormat);
       }
-      const bufferImage = await image.toBuffer();
-      returnImage = bufferImage.toString("base64");
+      try {
+        const bufferImage = await image.toBuffer();
+        returnImage = bufferImage.toString("base64");
+      } catch (e) {
+        throw {
+          status: 400,
+          code: 'Cropping failed',
+          message: `Cropping failed with "${e}"`
+        }
+      }
+
     } else {
       returnImage = originalImage.toString("base64");
     }
