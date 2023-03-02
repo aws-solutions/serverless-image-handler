@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CfnCondition, CfnResource, Resource } from "aws-cdk-lib";
-const { execSync } = require('child_process');
-import path = require("path");
+import { execSync } from "child_process";
+import { join } from "path";
 
 interface CfnNagSuppressRule {
   id: string;
@@ -51,7 +51,7 @@ export function addCfnCondition(resource: Resource | CfnResource | undefined, co
  */
 export function RunShellCommand(shellCommand: string, pathToRunCommandIn: string) {
   execSync(shellCommand, {
-    cwd: pathToRunCommandIn
+    cwd: pathToRunCommandIn,
   });
 }
 
@@ -60,7 +60,7 @@ export function RunShellCommand(shellCommand: string, pathToRunCommandIn: string
  * lambda functions which must be installed before esbuild is used to create
  * the bundled assets by cdk synth.
  */
-export function InstallDependencies() { 
-  const projectCdkSourcePath = path.join(__dirname, `../`);
+export function InstallDependencies() {
+  const projectCdkSourcePath = join(__dirname, `../`);
   RunShellCommand("npm run clean:install", projectCdkSourcePath);
 }
