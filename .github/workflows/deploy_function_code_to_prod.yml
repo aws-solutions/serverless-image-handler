@@ -51,5 +51,8 @@ jobs:
         with:
           name: image-handler.zip
 
-      - name: Deploy function code
-        run: aws lambda update-function-code --function-name ServerlessImageHandler-BackEndImageHandlerLambdaFu-xiEDWIsU07k7 --zip-file fileb://`pwd`/image-handler.zip --publish
+      - name: Deploy function code st-avatars bucket
+        run: aws lambda update-function-code --function-name sih-st-avatars-BackEndImageHandlerLambdaFunctionAD-Qter5t39foF9 --zip-file fileb://`pwd`/image-handler.zip --publish
+
+      - name: Deploy function code st-charts bucket
+        run: aws lambda update-function-code --function-name sih-st-charts-BackEndImageHandlerLambdaFunctionADE-mJmhSaFcJHVZ --zip-file fileb://`pwd`/image-handler.zip --publish
