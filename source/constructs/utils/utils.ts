@@ -45,22 +45,22 @@ export function addCfnCondition(resource: Resource | CfnResource | undefined, co
 }
 
 /**
- * Run a shell command from typescript
+ * Runs a shell command from typescript.
  * @param shellCommand Command to run in the shell
  * @param pathToRunCommandIn CWD of shell command
  */
-export function RunShellCommand(shellCommand: string, pathToRunCommandIn: string) {
+export function runShellCommand(shellCommand: string, pathToRunCommandIn: string) {
   execSync(shellCommand, {
     cwd: pathToRunCommandIn,
   });
 }
 
 /**
- * Install dependencies of cdk project. This will include the dependencies of the
- * lambda functions which must be installed before esbuild is used to create
- * the bundled assets by cdk synth.
+* Installs dependencies of the CDK project. This will include the dependencies of the
+* lambda functions which must be installed before esbuild is used to create
+* the bundled assets by CDK synth.
  */
-export function InstallDependencies() {
+export function installDependencies() {
   const projectCdkSourcePath = join(__dirname, `../`);
-  RunShellCommand("npm run clean:install", projectCdkSourcePath);
+  runShellCommand("npm run clean:install", projectCdkSourcePath);
 }
