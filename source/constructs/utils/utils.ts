@@ -56,9 +56,9 @@ export function runShellCommand(shellCommand: string, pathToRunCommandIn: string
 }
 
 /**
-* Installs dependencies of the CDK project. This will include the dependencies of the
-* lambda functions which must be installed before esbuild is used to create
-* the bundled assets by CDK synth.
+ * Installs dependencies of the CDK project. This will include the dependencies of the
+ * lambda functions which must be installed before esbuild is used to create
+ * the bundled assets by CDK synth.
  */
 export function installDependencies() {
   const projectCdkSourcePath = join(__dirname, `../`);
