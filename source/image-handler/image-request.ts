@@ -23,7 +23,7 @@ import https from 'https';
 import http from 'http';
 import { URL } from "url";
 
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; //5 MB limit
+const MAX_IMAGE_SIZE = 6 * 1024 * 1024; //5 MB limit
 const ALLOWED_CONTENT_TYPES = [
   'image/jpeg',
   'image/tiff',
