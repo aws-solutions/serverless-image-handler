@@ -24,3 +24,11 @@ provider "registry.terraform.io/hashicorp/aws" {
     "zh:ffc20b7d9f7bd331fb6451d0fc92c68196383d7115e69380de6566cc268cb9b9",
   ]
 }
+
+provider "registry.terraform.io/opensearch-project/opensearch" {
+  version     = "1.0.0-beta.2"
+  constraints = "1.0.0-beta.2"
+  hashes = [
+    "h1:nFbygatyqqJX2pRvNO6GzNq7Z5brOXgzjA69sUOMTC0=",
+  ]
+}

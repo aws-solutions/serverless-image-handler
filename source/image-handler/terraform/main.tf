@@ -10,7 +10,8 @@ module "lambda" {
   version = "6.10.0"
 
   architectures                     = ["x86_64"]
-  cloudwatch_logs_retention_in_days = 1
+  layers                            = ["arn:aws:lambda:eu-west-1:053041861227:layer:CustomLoggingExtensionOpenSearch-Amd64:9"]
+  cloudwatch_logs_enabled           = false
   description                       = "provider of cute kitty pics."
   function_name                     = local.function_name
   ignore_external_function_updates  = true
@@ -29,13 +30,17 @@ module "lambda" {
       CORS_ENABLED   = "Yes"
       CORS_ORIGIN    = "*"
       SOURCE_BUCKETS = aws_s3_bucket.images.bucket
+
+      LOG_EXT_OPEN_SEARCH_URL     = "https://logs.stroeer.engineering"
+      LOG_EXT_BUFFERING_TIMEOUT   = "30000"
+      LOG_EXT_BUFFERING_MAX_BYTES = "1048576"
+      LOG_EXT_BUFFERING_MAX_ITEMS = "10000"
     }
   }
 
-  cloudwatch_log_subscription_filters = {
-    opensearch = {
-      destination_arn = data.aws_lambda_function.log_streaming.arn
-    }
+  vpc_config = {
+    security_group_ids = [data.aws_security_group.vpc_endpoints.id, data.aws_security_group.all_outbound.id, data.aws_security_group.lambda.id]
+    subnet_ids         = data.aws_subnets.selected.ids
   }
 }
 
@@ -84,4 +89,19 @@ module "deployment" {
   s3_bucket                                   = data.aws_s3_bucket.ci.bucket
   s3_key                                      = local.s3_key
   function_name                               = local.function_name
+}
+
+resource "opensearch_role" "logs_write_access" {
+  role_name   = local.function_name
+  description = "Write access for ${local.function_name} lambda"
+
+  index_permissions {
+    index_patterns  = ["${local.function_name}-lambda-*"]
+    allowed_actions = ["write", "create_index"]
+  }
+}
+
+resource "opensearch_roles_mapping" "logs_write_access" {
+  role_name     = opensearch_role.logs_write_access.role_name
+  backend_roles = [module.lambda.role_name]
 }
