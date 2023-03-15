@@ -7,7 +7,7 @@ locals {
 
 module "lambda" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
-  version = "6.10.0"
+  version = "6.11.0"
 
   architectures                     = ["x86_64"]
   layers                            = ["arn:aws:lambda:eu-west-1:053041861227:layer:CustomLoggingExtensionOpenSearch-Amd64:9"]
@@ -92,8 +92,9 @@ module "deployment" {
 }
 
 resource "opensearch_role" "logs_write_access" {
-  role_name   = local.function_name
-  description = "Write access for ${local.function_name} lambda"
+  role_name           = local.function_name
+  description         = "Write access for ${local.function_name} lambda"
+  cluster_permissions = ["indices:data/write/bulk"]
 
   index_permissions {
     index_patterns  = ["${local.function_name}-lambda-*"]
@@ -103,5 +104,5 @@ resource "opensearch_role" "logs_write_access" {
 
 resource "opensearch_roles_mapping" "logs_write_access" {
   role_name     = opensearch_role.logs_write_access.role_name
-  backend_roles = [module.lambda.role_name]
+  backend_roles = [module.lambda.role_arn]
 }
