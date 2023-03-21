@@ -86,9 +86,20 @@ chmod +x build-s3-dist.sh
 
 ## Deploy
 
-- Deploy the distributable to the Amazon S3 bucket in your account. Make sure you are uploading the files in `deployment/global-s3-assets` and `deployment/regional-s3-assets` to `$BUCKET_NAME/$SOLUTION_NAME/$VERSION`.
+- Deploy the distributable to the Amazon S3 bucket in your account. Make sure you are uploading the files in `deployment/global-s3-assets` and `deployment/regional-s3-assets` to `$BUCKET_NAME/$SOLUTION_NAME/$VERSION` (check [this](https://github.com/aws-solutions/serverless-image-handler/issues/332#issuecomment-1029274526) out for more info).
+- Create another S3 Bucket[1] to be used as the source[2] where the images are going to be stored in.
 - Get the link of the solution template uploaded to your Amazon S3 bucket.
 - Deploy the solution to your account by launching a new AWS CloudFormation stack using the link of the solution template in Amazon S3.
+
+[1] It might be good for the project's standard sake to name it as `$BUCKET_PREFIX`.
+
+[2] It's required when creating the stack in CloudFormation.
+
+## Troubleshooting
+
+_S3 Bucket not found_
+
+Make sure the stack is being created at the same region you have set up for the project. If the error persists, double check you are using the second created bucket as the source.
 
 # Collection of operational metrics
 
