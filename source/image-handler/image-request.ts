@@ -216,19 +216,17 @@ export class ImageRequest {
    * @returns The original image or an error.
    */
   public async getOriginalImage(bucket: string, key: string): Promise<OriginalImageInfo> {
+    let decodedURL = decodeURIComponent(key);
     try {
       const result: OriginalImageInfo = {};
 
       const imageLocation = { Bucket: bucket, Key: key };
       let imageBuffer: Buffer;
-
-      if (this.isValidURL(key)) {
-        let imgBytes = await this.getImageBytes(key, 0);
+      if (this.isValidURL(decodedURL)) {
+        let imgBytes = await this.getImageBytes(decodedURL, 0);
         imageBuffer = Buffer.from(imgBytes as Uint8Array);
 
         result.contentType = this.inferImageType(imageBuffer);
-        // console.log(result.contentType)
-
       } else {
         const originalImage = await this.s3Client.getObject(imageLocation).promise();
         imageBuffer = Buffer.from(originalImage.Body as Uint8Array);
@@ -263,7 +261,7 @@ export class ImageRequest {
       let message = error.message;
       if (error.code === "NoSuchKey") {
         status = StatusCodes.NOT_FOUND;
-        message = `The image ${key} does not exist or the request may not be base64 encoded properly.`;
+        message = `The image ${decodedURL} does not exist or the request may not be base64 encoded properly.`;
       }
       throw new ImageHandlerError(status, error.code, message);
     }
