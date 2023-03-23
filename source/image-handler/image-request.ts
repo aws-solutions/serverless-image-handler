@@ -390,6 +390,7 @@ export class ImageRequest {
     const matchDefault = /^(\/?)([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
     const matchThumbor =
       /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?)(((.(?!(\.[^.\\/]+$)))*$)|.*(\.jpg$|\.jpeg$|.\.png$|\.webp$|\.tiff$|\.tif$|\.svg$|\.gif$))/i;
+    const matchURL = / |,|\.|\*|\+|\#|&|%|\$|\^/i;
     const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION } = process.env;
     const definedEnvironmentVariables =
       REWRITE_MATCH_PATTERN !== "" &&
@@ -414,6 +415,8 @@ export class ImageRequest {
       return RequestTypes.CUSTOM;
     } else if (matchThumbor.test(path)) {
       // use thumbor mappings
+      return RequestTypes.THUMBOR;
+    } else if (matchURL.test(path)) {
       return RequestTypes.THUMBOR;
     } else {
       throw new ImageHandlerError(
