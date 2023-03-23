@@ -32,6 +32,7 @@ const ALLOWED_CONTENT_TYPES = [
   'image/webp',
   'image/svg+xml',
 ];
+const MAX_REDIRECTS = 3;
 
 type OriginalImageInfo = Partial<{
   contentType: string;
@@ -166,15 +167,23 @@ export class ImageRequest {
     }
   }
 
-  public async getImageBytes(url: string) {
+  public async getImageBytes(url: string, depth: number) {
     return new Promise((resolve, reject) => {
       const protocol = url.startsWith('https') ? https : http;
       protocol.get(url, {headers: {'User-Agent': 'Mozilla/5.0'}}, response => {
+        if (depth > MAX_REDIRECTS) {
+          reject(new Error(`Failed to get the image: too many redirects`));
+          return;
+        }
+        if ([301, 302, 303, 307, 308].includes(response.statusCode)) {
+          const redirectUrl = response.headers.location;
+          return resolve(this.getImageBytes(redirectUrl, depth + 1));
+        }
         if (response.statusCode !== 200) {
           reject(new Error(`Failed to get the image, status code: ${response.statusCode}`));
           return;
         }
-        const contentType = response.headers['content-type'];
+        const contentType = response.headers['content-type'].split(';')[0];
         if (!ALLOWED_CONTENT_TYPES.includes(contentType)) {
           reject(new Error(`Invalid content type, only the following content types are allowed: ${ALLOWED_CONTENT_TYPES.join(', ')}`));
           return;
@@ -214,7 +223,7 @@ export class ImageRequest {
       let imageBuffer: Buffer;
 
       if (this.isValidURL(key)) {
-        let imgBytes = await this.getImageBytes(key);
+        let imgBytes = await this.getImageBytes(key, 0);
         imageBuffer = Buffer.from(imgBytes as Uint8Array);
 
         result.contentType = this.inferImageType(imageBuffer);
