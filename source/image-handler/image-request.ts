@@ -180,7 +180,7 @@ export class ImageRequest {
           return resolve(this.getImageBytes(redirectUrl, depth + 1));
         }
         if (response.statusCode !== 200) {
-          reject(new Error(`Failed to get the image, status code: ${response.statusCode}`));
+          reject(new Error(`Failed to get the image at ${url}. Status code: ${response.statusCode}` ));
           return;
         }
         const contentType = response.headers['content-type'].split(';')[0];
