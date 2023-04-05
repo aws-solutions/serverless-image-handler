@@ -39,20 +39,33 @@ jobs:
       - build
 
     steps:
-      - name: Configure AWS credentials for prod
+      - name: Retrieve built function code
+        uses: actions/download-artifact@v3
+        with:
+          name: image-handler.zip
+
+      - name: Configure AWS credentials for prod AWS account
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::455897087921:role/StocktwitsServerlessImageHandlerGithub
           role-session-name: GithubActions
 
-      - name: Retrieve built function code
-        uses: actions/download-artifact@v3
-        with:
-          name: image-handler.zip
-
-      - name: Deploy function code st-avatars bucket
+      - name: Deploy function code for st-avatars bucket
         run: aws lambda update-function-code --function-name sih-st-avatars-BackEndImageHandlerLambdaFunctionAD-Qter5t39foF9 --zip-file fileb://`pwd`/image-handler.zip --publish
 
-      - name: Deploy function code st-charts bucket
+      - name: Deploy function code for st-charts bucket
         run: aws lambda update-function-code --function-name sih-st-charts-BackEndImageHandlerLambdaFunctionADE-mJmhSaFcJHVZ --zip-file fileb://`pwd`/image-handler.zip --publish
+
+      - name: Configure AWS credentials for "old" AWS account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::146390941810:role/StocktwitsServerlessImageHandlerGithub
+          role-session-name: GithubActions
+
+      - name: Deploy function code for st-avatars bucket
+        run: aws lambda update-function-code --function-name sih-st-avatars-old-accoun-BackEndImageHandlerLambd-WLhOD4vNRmwT --zip-file fileb://`pwd`/image-handler.zip --publish
+
+      - name: Deploy function code for st-charts bucket
+        run: aws lambda update-function-code --function-name sih-st-charts-old-account-BackEndImageHandlerLambd-Krbyl9WMv7KQ --zip-file fileb://`pwd`/image-handler.zip --publish
