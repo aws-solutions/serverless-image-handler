@@ -15,7 +15,7 @@
     "axios": "^1.0.0",
     "moment": "^2.29.4",
     "uuid": "^9.0.0",
-    "aws-sdk": "^2.1229.0"
+    "aws-sdk": "^2.1354.0"
   },
   "devDependencies": {
     "@types/jest": "^29.1.1",
