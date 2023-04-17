@@ -618,6 +618,7 @@ async function createCloudFrontLoggingBucket(requestProperties: CreateLoggingBuc
     const createBucketRequestParams: CreateBucketRequest = {
       Bucket: bucketName,
       ACL: "log-delivery-write",
+      ObjectOwnership: "ObjectWriter",
     };
     await s3Client.createBucket(createBucketRequestParams).promise();
 

@@ -1581,6 +1581,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
                     "s3:GetObject",
                     "s3:PutObject",
                     "s3:ListBucket",
+                    "s3:PutBucketOwnershipControls",
                   ],
                   "Effect": "Allow",
                   "Resource": {
