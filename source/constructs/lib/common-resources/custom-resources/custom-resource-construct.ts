@@ -83,6 +83,7 @@ export class CustomResourcesConstruct extends Construct {
                 "s3:GetObject",
                 "s3:PutObject",
                 "s3:ListBucket",
+                "s3:PutBucketOwnershipControls",
               ],
               resources: [
                 Stack.of(this).formatArn({

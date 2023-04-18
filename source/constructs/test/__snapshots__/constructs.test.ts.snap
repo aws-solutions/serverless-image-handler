@@ -1167,7 +1167,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "81baf2ab3a41584170190dc0f2ce62f50e091a14cab8fd069cb3aebe903297c5.zip",
+          "S3Key": "78b436c469309e023e523cd541ba11447338133693d9c1a1fc5d6083b20fc58c.zip",
         },
         "Description": "sih (v6.1.0): Performs image edits and manipulations",
         "Environment": {
@@ -1434,7 +1434,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "9625fed5ea187a6addea35fa263bbcf7c41761dc08a4b22045b90f5e8e1ab3f5.zip",
+          "S3Key": "1366d04b3952cb14d9e5fb6177cebae1fbe15d99d032564494443c3126f4d196.zip",
         },
         "Description": "sih (v6.1.0): Custom resource",
         "Environment": {
@@ -1530,6 +1530,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
                     "s3:GetObject",
                     "s3:PutObject",
                     "s3:ListBucket",
+                    "s3:PutBucketOwnershipControls",
                   ],
                   "Effect": "Allow",
                   "Resource": {
@@ -1621,7 +1622,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
         ],
         "SourceObjectKeys": [
-          "b17ee622b8fe21bd9a4189063340647fbb783d07261ea136b83db1d58255b0b2.zip",
+          "297994e5975cd83b2ec43f52720181be7d5daf08af8987cc4d5749f99db8f777.zip",
         ],
       },
       "Type": "Custom::CDKBucketDeployment",
