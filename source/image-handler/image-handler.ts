@@ -173,6 +173,13 @@ export class ImageHandler {
     } else {
       if (edits.resize.width) edits.resize.width = Math.round(Number(edits.resize.width));
       if (edits.resize.height) edits.resize.height = Math.round(Number(edits.resize.height));
+      if (edits.resize.width < 1 || edits.resize.height < 1) {
+        throw new ImageHandlerError(
+          StatusCodes.BAD_REQUEST,
+          "InvalidImageSizeException",
+          "The image size is invalid."
+        );
+      }
 
       if (edits.resize.ratio) {
         const ratio = edits.resize.ratio;
