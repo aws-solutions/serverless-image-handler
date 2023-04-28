@@ -20,6 +20,7 @@ import {
 
 export class ImageHandler {
   private readonly LAMBDA_PAYLOAD_LIMIT = 6 * 1024 * 1024;
+  private readonly LARGE_IMAGE_SIZE = 16364 * 16364;
 
   constructor(private readonly s3Client: S3, private readonly rekognitionClient: Rekognition) {}
 
@@ -75,13 +76,21 @@ export class ImageHandler {
    */
   async process(imageRequestInfo: ImageRequestInfo): Promise<string> {
     const { originalImage, edits } = imageRequestInfo;
-    const options = { failOnError: false, animated: imageRequestInfo.contentType === ContentTypes.GIF };
+    const options = { failOnError: false, limitInputPixels: false, animated: imageRequestInfo.contentType === ContentTypes.GIF };
     let base64EncodedImage = "";
 
     // Apply edits if specified
     if (edits && Object.keys(edits).length) {
       // convert image to Sharp object
-      const image = await this.instantiateSharpImage(originalImage, edits, options);
+      let image = await this.instantiateSharpImage(originalImage, edits, options);
+      //Get source image metadata
+      const metadata = await image.metadata();
+      const pixel = metadata.width * metadata.height;
+      // To consume resources, check and set the limit if the image width is 16364 or less. Reinstantiate the Image with low pixel limit.
+      if(pixel <= this.LARGE_IMAGE_SIZE){                     
+        const newoptions = { failOnError: false, limitInputPixels: true, animated: imageRequestInfo.contentType === ContentTypes.GIF };
+        image = await this.instantiateSharpImage(originalImage, edits, newoptions);
+      }
       // apply image edits
       let modifiedImage = await this.applyEdits(image, edits, options.animated);
       // modify image output if requested
