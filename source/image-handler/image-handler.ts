@@ -86,7 +86,7 @@ export class ImageHandler {
       //Get source image metadata
       const metadata = await image.metadata();
       const pixel = metadata.width * metadata.height;
-      // To consume resources, check and set the limit if the image width is 16364 or less. Reinstantiate the Image with low pixel limit.
+      // To avoid unwanted resource consumption, check and set the pixel limit to true for images with width and height less than 16364 * 16364. Reinstantiate the Image with low pixel limit.
       if(pixel <= this.LARGE_IMAGE_SIZE){                     
         const newoptions = { failOnError: false, limitInputPixels: true, animated: imageRequestInfo.contentType === ContentTypes.GIF };
         image = await this.instantiateSharpImage(originalImage, edits, newoptions);
