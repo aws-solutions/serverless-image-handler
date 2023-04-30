@@ -13,8 +13,13 @@
 
 function importOriginalImage() {
     // Gather the bucket name and image key
-    const bucketName = $(`#txt-bucket-name`).first().val();
-    const keyName = $(`#txt-key-name`).first().val();
+    const bucketNameDirty = $(`#txt-bucket-name`).first().val();
+    const keyNameDirty = $(`#txt-key-name`).first().val();
+
+    // ensure fields do not contain html to avoid vulnerabilities
+    const bucketName = bucketNameDirty.replace(/(<([^>]+)>)/gi, "");
+    const keyName = keyNameDirty.replace(/(<([^>]+)>)/gi, "");
+
     // Assemble the image request
     const request = {
         bucket: bucketName,
@@ -75,8 +80,13 @@ function getPreviewImage() {
     }
     if (Object.keys(_edits.resize).length === 0) { delete _edits.resize }
     // Gather the bucket and key names
-    const bucketName = $(`#img-original`).first().attr(`data-bucket`);
-    const keyName = $(`#img-original`).first().attr(`data-key`);
+    const bucketNameDirty = $(`#img-original`).first().attr(`data-bucket`);
+    const keyNameDirty = $(`#img-original`).first().attr(`data-key`);
+
+    // ensure fields do not contain html to avoid vulnerabilities
+    const bucketName = bucketNameDirty.replace(/(<([^>]+)>)/gi, "");
+    const keyName = keyNameDirty.replace(/(<([^>]+)>)/gi, "");
+
     // Set up the request body
     const request = {
         bucket: bucketName,
