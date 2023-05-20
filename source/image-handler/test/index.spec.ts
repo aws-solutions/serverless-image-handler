@@ -3,7 +3,7 @@
 
 import { mockAwsS3 } from "./mock";
 
-import { handler } from "../index";
+import { handler, transformCdnUrls } from "../index";
 import { ImageHandlerError, ImageHandlerEvent, StatusCodes } from "../lib";
 
 describe("index", () => {
@@ -417,5 +417,22 @@ describe("index", () => {
       Key: "test.jpg",
     });
     expect(result).toEqual(expectedResult);
+  });
+
+  describe('transformCdnUrls', () => {
+    it('transforms URL correctly when matches', () => {
+      const inputUrl = '/fit-in/500x500/filters:quality(70)/cdn-cgi/image/fit=contain,width=200,height=200/production/image.jpg';
+      const expectedUrl = '/fit-in/500x500/filters:quality(70)/production/image.jpg';
+      expect(transformCdnUrls(inputUrl)).toBe(expectedUrl);
+    });
+
+    it('leaves URL unchanged when it does not match pattern', () => {
+      const inputUrl = '/fit-in/500x500/filters:quality(70)/production/image.jpg';
+      expect(transformCdnUrls(inputUrl)).toBe(inputUrl);
+
+      const inputUrl2 = '/fit-in/500x500/filters:quality(70)/http://abc.com/image.jpg';
+      expect(transformCdnUrls(inputUrl2)).toBe(inputUrl2);
+
+    });
   });
 });
