@@ -220,7 +220,7 @@ describe("setup", () => {
     mockAwsS3.getObject.mockImplementationOnce(() => ({
       promise() {
         return Promise.resolve({
-          "cacheControl": "max-age=31536000,public",
+          cacheControl: "max-age=31536000,public",
           ContentType: "custom-type",
           Expires: "Tue, 24 Dec 2019 13:46:28 GMT",
           LastModified: "Sat, 19 Dec 2009 16:30:47 GMT",
@@ -241,7 +241,7 @@ describe("setup", () => {
         rotate: 90,
       },
       originalImage: Buffer.from("SampleImageContent\n"),
-      "cacheControl": "max-age=31536000,public",
+      cacheControl: "max-age=31536000,public",
       contentType: "custom-type",
       expires: "Tue, 24 Dec 2019 13:46:28 GMT",
       lastModified: "Sat, 19 Dec 2009 16:30:47 GMT",
@@ -291,7 +291,7 @@ describe("setup", () => {
         rotate: 90,
       },
       originalImage: Buffer.from("SampleImageContent\n"),
-      "cacheControl": "max-age=31536000,public",
+      cacheControl: "max-age=31536000,public",
       contentType: "custom-type",
       expires: "Tue, 24 Dec 2019 13:46:28 GMT",
       lastModified: "Sat, 19 Dec 2009 16:30:47 GMT",
