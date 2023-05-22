@@ -1,0 +1,55 @@
+name: Deploy Function Code to Prod
+
+on:
+  push:
+    tags:
+      - stg-*
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    name: Build function code
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build function code
+        run: ./build-s3-dist.sh solutions stocktwits-resizing v1.0.4
+        working-directory: deployment
+
+      - name: Cache built function code
+        uses: actions/upload-artifact@v3
+        with:
+          name: image-handler.zip
+          path: deployment/regional-s3-assets/image-handler.zip
+
+  deploy:
+    name: Deploy function code
+
+    runs-on: ubuntu-latest
+
+    needs:
+      - build
+
+    steps:
+      - name: Retrieve built function code
+        uses: actions/download-artifact@v3
+        with:
+          name: image-handler.zip
+
+      - name: Configure AWS credentials for "old" AWS account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::146390941810:role/StocktwitsServerlessImageHandlerGithub
+          role-session-name: GithubActions
+
+      - name: Deploy function code for st-charts bucket
+        run: aws lambda update-function-code --function-name sih-st-charts-staging-BackEndImageHandlerLambdaFun-kyYjf3x2xFUo --zip-file fileb://`pwd`/image-handler.zip --publish
