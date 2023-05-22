@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { mockAwsS3 } from "./mock";
+import 'jest';
 
-import { handler, transformCdnUrls } from "../index";
+import { handler } from "../index";
 import { ImageHandlerError, ImageHandlerEvent, StatusCodes } from "../lib";
+import { ImageRequest } from "../image-request";
+
+
 
 describe("index", () => {
   // Arrange
@@ -419,20 +423,66 @@ describe("index", () => {
     expect(result).toEqual(expectedResult);
   });
 
-  describe('transformCdnUrls', () => {
-    it('transforms URL correctly when matches', () => {
-      const inputUrl = '/fit-in/500x500/filters:quality(70)/cdn-cgi/image/fit=contain,width=200,height=200/production/image.jpg';
-      const expectedUrl = '/fit-in/500x500/filters:quality(70)/production/image.jpg';
-      expect(transformCdnUrls(inputUrl)).toBe(expectedUrl);
+  
+});
+
+describe('handler', () => {
+  jest.mock("../image-request");
+  it('should correctly transform CDN URLs and pass them to ImageRequest.setup', async () => {
+    let event = {
+      path: "/fit-in/400x400/filters:quality(70)/cdn-cgi/image/fit=contain,width=200,height=200/production/image.jpeg",
+    };
+
+    
+    const setupSpy = jest.spyOn(ImageRequest.prototype, 'setup');
+
+    await handler(event);
+
+    // check that setup has been called with the correctly transformed URL
+    expect(setupSpy).toHaveBeenCalledWith({
+      ...event,
+      path: "/fit-in/400x400/filters:quality(70)/production/image.jpeg"
     });
 
-    it('leaves URL unchanged when it does not match pattern', () => {
-      const inputUrl = '/fit-in/500x500/filters:quality(70)/production/image.jpg';
-      expect(transformCdnUrls(inputUrl)).toBe(inputUrl);
+    // Cleanup the spying
+    setupSpy.mockRestore();
+  });
+  it('should not transform non External URLs and pass them to ImageRequest.setup', async () => {
+    let event = {
+      path: "/fit-in/500x500/filters:quality(70)/http://example.com/image.jpeg",
+    };
 
-      const inputUrl2 = '/fit-in/500x500/filters:quality(70)/http://abc.com/image.jpg';
-      expect(transformCdnUrls(inputUrl2)).toBe(inputUrl2);
+    
+    const setupSpy = jest.spyOn(ImageRequest.prototype, 'setup');
 
+    await handler(event);
+
+    // check that setup has been called with the correctly transformed URL
+    expect(setupSpy).toHaveBeenCalledWith({
+      ...event,
+      path: "/fit-in/500x500/filters:quality(70)/http://example.com/image.jpeg"
     });
+
+    // Cleanup the spying
+    setupSpy.mockRestore();
+  });
+  it('should not transform non CDN URLs and pass them to ImageRequest.setup', async () => {
+    let event = {
+      path: "/fit-in/400x400/filters:quality(70)/production/image.jpeg",
+    };
+
+    
+    const setupSpy = jest.spyOn(ImageRequest.prototype, 'setup');
+
+    await handler(event);
+
+    // check that setup has been called with the correctly transformed URL
+    expect(setupSpy).toHaveBeenCalledWith({
+      ...event,
+      path: "/fit-in/400x400/filters:quality(70)/production/image.jpeg"
+    });
+
+    // Cleanup the spying
+    setupSpy.mockRestore();
   });
 });
