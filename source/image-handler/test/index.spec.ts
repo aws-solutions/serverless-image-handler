@@ -8,8 +8,6 @@ import { handler } from "../index";
 import { ImageHandlerError, ImageHandlerEvent, StatusCodes } from "../lib";
 import { ImageRequest } from "../image-request";
 
-
-
 describe("index", () => {
   // Arrange
   process.env.SOURCE_BUCKETS = "source-bucket";
@@ -422,8 +420,6 @@ describe("index", () => {
     });
     expect(result).toEqual(expectedResult);
   });
-
-  
 });
 
 describe('handler', () => {
