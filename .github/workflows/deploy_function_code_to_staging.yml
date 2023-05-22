@@ -1,4 +1,4 @@
-name: Deploy Function Code to Prod
+name: Deploy Function Code to Staging
 
 on:
   push:
