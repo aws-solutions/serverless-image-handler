@@ -1,0 +1,33 @@
+# Use an official Node.js runtime as a parent image
+FROM node:16
+
+# Set the working directory in the container to /app
+WORKDIR /app
+
+# Add the current directory contents into the container at /app
+ADD . /app
+
+
+WORKDIR /app/source/
+RUN npm install
+
+
+# Install dependencies for each part of the application
+WORKDIR /app/source/constructs
+RUN npm install
+
+WORKDIR /app/source/custom-resource
+RUN npm install
+
+WORKDIR /app/source/image-handler
+RUN npm install
+
+WORKDIR /app/source/solution-utils
+
+# Change to root working directory
+WORKDIR /app/deployment
+
+RUN chmod +x run-unit-tests.sh
+
+# Run unit tests when the container launches
+CMD ["./run-unit-tests.sh"]

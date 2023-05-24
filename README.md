@@ -76,6 +76,16 @@ chmod +x run-unit-tests.sh
 ./run-unit-tests.sh
 ```
 
+
+## Dockerized Unit Test
+
+No need to install any dependencies just use the docker
+
+```bash
+docker build -t sih-ut -f Dockerfile.test . 
+docker run -it --rm --name running-ut sih-ut  
+```
+
 ## Build
 
 ```bash
