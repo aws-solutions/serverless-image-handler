@@ -443,7 +443,7 @@ describe('handler', () => {
     // Cleanup the spying
     setupSpy.mockRestore();
   });
-  it('should not transform non External URLs and pass them to ImageRequest.setup', async () => {
+  it('should not transform External URLs and pass them to ImageRequest.setup', async () => {
     let event = {
       path: "/fit-in/500x500/filters:quality(70)/http://example.com/image.jpeg",
     };
