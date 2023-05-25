@@ -481,4 +481,23 @@ describe('handler', () => {
     // Cleanup the spying
     setupSpy.mockRestore();
   });
+  it('handle generic urls too them to ImageRequest.setup', async () => {
+    let event = {
+      path: "/resize/filters:focal(70)/cdn-cgi/image/fit=contain,width=200,height=200/production/image.jpeg",
+    };
+
+    
+    const setupSpy = jest.spyOn(ImageRequest.prototype, 'setup');
+
+    await handler(event);
+
+    // check that setup has been called with the correctly transformed URL
+    expect(setupSpy).toHaveBeenCalledWith({
+      ...event,
+      path: "/resize/filters:focal(70)/production/image.jpeg"
+    });
+
+    // Cleanup the spying
+    setupSpy.mockRestore();
+  });
 });

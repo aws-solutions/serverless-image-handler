@@ -147,13 +147,12 @@ function getResponseHeaders(isError: boolean = false, isAlb: boolean = false): H
  */
 function transformCdnUrls(url: string): string {
   // Regular expression to detect the second type of URL and capture the dynamic parts
-  const regex = /\/fit-in\/(\d+x\d+)\/filters:quality\((\d+)\)\/cdn-cgi\/image\/fit=contain,width=\d+,height=\d+/;
+  const regex = /\/cdn-cgi\/image\/fit=contain,width=\d+,height=\d+/;
 
   // Check if the URL matches the pattern
   if (regex.test(url)) {
-    // Replace the matched part of the URL with the corresponding part from the first type of URL
-    // and reinsert the captured dynamic parts
-    return url.replace(regex, (_match, p1, p2) => `/fit-in/${p1}/filters:quality(${p2})`);
+   // Replace the matched part of the URL with an empty string, effectively removing it
+   return url.replace(regex, '');
   }
 
   // If the URL does not match the pattern, return it unchanged
