@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { mockAwsS3 } from "./mock";
+import 'jest';
 
 import { handler } from "../index";
 import { ImageHandlerError, ImageHandlerEvent, StatusCodes } from "../lib";
+import { ImageRequest } from "../image-request";
 
 describe("index", () => {
   // Arrange
@@ -417,5 +419,85 @@ describe("index", () => {
       Key: "test.jpg",
     });
     expect(result).toEqual(expectedResult);
+  });
+});
+
+describe('handler', () => {
+  jest.mock("../image-request");
+  it('should correctly transform CDN URLs and pass them to ImageRequest.setup', async () => {
+    let event = {
+      path: "/fit-in/400x400/filters:quality(70)/cdn-cgi/image/fit=contain,width=200,height=200/production/image.jpeg",
+    };
+
+    
+    const setupSpy = jest.spyOn(ImageRequest.prototype, 'setup');
+
+    await handler(event);
+
+    // check that setup has been called with the correctly transformed URL
+    expect(setupSpy).toHaveBeenCalledWith({
+      ...event,
+      path: "/fit-in/400x400/filters:quality(70)/production/image.jpeg"
+    });
+
+    // Cleanup the spying
+    setupSpy.mockRestore();
+  });
+  it('should not transform External URLs and pass them to ImageRequest.setup', async () => {
+    let event = {
+      path: "/fit-in/500x500/filters:quality(70)/http://example.com/image.jpeg",
+    };
+
+    
+    const setupSpy = jest.spyOn(ImageRequest.prototype, 'setup');
+
+    await handler(event);
+
+    // check that setup has been called with the correctly transformed URL
+    expect(setupSpy).toHaveBeenCalledWith({
+      ...event,
+      path: "/fit-in/500x500/filters:quality(70)/http://example.com/image.jpeg"
+    });
+
+    // Cleanup the spying
+    setupSpy.mockRestore();
+  });
+  it('should not transform non CDN URLs and pass them to ImageRequest.setup', async () => {
+    let event = {
+      path: "/fit-in/400x400/filters:quality(70)/production/image.jpeg",
+    };
+
+    
+    const setupSpy = jest.spyOn(ImageRequest.prototype, 'setup');
+
+    await handler(event);
+
+    // check that setup has been called with the correctly transformed URL
+    expect(setupSpy).toHaveBeenCalledWith({
+      ...event,
+      path: "/fit-in/400x400/filters:quality(70)/production/image.jpeg"
+    });
+
+    // Cleanup the spying
+    setupSpy.mockRestore();
+  });
+  it('handle generic urls too them to ImageRequest.setup', async () => {
+    let event = {
+      path: "/resize/filters:focal(70)/cdn-cgi/image/fit=contain,width=200,height=200/production/image.jpeg",
+    };
+
+    
+    const setupSpy = jest.spyOn(ImageRequest.prototype, 'setup');
+
+    await handler(event);
+
+    // check that setup has been called with the correctly transformed URL
+    expect(setupSpy).toHaveBeenCalledWith({
+      ...event,
+      path: "/resize/filters:focal(70)/production/image.jpeg"
+    });
+
+    // Cleanup the spying
+    setupSpy.mockRestore();
   });
 });

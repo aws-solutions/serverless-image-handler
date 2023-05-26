@@ -24,6 +24,7 @@ const secretProvider = new SecretProvider(secretsManagerClient);
  * @returns Processed request response.
  */
 export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExecutionResult> {
+  event.path = transformCdnUrls(event.path);
   console.info("Received event:", JSON.stringify(event, null, 2));
 
   const imageRequest = new ImageRequest(s3Client, secretProvider);
@@ -137,4 +138,23 @@ function getResponseHeaders(isError: boolean = false, isAlb: boolean = false): H
   }
 
   return headers;
+}
+
+/**
+ * Transorm CDN URLs to the format expected by the image handler.
+ * @param url
+ * @returns Transformed URL.
+ */
+function transformCdnUrls(url: string): string {
+  // Regular expression to detect the second type of URL and capture the dynamic parts
+  const regex = /\/cdn-cgi\/image\/fit=contain,width=\d+,height=\d+/;
+
+  // Check if the URL matches the pattern
+  if (regex.test(url)) {
+   // Replace the matched part of the URL with an empty string, effectively removing it
+   return url.replace(regex, '');
+  }
+
+  // If the URL does not match the pattern, return it unchanged
+  return url;
 }
