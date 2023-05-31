@@ -3,6 +3,7 @@
 
 import S3 from "aws-sdk/clients/s3";
 import { createHmac } from "crypto";
+import sharp, { Metadata } from "sharp";
 
 import {
   ContentTypes,
@@ -22,6 +23,12 @@ import { ThumborMapper } from "./thumbor-mapper";
 import https from 'https';
 import http from 'http';
 import { URL } from "url";
+
+const MAX_PERCENTAGE = parseInt(process.env.MAX_PERCENTAGE,10) || 75
+
+const MIN_PERCENTAGE = parseInt(process.env.MIN_PERCENTAGE, 10) || 25
+
+const GIF_ALLOWED_RESIZE = parseInt(process.env.GIF_ALLOWED_RESIZE,10) || 0.75 * 1024 * 1024 
 
 const MAX_IMAGE_SIZE = 6 * 1024 * 1024; //6 MB
 const ALLOWED_CONTENT_TYPES = [
@@ -120,9 +127,12 @@ export class ImageRequest {
       imageRequestInfo.edits = this.parseImageEdits(event, imageRequestInfo.requestType);
 
       const originalImage = await this.getOriginalImage(imageRequestInfo.bucket, imageRequestInfo.key);
+  
       imageRequestInfo = { ...imageRequestInfo, ...originalImage };
 
       imageRequestInfo.headers = this.parseImageHeaders(event, imageRequestInfo.requestType);
+
+      this.setResizeDimensionsforGifIfRequired(originalImage,imageRequestInfo);
 
       // If the original image is SVG file and it has any edits but no output format, change the format to PNG.
       if (
@@ -588,5 +598,52 @@ export class ImageRequest {
         );
       }
     }
+  }
+
+  /**
+   * Checks Gif Resize dimensions and resets to original dimension if any of it exceeds the original size
+   * @param event ImageRequestInfo, ImageMetadata
+   * @returns A promise.
+   */
+  private async setResizeDimensionsforGifIfRequired(originalImage: OriginalImageInfo,imageRequestInfo: ImageRequestInfo): Promise<void> {
+    //If the original image is GIF file end edit diemsions exceeds original then use original
+      if (
+        imageRequestInfo.contentType === ContentTypes.GIF &&
+        imageRequestInfo.edits &&
+        Object.keys(imageRequestInfo.edits).length > 0 && imageRequestInfo.edits.resize) {
+          const metadata = await sharp(originalImage.originalImage).metadata();
+          console.info("Siyanat edited metadata")
+          console.info("Siyanat MAX_PERCENTAGE ", MAX_PERCENTAGE)
+          console.info("Siyanat MIN_PERCENTAGE ", MIN_PERCENTAGE)
+          console.info("Siyanat GIF_ALLOWED_RESIZE ", GIF_ALLOWED_RESIZE)
+            if(metadata.size > GIF_ALLOWED_RESIZE){
+              let resize = imageRequestInfo.edits.resize
+              console.info("Siyanat edited metadata", JSON.stringify(resize))
+              if(resize.width && resize.height){
+                if(this.shouldResize(resize.width, metadata.width)){
+                  imageRequestInfo.edits.resize.width = metadata.width
+                }
+                if(this.shouldResize(resize.height,metadata.height)){
+                  imageRequestInfo.edits.resize.height = metadata.height
+                }
+            }
+        }
+      }
+   }
+
+  /**
+    * When resize params are near to original dimensions it mostly leads to greater size gif  after resizing
+    * @param number
+    * @param reference
+    * @returns boolean based on condition
+    */
+
+  private  shouldResize(number: number, reference: number): boolean {
+    console.info("Siyanat number ", number)
+    console.info("Siyanat reference ", reference)
+    if(number === 0 || number === null) return true
+    if(number > reference) return true
+    const percentage = (number / reference) * 100;
+    return percentage >= MAX_PERCENTAGE || percentage <= MIN_PERCENTAGE;
   }
 }
