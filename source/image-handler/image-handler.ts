@@ -423,6 +423,7 @@ export class ImageHandler {
    */
   private skipEdit(edit: string, isAnimation: boolean): boolean {
     console.info("Siyanat Edit is", edit)
+    console.info("Siyanat should skip eidt",  isAnimation && ["rotate", "smartCrop", "roundCrop", "contentModeration", "skip"].includes(edit))
     return isAnimation && ["rotate", "smartCrop", "roundCrop", "contentModeration", "skip"].includes(edit);
   }
 

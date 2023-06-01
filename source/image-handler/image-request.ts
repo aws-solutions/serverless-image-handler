@@ -630,7 +630,7 @@ export class ImageRequest {
                 }
                 if(widthResized && heightResized){
                     if(imageRequestInfo.edits){
-                      console.info("Siyanat Skipping edit")
+                      console.info("Siyanat edit json", JSON.stringify(imageRequestInfo.edits))
                       imageRequestInfo.edits["edit"] = "skip"
                     }
                 }
