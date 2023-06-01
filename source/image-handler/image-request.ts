@@ -132,7 +132,7 @@ export class ImageRequest {
 
       imageRequestInfo.headers = this.parseImageHeaders(event, imageRequestInfo.requestType);
 
-      this.setResizeDimensionsforGifIfRequired(originalImage,imageRequestInfo);
+      await this.setResizeDimensionsforGifIfRequired(originalImage,imageRequestInfo);
 
       console.log("Siyanat imageRequestInfo.edits ", JSON.stringify(imageRequestInfo.edits))
 
@@ -633,7 +633,7 @@ export class ImageRequest {
                 if(widthResized && heightResized){
                     if(imageRequestInfo.edits){
                       console.info("Siyanat edit json", JSON.stringify(imageRequestInfo.edits))
-                      imageRequestInfo.edits = undefined
+                      delete imageRequestInfo.edits
                     }
                 }
            } 
