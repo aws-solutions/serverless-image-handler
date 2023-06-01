@@ -127,6 +127,7 @@ export class ImageHandler {
 
     // Apply the image edits
     for (const edit in edits) {
+      console.info("Siyanat inside edit")
       if (this.skipEdit(edit, isAnimation)) continue;
 
       switch (edit) {
