@@ -615,19 +615,26 @@ export class ImageRequest {
           console.info("Siyanat edited metadata")
           console.info("Siyanat MAX_PERCENTAGE ", MAX_PERCENTAGE)
           console.info("Siyanat MIN_PERCENTAGE ", MIN_PERCENTAGE)
-          console.info("Siyanat GIF_ALLOWED_RESIZE ", GIF_ALLOWED_RESIZE)
-            if(metadata.size > GIF_ALLOWED_RESIZE){
-              let resize = imageRequestInfo.edits.resize
+          let widthResized = false
+          let heightResized = false
+          let resize = imageRequestInfo.edits.resize
               console.info("Siyanat edited metadata", JSON.stringify(resize))
               if(resize.width && resize.height){
                 if(this.shouldResize(resize.width, metadata.width)){
                   imageRequestInfo.edits.resize.width = metadata.width
+                  widthResized  = true
                 }
                 if(this.shouldResize(resize.height,metadata.height)){
                   imageRequestInfo.edits.resize.height = metadata.height
+                  heightResized = true
                 }
-            }
-        }
+                if(widthResized && heightResized){
+                    if(imageRequestInfo.edits.edit){
+                      console.info("Siyanat Skipping edit")
+                      imageRequestInfo.edits.edit = "skip"
+                    }
+                }
+           } 
       }
    }
 
