@@ -134,6 +134,8 @@ export class ImageRequest {
 
       this.setResizeDimensionsforGifIfRequired(originalImage,imageRequestInfo);
 
+      console.log("Siyanat imageRequestInfo.edits ", JSON.stringify(imageRequestInfo.edits))
+
       // If the original image is SVG file and it has any edits but no output format, change the format to PNG.
       if (
         imageRequestInfo.contentType === ContentTypes.SVG &&
