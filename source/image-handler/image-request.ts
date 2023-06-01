@@ -631,7 +631,7 @@ export class ImageRequest {
                 if(widthResized && heightResized){
                     if(imageRequestInfo.edits){
                       console.info("Siyanat edit json", JSON.stringify(imageRequestInfo.edits))
-                      delete imageRequestInfo.edits
+                      imageRequestInfo.edits = undefined
                     }
                 }
            } 
