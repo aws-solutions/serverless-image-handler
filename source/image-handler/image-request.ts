@@ -629,9 +629,9 @@ export class ImageRequest {
                   heightResized = true
                 }
                 if(widthResized && heightResized){
-                    if(imageRequestInfo.edits.edit){
+                    if(imageRequestInfo.edits){
                       console.info("Siyanat Skipping edit")
-                      imageRequestInfo.edits.edit = "skip"
+                      imageRequestInfo.edits["edit"] = "skip"
                     }
                 }
            } 
