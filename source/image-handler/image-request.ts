@@ -621,7 +621,7 @@ export class ImageRequest {
           let heightResized = false
           let resize = imageRequestInfo.edits.resize
               console.info("Siyanat edited metadata", JSON.stringify(resize))
-              if(resize.width && resize.height){
+              if(resize.width || resize.height){
                 if(this.shouldResize(resize.width, metadata.width)){
                   imageRequestInfo.edits.resize.width = metadata.width
                   widthResized  = true
