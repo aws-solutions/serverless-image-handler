@@ -630,12 +630,12 @@ export class ImageRequest {
                   imageRequestInfo.edits.resize.height = metadata.height
                   heightResized = true
                 }
-                if(widthResized && heightResized){
+                /*if(widthResized && heightResized){
                     if(imageRequestInfo.edits){
                       console.info("Siyanat edit json", JSON.stringify(imageRequestInfo.edits))
                       delete imageRequestInfo.edits
                     }
-                }
+                }*/
            } 
       }
    }
