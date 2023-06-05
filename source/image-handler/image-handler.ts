@@ -422,9 +422,7 @@ export class ImageHandler {
    * @returns whether the edit needs to be skipped or not.
    */
   private skipEdit(edit: string, isAnimation: boolean): boolean {
-    console.info("Siyanat Edit is", edit)
-    console.info("Siyanat should skip eidt",  isAnimation && ["rotate", "smartCrop", "roundCrop", "contentModeration", "skip"].includes(edit))
-    return isAnimation && ["rotate", "smartCrop", "roundCrop", "contentModeration", "skip"].includes(edit);
+    return isAnimation && ["rotate", "smartCrop", "roundCrop", "contentModeration"].includes(edit);
   }
 
   /**
