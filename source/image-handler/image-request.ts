@@ -28,7 +28,7 @@ const MAX_PERCENTAGE = parseInt(process.env.MAX_PERCENTAGE,10) || 75
 
 const MIN_PERCENTAGE = parseInt(process.env.MIN_PERCENTAGE, 10) || 25
 
-const GIF_ALLOWED_RESIZE = parseInt(process.env.GIF_ALLOWED_RESIZE,10) || 0.75 * 1024 * 1024 
+const GIF_ALLOWED_RESIZE = parseInt(process.env.GIF_ALLOWED_RESIZE,10) || 4 * 1024 * 1024 
 
 const MAX_IMAGE_SIZE = 6 * 1024 * 1024; //6 MB
 const ALLOWED_CONTENT_TYPES = [
@@ -134,8 +134,7 @@ export class ImageRequest {
 
       await this.setResizeDimensionsforGifIfRequired(originalImage,imageRequestInfo);
 
-      console.log("Siyanat imageRequestInfo.edits ", JSON.stringify(imageRequestInfo.edits))
-
+    
       // If the original image is SVG file and it has any edits but no output format, change the format to PNG.
       if (
         imageRequestInfo.contentType === ContentTypes.SVG &&
@@ -614,13 +613,9 @@ export class ImageRequest {
         imageRequestInfo.edits &&
         Object.keys(imageRequestInfo.edits).length > 0 && imageRequestInfo.edits.resize) {
           const metadata = await sharp(originalImage.originalImage).metadata();
-          console.info("Siyanat edited metadata")
-          console.info("Siyanat MAX_PERCENTAGE ", MAX_PERCENTAGE)
-          console.info("Siyanat MIN_PERCENTAGE ", MIN_PERCENTAGE)
           let widthResized = false
           let heightResized = false
           let resize = imageRequestInfo.edits.resize
-              console.info("Siyanat edited metadata", JSON.stringify(resize))
               if(resize.width || resize.height){
                 if(this.shouldResize(resize.width, metadata.width)){
                   imageRequestInfo.edits.resize.width = metadata.width
@@ -630,26 +625,27 @@ export class ImageRequest {
                   imageRequestInfo.edits.resize.height = metadata.height
                   heightResized = true
                 }
-                /*if(widthResized && heightResized){
-                    if(imageRequestInfo.edits){
-                      console.info("Siyanat edit json", JSON.stringify(imageRequestInfo.edits))
+                if(widthResized && heightResized){
+                    // bypass resizing only if Gif size is < 4MB
+                    // otherwise 413 is practically guaranteed when converting to base64
+                    // better to attempt to resize and check if it can still return a gif
+                    if(metadata.size < GIF_ALLOWED_RESIZE){
                       delete imageRequestInfo.edits
                     }
-                }*/
+                }
            } 
       }
    }
 
   /**
     * When resize params are near to original dimensions it mostly leads to greater size gif  after resizing
+    * hence when params are near to original dimensions or zero  we should not resize
     * @param number
     * @param reference
     * @returns boolean based on condition
     */
 
   private  shouldResize(number: number, reference: number): boolean {
-    console.info("Siyanat number ", number)
-    console.info("Siyanat reference ", reference)
     if(number === 0 || number === null) return true
     if(number > reference) return true
     const percentage = (number / reference) * 100;
