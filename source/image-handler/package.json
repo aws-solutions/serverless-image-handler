@@ -15,7 +15,8 @@
     "color": "4.2.3",
     "color-name": "1.1.4",
     "sharp": "^0.31.3",
-    "aws-sdk": "^2.1356.0"
+    "aws-sdk": "^2.1356.0",
+    "jimp": "^0.22.8"
   },
   "devDependencies": {
     "@types/color": "^3.0.3",

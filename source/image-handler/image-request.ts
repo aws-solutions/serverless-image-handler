@@ -18,6 +18,7 @@ import {
 } from "./lib";
 import { SecretProvider } from "./secret-provider";
 import { ThumborMapper } from "./thumbor-mapper";
+import {BitmapRequest} from "./bitmap-handler";
 
 type OriginalImageInfo = Partial<{
   contentType: string;
@@ -177,7 +178,14 @@ export class ImageRequest {
       }
 
       result.cacheControl = originalImage.CacheControl ?? "max-age=31536000,public";
-      result.originalImage = imageBuffer;
+      const bitmapRequest = new BitmapRequest();
+
+      if (bitmapRequest.isBmp(imageBuffer)) {
+        result.contentType = 'image/png';
+        result.originalImage = await bitmapRequest.convertToPng(imageBuffer);
+      } else {
+        result.originalImage = imageBuffer;
+      }
 
       return result;
     } catch (error) {
