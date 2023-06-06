@@ -57,7 +57,7 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
     };
   } catch (error) {
     console.error(error);
-    console.error("Error ocurred for path ", event.path);//log the path for debugging
+    console.error("Error occurred for path ", event.path);//log the path for debugging
     // Default fallback image
     const { ENABLE_DEFAULT_FALLBACK_IMAGE, DEFAULT_FALLBACK_IMAGE_BUCKET, DEFAULT_FALLBACK_IMAGE_KEY } = process.env;
     if (
