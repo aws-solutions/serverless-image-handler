@@ -3,6 +3,7 @@
 
 import S3 from "aws-sdk/clients/s3";
 import { createHmac } from "crypto";
+import sharp, { Metadata } from "sharp";
 
 import {
   ContentTypes,
@@ -23,6 +24,9 @@ import https from 'https';
 import http from 'http';
 import { URL } from "url";
 
+const MAX_PERCENTAGE = parseInt(process.env.MAX_PERCENTAGE,10) || 75
+const MIN_PERCENTAGE = parseInt(process.env.MIN_PERCENTAGE, 10) || 25
+const GIF_ALLOWED_RESIZE = parseInt(process.env.GIF_ALLOWED_RESIZE,10) || 4 * 1024 * 1024 
 const MAX_IMAGE_SIZE = 6 * 1024 * 1024; //6 MB
 const ALLOWED_CONTENT_TYPES = [
   'image/jpeg',
@@ -123,6 +127,8 @@ export class ImageRequest {
       imageRequestInfo = { ...imageRequestInfo, ...originalImage };
 
       imageRequestInfo.headers = this.parseImageHeaders(event, imageRequestInfo.requestType);
+
+      await this.setResizeDimensionsforGifIfRequired(originalImage,imageRequestInfo);
 
       // If the original image is SVG file and it has any edits but no output format, change the format to PNG.
       if (
@@ -588,5 +594,56 @@ export class ImageRequest {
         );
       }
     }
+  }
+
+  /**
+   * Checks Gif Resize dimensions and resets to original dimension if any of it exceeds the original size
+   * @param event ImageRequestInfo, ImageMetadata
+   * @returns A promise.
+   */
+  private async setResizeDimensionsforGifIfRequired(originalImage: OriginalImageInfo,imageRequestInfo: ImageRequestInfo): Promise<void> {
+    //If the original image is GIF file end edit diemsions exceeds original then use original
+      if (
+        imageRequestInfo.contentType === ContentTypes.GIF &&
+        imageRequestInfo.edits &&
+        Object.keys(imageRequestInfo.edits).length > 0 && imageRequestInfo.edits.resize) {
+          const metadata = await sharp(originalImage.originalImage).metadata();
+          let widthResized = false
+          let heightResized = false
+          let resize = imageRequestInfo.edits.resize
+              if(resize.width || resize.height){
+                if(this.shouldResize(resize.width, metadata.width)){
+                  imageRequestInfo.edits.resize.width = metadata.width
+                  widthResized  = true
+                }
+                if(this.shouldResize(resize.height,metadata.height)){
+                  imageRequestInfo.edits.resize.height = metadata.height
+                  heightResized = true
+                }
+                if(widthResized && heightResized){
+                    // bypass resizing only if Gif size is < 4MB
+                    // otherwise 413 is practically guaranteed when converting to base64
+                    // better to attempt to resize and check if it can still return a gif
+                    if(metadata.size < GIF_ALLOWED_RESIZE){
+                      delete imageRequestInfo.edits
+                    }
+                }
+           } 
+      }
+   }
+
+  /**
+    * When resize params are near to original dimensions it mostly leads to greater size gif  after resizing
+    * hence when params are near to original dimensions or zero  we should not resize
+    * @param number
+    * @param reference
+    * @returns boolean based on condition
+    */
+
+  private  shouldResize(number: number, reference: number): boolean {
+    if(number === 0 || number === null) return true
+    if(number > reference) return true
+    const percentage = (number / reference) * 100;
+    return percentage >= MAX_PERCENTAGE || percentage <= MIN_PERCENTAGE;
   }
 }

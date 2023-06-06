@@ -1,6 +1,9 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+
+jest.mock('sharp'); //must be before sharp import
+
 import { mockAwsS3, mockAwsSecretManager } from "../mock";
 
 import S3 from "aws-sdk/clients/s3";
@@ -9,6 +12,9 @@ import SecretsManager from "aws-sdk/clients/secretsmanager";
 import { ImageRequest } from "../../image-request";
 import { ImageHandlerError, RequestTypes, StatusCodes } from "../../lib";
 import { SecretProvider } from "../../secret-provider";
+import sharp, { Sharp } from 'sharp';
+import fs from "fs";
+
 
 describe("setup", () => {
   const OLD_ENV = process.env;
@@ -793,5 +799,485 @@ describe("setup", () => {
       Key: "test.png",
     });
     expect(imageRequestInfo).toEqual(expectedResult);
+  });
+
+  describe("Restricted Gif Resizing", () => {
+    beforeAll(() => {
+      process.env.ENABLE_SIGNATURE = "No";
+      process.env.SOURCE_BUCKETS = "validBucket";
+    });
+    it("Should match width if width exceeds the original GIF dimension and height is within range and gif is < 4mb", async () => {
+      // Arrange
+      const event = {
+        path: "/fit-in/500x250/filters:quality(70)/image.gif",
+      };
+      const image = fs.readFileSync("./test/image/25x15.png");
+      const sharpInstance: Partial<Sharp> = {
+        metadata: jest.fn().mockResolvedValue({ width: 700, height: 400, size: 1024 }),
+      };
+    
+      ((sharp as unknown) as jest.Mock).mockReturnValue(sharpInstance);
+      
+      mockAwsS3.getObject.mockImplementationOnce(() => ({
+        promise() {
+          return Promise.resolve({
+            ContentType: "image/gif",
+            Body: image,
+          });
+        },
+      }));
+
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+      const imageRequestInfo = await imageRequest.setup(event);
+      const expectedResult = {
+        requestType: "Thumbor",
+        bucket: "validBucket",
+        key: "image.gif",
+        edits: {
+          gif: { quality:70},
+          resize: {
+            width: 500,
+            height: 250,
+            fit: "inside",
+        }},
+        headers: undefined,
+        originalImage: image,
+        cacheControl: "max-age=31536000,public",
+        contentType: "image/gif",
+      };
+
+      // Assert
+      expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+        Bucket: "validBucket",
+        Key: "image.gif",
+      });
+      expect(imageRequestInfo).toEqual(expectedResult);
+    });
+    it("Should match height if height exceeds the original GIF dimension but width is within range and gif is < 4mb", async () => {
+      // Arrange
+      const event = {
+        path: "/fit-in/300x700/filters:quality(70)/image.gif",
+      };
+      const image = fs.readFileSync("./test/image/25x15.png");
+      const sharpInstance: Partial<Sharp> = {
+        metadata: jest.fn().mockResolvedValue({ width: 500, height: 400, size: 1024 }),
+      };
+    
+      ((sharp as unknown) as jest.Mock).mockReturnValue(sharpInstance);
+      
+      mockAwsS3.getObject.mockImplementationOnce(() => ({
+        promise() {
+          return Promise.resolve({
+            ContentType: "image/gif",
+            Body: image,
+          });
+        },
+      }));
+
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+      const imageRequestInfo = await imageRequest.setup(event);
+      const expectedResult = {
+        requestType: "Thumbor",
+        bucket: "validBucket",
+        key: "image.gif",
+        edits: {
+          gif: { quality:70},
+          resize: {
+            width: 300,
+            height: 400,
+            fit: "inside",
+        }},
+        headers: undefined,
+        originalImage: image,
+        cacheControl: "max-age=31536000,public",
+        contentType: "image/gif",
+      };
+
+      // Assert
+      expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+        Bucket: "validBucket",
+        Key: "image.gif",
+      });
+      expect(imageRequestInfo).toEqual(expectedResult);
+    });
+    it("Should match height if height =0 the original GIF dimension but width is within range", async () => {
+      // Arrange
+      const event = {
+        path: "/fit-in/300x0/filters:quality(70)/image.gif",
+      };
+      const image = fs.readFileSync("./test/image/25x15.png");
+      const sharpInstance: Partial<Sharp> = {
+        metadata: jest.fn().mockResolvedValue({ width: 500, height: 400, size: 1024 }),
+      };
+    
+      ((sharp as unknown) as jest.Mock).mockReturnValue(sharpInstance);
+      
+      mockAwsS3.getObject.mockImplementationOnce(() => ({
+        promise() {
+          return Promise.resolve({
+            ContentType: "image/gif",
+            Body: image,
+          });
+        },
+      }));
+
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+      const imageRequestInfo = await imageRequest.setup(event);
+      const expectedResult = {
+        requestType: "Thumbor",
+        bucket: "validBucket",
+        key: "image.gif",
+        edits: {
+          gif: { quality:70},
+          resize: {
+            width: 300,
+            height: 400,
+            fit: "inside",
+        }},
+        headers: undefined,
+        originalImage: image,
+        cacheControl: "max-age=31536000,public",
+        contentType: "image/gif",
+      };
+
+      // Assert
+      expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+        Bucket: "validBucket",
+        Key: "image.gif",
+      });
+      expect(imageRequestInfo).toEqual(expectedResult);
+    });
+    it("Should match width if width = 0 exceeds the original GIF dimension but height is within range", async () => {
+      // Arrange
+      const event = {
+        path: "/fit-in/0x200/filters:quality(70)/image.gif",
+      };
+      const image = fs.readFileSync("./test/image/25x15.png");
+      const sharpInstance: Partial<Sharp> = {
+        metadata: jest.fn().mockResolvedValue({ width: 500, height: 400, size: 1024 }),
+      };
+    
+      ((sharp as unknown) as jest.Mock).mockReturnValue(sharpInstance);
+      
+      mockAwsS3.getObject.mockImplementationOnce(() => ({
+        promise() {
+          return Promise.resolve({
+            ContentType: "image/gif",
+            Body: image,
+          });
+        },
+      }));
+
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+      const imageRequestInfo = await imageRequest.setup(event);
+      const expectedResult = {
+        requestType: "Thumbor",
+        bucket: "validBucket",
+        key: "image.gif",
+        edits: {
+          gif: { quality:70},
+          resize: {
+            width: 500,
+            height: 200,
+            fit: "inside",
+        }},
+        headers: undefined,
+        originalImage: image,
+        cacheControl: "max-age=31536000,public",
+        contentType: "image/gif",
+      };
+
+      // Assert
+      expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+        Bucket: "validBucket",
+        Key: "image.gif",
+      });
+      expect(imageRequestInfo).toEqual(expectedResult);
+    });
+    it("Should match width height if both exceeds and gif is > 4mb", async () => {
+      // Arrange
+      const event = {
+        path: "/fit-in/700x700/filters:quality(70)/image.gif",
+      };
+      const image = fs.readFileSync("./test/image/25x15.png");
+      const sharpInstance: Partial<Sharp> = {
+        metadata: jest.fn().mockResolvedValue({ width: 500, height: 400, size: 4.1 *1024 *1024 }),
+      };
+    
+      ((sharp as unknown) as jest.Mock).mockReturnValue(sharpInstance);
+      
+      mockAwsS3.getObject.mockImplementationOnce(() => ({
+        promise() {
+          return Promise.resolve({
+            ContentType: "image/gif",
+            Body: image,
+          });
+        },
+      }));
+
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+      const imageRequestInfo = await imageRequest.setup(event);
+      const expectedResult = {
+        requestType: "Thumbor",
+        bucket: "validBucket",
+        key: "image.gif",
+        edits: {
+          gif: { quality:70},
+          resize: {
+            width: 500,
+            height: 400,
+            fit: "inside",
+        }},
+        headers: undefined,
+        originalImage: image,
+        cacheControl: "max-age=31536000,public",
+        contentType: "image/gif",
+      };
+
+      // Assert
+      expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+        Bucket: "validBucket",
+        Key: "image.gif",
+      });
+      expect(imageRequestInfo).toEqual(expectedResult);
+    });
+    it("Should skip resize if height and width exceeds the original GIF dimension and gif is < 4mb", async () => {
+      // Arrange
+      const event = {
+        path: "/fit-in/700x700/filters:quality(70)/image.gif",
+      };
+      const image = fs.readFileSync("./test/image/25x15.png");
+      const sharpInstance: Partial<Sharp> = {
+        metadata: jest.fn().mockResolvedValue({ width: 500, height: 400, size: 1024 }),
+      };
+    
+      ((sharp as unknown) as jest.Mock).mockReturnValue(sharpInstance);
+      
+      mockAwsS3.getObject.mockImplementationOnce(() => ({
+        promise() {
+          return Promise.resolve({
+            ContentType: "image/gif",
+            Body: image,
+          });
+        },
+      }));
+
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+      const imageRequestInfo = await imageRequest.setup(event);
+      const expectedResult = {
+        requestType: "Thumbor",
+        bucket: "validBucket",
+        key: "image.gif",
+        headers: undefined,
+        originalImage: image,
+        cacheControl: "max-age=31536000,public",
+        contentType: "image/gif",
+      };
+
+      // Assert
+      expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+        Bucket: "validBucket",
+        Key: "image.gif",
+      });
+      expect(imageRequestInfo).toEqual(expectedResult);
+    });
+    it("Should match height if height is less than 25 percent and width is within range", async () => {
+      // Arrange
+      const event = {
+        path: "/fit-in/300x70/filters:quality(70)/image.gif",
+      };
+      const image = fs.readFileSync("./test/image/25x15.png");
+      const sharpInstance: Partial<Sharp> = {
+        metadata: jest.fn().mockResolvedValue({ width: 500, height: 400, size: 1024 }),
+      };
+    
+      ((sharp as unknown) as jest.Mock).mockReturnValue(sharpInstance);
+      
+      mockAwsS3.getObject.mockImplementationOnce(() => ({
+        promise() {
+          return Promise.resolve({
+            ContentType: "image/gif",
+            Body: image,
+          });
+        },
+      }));
+
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+      const imageRequestInfo = await imageRequest.setup(event);
+      const expectedResult = {
+        requestType: "Thumbor",
+        bucket: "validBucket",
+        key: "image.gif",
+        edits: {
+          gif: { quality:70},
+          resize: {
+            width: 300,
+            height: 400,
+            fit: "inside",
+        }},
+        headers: undefined,
+        originalImage: image,
+        cacheControl: "max-age=31536000,public",
+        contentType: "image/gif",
+      };
+
+      // Assert
+      expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+        Bucket: "validBucket",
+        Key: "image.gif",
+      });
+      expect(imageRequestInfo).toEqual(expectedResult);
+    });
+    it("Should match height if height is greater than 75 percent and width is within range", async () => {
+      // Arrange
+      const event = {
+        path: "/fit-in/300x350/filters:quality(70)/image.gif",
+      };
+      const image = fs.readFileSync("./test/image/25x15.png");
+      const sharpInstance: Partial<Sharp> = {
+        metadata: jest.fn().mockResolvedValue({ width: 500, height: 400, size: 1024 }),
+      };
+    
+      ((sharp as unknown) as jest.Mock).mockReturnValue(sharpInstance);
+      
+      mockAwsS3.getObject.mockImplementationOnce(() => ({
+        promise() {
+          return Promise.resolve({
+            ContentType: "image/gif",
+            Body: image,
+          });
+        },
+      }));
+
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+      const imageRequestInfo = await imageRequest.setup(event);
+      const expectedResult = {
+        requestType: "Thumbor",
+        bucket: "validBucket",
+        key: "image.gif",
+        edits: {
+          gif: { quality:70},
+          resize: {
+            width: 300,
+            height: 400,
+            fit: "inside",
+        }},
+        headers: undefined,
+        originalImage: image,
+        cacheControl: "max-age=31536000,public",
+        contentType: "image/gif",
+      };
+
+      // Assert
+      expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+        Bucket: "validBucket",
+        Key: "image.gif",
+      });
+      expect(imageRequestInfo).toEqual(expectedResult);
+    });
+    it("Should match width if width is less than 25 percent and height is within range", async () => {
+      // Arrange
+      const event = {
+        path: "/fit-in/100x250/filters:quality(70)/image.gif",
+      };
+      const image = fs.readFileSync("./test/image/25x15.png");
+      const sharpInstance: Partial<Sharp> = {
+        metadata: jest.fn().mockResolvedValue({ width: 500, height: 400, size: 1024 }),
+      };
+    
+      ((sharp as unknown) as jest.Mock).mockReturnValue(sharpInstance);
+      
+      mockAwsS3.getObject.mockImplementationOnce(() => ({
+        promise() {
+          return Promise.resolve({
+            ContentType: "image/gif",
+            Body: image,
+          });
+        },
+      }));
+
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+      const imageRequestInfo = await imageRequest.setup(event);
+      const expectedResult = {
+        requestType: "Thumbor",
+        bucket: "validBucket",
+        key: "image.gif",
+        edits: {
+          gif: { quality:70},
+          resize: {
+            width: 500,
+            height: 250,
+            fit: "inside",
+        }},
+        headers: undefined,
+        originalImage: image,
+        cacheControl: "max-age=31536000,public",
+        contentType: "image/gif",
+      };
+
+      // Assert
+      expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+        Bucket: "validBucket",
+        Key: "image.gif",
+      });
+      expect(imageRequestInfo).toEqual(expectedResult);
+    });
+    it("Should match width if width is > than 75 percent and height is within range", async () => {
+      // Arrange
+      const event = {
+        path: "/fit-in/450x250/filters:quality(70)/image.gif",
+      };
+      const image = fs.readFileSync("./test/image/25x15.png");
+      const sharpInstance: Partial<Sharp> = {
+        metadata: jest.fn().mockResolvedValue({ width: 500, height: 400, size: 1024 }),
+      };
+    
+      ((sharp as unknown) as jest.Mock).mockReturnValue(sharpInstance);
+      
+      mockAwsS3.getObject.mockImplementationOnce(() => ({
+        promise() {
+          return Promise.resolve({
+            ContentType: "image/gif",
+            Body: image,
+          });
+        },
+      }));
+
+      // Act
+      const imageRequest = new ImageRequest(s3Client, secretProvider);
+      const imageRequestInfo = await imageRequest.setup(event);
+      const expectedResult = {
+        requestType: "Thumbor",
+        bucket: "validBucket",
+        key: "image.gif",
+        edits: {
+          gif: { quality:70},
+          resize: {
+            width: 500,
+            height: 250,
+            fit: "inside",
+        }},
+        headers: undefined,
+        originalImage: image,
+        cacheControl: "max-age=31536000,public",
+        contentType: "image/gif",
+      };
+
+      // Assert
+      expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+        Bucket: "validBucket",
+        Key: "image.gif",
+      });
+      expect(imageRequestInfo).toEqual(expectedResult);
+    });
   });
 });
