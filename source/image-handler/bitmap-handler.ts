@@ -21,12 +21,22 @@ export class BitmapRequest {
   };
 
   public isBmp(imageBuffer: Buffer): boolean {
-    const bmpMagicNumber = "424d";
-
-    // Read the first 2 bytes of the file
-    const fileSignature = imageBuffer.subarray(0, 2).toString("hex");
-
-    // Compare the file signature with the magic number
-    return fileSignature === bmpMagicNumber;
+    const imageSignature = imageBuffer.subarray(0, 4).toString("hex").toUpperCase();
+    if (
+      imageSignature === "89504E47" ||
+      imageSignature === "FFD8FFDB" ||
+      imageSignature === "FFD8FFE0" ||
+      imageSignature === "FFD8FFEE" ||
+      imageSignature === "FFD8FFE1" ||
+      imageSignature === "52494646" ||
+      imageSignature === "49492A00" ||
+      imageSignature === "4D4D002A"
+    ) {
+      return false;
+    } else {
+      const bmpMagicNumber = "424d";
+      const fileSignature = imageBuffer.subarray(0, 2).toString("hex");
+      return fileSignature === bmpMagicNumber;
+    }
   }
 }
