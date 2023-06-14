@@ -24,9 +24,9 @@ import https from 'https';
 import http from 'http';
 import { URL } from "url";
 
-const MAX_PERCENTAGE = parseInt(process.env.MAX_PERCENTAGE,10) || 75
+const MAX_PERCENTAGE = parseInt(process.env.MAX_PERCENTAGE, 10) || 75
 const MIN_PERCENTAGE = parseInt(process.env.MIN_PERCENTAGE, 10) || 25
-const GIF_ALLOWED_RESIZE = parseInt(process.env.GIF_ALLOWED_RESIZE,10) || 4 * 1024 * 1024 
+const GIF_ALLOWED_RESIZE = parseInt(process.env.GIF_ALLOWED_RESIZE, 10) || 4 * 1024 * 1024 
 const MAX_IMAGE_SIZE = 6 * 1024 * 1024; //6 MB
 const ALLOWED_CONTENT_TYPES = [
   'image/jpeg',
@@ -128,7 +128,7 @@ export class ImageRequest {
 
       imageRequestInfo.headers = this.parseImageHeaders(event, imageRequestInfo.requestType);
 
-      await this.setResizeDimensionsforGifIfRequired(originalImage,imageRequestInfo);
+      await this.setResizeDimensionsforGifIfRequired(originalImage, imageRequestInfo);
 
       // If the original image is SVG file and it has any edits but no output format, change the format to PNG.
       if (
