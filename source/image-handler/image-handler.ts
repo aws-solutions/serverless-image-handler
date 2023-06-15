@@ -76,7 +76,11 @@ export class ImageHandler {
    */
   async process(imageRequestInfo: ImageRequestInfo): Promise<string> {
     const { originalImage, edits } = imageRequestInfo;
-    const options = { failOnError: false, limitInputPixels: false, animated: imageRequestInfo.contentType === ContentTypes.GIF };
+    const options = {
+      failOnError: false,
+      limitInputPixels: false,
+      animated: imageRequestInfo.contentType === ContentTypes.GIF,
+    };
     let base64EncodedImage = "";
 
     // Apply edits if specified
@@ -87,8 +91,12 @@ export class ImageHandler {
       const metadata = await image.metadata();
       const pixel = metadata.width * metadata.height;
       // To avoid unwanted resource consumption, check and set the pixel limit to true for images with width and height less than 16364 * 16364. Reinstantiate the Image with low pixel limit.
-      if(pixel <= this.LARGE_IMAGE_SIZE){                     
-        const newoptions = { failOnError: false, limitInputPixels: true, animated: imageRequestInfo.contentType === ContentTypes.GIF };
+      if (pixel <= this.LARGE_IMAGE_SIZE) {
+        const newoptions = {
+          failOnError: false,
+          limitInputPixels: true,
+          animated: imageRequestInfo.contentType === ContentTypes.GIF,
+        };
         image = await this.instantiateSharpImage(originalImage, edits, newoptions);
       }
       // apply image edits
