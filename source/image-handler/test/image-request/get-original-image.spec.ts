@@ -55,6 +55,18 @@ describe("getOriginalImage", () => {
     expect(result.originalImage).toBeInstanceOf(Buffer);
   });
 
+  it("Should pass for content tye application octet", async () => {
+    // Mock
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = await imageRequest.getOriginalImage("", "https://static.finnhub.io/logo/f47dde7da64ae0fc2df0d0f0ba75ab55aafa49c506a5b8ce1ca778c6a9a669d3.png")
+
+    // Assert
+    expect(result).toBeTruthy;
+    expect(result.originalImage).toBeInstanceOf(Buffer);
+  });
+
+
   it("Should throw an error if an invalid bucket or key name is provided, simulating a non-existent original image", async () => {
     // Mock
     mockAwsS3.getObject.mockImplementationOnce(() => ({

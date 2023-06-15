@@ -21,7 +21,8 @@
   "dependencies": {
     "color": "4.2.3",
     "color-name": "1.1.4",
-    "sharp": "^0.31.1"
+    "sharp": "^0.31.1",
+    "axios": "^1.4.0"
   },
   "devDependencies": {
     "@types/color": "^3.0.3",

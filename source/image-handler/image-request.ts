@@ -4,6 +4,7 @@
 import S3 from "aws-sdk/clients/s3";
 import { createHmac } from "crypto";
 import sharp, { Metadata } from "sharp";
+import axios from 'axios';
 
 import {
   ContentTypes,
@@ -35,8 +36,11 @@ const ALLOWED_CONTENT_TYPES = [
   'image/gif',
   'image/webp',
   'image/svg+xml',
+  'binary/octet-stream',
+  'application/octet-stream'
 ];
 const MAX_REDIRECTS = 3;
+const TIMEOUT = 10000; // 10 seconds timeout
 
 type OriginalImageInfo = Partial<{
   contentType: string;
@@ -216,6 +220,52 @@ export class ImageRequest {
   }
 
   /**
+   * This function is used to get the image bytes from the url using the axios library.
+   * @param url 
+   * @param depth 
+   * @returns buffer
+   */
+  public async getImageBytesUsingAxios(url: string, depth: number = 0): Promise<Buffer> {
+    const headers = {
+        'Host': new URL(url).hostname,
+        'Accept': '*/*',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15'
+    };
+
+    try {
+        const response = await axios.get(url, {
+            headers: headers,
+            timeout: TIMEOUT,
+            maxRedirects: MAX_REDIRECTS,
+            responseType: 'arraybuffer'
+        });
+
+        const contentType = response.headers['content-type']?.split(';')[0];
+        if (!contentType || !ALLOWED_CONTENT_TYPES.includes(contentType)) {
+            throw new Error(`Invalid content type, only the following content types are allowed: ${ALLOWED_CONTENT_TYPES.join(', ')}`);
+        }
+
+        if (response.data.byteLength > MAX_IMAGE_SIZE) {
+            throw new Error(`The image is too large, the maximum allowed size is ${MAX_IMAGE_SIZE} bytes`);
+        }
+
+        return Buffer.from(response.data);
+
+    } catch (error) {
+        if (error.response) {
+            // Request made and server responded
+            throw new Error(`Failed to get the image at ${url}. Status code: ${error.response.status}`);
+        } else if (error.request) {
+            // The request was made but no response was received
+            throw new Error(`No response received for ${url}.`);
+        } else {
+            // Something happened in setting up the request that triggered an Error
+            throw error;
+        }
+    }
+}
+
+  /**
    * Gets the original image from an Amazon S3 bucket.
    * @param bucket The name of the bucket containing the image.
    * @param key The key name corresponding to the image.
@@ -229,7 +279,7 @@ export class ImageRequest {
       const imageLocation = { Bucket: bucket, Key: key };
       let imageBuffer: Buffer;
       if (this.isValidURL(decodedURL)) {
-        let imgBytes = await this.getImageBytes(decodedURL, 0);
+        let imgBytes = await this.getImageBytesUsingAxios(decodedURL, 0);
         imageBuffer = Buffer.from(imgBytes as Uint8Array);
 
         result.contentType = this.inferImageType(imageBuffer);
@@ -264,6 +314,15 @@ export class ImageRequest {
       return result;
     } catch (error) {
       let status = StatusCodes.INTERNAL_SERVER_ERROR;
+      if(error.message.includes('403')) {
+        status = StatusCodes.FORBIDDEN
+      }
+      else if(error.message.includes('404')) {
+        status = StatusCodes.NOT_FOUND
+      }
+      else if(error.message.includes('401')) {
+        status = StatusCodes.UNAUTHORIZED
+      }
       let message = error.message;
       if (error.code === "NoSuchKey") {
         status = StatusCodes.NOT_FOUND;
