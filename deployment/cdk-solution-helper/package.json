@@ -19,6 +19,6 @@
   },
   "dependencies": {
     "adm-zip": "^0.5.10",
-    "aws-cdk-lib": "^2.63.0"
+    "aws-cdk-lib": "^2.80.0"
   }
 }
