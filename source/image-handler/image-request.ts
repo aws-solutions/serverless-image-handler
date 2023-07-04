@@ -453,6 +453,7 @@ export class ImageRequest {
       case "FFD8FFED":
       case "FFD8FFEE":
       case "FFD8FFE1":
+      case "FFD8FFE2":
         return ContentTypes.JPEG;
       case "52494646":
         return ContentTypes.WEBP;
