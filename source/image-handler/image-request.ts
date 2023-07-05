@@ -427,8 +427,9 @@ export class ImageRequest {
    */
   public getOutputFormat(event: ImageHandlerEvent, requestType: RequestTypes = undefined): ImageFormatTypes {
     const { AUTO_WEBP } = process.env;
+    const accept = event.headers.Accept || event.headers.accept;
 
-    if (AUTO_WEBP === "Yes" && event.headers.Accept && event.headers.Accept.includes(ContentTypes.WEBP)) {
+    if (AUTO_WEBP === "Yes" && accept && accept.includes(ContentTypes.WEBP)) {
       return ImageFormatTypes.WEBP;
     } else if (requestType === RequestTypes.DEFAULT) {
       const decoded = this.decodeRequest(event);

@@ -21,11 +21,29 @@ describe("getOutputFormat", () => {
     process.env = OLD_ENV;
   });
 
-  it('Should pass if it returns "webp" for an accepts header which includes webp', () => {
+  it('Should pass if it returns "webp" for a capitalized accepts header which includes webp', () => {
     // Arrange
     const event = {
       headers: {
         Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
+      },
+    };
+    process.env.AUTO_WEBP = "Yes";
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.getOutputFormat(event);
+
+    // Assert
+    expect(result).toEqual("webp");
+  });
+
+  it('Should pass if it returns "webp" for a lowercase accepts header which includes webp', () => {
+    // Arrange
+    const event = {
+      headers: {
+        accept:
           "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
       },
     };
