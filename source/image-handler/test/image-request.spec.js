@@ -805,6 +805,40 @@ describe('parseImageEdits()', function () {
       }
     });
   });
+  describe('007/ignorablePathPrefixes', () => {
+    it('Should ignore `/author/` prefixes when requesting images so that those can be transparently used for blocking via robots.txt', async function () {
+      // Arrange
+      const event = {
+        path: "/authors/test-image-001.jpg"
+      }
+      process.env = {
+        SOURCE_BUCKETS: "allowedBucket001"
+      }
+      // Mock
+      mockAws.getObject.mockImplementationOnce(() => {
+        return {
+          promise() {
+            return Promise.resolve({Body: Buffer.from('SampleImageContent\n')});
+          }
+        };
+      });
+      // Act
+      const imageRequest = new ImageRequest(s3, secretsManager);
+      await imageRequest.setup(event);
+      const expectedResult = {
+        requestType: 'Thumbor',
+        bucket: 'allowedBucket001',
+        key: 'test-image-001.jpg',
+        edits: {},
+        originalImage: Buffer.from('SampleImageContent\n'),
+        CacheControl: 'public, max-age=31536000, immutable',
+        ContentType: 'image'
+      }
+      // Assert
+      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'allowedBucket001', Key: 'test-image-001.jpg'});
+      expect(imageRequest).toEqual(expectedResult);
+    });
+  });
 });
 
 // ----------------------------------------------------------------------------

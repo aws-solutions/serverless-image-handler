@@ -261,6 +261,7 @@ class ImageRequest {
         }
       }
       path = path
+        .replace(/^(\/)?authors\//, '$1')
         .replace(/\/\d+x\d+:\d+x\d+\//g, "/")
         .replace(/\/(\d+|__WIDTH__)x\d+\//g, "/")
         .replace(/\/filters:[^\/]+/g, "/")
@@ -425,7 +426,7 @@ class ImageRequest {
    * Return the output format depending on first four hex values of an image file.
    * @param {Buffer} imageBuffer - Image buffer.
    */
-   inferImageType(imageBuffer) {
+  inferImageType(imageBuffer) {
     switch (imageBuffer.toString("hex").substring(0, 8).toUpperCase()) {
       case "89504E47":
         return "image/png";
