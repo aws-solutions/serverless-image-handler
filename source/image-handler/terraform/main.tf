@@ -7,17 +7,17 @@ locals {
 
 module "lambda" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
-  version = "6.11.0"
+  version = "6.13.0"
 
   architectures                     = ["x86_64"]
-  layers                            = ["arn:aws:lambda:eu-west-1:053041861227:layer:CustomLoggingExtensionOpenSearch-Amd64:9"]
+  layers                            = ["arn:aws:lambda:eu-west-1:053041861227:layer:CustomLoggingExtensionOpenSearch-Amd64:10"]
   cloudwatch_logs_enabled           = false
   description                       = "provider of cute kitty pics."
   function_name                     = local.function_name
   ignore_external_function_updates  = true
   memory_size                       = 1024
   publish                           = true
-  runtime                           = "nodejs14.x"
+  runtime                           = "nodejs18.x"
   handler                           = "index.handler"
   s3_bucket                         = data.aws_s3_bucket.ci.bucket
   s3_key                            = local.s3_key
@@ -32,9 +32,6 @@ module "lambda" {
       SOURCE_BUCKETS = aws_s3_bucket.images.bucket
 
       LOG_EXT_OPEN_SEARCH_URL     = "https://logs.stroeer.engineering"
-      LOG_EXT_BUFFERING_TIMEOUT   = "30000"
-      LOG_EXT_BUFFERING_MAX_BYTES = "1048576"
-      LOG_EXT_BUFFERING_MAX_ITEMS = "10000"
     }
   }
 

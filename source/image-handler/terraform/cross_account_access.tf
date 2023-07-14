@@ -48,6 +48,11 @@ resource "aws_iam_policy" "s3_org_access" {
         Effect   = "Allow"
         Resource = "${aws_s3_bucket.images.arn}/${each.key}/*"
         Sid : "ImageWriteAssetsAccessTeam${replace(title(each.key), "-", "")}"
+      },
+      {
+        Action   = ["kms:GenerateDataKey", "kms:Decrypt", "kms:Encrypt"]
+        Effect   = "Allow"
+        Resource = aws_kms_key.images.arn
       }
     ]
   })
