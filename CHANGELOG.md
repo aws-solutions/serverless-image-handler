@@ -5,12 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.2.0] - 2023-04-24
+
+### Added
+
++ Add `cdk-helper` module to help with packaging cdk generated assets in solutions internal pipelines
++ Use [DefaultStackSynthesizer](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.DefaultStackSynthesizer.html) with different configurations to generate template for `cdk deploy` and on internal solutions pipeline
++ Add esbuild bundler for lambda functions using `NodejsFunction`, reference [aws_lambda_nodejs](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_nodejs-readme.html)
++ Refactor pipeline scripts
++ Changes semver dependency version to 7.5.2 for github reported vulnerability CVE-2022-25883
++ Changes word-wrap dependency version to aashutoshrathi/word-wrap for github reported vulnerability CVE-2023-26115
+
 ## [6.1.2] - 2023-04-14
 
 ### Changed
 
 - added s3 bucket ownership control permission and ownership parameter to S3 logging bucket to account for [changes in S3 default behavior](https://docs.aws.amazon.com/AmazonS3/latest/userguide/create-bucket-faq.html)
-- changed xml2js version to 0.5.0
+- changed xml2js version to 0.5.0 for github dependabot reported vulnerability CVE-2023-0842
 
 ## [6.1.1] - 2023-02-09
 
