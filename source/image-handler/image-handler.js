@@ -317,6 +317,9 @@ class ImageHandler {
       }
       let boundingBox = {};
 
+      if (!response.FaceDetails || response.FaceDetails.length < faceIdx)
+        throw new Error("Cannot read property 'BoundingBox' of undefined");
+
       //handle bounds > 1 and < 0
       for (let bound in response.FaceDetails[faceIdx].BoundingBox) {
         if (response.FaceDetails[faceIdx].BoundingBox[bound] < 0) boundingBox[bound] = 0;
