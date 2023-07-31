@@ -19,7 +19,9 @@ class ThumborMapping {
   process(event) {
     // Setup
     this.path = event['path'] || event['rawPath'];
-    this.path = this.path.replace('__WIDTH__', '1800');
+    this.path = this.path.replace('__WIDTH__', '1800')
+      .replace('%28', '(')
+      .replace('%29', ')');
 
     // Process the Dimensions
     const dimPath = this.path.match(/\/(\d+)x(\d+)\//);
@@ -125,6 +127,7 @@ class ThumborMapping {
    */
   mapFilter(edit, filetype) {
     const matched = edit.match(/:(.+)\((.*)\)/);
+    if (!matched) return;
     const editKey = matched[1];
     let value = matched[2];
     // Find the proper filter
