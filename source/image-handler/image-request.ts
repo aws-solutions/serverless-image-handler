@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import S3 from "aws-sdk/clients/s3";
+import fetch from "node-fetch";
 import { createHmac } from "crypto";
 
 import {
@@ -25,6 +26,7 @@ type OriginalImageInfo = Partial<{
   lastModified: string;
   cacheControl: string;
   originalImage: Buffer;
+  WebsiteRedirectLocation: string;
 }>;
 
 export class ImageRequest {
@@ -155,6 +157,18 @@ export class ImageRequest {
 
       const imageLocation = { Bucket: bucket, Key: key };
       const originalImage = await this.s3Client.getObject(imageLocation).promise();
+
+      if(originalImage.WebsiteRedirectLocation)
+      {
+        const response = await fetch(originalImage.WebsiteRedirectLocation);
+        if(response.status != 200)
+        {
+          throw new Error(`Image at ${originalImage.WebsiteRedirectLocation} could not loaded`);
+        }
+        originalImage.ContentType = response.headers.get("Content-Type");
+        originalImage.Body = await response.arrayBuffer();
+      }
+
       const imageBuffer = Buffer.from(originalImage.Body as Uint8Array);
 
       if (originalImage.ContentType) {
