@@ -10,10 +10,8 @@
 - [Customizing the Solution](#customizing-the-solution)
   - [Prerequisites for Customization](#prerequisites-for-customization)
     - [1. Clone the repository](#1-clone-the-repository)
-    - [2. Declare environment variables](#2-declare-environment-variables)
-  - [Unit Test](#unit-test)
-  - [Build](#build)
-  - [Deploy](#deploy)
+    - [2. Unit Test](#2-unit-test)
+    - [3. Build & Deploy](#3-build-and-deploy)
 - [Collection of operational metrics](#collection-of-operational-metrics)
 - [External Contributors](#external-contributors)
 - [License](#license)
@@ -46,7 +44,7 @@ In addition to the AWS Solutions Constructs, the solution uses AWS CDK directly 
 ## Prerequisites for Customization
 
 - [AWS Command Line Interface](https://aws.amazon.com/cli/)
-- Node.js 16.x or later
+- Node.js 14.x
 
 ### 1. Clone the repository
 
@@ -56,39 +54,30 @@ cd serverless-image-handler
 export MAIN_DIRECTORY=$PWD
 ```
 
-### 2. Declare environment variables
 
-```bash
-export REGION=aws-region-code # the AWS region to launch the solution (e.g. us-east-1)
-export BUCKET_PREFIX=my-bucket-name # the bucket prefix, randomized name recommended
-export BUCKET_NAME=$BUCKET_PREFIX-$REGION # the bucket name where customized code will reside
-export SOLUTION_NAME=my-solution-name # the solution name
-export VERSION=my-version # version number for the customized code
-```
-
-## Unit Test
+### 2. Unit Test
 
 After making changes, run unit tests to make sure added customization passes the tests:
 
 ```bash
 cd $MAIN_DIRECTORY/deployment
-chmod +x run-unit-tests.sh
-./run-unit-tests.sh
+chmod +x run-unit-tests.sh && ./run-unit-tests.sh
 ```
 
-## Build
-
+### 3. Build and Deploy
 ```bash
-cd $MAIN_DIRECTORY/deployment
-chmod +x build-s3-dist.sh
-./build-s3-dist.sh $BUCKET_PREFIX $SOLUTION_NAME $VERSION
+cd $MAIN_DIRECTORY/source/constructs
+npm run clean:install
+overrideWarningsEnabled=false npx cdk bootstrap --profile <PROFILE_NAME>
+overrideWarningsEnabled=false npx cdk deploy\
+ --parameters DeployDemoUIParameter=Yes\
+  --parameters SourceBucketsParameter=<MY_BUCKET>\
+   --profile <PROFILE_NAME>
 ```
 
-## Deploy
-
-- Deploy the distributable to the Amazon S3 bucket in your account. Make sure you are uploading the files in `deployment/global-s3-assets` and `deployment/regional-s3-assets` to `$BUCKET_NAME/$SOLUTION_NAME/$VERSION`.
-- Get the link of the solution template uploaded to your Amazon S3 bucket.
-- Deploy the solution to your account by launching a new AWS CloudFormation stack using the link of the solution template in Amazon S3.
+_Note:_
+- **MY_BUCKET**: name of an existing bucket in your account
+- **PROFILE_NAME**: name of an AWS CLI profile that has appropriate credentials for deploying in your preferred region
 
 # Collection of operational metrics
 
@@ -116,6 +105,5 @@ This solution collects anonymous operational metrics to help AWS improve the qua
 
 # License
 
-Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.   
 SPDX-License-Identifier: Apache-2.0

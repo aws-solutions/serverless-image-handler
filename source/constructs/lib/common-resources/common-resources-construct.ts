@@ -13,9 +13,7 @@ import * as appreg from "@aws-cdk/aws-servicecatalogappregistry-alpha";
 export interface CommonResourcesProps extends SolutionConstructProps {
   readonly solutionId: string;
   readonly solutionVersion: string;
-  readonly solutionDisplayName: string;
-  readonly sourceCodeBucketName: string;
-  readonly sourceCodeKeyPrefix: string;
+  readonly solutionName: string;
 }
 
 export interface Conditions {
@@ -96,15 +94,15 @@ export class CommonResources extends Construct {
       applicationName: Fn.join("-", ["AppRegistry", Aws.STACK_NAME, Aws.REGION, Aws.ACCOUNT_ID]),
       description: `Service Catalog application to track and manage all your resources for the solution ${props.applicationName}`,
     });
-    application.associateStack(stack);
+    application.associateApplicationWithStack(stack);
 
     Tags.of(application).add("Solutions:SolutionID", props.solutionId);
     Tags.of(application).add("Solutions:SolutionName", props.applicationName);
     Tags.of(application).add("Solutions:SolutionVersion", props.solutionVersion);
     Tags.of(application).add("Solutions:ApplicationType", applicationType);
 
-    const attributeGroup = new appreg.AttributeGroup(stack, "DefaultApplicationAttributes", {
-      attributeGroupName: `AppRegistry-${Aws.STACK_NAME}`,
+    const attributeGroup = new appreg.AttributeGroup(stack, "DefaultApplicationAttributeGroup", {
+      attributeGroupName: `A30-AppRegistry-${Aws.STACK_NAME}`,
       description: "Attribute group for solution information",
       attributes: {
         applicationType,
@@ -113,6 +111,6 @@ export class CommonResources extends Construct {
         solutionName: props.applicationName,
       },
     });
-    application.associateAttributeGroup(attributeGroup);
+    attributeGroup.associateWith(application);
   }
 }

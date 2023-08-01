@@ -22,11 +22,9 @@ When filing an issue, please check [existing open](https://github.com/aws-soluti
 
 Contributions via pull requests are much appreciated. Before sending us a pull request, please ensure that:
 
-1. You are working against the latest source on the _develop_ branch.
+1. You are working against the latest source on the _main_ branch.
 1. You check existing open, and recently merged, pull requests to make sure someone else hasn't addressed the problem already.
 1. You open an issue to discuss any significant work - we would hate for your time to be wasted.
-1. Note that the head of the develop branch contains latest features being developed for the solution.
-1. Changes in this branch will be unstable and are not recommended for production deployments.
 
 To send us a pull request, please:
 
@@ -36,7 +34,6 @@ To send us a pull request, please:
 1. Run _npx npm run prettier-format_ in _source_ to ensure that code format standards are maintained.
 1. If your changes include new capabilities, include in the PR description text that can be folded into the solution documentation.
 1. Commit to your fork using clear commit messages.
-1. Ensure that github Actions pass for all Required tasks.
 1. In your repository _Security_ section, ensure that security advisories are enabled and address any Dependabot issues that appear.
 1. Send us a pull request, answering any default questions in the pull request interface.
 1. If the changes are complex or may involve additional communication, we may create a feature branch specific to your PR and ask you to rebase using that branch.
