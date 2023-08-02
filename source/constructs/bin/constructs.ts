@@ -2,27 +2,46 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { App, DefaultStackSynthesizer } from "aws-cdk-lib";
-import { ServerlessImageHandlerStack } from "../lib/serverless-image-stack";
+import { ServerlessImageHandlerStack, ServerlessImageHandlerStackProps } from "../lib/serverless-image-stack";
 
-// CDK and default deployment
-let synthesizer = new DefaultStackSynthesizer({
-  generateBootstrapVersionRule: false,
-});
+const getProps = (): ServerlessImageHandlerStackProps => {
+  const { SOLUTION_BUCKET_NAME_PLACEHOLDER, SOLUTION_NAME_PLACEHOLDER, SOLUTION_VERSION_PLACEHOLDER } = process.env;
 
-// Solutions pipeline deployment
-const { DIST_OUTPUT_BUCKET, SOLUTION_NAME, VERSION } = process.env;
-if (DIST_OUTPUT_BUCKET && SOLUTION_NAME && VERSION)
-  synthesizer = new DefaultStackSynthesizer({
-    generateBootstrapVersionRule: false,
-    fileAssetsBucketName: `${DIST_OUTPUT_BUCKET}-\${AWS::Region}`,
-    bucketPrefix: `${SOLUTION_NAME}/${VERSION}/`,
-  });
+  if (typeof SOLUTION_BUCKET_NAME_PLACEHOLDER !== "string" || SOLUTION_BUCKET_NAME_PLACEHOLDER.trim() === "") {
+    throw new Error("Missing required environment variable: SOLUTION_BUCKET_NAME_PLACEHOLDER");
+  }
+
+  if (typeof SOLUTION_NAME_PLACEHOLDER !== "string" || SOLUTION_NAME_PLACEHOLDER.trim() === "") {
+    throw new Error("Missing required environment variable: SOLUTION_NAME_PLACEHOLDER");
+  }
+
+  if (typeof SOLUTION_VERSION_PLACEHOLDER !== "string" || SOLUTION_VERSION_PLACEHOLDER.trim() === "") {
+    throw new Error("Missing required environment variable: SOLUTION_VERSION_PLACEHOLDER");
+  }
+
+  const solutionId = "SO0023";
+  const solutionDisplayName = "Serverless Image Handler";
+  const solutionVersion = SOLUTION_VERSION_PLACEHOLDER;
+  const solutionName = SOLUTION_NAME_PLACEHOLDER;
+  const solutionAssetHostingBucketNamePrefix = SOLUTION_BUCKET_NAME_PLACEHOLDER;
+  const description = `(${solutionId}) - ${solutionDisplayName}. Version ${solutionVersion}`;
+
+  return {
+    description,
+    solutionId,
+    solutionName,
+    solutionDisplayName,
+    solutionVersion,
+    solutionAssetHostingBucketNamePrefix,
+  };
+};
 
 const app = new App();
+
 // eslint-disable-next-line no-new
 new ServerlessImageHandlerStack(app, "ServerlessImageHandlerStack", {
-  synthesizer: synthesizer,
-  solutionId: app.node.tryGetContext("solutionId"),
-  solutionVersion: app.node.tryGetContext("solutionVersion"),
-  solutionName: app.node.tryGetContext("solutionName"),
+  synthesizer: new DefaultStackSynthesizer({
+    generateBootstrapVersionRule: false,
+  }),
+  ...getProps(),
 });

@@ -1,6 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { Image } from "aws-sdk/clients/rekognition";
 import { ImageFitTypes, ImageFormatTypes } from "../../lib";
 import { ThumborMapper } from "../../thumbor-mapper";
 

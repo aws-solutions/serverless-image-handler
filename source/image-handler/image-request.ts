@@ -30,7 +30,7 @@ type OriginalImageInfo = Partial<{
 export class ImageRequest {
   private static readonly DEFAULT_EFFORT = 4;
 
-  constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) { }
+  constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) {}
 
   /**
    * Determines the output format of an image
@@ -48,7 +48,7 @@ export class ImageRequest {
         imageRequestInfo.effort = isValid ? effort : ImageRequest.DEFAULT_EFFORT;
       }
     }
-    if (imageRequestInfo.edits?.toFormat) {
+    if (imageRequestInfo.edits && imageRequestInfo.edits.toFormat) {
       imageRequestInfo.outputFormat = imageRequestInfo.edits.toFormat;
     } else if (outputFormat) {
       imageRequestInfo.outputFormat = outputFormat;
@@ -206,7 +206,7 @@ export class ImageRequest {
         // Check the provided bucket against the allowed list
         const sourceBuckets = this.getAllowedSourceBuckets();
 
-        if (sourceBuckets.includes(request.bucket) || new RegExp("^" + sourceBuckets[0] + "$").exec(request.bucket)) {
+        if (sourceBuckets.includes(request.bucket) || request.bucket.match(new RegExp("^" + sourceBuckets[0] + "$"))) {
           return request.bucket;
         } else {
           throw new ImageHandlerError(
@@ -291,14 +291,7 @@ export class ImageRequest {
       }
 
       return decodeURIComponent(
-        path
-          .replace(/\/\d+x\d+:\d+x\d+(?=\/)/g, "")
-          .replace(/\/\d+x\d+(?=\/)/g, "")
-          .replace(/filters:watermark\(.*\)/u, "")
-          .replace(/filters:[^/]+/g, "")
-          .replace(/\/fit-in(?=\/)/g, "")
-          .replace(/^\/+/g, "")
-          .replace(/^\/+/, "")
+        path.replace(/\/\d+x\d+:\d+x\d+\/|(?<=\/)\d+x\d+\/|filters:[^/]+|\/fit-in(?=\/)|^\/+/g, "").replace(/^\/+/, "")
       );
     }
 
@@ -319,9 +312,8 @@ export class ImageRequest {
   public parseRequestType(event: ImageHandlerEvent): RequestTypes {
     const { path } = event;
     const matchDefault = /^(\/?)([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
-    const matchThumbor1 = /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?)/i;
-    const matchThumbor2 = /((.(?!(\.[^.\\/]+$)))*$)/i;
-    const matchThumbor3 = /.*(\.jpg$|\.jpeg$|.\.png$|\.webp$|\.tiff$|\.tif$|\.svg$|\.gif$)/i;
+    const matchThumbor =
+      /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?)(((.(?!(\.[^.\\/]+$)))*$)|.*(\.jpg$|\.jpeg$|.\.png$|\.webp$|\.tiff$|\.tif$|\.svg$|\.gif$))/i;
     const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION } = process.env;
     const definedEnvironmentVariables =
       REWRITE_MATCH_PATTERN !== "" &&
@@ -344,7 +336,7 @@ export class ImageRequest {
     } else if (definedEnvironmentVariables) {
       // use rewrite function then thumbor mappings
       return RequestTypes.CUSTOM;
-    } else if (matchThumbor1.test(path) && matchThumbor2.test(path) && matchThumbor3.test(path)) {
+    } else if (matchThumbor.test(path)) {
       // use thumbor mappings
       return RequestTypes.THUMBOR;
     } else {
@@ -382,7 +374,7 @@ export class ImageRequest {
     const { path } = event;
 
     if (path) {
-      const encoded = path.startsWith("/") ? path.slice(1) : path;
+      const encoded = path.charAt(0) === "/" ? path.slice(1) : path;
       const toBuffer = Buffer.from(encoded, "base64");
       try {
         // To support European characters, 'ascii' was removed.
@@ -447,13 +439,12 @@ export class ImageRequest {
    * @returns The output format.
    */
   public inferImageType(imageBuffer: Buffer): string {
-    const imageSignature = imageBuffer.subarray(0, 4).toString("hex").toUpperCase();
+    const imageSignature = imageBuffer.slice(0, 4).toString("hex").toUpperCase();
     switch (imageSignature) {
       case "89504E47":
         return ContentTypes.PNG;
       case "FFD8FFDB":
       case "FFD8FFE0":
-      case "FFD8FFED":
       case "FFD8FFEE":
       case "FFD8FFE1":
         return ContentTypes.JPEG;

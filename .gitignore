@@ -2,7 +2,6 @@
 **/dist
 **/global-s3-assets
 **/regional-s3-assets
-**/staging
 **/open-source
 **/.zip
 **/tmp
@@ -15,7 +14,6 @@
 **/coverage
 **/coverage-reports
 **/.nyc_output
-**/mock-*
 
 # misc
 **/npm-debug.log

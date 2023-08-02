@@ -10,9 +10,12 @@ test("Serverless Image Handler Stack Snapshot", () => {
   const app = new App();
 
   const stack = new ServerlessImageHandlerStack(app, "TestStack", {
+    description: "Serverless Image Handler Stack",
     solutionId: "S0ABC",
     solutionName: "sih",
-    solutionVersion: "v6.2.0",
+    solutionVersion: "v6.1.0",
+    solutionDisplayName: "Serverless Image Handler Test",
+    solutionAssetHostingBucketNamePrefix: "hosting-bucket",
   });
 
   const template = Template.fromStack(stack);
