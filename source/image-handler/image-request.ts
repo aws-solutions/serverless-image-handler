@@ -107,9 +107,25 @@ export class ImageRequest {
           imageRequestInfo.edits[imageRequestInfo.outputFormat] = imageRequestInfo.edits[qualityKey];
           delete imageRequestInfo.edits[qualityKey];
         }
-      }
+      } 
+      
     }
+
+    if (imageRequestInfo.contentType === ContentTypes.GIF) {  
+      //Gif quality as per sharp doc can be controlled by adding interframe error 
+      //between 0 to 32 .After doing a bit of experimentation adding the below compression
+      //reduces the chance for 413 excpeption by a good margin and looks almost the same
+      let gifQuality = imageRequestInfo.edits.gif.quality;
+      if(gifQuality >= 70){
+          imageRequestInfo.edits.gif.interFrameMaxError = 16;
+      } else if(gifQuality >= 50 && gifQuality < 70) {
+          imageRequestInfo.edits.gif.interFrameMaxError = 24;
+      } else {
+          imageRequestInfo.edits.gif.interFrameMaxError = 32;
+      }
   }
+
+}
 
   /**
    * Initializer function for creating a new image request, used by the image handler to perform image modifications.
@@ -667,25 +683,13 @@ export class ImageRequest {
         imageRequestInfo.edits &&
         Object.keys(imageRequestInfo.edits).length > 0 && imageRequestInfo.edits.resize) {
           const metadata = await sharp(originalImage.originalImage).metadata();
-          let widthResized = false
-          let heightResized = false
           let resize = imageRequestInfo.edits.resize
               if(resize.width || resize.height){
                 if(this.shouldResize(resize.width, metadata.width)){
                   imageRequestInfo.edits.resize.width = metadata.width
-                  widthResized  = true
                 }
                 if(this.shouldResize(resize.height,metadata.height)){
                   imageRequestInfo.edits.resize.height = metadata.height
-                  heightResized = true
-                }
-                if(widthResized && heightResized){
-                    // bypass resizing only if Gif size is < 4MB
-                    // otherwise 413 is practically guaranteed when converting to base64
-                    // better to attempt to resize and check if it can still return a gif
-                    if(metadata.size < GIF_ALLOWED_RESIZE){
-                      delete imageRequestInfo.edits
-                    }
                 }
            } 
       }

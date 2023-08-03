@@ -1,0 +1,21 @@
+# Use an official Node.js runtime as a parent image
+FROM node:16
+
+# Set the working directory in the container to /app
+WORKDIR /app
+
+# Add the current directory contents into the container at /app
+COPY . .
+
+# Install dependencies for each part of the application
+WORKDIR /app/source/constructs
+RUN npm install
+
+WORKDIR /app/source/custom-resource
+RUN npm install
+
+WORKDIR /app/source/image-handler
+RUN npm install && npm run build
+
+WORKDIR /app/source/solution-utils
+RUN npm install

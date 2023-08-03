@@ -93,6 +93,10 @@ cd $MAIN_DIRECTORY/deployment
 chmod +x build-s3-dist.sh
 ./build-s3-dist.sh $BUCKET_PREFIX $SOLUTION_NAME $VERSION
 ```
+## Dockerized Compile 
+```bash
+docker build -t sih-ut -f Dockerfile.compile .  
+```
 
 ## Deploy
 

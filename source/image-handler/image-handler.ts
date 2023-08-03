@@ -113,7 +113,7 @@ export class ImageHandler {
     }
 
     return base64EncodedImage;
-  }
+  }  
 
   /**
    * Applies image modifications to the original image based on edits.
