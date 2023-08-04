@@ -1,6 +1,6 @@
 {
   "name": "constructs",
-  "version": "6.2.0",
+  "version": "6.2.1",
   "description": "Serverless Image Handler Constructs",
   "license": "Apache-2.0",
   "bin": {

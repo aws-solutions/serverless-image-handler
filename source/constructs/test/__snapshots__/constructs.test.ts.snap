@@ -350,7 +350,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "Solutions:ApplicationType": "AWS-Solutions",
           "Solutions:SolutionID": "S0ABC",
           "Solutions:SolutionName": "sih",
-          "Solutions:SolutionVersion": "v6.2.0",
+          "Solutions:SolutionVersion": "v6.2.1",
         },
       },
       "Type": "AWS::ServiceCatalogAppRegistry::Application",
@@ -1150,9 +1150,9 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "a0b1a27ff795cbf91cf437968a83823da180d2a071ab88a08eaadde821211f8a.zip",
+          "S3Key": "82f1ba8dc3b6177b733d951f282f5451925f6fb067ddd9626328d91468b7c9fc.zip",
         },
-        "Description": "sih (v6.2.0): Performs image edits and manipulations",
+        "Description": "sih (v6.2.1): Performs image edits and manipulations",
         "Environment": {
           "Variables": {
             "AUTO_WEBP": {
@@ -1419,13 +1419,13 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
           "S3Key": "1d9c0f7ba21ae4df4d9f33af092ffe6bf4c806ea06398e947419c4e7f091d52b.zip",
         },
-        "Description": "sih (v6.2.0): Custom resource",
+        "Description": "sih (v6.2.1): Custom resource",
         "Environment": {
           "Variables": {
             "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
             "RETRY_SECONDS": "5",
             "SOLUTION_ID": "S0ABC",
-            "SOLUTION_VERSION": "v6.2.0",
+            "SOLUTION_VERSION": "v6.2.1",
           },
         },
         "Handler": "index.handler",
@@ -1575,6 +1575,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       "UpdateReplacePolicy": "Delete",
     },
     "CommonResourcesCustomResourcesDeployWebsiteAwsCliLayerBC025F39": {
+      "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
       "Properties": {
         "Content": {
           "S3Bucket": {
@@ -1587,6 +1588,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       "Type": "AWS::Lambda::LayerVersion",
     },
     "CommonResourcesCustomResourcesDeployWebsiteCustomResourceECB9B136": {
+      "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
       "DeletionPolicy": "Delete",
       "Properties": {
         "DestinationBucketName": {
@@ -1730,6 +1732,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       "Type": "AWS::IAM::Policy",
     },
     "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536": {
+      "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
       "DependsOn": [
         "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
         "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
@@ -1788,6 +1791,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       "Type": "AWS::Lambda::Function",
     },
     "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265": {
+      "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
       "Properties": {
         "AssumeRolePolicyDocument": {
           "Statement": [
@@ -1825,6 +1829,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       "Type": "AWS::IAM::Role",
     },
     "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF": {
+      "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
       "Properties": {
         "PolicyDocument": {
           "Statement": [
@@ -1924,7 +1929,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "applicationType": "AWS-Solutions",
           "solutionID": "S0ABC",
           "solutionName": "sih",
-          "version": "v6.2.0",
+          "version": "v6.2.1",
         },
         "Description": "Attribute group for solution information",
         "Name": {

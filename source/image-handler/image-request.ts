@@ -344,7 +344,7 @@ export class ImageRequest {
     } else if (definedEnvironmentVariables) {
       // use rewrite function then thumbor mappings
       return RequestTypes.CUSTOM;
-    } else if (matchThumbor1.test(path) && matchThumbor2.test(path) && matchThumbor3.test(path)) {
+    } else if (matchThumbor1.test(path) && (matchThumbor2.test(path) || matchThumbor3.test(path))) {
       // use thumbor mappings
       return RequestTypes.THUMBOR;
     } else {
