@@ -7,12 +7,13 @@ import { Function as LambdaFunction, Runtime } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Bucket, IBucket } from "aws-cdk-lib/aws-s3";
 import { BucketDeployment, Source as S3Source } from "aws-cdk-lib/aws-s3-deployment";
-import { ArnFormat, Aws, CfnCondition, CfnResource, CustomResource, Duration, Lazy, Stack } from "aws-cdk-lib";
+import { ArnFormat, Aspects, Aws, CfnCondition, CfnResource, CustomResource, Duration, Lazy, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { addCfnSuppressRules } from "../../../utils/utils";
 
 import { SolutionConstructProps } from "../../types";
 import { CommonResourcesProps, Conditions } from "../common-resources-construct";
+import { ConditionAspect } from "../../../utils/aspects";
 
 export interface CustomResourcesConstructProps extends CommonResourcesProps {
   readonly conditions: Conditions;
@@ -179,10 +180,11 @@ export class CustomResourcesConstruct extends Construct {
   public setupCopyWebsiteCustomResource(props: SetupCopyWebsiteCustomResourceProps) {
     // Stage static assets for the front-end from the local
     /* eslint-disable no-new */
-    new BucketDeployment(this, "DeployWebsite", {
+    const bucketDeployment = new BucketDeployment(this, "DeployWebsite", {
       sources: [S3Source.asset(path.join(__dirname, "../../../../demo-ui"))],
       destinationBucket: props.hostingBucket,
     });
+    Aspects.of(bucketDeployment).add(new ConditionAspect(this.conditions.deployUICondition));
   }
 
   public setupPutWebsiteConfigCustomResource(props: SetupPutWebsiteConfigCustomResourceProps) {

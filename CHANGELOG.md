@@ -5,16 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [6.2.0] - 2023-04-24
+## [6.2.1] - 2023-08-03
+
+### Fixed
+
+- Template fails to deploy unless demo UI is enabled [#499](https://github.com/aws-solutions/serverless-image-handler/issues/499)
+- Thumbor requests of images without a file extension would fail
+- CloudFormation template description was not being generated
+
+### Changed
+
+- Upgraded build requirement to Node 16
+
+## [6.2.0] - 2023-08-01
 
 ### Added
 
-+ Add `cdk-helper` module to help with packaging cdk generated assets in solutions internal pipelines
-+ Use [DefaultStackSynthesizer](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.DefaultStackSynthesizer.html) with different configurations to generate template for `cdk deploy` and on internal solutions pipeline
-+ Add esbuild bundler for lambda functions using `NodejsFunction`, reference [aws_lambda_nodejs](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_nodejs-readme.html)
-+ Refactor pipeline scripts
-+ Changes semver dependency version to 7.5.2 for github reported vulnerability CVE-2022-25883
-+ Changes word-wrap dependency version to aashutoshrathi/word-wrap for github reported vulnerability CVE-2023-26115
+- Add `cdk-helper` module to help with packaging cdk generated assets in solutions internal pipelines
+- Use [DefaultStackSynthesizer](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.DefaultStackSynthesizer.html) with different configurations to generate template for `cdk deploy` and on internal solutions pipeline
+- Add esbuild bundler for lambda functions using `NodejsFunction`, reference [aws_lambda_nodejs](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_nodejs-readme.html)
+- Refactor pipeline scripts
+- Changes semver dependency version to 7.5.2 for github reported vulnerability CVE-2022-25883
+- Changes word-wrap dependency version to aashutoshrathi/word-wrap for github reported vulnerability CVE-2023-26115
 
 ## [6.1.2] - 2023-04-14
 

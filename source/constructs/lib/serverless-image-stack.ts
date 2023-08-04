@@ -4,7 +4,7 @@
 import { PriceClass } from "aws-cdk-lib/aws-cloudfront";
 import { Aspects, CfnMapping, CfnOutput, CfnParameter, Stack, StackProps, Tags } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { SuppressLambdaFunctionCfnRulesAspect } from "../utils/aspects";
+import { ConditionAspect, SuppressLambdaFunctionCfnRulesAspect } from "../utils/aspects";
 import { BackEnd } from "./back-end/back-end-construct";
 import { CommonResources } from "./common-resources/common-resources-construct";
 import { FrontEndConstruct as FrontEnd } from "./front-end/front-end-construct";
@@ -199,6 +199,8 @@ export class ServerlessImageHandlerStack extends Stack {
     commonResources.customResources.setupCopyWebsiteCustomResource({
       hostingBucket: frontEnd.websiteHostingBucket,
     });
+    const singletonFunction = this.node.findChild("Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C");
+    Aspects.of(singletonFunction).add(new ConditionAspect(commonResources.conditions.deployUICondition));
 
     commonResources.customResources.setupPutWebsiteConfigCustomResource({
       hostingBucket: frontEnd.websiteHostingBucket,

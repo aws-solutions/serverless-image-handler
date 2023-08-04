@@ -109,4 +109,17 @@ describe("parseRequestType", () => {
       });
     }
   });
+
+  it("Should pass if a path is provided without an extension", () => {
+    // Arrange
+    const event = { path: "/image" };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseRequestType(event);
+
+    // Assert
+    const expectedResult = RequestTypes.THUMBOR;
+    expect(result).toEqual(expectedResult);
+  });
 });
