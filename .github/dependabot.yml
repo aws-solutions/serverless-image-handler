@@ -23,3 +23,20 @@ updates:
       interval: "weekly"
     reviewers:
       - "stroeer/teams/buzz-end"
+
+  - package-ecosystem: "terraform"
+    directory: "/source/thumbs/terraform"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "stroeer/teams/buzz-end"
+
+  # Enable version updates for Cargo
+  - package-ecosystem: "cargo"
+    # Look `Cargo.toml` in the repository root
+    directory: "/source/thumbs/"
+    # Check for updates every week
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "stroeer/teams/buzz-end"

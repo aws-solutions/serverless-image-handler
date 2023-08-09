@@ -17,7 +17,7 @@
   },
   "scripts": {
     "pretest": "npm run build:init && npm install",
-    "test": "jest ./**/*.spec.js --coverage --silent",
+    "test": "npm install && jest ./**/*.spec.js --coverage --silent",
     "build:init": "rm -rf package-lock.json dist/ node_modules/ coverage/",
     "build:zip": "zip --recurse-paths image-handler.zip --quiet . --exclude 'terraform/*'",
     "build:dist": "mkdir -p dist && mv image-handler.zip dist/",

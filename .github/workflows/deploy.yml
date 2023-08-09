@@ -4,15 +4,28 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - "**.tf"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "**.tf"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+# read+write needed for `aws-actions/configure-aws-credentials` to work
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
-  build:
+  image-handler:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     runs-on: ubuntu-20.04
-    permissions:
-      id-token: write
-      contents: read
 
     steps:
       - uses: actions/checkout@v3
@@ -30,10 +43,14 @@ jobs:
         run: make npm/install
       - name: install
         run: make npm/test
-      - name: install
+      - name: build
         run: make build
 
       - name: configure aws credentials
+        # 📌 Runs only if:
+        # 1. is a 'push to main'
+        # 2. did not run in a fork
+        if: ${{ github.ref == 'refs/heads/main' && github.repository_owner == 'stroeer' }}
         uses: aws-actions/configure-aws-credentials@master
         with:
           role-to-assume: arn:aws:iam::053041861227:role/github-s3-access-eu-west-1
@@ -41,4 +58,57 @@ jobs:
           aws-region: eu-west-1
 
       - name: s3 upload artefact
+        # 📌 Runs only if:
+        # 1. is a 'push to main'
+        # 2. did not run in a fork
+        if: ${{ github.ref == 'refs/heads/main' && github.repository_owner == 'stroeer' }}
         run: make upload
+
+  thumbnail-generator:
+    env:
+      CARGO_TERM_COLOR: always
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Set up cargo cache
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      - name: install cargo lambda
+        run: pip3 install cargo-lambda
+      - name: cargo lambda build
+        run: make build SERVICE=thumbs
+
+      - name: configure aws credentials
+        # 📌 Runs only if:
+        # 1. is a 'push to main'
+        # 2. did not run in a fork
+        if: ${{ github.ref == 'refs/heads/main' && github.repository_owner == 'stroeer' }}
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: arn:aws:iam::053041861227:role/github-s3-access-eu-west-1
+          role-session-name: GitHubActions
+          aws-region: eu-west-1
+
+      - name: s3 upload artefact
+        # 📌 Runs only if:
+        # 1. is a 'push to main'
+        # 2. did not run in a fork
+        if: ${{ github.ref == 'refs/heads/main' && github.repository_owner == 'stroeer' }}
+        run: make upload SERVICE=thumbs

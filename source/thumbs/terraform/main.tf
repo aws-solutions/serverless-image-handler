@@ -1,50 +1,55 @@
 locals {
-  function_name = "image-handler${var.app_suffix}"
+  function_name = "image-thumbs${var.app_suffix}"
   environment   = "production"
-  zip_package   = "../dist/image-handler.zip"
-  s3_key        = "image-handler/${local.function_name}.zip"
+  zip_package   = "../target/lambda/arm64/thumbs/bootstrap.zip"
+  s3_key        = "image-thumbs/${local.function_name}.zip"
 }
 
 module "lambda" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
-  version = "6.13.0"
+  version = "6.11.0"
 
-  architectures                     = ["x86_64"]
-  layers                            = ["arn:aws:lambda:eu-west-1:053041861227:layer:CustomLoggingExtensionOpenSearch-Amd64:10"]
-  cloudwatch_logs_enabled           = false
-  description                       = "provider of cute kitty pics."
-  function_name                     = local.function_name
-  ignore_external_function_updates  = true
-  memory_size                       = 1024
-  publish                           = true
-  runtime                           = "nodejs18.x"
-  handler                           = "index.handler"
-  s3_bucket                         = data.aws_s3_bucket.ci.bucket
-  s3_key                            = local.s3_key
-  s3_object_version                 = aws_s3_object.this.version_id
-  timeout                           = 30
+  architectures = ["arm64"]
+  layers = [
+    "arn:aws:lambda:eu-west-1:053041861227:layer:CustomLoggingExtensionOpenSearch-Arm64:10"
+  ]
+  cloudwatch_logs_enabled          = false
+  description                      = "provider of cute kitty thumbs."
+  function_name                    = local.function_name
+  ignore_external_function_updates = true
+  memory_size                      = 1024
+  publish                          = true
+  runtime                          = "provided.al2"
+  handler                          = "thumbs"
+  s3_bucket                        = data.aws_s3_bucket.ci.bucket
+  s3_key                           = local.s3_key
+  s3_object_version                = aws_s3_object.this.version_id
+  timeout                          = 30
 
   environment = {
     variables = {
-      AUTO_WEBP      = "Yes"
-      CORS_ENABLED   = "Yes"
-      CORS_ORIGIN    = "*"
-      SOURCE_BUCKETS = aws_s3_bucket.images.bucket
-
-      LOG_EXT_OPEN_SEARCH_URL     = "https://logs.stroeer.engineering"
+      LOG_EXT_OPEN_SEARCH_URL = "https://logs.stroeer.engineering"
     }
   }
 
-  vpc_config = {
-    security_group_ids = [data.aws_security_group.vpc_endpoints.id, data.aws_security_group.all_outbound.id, data.aws_security_group.lambda.id]
-    subnet_ids         = data.aws_subnets.selected.ids
-  }
 }
+
+resource "aws_lambda_alias" "this" {
+  description      = "Alias for the active Lambda version"
+  function_name    = module.lambda.function_name
+  function_version = module.lambda.version
+  name             = local.environment
+}
+
 
 resource "aws_lambda_function_url" "production" {
   authorization_type = "NONE"
   function_name      = aws_lambda_alias.this.function_name
   qualifier          = aws_lambda_alias.this.name
+  cors {
+    allow_methods = ["GET"]
+    allow_origins = ["*"]
+  }
 }
 
 resource "aws_lambda_permission" "function_url_allow_public_access" {
@@ -56,7 +61,6 @@ resource "aws_lambda_permission" "function_url_allow_public_access" {
   statement_id           = "FunctionURLAllowPublicAccess"
 }
 
-
 # ---------------------------------------------------------------------------------------------------------------------
 # Deployment resources
 # ---------------------------------------------------------------------------------------------------------------------
@@ -66,22 +70,11 @@ resource "aws_lambda_permission" "function_url_allow_public_access" {
 resource "aws_s3_object" "this" {
   bucket = data.aws_s3_bucket.ci.bucket
   key    = local.s3_key
-  source = fileexists(local.zip_package) ? local.zip_package : null
-  etag   = fileexists(local.zip_package) ? filemd5(local.zip_package) : null
+  source = local.zip_package
+  etag   = filemd5(local.zip_package)
 
   lifecycle {
     ignore_changes = [etag, source, version_id, tags_all]
-  }
-}
-
-resource "aws_lambda_alias" "this" {
-  description      = "Alias for the active Lambda version"
-  function_name    = module.lambda.function_name
-  function_version = module.lambda.version
-  name             = local.environment
-
-  lifecycle {
-    ignore_changes = [function_version]
   }
 }
 
