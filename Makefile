@@ -25,9 +25,9 @@ npm/test ::
 	cd $(WORK_DIR) && npm run test
 
 build ::
-	cd $(WORK_DIR) && if [[ -f 'package.json' ]] ; then \
+	cd $(WORK_DIR) && if [ -f 'package.json' ] ; then \
 		npm run test && npm run build ; \
-	elif [[ -f 'Cargo.toml' ]] ; then \
+	elif [ -f 'Cargo.toml' ] ; then \
 		cargo lambda build --arm64 --release --output-format zip --lambda-dir target/lambda/arm64 ; \
 	else \
 		echo 'Unknown SERVICE/Build: $(SERVICE). Aborting.' ; exit 1 ; \
@@ -44,9 +44,9 @@ invoke :: # invoke the running docker lambda by posting a sample API-GW-Event
 
 
 upload :: # upload/push the app to production (given sufficient permissions)
-	if [[ "image-handler" = "$(SERVICE)" ]] ; then \
+	if [ "image-handler" = "$(SERVICE)" ] ; then \
 		aws s3 cp $(WORK_DIR)/dist/image-handler.zip s3://ci-$(ACCOUNT_ID)-$(REGION)/image-handler/image-handler$(APP_SUFFIX).zip ; \
-	elif [[ "thumbs" = "$(SERVICE)" ]] ; then \
+	elif [ "thumbs" = "$(SERVICE)" ] ; then \
         aws s3 cp $(WORK_DIR)/target/lambda/arm64/thumbs/bootstrap.zip s3://ci-$(ACCOUNT_ID)-$(REGION)/image-thumbs/image-thumbs$(APP_SUFFIX).zip ; \
 	else \
 		echo "Unknown SERVICE/Upload: $(SERVICE). Aborting." ; exit 1 ; \
