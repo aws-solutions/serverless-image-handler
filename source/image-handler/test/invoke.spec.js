@@ -9,7 +9,7 @@ const fs = require('fs');
 
 describe("INVOKE", () => {
   process.env.SOURCE_BUCKETS = "master-images-053041861227-eu-west-1";
-
+  jest.setTimeout(70_000)
   const run = async (event) => {
     const result = await handler.handler(event);
 

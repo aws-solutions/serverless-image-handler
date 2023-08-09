@@ -66,7 +66,13 @@ class ImageHandler {
         image = await this.applyEdits(image, edits);
       }
 
-      if (request.outputFormat !== undefined) {
+      if ('image/webp' === request['ContentType'] && request.outputFormat === "webp") {
+        image.webp({effort: 6, alphaQuality: 75});
+      } else if ("image/png" === request['ContentType']) {
+        image.png({quality: 80, effort: 9, compressionLevel: 9});
+      } else if ("image/jpeg" === request['ContentType']) {
+        image.jpeg({mozjpeg: true});
+      } else if (request.outputFormat !== undefined) {
         image.toFormat(request.outputFormat);
       }
       try {
