@@ -43,13 +43,13 @@ invoke :: # invoke the running docker lambda by posting a sample API-GW-Event
 	@echo nothing to do
 
 
-upload :: build # build and push the app to production (given sufficient permissions)
-	if [ $(SERVICE) == 'image-handler' ]; then \
+upload :: # upload/push the app to production (given sufficient permissions)
+	if [ "image-handler" == "$(SERVICE)" ]; then \
 		aws s3 cp $(WORK_DIR)/dist/image-handler.zip s3://ci-$(ACCOUNT_ID)-$(REGION)/image-handler/image-handler$(APP_SUFFIX).zip ; \
-	elif [ $(SERVICE) == 'thumbs' ]; then \
+	elif [ "thumbs" == "$(SERVICE)" ]; then \
         aws s3 cp $(WORK_DIR)/target/lambda/arm64/thumbs/bootstrap.zip s3://ci-$(ACCOUNT_ID)-$(REGION)/image-thumbs/image-thumbs$(APP_SUFFIX).zip ; \
 	else \
-		echo 'Unknown SERVICE/Upload: $(SERVICE). Aborting.' ; exit 1 ; \
+		echo "Unknown SERVICE/Upload: $(SERVICE). Aborting." ; exit 1 ; \
 	fi
 
 all :: build tf
