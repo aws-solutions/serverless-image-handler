@@ -366,6 +366,10 @@ export class ThumborMapper {
         this.mapWatermark(filterValue, currentEdits);
         break;
       }
+      case "grey_background": {
+        currentEdits.greyBackground = true;
+        break;
+      }
     }
 
     return currentEdits;

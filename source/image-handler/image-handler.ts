@@ -150,6 +150,10 @@ export class ImageHandler {
           this.applyCrop(originalImage, edits);
           break;
         }
+        case "greyBackground": {
+          await this.applyGreyBackground(originalImage, edits);
+          break
+        }
         default: {
           if (edit in originalImage) {
             originalImage[edit](edits[edit]);
@@ -414,6 +418,29 @@ export class ImageHandler {
       );
     }
   }
+
+  /**
+   * Applies adding grey background to image edit.
+   * @param originalImage The original sharp image.
+   * @param edits The edits to be made to the original image.
+   */
+  private async applyGreyBackground(originalImage: sharp.Sharp, edits: ImageEdits): Promise<void> {
+    let imageMetadata: sharp.Metadata = await originalImage.metadata();
+    let bucket = "soletrader-productimages";
+    let key = "grey.jpg";
+
+    if (edits.resize) {
+      const imageBuffer = await originalImage.toBuffer();
+      const resizeOptions: ResizeOptions = edits.resize;
+
+      imageMetadata = await sharp(imageBuffer).resize(resizeOptions).metadata();
+    }
+
+    const overlay = await this.getOverlayImage(bucket, key, "100", "100", "0", imageMetadata);
+    const overlayOption: OverlayOptions = { blend: "hard-light", input: overlay };
+
+    originalImage.composite([overlayOption]);
+    }
 
   /**
    * Checks whether an edit needs to be skipped or not.
