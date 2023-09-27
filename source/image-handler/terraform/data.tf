@@ -1,16 +1,13 @@
-data "aws_region" "current" {}
-data "aws_caller_identity" "current" {}
-
 data "aws_sns_topic" "notifications" {
   name = "codestar-notifications"
 }
 
 data "aws_s3_bucket" "pipeline_artifacts" {
-  bucket = "codepipeline-bucket-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
+  bucket = "codepipeline-bucket-${var.account_id}-${var.region}"
 }
 
 data "aws_s3_bucket" "ci" {
-  bucket = "ci-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
+  bucket = "ci-${var.account_id}-${var.region}"
 }
 
 data "aws_vpc" "selected" {

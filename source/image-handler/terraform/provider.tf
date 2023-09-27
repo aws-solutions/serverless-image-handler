@@ -14,7 +14,7 @@ provider "aws" {
 }
 
 provider "opensearch" {
-  aws_region  = data.aws_region.current.name
+  aws_region  = var.region
   healthcheck = true
   url         = "https://logs.stroeer.engineering"
 }

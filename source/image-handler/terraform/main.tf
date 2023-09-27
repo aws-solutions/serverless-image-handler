@@ -7,22 +7,22 @@ locals {
 
 module "lambda" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
-  version = "6.13.0"
+  version = "7.0.0"
 
-  architectures                     = ["x86_64"]
-  layers                            = ["arn:aws:lambda:eu-west-1:053041861227:layer:CustomLoggingExtensionOpenSearch-Amd64:10"]
-  cloudwatch_logs_enabled           = false
-  description                       = "provider of cute kitty pics."
-  function_name                     = local.function_name
-  ignore_external_function_updates  = true
-  memory_size                       = 1024
-  publish                           = true
-  runtime                           = "nodejs18.x"
-  handler                           = "index.handler"
-  s3_bucket                         = data.aws_s3_bucket.ci.bucket
-  s3_key                            = local.s3_key
-  s3_object_version                 = aws_s3_object.this.version_id
-  timeout                           = 30
+  architectures                    = ["x86_64"]
+  layers                           = ["arn:aws:lambda:eu-west-1:053041861227:layer:CustomLoggingExtensionOpenSearch-Amd64:10"]
+  cloudwatch_logs_enabled          = false
+  description                      = "provider of cute kitty pics."
+  function_name                    = local.function_name
+  ignore_external_function_updates = true
+  memory_size                      = 1024
+  publish                          = true
+  runtime                          = "nodejs18.x"
+  handler                          = "index.handler"
+  s3_bucket                        = data.aws_s3_bucket.ci.bucket
+  s3_key                           = local.s3_key
+  s3_object_version                = aws_s3_object.this.version_id
+  timeout                          = 30
 
   environment = {
     variables = {
@@ -31,7 +31,7 @@ module "lambda" {
       CORS_ORIGIN    = "*"
       SOURCE_BUCKETS = aws_s3_bucket.images.bucket
 
-      LOG_EXT_OPEN_SEARCH_URL     = "https://logs.stroeer.engineering"
+      LOG_EXT_OPEN_SEARCH_URL = "https://logs.stroeer.engineering"
     }
   }
 
@@ -55,7 +55,6 @@ resource "aws_lambda_permission" "function_url_allow_public_access" {
   function_url_auth_type = "NONE"
   statement_id           = "FunctionURLAllowPublicAccess"
 }
-
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Deployment resources
@@ -87,7 +86,7 @@ resource "aws_lambda_alias" "this" {
 
 module "deployment" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws//modules/deployment"
-  version = "6.10.0"
+  version = "7.0.0"
 
   alias_name                                  = aws_lambda_alias.this.name
   codebuild_cloudwatch_logs_retention_in_days = 7

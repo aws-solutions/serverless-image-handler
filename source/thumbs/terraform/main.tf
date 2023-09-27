@@ -7,11 +7,11 @@ locals {
 
 module "lambda" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
-  version = "6.11.0"
+  version = "7.0.0"
 
   architectures = ["arm64"]
   layers = [
-    "arn:aws:lambda:eu-west-1:053041861227:layer:CustomLoggingExtensionOpenSearch-Arm64:10"
+    "arn:aws:lambda:${var.region}:${var.account_id}:layer:CustomLoggingExtensionOpenSearch-Arm64:10"
   ]
   cloudwatch_logs_enabled          = false
   description                      = "provider of cute kitty thumbs."
@@ -80,7 +80,7 @@ resource "aws_s3_object" "this" {
 
 module "deployment" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws//modules/deployment"
-  version = "6.10.0"
+  version = "7.0.0"
 
   alias_name                                  = aws_lambda_alias.this.name
   codebuild_cloudwatch_logs_retention_in_days = 7

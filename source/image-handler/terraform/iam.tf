@@ -11,7 +11,7 @@ data "aws_iam_policy_document" "lambda" {
 
 resource "aws_iam_policy" "lambda" {
   description = "${local.function_name} Permissions"
-  name        = "${module.lambda.function_name}-${data.aws_region.current.name}"
+  name        = "${module.lambda.function_name}-${var.region}"
   policy      = data.aws_iam_policy_document.lambda.json
 }
 

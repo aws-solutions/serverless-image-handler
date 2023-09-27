@@ -11,7 +11,7 @@ locals {
 resource "aws_iam_role" "s3_org_access" {
   for_each = local.teams
 
-  name = "s3-images-access-team-${each.key}-${data.aws_region.current.name}"
+  name = "s3-images-access-team-${each.key}-${var.region}"
   path = "/cdn/"
 
   assume_role_policy = jsonencode({

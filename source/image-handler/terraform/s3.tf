@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "images" {
-  bucket        = "master-images-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
+  bucket        = "master-images-${var.account_id}-${var.region}"
   force_destroy = false
 }
 
@@ -30,7 +30,7 @@ resource "aws_kms_key_policy" "images" {
         "Sid" : "Allow direct access to key metadata to the account",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          "AWS" : "arn:aws:iam::${var.account_id}:root"
         },
         "Action" : ["kms:*"],
         "Resource" : "*"
@@ -69,7 +69,7 @@ resource "aws_kms_key_policy" "images" {
         "Resource" : "*",
         "Condition" : {
           "StringEquals" : {
-            "kms:CallerAccount" : data.aws_caller_identity.current.account_id
+            "kms:CallerAccount" : var.account_id
             "kms:ViaService" : "s3.eu-west-1.amazonaws.com"
           }
         }
