@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.2.2] - 2023-09-29
+
+### Changed
+
+- Update package.json Author
+- Modify some license headers to maintain consistency
+
+### Security
+
+- Upgraded sharp to v0.32.6 for vulnerability CVE-2023-4863
+- Upgraded outdated NPM packages
+
 ## [6.2.1] - 2023-08-03
 
 ### Fixed
@@ -225,7 +237,7 @@ Version 6.0.0 does not support upgrading from previous versions due to the updat
 
 - Lambda functions runtime to nodejs12.x
 - sharp version (from 0.21.3 to 0.23.3)
-- Image handler function to use Composite API (https://sharp.pixelplumbing.com/en/stable/api-composite/)
+- Image handler function to use Composite API (<https://sharp.pixelplumbing.com/en/stable/api-composite/>)
 - License to Apache-2.0
 
 ### Removed

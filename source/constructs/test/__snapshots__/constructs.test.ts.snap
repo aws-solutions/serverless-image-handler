@@ -350,7 +350,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "Solutions:ApplicationType": "AWS-Solutions",
           "Solutions:SolutionID": "S0ABC",
           "Solutions:SolutionName": "sih",
-          "Solutions:SolutionVersion": "v6.2.1",
+          "Solutions:SolutionVersion": "v6.2.2",
         },
       },
       "Type": "AWS::ServiceCatalogAppRegistry::Application",
@@ -1150,9 +1150,9 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "82f1ba8dc3b6177b733d951f282f5451925f6fb067ddd9626328d91468b7c9fc.zip",
+          "S3Key": "41ef15a3e6b6b8f15863cb611acea96ea2fc7691ede4f30e039824930c06e3ef.zip",
         },
-        "Description": "sih (v6.2.1): Performs image edits and manipulations",
+        "Description": "sih (v6.2.2): Performs image edits and manipulations",
         "Environment": {
           "Variables": {
             "AUTO_WEBP": {
@@ -1417,15 +1417,15 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "1d9c0f7ba21ae4df4d9f33af092ffe6bf4c806ea06398e947419c4e7f091d52b.zip",
+          "S3Key": "9f56062eb9a2f45010283a5726b3efd71ce28091e29e98d661c217dd62e18a3b.zip",
         },
-        "Description": "sih (v6.2.1): Custom resource",
+        "Description": "sih (v6.2.2): Custom resource",
         "Environment": {
           "Variables": {
             "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
             "RETRY_SECONDS": "5",
             "SOLUTION_ID": "S0ABC",
-            "SOLUTION_VERSION": "v6.2.1",
+            "SOLUTION_VERSION": "v6.2.2",
           },
         },
         "Handler": "index.handler",
@@ -1581,7 +1581,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "f8e422c63159c82c409e8254300a3134e020892c27382902d4c8c0a5b35d0a06.zip",
+          "S3Key": "e2277687077a2abf9ae1af1cc9565e6715e2ebb62f79ec53aa75a1af9298f642.zip",
         },
         "Description": "/opt/awscli/aws",
       },
@@ -1607,7 +1607,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
         ],
         "SourceObjectKeys": [
-          "297994e5975cd83b2ec43f52720181be7d5daf08af8987cc4d5749f99db8f777.zip",
+          "c301c2cce52bb1b36720a115d657907f3ec9fa20bd385b4d81bf451fbe77fe4b.zip",
         ],
       },
       "Type": "Custom::CDKBucketDeployment",
@@ -1929,7 +1929,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "applicationType": "AWS-Solutions",
           "solutionID": "S0ABC",
           "solutionName": "sih",
-          "version": "v6.2.1",
+          "version": "v6.2.2",
         },
         "Description": "Attribute group for solution information",
         "Name": {
