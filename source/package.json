@@ -1,10 +1,13 @@
 {
   "name": "source",
-  "version": "6.2.1",
+  "version": "6.2.2",
   "private": true,
   "description": "ESLint and prettier dependencies to be used within the solution",
   "license": "Apache-2.0",
-  "author": "AWS Solutions",
+  "author": {
+    "name": "Amazon Web Services",
+    "url": "https://aws.amazon.com/solutions"
+  },
   "scripts": {
     "lint": "npx eslint . --ext .ts",
     "prettier-format": "npx prettier --config .prettierrc.yml '**/*.ts' --write",
@@ -13,25 +16,25 @@
     "install:dependencies": "npm run install:custom-resource && npm run install:image-handler"
   },
   "devDependencies": {
-    "@types/node": "^20.3.1",
-    "@typescript-eslint/eslint-plugin": "^5.60.1",
-    "@typescript-eslint/parser": "^5.60.1",
-    "eslint": "^8.43.0",
-    "eslint-config-prettier": "^8.8.0",
+    "@types/node": "^20.7.2",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "eslint": "^8.50.0",
+    "eslint-config-prettier": "^8.10.0",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-header": "^3.1.1",
-    "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-jsdoc": "^46.3.0",
+    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-jsdoc": "^46.8.2",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^4.2.1",
     "prettier": "~2.8.8"
   },
   "overrides": {
-    "semver": "7.5.2",
+    "semver": "7.5.4",
     "word-wrap": "npm:@aashutoshrathi/word-wrap"
   },
   "resolutions": {
-    "semver": "7.5.2",
+    "semver": "7.5.4",
     "word-wrap": "aashutoshrathi/word-wrap"
   }
 }
