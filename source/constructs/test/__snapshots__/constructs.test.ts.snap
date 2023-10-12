@@ -1150,7 +1150,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "41ef15a3e6b6b8f15863cb611acea96ea2fc7691ede4f30e039824930c06e3ef.zip",
+          "S3Key": "0d34710eeb4659e4f7f2b33f1083ac6db94fb42834e94ca30fc5deccd2fb599e.zip",
         },
         "Description": "sih (v6.2.2): Performs image edits and manipulations",
         "Environment": {

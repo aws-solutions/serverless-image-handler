@@ -75,7 +75,8 @@ export class ImageHandler {
    */
   async process(imageRequestInfo: ImageRequestInfo): Promise<string> {
     const { originalImage, edits } = imageRequestInfo;
-    const options = { failOnError: false, animated: imageRequestInfo.contentType === ContentTypes.GIF };
+    const supportsAnimation = imageRequestInfo.contentType === ContentTypes.GIF || imageRequestInfo.contentType === ContentTypes.WEBP;
+    const options = { failOnError: false, animated: supportsAnimation  };
     let base64EncodedImage = "";
 
     // Apply edits if specified
