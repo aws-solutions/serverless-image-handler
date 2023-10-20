@@ -44,3 +44,4 @@ rm ./*.template.json
 headline "[Package] Generate public assets for lambda and ui"
 cd "$deployment_dir"/cdk-solution-helper/asset-packager && npm ci
 npx ts-node ./index "$staging_dist_dir" "$build_dist_dir"
+rm -rf $staging_dist_dir

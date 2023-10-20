@@ -803,7 +803,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "rules_to_suppress": [
             {
               "id": "W45",
-              "reason": "ApiGateway has AccessLogging enabled in AWS::ApiGateway::Stage resource, but cfn_nag checkes for it in AWS::ApiGateway::Deployment resource",
+              "reason": "ApiGateway has AccessLogging enabled in AWS::ApiGateway::Stage resource, but cfn_nag checks for it in AWS::ApiGateway::Deployment resource",
             },
           ],
         },
@@ -1150,7 +1150,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "41ef15a3e6b6b8f15863cb611acea96ea2fc7691ede4f30e039824930c06e3ef.zip",
+          "S3Key": "88d7e27d3da3190e2aea077c6865651ee8e6194c25c210981852030f9b57e75c.zip",
         },
         "Description": "sih (v6.2.2): Performs image edits and manipulations",
         "Environment": {

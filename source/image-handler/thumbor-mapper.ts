@@ -281,7 +281,7 @@ export class ThumborMapper {
    * @returns Cumulative edits based on the previous edits and the current filter.
    */
   public mapFilter(filterExpression: string, fileFormat: ImageFormatTypes, previousEdits: ImageEdits = {}): ImageEdits {
-    const matched = filterExpression.match(/:(.+)\((.*)\)/);
+    const matched = filterExpression.match(/:(.+)\((.*)\)/); // NOSONAR
     const [_, filterName, filterValue] = matched;
     const currentEdits = { ...previousEdits };
 

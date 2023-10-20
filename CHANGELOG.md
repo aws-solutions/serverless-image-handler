@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.2.3] - 2023-10-20
+
+### Fixed
+
+- Fixing Security Vulnerabilities
+
+### Changed
+
+- Updated the versions of multiple dependencies
+
 ## [6.2.2] - 2023-09-29
 
 ### Changed
@@ -79,9 +89,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [6.0.0] - 2021-12-21
 
-### ⚠ BREAKING CHANGES
+### Changed
 
-Version 6.0.0 does not support upgrading from previous versions due to the update that uses the AWS CDK to generate the AWS CloudFormation template.
+- **Note that** Version 6.0.0 does not support upgrading from previous versions due to the update that uses the AWS CDK to generate the AWS CloudFormation template.
 
 ### Added
 
@@ -130,10 +140,6 @@ Version 6.0.0 does not support upgrading from previous versions due to the updat
 
 ## [5.1.0] - 2020-11-19
 
-### ⚠ BREAKING CHANGES
-
-- **Image URL Signature**: When image URL signature is enabled, all URLs including existing URLs should have `signature` query parameter.
-
 ### Added
 
 - Image URL signature: [#111](https://github.com/aws-solutions/serverless-image-handler/issues/111), [#203](https://github.com/aws-solutions/serverless-image-handler/issues/203), [#221](https://github.com/aws-solutions/serverless-image-handler/issues/221), [#227](https://github.com/aws-solutions/serverless-image-handler/pull/227)
@@ -159,6 +165,7 @@ Version 6.0.0 does not support upgrading from previous versions due to the updat
 - Migrate unit tests to use `jest`
 - Move all `aws-sdk` in `ImageHandler` Lambda function to `index.js` for the best practice
 - Enhance the default error message not to show empty JSON: [#206](https://github.com/aws-solutions/serverless-image-handler/issues/206)
+- **Image URL Signature**: When image URL signature is enabled, all URLs including existing URLs should have `signature` query parameter.
 
 ### Removed
 
@@ -194,7 +201,7 @@ Version 6.0.0 does not support upgrading from previous versions due to the updat
   - `thumbor-mapping.js`: `99.29%` to `100%`
   - `overall`: `91.55%` to `100%`
 
-## [4.2] - 2020-02-06
+## [4.2.0] - 2020-02-06
 
 ### Added
 
@@ -226,7 +233,7 @@ Version 6.0.0 does not support upgrading from previous versions due to the updat
 - Fix regular expression issue: [#114](https://github.com/aws-solutions/serverless-image-handler/issues/114), [#121](https://github.com/aws-solutions/serverless-image-handler/issues/121), [#125](https://github.com/aws-solutions/serverless-image-handler/issues/125)
 - Fix not working quality parameter: [#129](https://github.com/aws-solutions/serverless-image-handler/issues/129)
 
-## [4.1] - 2019-12-31
+## [4.1.0] - 2019-12-31
 
 ### Added
 
