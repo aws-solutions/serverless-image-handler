@@ -4,7 +4,7 @@ name: CDK Nag Test
 on:
   push: 
     branches:
-      - '*'
+      - 'master'
   pull_request:
     types: [opened, edited, reopened, synchronize]
 
@@ -15,12 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [20.x]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
       - run: |
-          cd source/constructs && npm i --only=dev
+          cd source/constructs && npm i
           npx cdk synth
