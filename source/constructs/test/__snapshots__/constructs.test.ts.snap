@@ -11,6 +11,14 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
         "Yes",
       ],
     },
+    "CommonResourcesEnableAutoWebPCondition68405A08": {
+      "Fn::Equals": [
+        {
+          "Ref": "AutoWebPParameter",
+        },
+        "Yes",
+      ],
+    },
     "CommonResourcesEnableCorsConditionA0615348": {
       "Fn::Equals": [
         {
@@ -398,10 +406,18 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
             "EnableAcceptEncodingGzip": true,
             "HeadersConfig": {
               "HeaderBehavior": "whitelist",
-              "Headers": [
-                "origin",
-                "accept",
-              ],
+              "Headers": {
+                "Fn::If": [
+                  "CommonResourcesEnableAutoWebPCondition68405A08",
+                  [
+                    "origin",
+                    "accept",
+                  ],
+                  [
+                    "origin",
+                  ],
+                ],
+              },
             },
             "QueryStringsConfig": {
               "QueryStringBehavior": "whitelist",
@@ -1254,10 +1270,18 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
           "HeadersConfig": {
             "HeaderBehavior": "whitelist",
-            "Headers": [
-              "origin",
-              "accept",
-            ],
+            "Headers": {
+              "Fn::If": [
+                "CommonResourcesEnableAutoWebPCondition68405A08",
+                [
+                  "origin",
+                  "accept",
+                ],
+                [
+                  "origin",
+                ],
+              ],
+            },
           },
           "Name": {
             "Fn::Join": [
