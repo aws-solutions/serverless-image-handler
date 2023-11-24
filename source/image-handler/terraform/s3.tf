@@ -7,7 +7,19 @@ resource "aws_s3_bucket_versioning" "images" {
   bucket = aws_s3_bucket.images.bucket
 
   versioning_configuration {
-    status = "Suspended"
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "images" {
+  bucket = aws_s3_bucket.images.bucket
+  rule {
+    id     = "delete_old_versions"
+    status = "Enabled"
+
+    noncurrent_version_expiration {
+      noncurrent_days = 14
+    }
   }
 }
 
