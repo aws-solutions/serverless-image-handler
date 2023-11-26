@@ -3,7 +3,7 @@
 
 import Rekognition from "aws-sdk/clients/rekognition";
 import S3 from "aws-sdk/clients/s3";
-import sharp, { FormatEnum, OverlayOptions, ResizeOptions } from "sharp";
+import sharp, { ExtendOptions, FormatEnum, OverlayOptions, ResizeOptions } from "sharp";
 
 import {
   BoundingBox,
@@ -154,6 +154,10 @@ export class ImageHandler {
           await this.applyGreyBackground(originalImage, edits);
           break
         }
+        case "pad": {
+          await this.applyPad(originalImage, edits);
+          break
+        }
         default: {
           if (edit in originalImage) {
             originalImage[edit](edits[edit]);
@@ -220,6 +224,27 @@ export class ImageHandler {
     }
 
     return resultSize;
+  };
+
+  /**
+   *
+   * @param imageMetadata the size of the image
+   * @returns the extend options
+   */
+  private calcExtendOptions = (imageMetadata: sharp.Metadata, edits: ImageEdits): sharp.ExtendOptions => {
+    const top = Math.floor(imageMetadata.height * 0.48);
+    const sides = Math.floor(imageMetadata.width * 0.1);
+
+    const extendOptions: ExtendOptions = {
+      top: top,
+      bottom: 0,
+      left: sides,
+      right: sides,
+      extendWith: "background",
+      background: edits.greyBackground ? {r: 244, g: 244, b: 244, alpha: 1} : {r: 255, g: 255, b: 255, alpha: 1}
+    }
+
+    return extendOptions;
   };
 
   /**
@@ -437,9 +462,26 @@ export class ImageHandler {
     }
 
     const overlay = await this.getOverlayImage(bucket, key, "100", "100", "0", imageMetadata);
-    const overlayOption: OverlayOptions = { blend: "hard-light", input: overlay };
+    const overlayOption: OverlayOptions = { blend: "hard-light", input: overlay, gravity: "south" };
 
     originalImage.composite([overlayOption]);
+    }
+
+  /**
+   * Applies adding padding to product image.
+   * @param originalImage The original sharp image.
+   */
+  private async applyPad(originalImage: sharp.Sharp, edits: ImageEdits): Promise<void> {
+    let imageMetadata: sharp.Metadata = await originalImage.metadata();
+    if (edits.resize) {
+      const imageBuffer = await originalImage.toBuffer();
+      const resizeOptions: ResizeOptions = edits.resize;
+
+      imageMetadata = await sharp(imageBuffer).resize(resizeOptions).metadata();
+    }
+
+    const extendOptions: sharp.ExtendOptions = this.calcExtendOptions(imageMetadata, edits);
+    originalImage.extend(extendOptions)
     }
 
   /**
@@ -670,6 +712,8 @@ export class ImageHandler {
         return "raw";
       case ImageFormatTypes.GIF:
         return "gif";
+      case ImageFormatTypes.AVIF:
+        return "avif";
       default:
         throw new ImageHandlerError(
           StatusCodes.INTERNAL_SERVER_ERROR,

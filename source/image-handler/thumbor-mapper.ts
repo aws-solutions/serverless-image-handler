@@ -370,6 +370,9 @@ export class ThumborMapper {
         currentEdits.greyBackground = true;
         break;
       }
+      case "pad": {
+        currentEdits.pad = true;
+      }
     }
 
     return currentEdits;
