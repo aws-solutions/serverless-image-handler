@@ -223,6 +223,13 @@ export class ImageRequest {
     } else if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
       // Use the default image source bucket env var
       const sourceBuckets = this.getAllowedSourceBuckets();
+      // Take the path and split it at "/" to get each "word" in the url as array
+      let potentialBucket = event.path.split("/");
+      // filter out all parts that are not an bucket-url
+      potentialBucket = potentialBucket.filter(e => sourceBuckets.includes(e));
+      // return the first match
+      if (potentialBucket.length > 0) return potentialBucket[0];
+
       return sourceBuckets[0];
     } else {
       throw new ImageHandlerError(
