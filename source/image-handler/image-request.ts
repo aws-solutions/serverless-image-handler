@@ -101,7 +101,7 @@ export class ImageRequest {
 
       imageRequestInfo.requestType = this.parseRequestType(event);
       imageRequestInfo.bucket = this.parseImageBucket(event, imageRequestInfo.requestType);
-      imageRequestInfo.key = this.parseImageKey(event, imageRequestInfo.requestType, bucket);
+      imageRequestInfo.key = this.parseImageKey(event, imageRequestInfo.requestType, imageRequestInfo.bucket);
       imageRequestInfo.edits = this.parseImageEdits(event, imageRequestInfo.requestType);
 
       const originalImage = await this.getOriginalImage(imageRequestInfo.bucket, imageRequestInfo.key);
@@ -272,7 +272,7 @@ export class ImageRequest {
    * @param requestType Type of the request.
    * @returns The name of the appropriate Amazon S3 key.
    */
-  public parseImageKey(event: ImageHandlerEvent, requestType: RequestTypes, bucket: string): string {
+  public parseImageKey(event: ImageHandlerEvent, requestType: RequestTypes, bucket: string = null): string {
     if (requestType === RequestTypes.DEFAULT) {
       // Decode the image request and return the image key
       const { key } = this.decodeRequest(event);
