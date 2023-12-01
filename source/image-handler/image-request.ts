@@ -299,7 +299,6 @@ export class ImageRequest {
 
       return decodeURIComponent(
         path
-          .replace(`/${bucket}`, '')
           .replace(/\/\d+x\d+:\d+x\d+(?=\/)/g, "")
           .replace(/\/\d+x\d+(?=\/)/g, "")
           .replace(/filters:watermark\(.*\)/u, "")
@@ -307,6 +306,7 @@ export class ImageRequest {
           .replace(/\/fit-in(?=\/)/g, "")
           .replace(/^\/+/g, "")
           .replace(/^\/+/, "")
+          .replace(new RegExp(bucket + "\/"), '')
       );
     }
 
