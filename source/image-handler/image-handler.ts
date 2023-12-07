@@ -179,6 +179,10 @@ export class ImageHandler {
       edits.resize = {};
       edits.resize.fit = ImageFitTypes.INSIDE;
     } else {
+      if (edits.fit) {
+        edits.resize.fit = ImageFitTypes.CONTAIN;
+        edits.resize.background = "white";
+      }
       if (edits.resize.width) edits.resize.width = Math.round(Number(edits.resize.width));
       if (edits.resize.height) edits.resize.height = Math.round(Number(edits.resize.height));
 

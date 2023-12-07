@@ -373,6 +373,9 @@ export class ThumborMapper {
       case "pad": {
         currentEdits.pad = true;
       }
+      case "fit": {
+        currentEdits.fit = true;
+      }
     }
 
     return currentEdits;
