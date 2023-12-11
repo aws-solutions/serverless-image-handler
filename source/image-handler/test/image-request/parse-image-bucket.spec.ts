@@ -129,7 +129,7 @@ describe("parseImageBucket", () => {
 
   it("should parse bucket-name from first part in thumbor request but fail since it's not allowed", () => {
     // Arrange
-    const event = { path: "/filters:grayscale()/test-bucket/test-image-001.jpg" };
+    const event = { path: "/filters:grayscale()/s3:test-bucket/test-image-001.jpg" };
     process.env.SOURCE_BUCKETS = "allowedBucket001, allowedBucket002";
 
     // Act
@@ -142,7 +142,7 @@ describe("parseImageBucket", () => {
 
   it("should parse bucket-name from first part in thumbor request and return it", () => {
     // Arrange
-    const event = { path: "/filters:grayscale()/test-bucket/test-image-001.jpg" };
+    const event = { path: "/filters:grayscale()/s3:test-bucket/test-image-001.jpg" };
     process.env.SOURCE_BUCKETS = "allowedBucket001, test-bucket";
 
     // Act

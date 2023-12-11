@@ -224,7 +224,10 @@ export class ImageRequest {
       // Use the default image source bucket env var
       const sourceBuckets = this.getAllowedSourceBuckets();
       // Take the path and split it at "/" to get each "word" in the url as array
-      let potentialBucket = event.path.split("/");
+      let potentialBucket = event.path
+        .split("/")
+        .filter(e => e.startsWith('s3:'))
+        .map(e => e.replace("s3:", ""));
       // filter out all parts that are not an bucket-url
       potentialBucket = potentialBucket.filter(e => sourceBuckets.includes(e));
       // return the first match
@@ -306,7 +309,7 @@ export class ImageRequest {
           .replace(/\/fit-in(?=\/)/g, "")
           .replace(/^\/+/g, "")
           .replace(/^\/+/, "")
-          .replace(new RegExp(bucket + "\/"), '')
+          .replace(new RegExp("s3:" + bucket + "\/"), '')
       );
     }
 
