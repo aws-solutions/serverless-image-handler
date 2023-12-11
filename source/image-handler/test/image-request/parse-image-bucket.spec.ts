@@ -127,7 +127,7 @@ describe("parseImageBucket", () => {
     }
   });
 
-  it("should parse bucket-name from first part in thubor request but fail since it's not allowed", () => {
+  it("should parse bucket-name from first part in thumbor request but fail since it's not allowed", () => {
     // Arrange
     const event = { path: "/filters:grayscale()/test-bucket/test-image-001.jpg" };
     process.env.SOURCE_BUCKETS = "allowedBucket001, allowedBucket002";
@@ -151,5 +151,18 @@ describe("parseImageBucket", () => {
     const bucket = imageRequest.parseImageBucket(event, RequestTypes.THUMBOR);
     // Assert
     expect(bucket).toEqual("test-bucket")
+  })
+
+  it("should take bucket-name from env-variable if not present in the URL", () => {
+    // Arrange
+    const event = { path: "/filters:grayscale()/test-image-001.jpg" };
+    process.env.SOURCE_BUCKETS = "allowedBucket001, test-bucket";
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+
+    const bucket = imageRequest.parseImageBucket(event, RequestTypes.THUMBOR);
+    // Assert
+    expect(bucket).toEqual("allowedBucket001")
   })
 });
