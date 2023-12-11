@@ -140,7 +140,7 @@ describe("parseImageBucket", () => {
     expect(bucket).toEqual("allowedBucket001")
   })
 
-  it("should parse bucket-name from first part in thubor request and return it", () => {
+  it("should parse bucket-name from first part in thumbor request and return it", () => {
     // Arrange
     const event = { path: "/filters:grayscale()/test-bucket/test-image-001.jpg" };
     process.env.SOURCE_BUCKETS = "allowedBucket001, test-bucket";
