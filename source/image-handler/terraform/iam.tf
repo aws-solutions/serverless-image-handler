@@ -1,11 +1,11 @@
 data "aws_iam_policy_document" "lambda" {
   statement {
     actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.images.arn}/*"]
+    resources = ["arn:aws:s3:::master-images-${var.account_id}-${var.region}/*"]
   }
   statement {
     actions   = ["s3:ListBucket"]
-    resources = [aws_s3_bucket.images.arn]
+    resources = ["arn:aws:s3:::master-images-${var.account_id}-${var.region}"]
   }
 }
 

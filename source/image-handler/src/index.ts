@@ -1,16 +1,26 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-const logger = require("./logger");
-const AWS = require("aws-sdk");
-const s3 = new AWS.S3();
-const rekognition = new AWS.Rekognition();
+import { Logger } from '@aws-lambda-powertools/logger'
+import {LogStashFormatter} from "./lib/logging/LogStashFormatter";
+import { ImageRequest } from "./image-request";
+import { ImageHandler } from "./image-handler";
+import {S3} from "@aws-sdk/client-s3";
+import {Rekognition} from "@aws-sdk/client-rekognition";
 
-const ImageRequest = require("./image-request.js");
-const ImageHandler = require("./image-handler.js");
+const s3 = new S3({
+  region: process.env.AWS_REGION,
+})
+const rekognition = new Rekognition({
+  region: process.env.AWS_REGION,
+})
 
-exports.handler = async (event) => {
-  logger.registerCloudwatchEvent(event);
+const logger = new Logger({
+  serviceName: process.env.AWS_LAMBDA_FUNCTION_NAME ?? '',
+  logFormatter: new LogStashFormatter(),
+})
+
+export async function handler(event: any): Promise<any> {
 
   const imageRequest = new ImageRequest(s3);
   const imageHandler = new ImageHandler(s3, rekognition);
@@ -18,7 +28,7 @@ exports.handler = async (event) => {
 
   try {
     const request = await imageRequest.setup(event);
-    logger.info("Image manipulation request", request);
+    logger.info("Image manipulation request", {request});
 
     let now = Date.now();
     if (request.Expires && request.Expires.getTime() < now) {
@@ -72,10 +82,12 @@ exports.handler = async (event) => {
         body: processedRequest
       };
     }
-  } catch (err) {
-    const log = (err.status && err.status >= 400 && err.status < 500) ? logger.warn : logger.error;
-    log(err.message, err);
-
+  } catch (err: any) {
+    if (err.status && err.status >= 400 && err.status < 500) {
+      logger.warn(err.message, err);
+    } else {
+      logger.error(err.message, err);
+    }
     // Default fallback image
     if (
       process.env.ENABLE_DEFAULT_FALLBACK_IMAGE === "Yes" &&
@@ -87,9 +99,7 @@ exports.handler = async (event) => {
       try {
         const bucket = process.env.DEFAULT_FALLBACK_IMAGE_BUCKET;
         const objectKey = process.env.DEFAULT_FALLBACK_IMAGE_KEY;
-        const defaultFallbackImage = await s3
-          .getObject({Bucket: bucket, Key: objectKey})
-          .promise();
+        const defaultFallbackImage = await s3.getObject({Bucket: bucket, Key: objectKey});
         const headers = getResponseHeaders(200, isAlb);
         headers["Content-Type"] = defaultFallbackImage.ContentType;
         headers["Last-Modified"] = defaultFallbackImage.LastModified;
@@ -99,10 +109,10 @@ exports.handler = async (event) => {
           statusCode: err.status ? err.status : 500,
           isBase64Encoded: true,
           headers: headers,
-          body: defaultFallbackImage.Body.toString("base64")
+          body: await defaultFallbackImage.Body!.transformToString("base64")
         };
       } catch (error) {
-        logger.warn("Error occurred while getting the default fallback image.", error);
+        logger.warn("Error occurred while getting the default fallback image.",  error as Error);
       }
     }
 
@@ -143,7 +153,7 @@ exports.handler = async (event) => {
  */
 const getResponseHeaders = (status_code = 200, isAlb = false) => {
   const corsEnabled = process.env.CORS_ENABLED === "Yes";
-  const headers = {
+  const headers: any = {
     "Access-Control-Allow-Methods": "GET",
     "Access-Control-Allow-Headers": "Content-Type, Authorization"
   };

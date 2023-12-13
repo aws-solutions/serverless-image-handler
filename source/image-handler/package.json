@@ -6,22 +6,29 @@
   "version": "5.1.0",
   "private": true,
   "dependencies": {
-    "color": "4.2.3",
-    "color-name": "1.1.4",
-    "sharp": "0.32.6",
-    "aws-sdk": "2.1470.0"
+    "@aws-sdk/client-rekognition": "3.433.0",
+    "@aws-sdk/client-s3": "3.433.0",
+    "sharp": "0.33.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "sinon": "^16.0.0"
+    "@aws-lambda-powertools/logger": "1.14.0",
+    "@types/color": "^3.0.6",
+    "@types/color-name": "^1.1.3",
+    "@types/sharp": "^0.32.0",
+    "aws-sdk-client-mock": "3.0.0",
+    "aws-sdk-client-mock-jest": "3.0.0",
+    "@aws-sdk/util-stream-node": "3.374.0",
+    "prettier": "3.0.3",
+    "tsup": "7.2.0",
+    "vitest": "latest"
   },
   "scripts": {
-    "pretest": "npm run build:init && npm install",
-    "test": "npm install && jest ./**/*.spec.js --coverage --silent",
-    "build:init": "rm -rf package-lock.json dist/ node_modules/ coverage/",
-    "build:zip": "zip --recurse-paths image-handler.zip --quiet . --exclude 'terraform/*'",
-    "build:dist": "mkdir -p dist && mv image-handler.zip dist/",
-    "build": "npm run build:init && npm install --arch=x64 --platform=linux --production && npm run build:zip && npm run build:dist"
+    "pretest": "npm i --quiet",
+    "build:init": "rm -rf package-lock.json dist/ coverage/",
+    "build:zip": "cd dist && zip -r image-handler.zip *.js node_modules",
+    "build": "npm run build:init && npm install --cpu=arm64 --os=linux && tsup && npm install --cpu=arm64 --os=linux --prefix dist sharp && npm run build:zip",
+    "test": "vitest run",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\""
   },
   "license": "Apache-2.0",
   "directories": {

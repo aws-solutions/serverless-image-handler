@@ -1,14 +1,18 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-const Color = require('color');
-const ColorName = require('color-name');
+import Color from "color";
+import ColorName from "color-name";
 
-class ThumborMapping {
+export class ThumborMapping {
 
   // Constructor
+  private path: any;
+  cropping: any;
+  edits: any;
   constructor() {
     this.edits = {};
+    this.cropping= {}
   }
 
   /**
@@ -16,7 +20,7 @@ class ThumborMapping {
    * handler to perform image modifications based on legacy URL path requests.
    * @param {object} event - The request body.
    */
-  process(event) {
+  process(event: any) {
     // Setup
     this.path = event['path'] || event['rawPath'];
     this.path = this.path.replace('__WIDTH__', '1800')
@@ -90,11 +94,11 @@ class ThumborMapping {
 
   /**
    * Enables users to migrate their current image request model to the SIH solution,
-   * without changing their legacy application code to accomodate new image requests.
+   * without changing their legacy application code to accommodate new image requests.
    * @param {string} path - The URL path extracted from the web request.
    * @return {object} - The parsed path using the match pattern and the substitution.
    */
-  parseCustomPath(path) {
+  parseCustomPath(path: string): { path: string } {
     // Setup from the environment variables
     const matchPattern = process.env.REWRITE_MATCH_PATTERN;
     const substitution = process.env.REWRITE_SUBSTITUTION;
@@ -105,7 +109,7 @@ class ThumborMapping {
 
       if (typeof (matchPattern) === 'string') {
         const patternStrings = matchPattern.split('/');
-        const flags = patternStrings.pop();
+        const flags: any = patternStrings.pop();
         const parsedPatternString = matchPattern.slice(1, matchPattern.length - 1 - flags.length);
         const regExp = new RegExp(parsedPatternString, flags);
         parsedPath = path.replace(regExp, substitution);
@@ -125,7 +129,7 @@ class ThumborMapping {
    * @param {string} edit - The URL path filter.
    * @param {string} filetype - The file type of the original image.
    */
-  mapFilter(edit, filetype) {
+  mapFilter(edit: string, filetype: any) {
     const matched = edit.match(/:(.+)\((.*)\)/);
     if (!matched) return;
     const editKey = matched[1];
@@ -134,6 +138,7 @@ class ThumborMapping {
     if (editKey === ('autojpg')) {
       this.edits.toFormat = 'jpeg';
     } else if (editKey === ('background_color')) {
+      // @ts-ignore
       if (!ColorName[value]) {
         value = `#${value}`
       }
@@ -144,11 +149,11 @@ class ThumborMapping {
     } else if (editKey === ('convolution')) {
       const arr = value.split(',');
       const strMatrix = (arr[0]).split(';');
-      let matrix = [];
+      let matrix: any[] = [];
       strMatrix.forEach(function (str) {
         matrix.push(Number(str));
       });
-      const matrixWidth = arr[1];
+      const matrixWidth: any = arr[1];
       let matrixHeight = 0;
       let counter = 0;
       for (let i = 0; i < matrix.length; i++) {
@@ -170,6 +175,7 @@ class ThumborMapping {
       if (this.edits.resize === undefined) {
         this.edits.resize = {};
       }
+      // @ts-ignore
       if (!ColorName[value]) {
         value = `#${value}`
       }
@@ -209,7 +215,7 @@ class ThumborMapping {
       }
     } else if (editKey === ('rgb')) {
       const percentages = value.split(',');
-      const values = [];
+      const values: any[] = [];
       percentages.forEach(function (percentage) {
         const parsedPercentage = Number(percentage);
         const val = 255 * (parsedPercentage / 100);
@@ -220,8 +226,7 @@ class ThumborMapping {
       this.edits.rotate = Number(value);
     } else if (editKey === ('sharpen')) {
       const sh = value.split(',');
-      const sigma = 1 + Number(sh[1]) / 2;
-      this.edits.sharpen = sigma;
+      this.edits.sharpen = 1 + Number(sh[1]) / 2;
     } else if (editKey === ('stretch')) {
       if (this.edits.resize === undefined) {
         this.edits.resize = {};
@@ -242,8 +247,8 @@ class ThumborMapping {
       const options = value.replace(/\s+/g, '').split(',');
       const bucket = options[0];
       const key = options[1];
-      const xPos = options[2];
-      const yPos = options[3];
+      const xPos: any = options[2];
+      const yPos: any = options[3];
       const alpha = options[4];
       const wRatio = options[5];
       const hRatio = options[6];
@@ -285,6 +290,3 @@ class ThumborMapping {
     }
   }
 }
-
-// Exports
-module.exports = ThumborMapping;

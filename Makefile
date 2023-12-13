@@ -19,7 +19,7 @@ clean ::
 	@cd $(WORK_DIR) && rm -rf ./dist/ ./node_modules/
 
 npm/install ::
-	cd $(WORK_DIR) && npm install
+	cd $(WORK_DIR) && npm install --cpu=arm64 --os=linux --libc=musl
 
 npm/test ::
 	cd $(WORK_DIR) && npm run test
@@ -36,7 +36,7 @@ build ::
 tf ::
 	rm -f $(WORK_DIR)/terraform/.terraform/terraform.tfstate || true
 	terraform -chdir=$(WORK_DIR)/terraform init $(TF_VARS) -reconfigure -upgrade=$(DO_TF_UPGRADE) $(TF_BACKEND_CFG)
-	if [ "true" == "$(DO_TF_UPGRADE)" ]; then terraform -chdir=$(WORK_DIR)/terraform providers lock -platform=darwin_amd64 -platform=linux_amd64; fi
+	if [ "true" == "$(DO_TF_UPGRADE)" ]; then terraform -chdir=$(WORK_DIR)/terraform providers lock -platform=darwin_amd64 -platform=darwin_arm64 -platform=linux_amd64; fi
 	terraform -chdir=$(WORK_DIR)/terraform $(MODE) $(TF_VARS)
 
 invoke :: # invoke the running docker lambda by posting a sample API-GW-Event

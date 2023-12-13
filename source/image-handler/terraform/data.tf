@@ -43,3 +43,7 @@ data "aws_security_group" "lambda" {
 data "aws_cloudfront_distribution" "images" {
   id = "E3K0UX29CMXL6T"
 }
+
+data "aws_ssm_parameter" "logging_layer" {
+  name      = "/internal/lambda-logging-oss/arm64/layer_arn"
+}

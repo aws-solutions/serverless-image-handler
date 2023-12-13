@@ -1,10 +1,12 @@
 resource "aws_s3_bucket" "images" {
+  count         = var.app_suffix == "" ? 1 : 0
   bucket        = "master-images-${var.account_id}-${var.region}"
   force_destroy = false
 }
 
 resource "aws_s3_bucket_versioning" "images" {
-  bucket = aws_s3_bucket.images.bucket
+  count  = var.app_suffix == "" ? 1 : 0
+  bucket = aws_s3_bucket.images[count.index].bucket
 
   versioning_configuration {
     status = "Enabled"
@@ -27,17 +29,20 @@ resource "aws_s3_bucket_lifecycle_configuration" "images" {
 }
 
 resource "aws_kms_key" "images" {
-  description             = "This key is used to encrypt bucket objects within the ${aws_s3_bucket.images.bucket} bucket."
+  count                   = var.app_suffix == "" ? 1 : 0
+  description             = "This key is used to encrypt bucket objects within the ${aws_s3_bucket.images[count.index].bucket} bucket."
   deletion_window_in_days = 10
 }
 
 resource "aws_kms_alias" "images" {
-  target_key_id = aws_kms_key.images.key_id
+  count         = var.app_suffix == "" ? 1 : 0
+  target_key_id = aws_kms_key.images[count.index].key_id
   name          = "alias/s3_image_bucket"
 }
 
 resource "aws_kms_key_policy" "images" {
-  key_id = aws_kms_key.images.id
+  count  = var.app_suffix == "" ? 1 : 0
+  key_id = aws_kms_key.images[count.index].id
   policy = jsonencode({
     Id = "User"
     Statement = [
@@ -95,30 +100,34 @@ resource "aws_kms_key_policy" "images" {
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "images" {
-  bucket = aws_s3_bucket.images.bucket
+  count  = var.app_suffix == "" ? 1 : 0
+  bucket = aws_s3_bucket.images[count.index].bucket
   rule {
     bucket_key_enabled = false
     apply_server_side_encryption_by_default {
       sse_algorithm     = "aws:kms"
-      kms_master_key_id = aws_kms_key.images.arn
+      kms_master_key_id = aws_kms_key.images[count.index].arn
     }
   }
 }
 
 resource "aws_s3_bucket_public_access_block" "images" {
+  count                   = var.app_suffix == "" ? 1 : 0
   block_public_acls       = true
   block_public_policy     = true
-  bucket                  = aws_s3_bucket.images.id
+  bucket                  = aws_s3_bucket.images[count.index].id
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
 
 resource "aws_s3_bucket_policy" "this" {
-  bucket = aws_s3_bucket.images.id
-  policy = data.aws_iam_policy_document.deny_insecure_transport.json
+  count  = var.app_suffix == "" ? 1 : 0
+  bucket = aws_s3_bucket.images[count.index].id
+  policy = data.aws_iam_policy_document.deny_insecure_transport[count.index].json
 }
 
 data "aws_iam_policy_document" "deny_insecure_transport" {
+  count = var.app_suffix == "" ? 1 : 0
   statement {
     sid    = "denyInsecureTransport"
     effect = "Deny"
@@ -127,7 +136,7 @@ data "aws_iam_policy_document" "deny_insecure_transport" {
       "s3:*",
     ]
 
-    resources = [aws_s3_bucket.images.arn, "${aws_s3_bucket.images.arn}/*"]
+    resources = [aws_s3_bucket.images[count.index].arn, "${aws_s3_bucket.images[count.index].arn}/*"]
 
     principals {
       type        = "*"
@@ -143,7 +152,7 @@ data "aws_iam_policy_document" "deny_insecure_transport" {
 
   statement {
     actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.images.arn}/*"]
+    resources = ["${aws_s3_bucket.images[count.index].arn}/*"]
     principals {
       type        = "Service"
       identifiers = ["cloudfront.amazonaws.com"]
@@ -158,7 +167,8 @@ data "aws_iam_policy_document" "deny_insecure_transport" {
 }
 
 resource "aws_s3_object" "robots_txt" {
-  bucket        = aws_s3_bucket.images.bucket
+  count         = var.app_suffix == "" ? 1 : 0
+  bucket        = aws_s3_bucket.images[count.index].bucket
   key           = "robots.txt"
   cache_control = "max-age=60" # todo ~> increase this
 

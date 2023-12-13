@@ -1,7 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-const ThumborMapping = require('../thumbor-mapping');
+import {ThumborMapping} from "../src/thumbor-mapping";
+import {expect, describe, it} from "vitest";
 
 // ----------------------------------------------------------------------------
 // process()
@@ -222,7 +223,7 @@ describe('parseCustomPath()', function() {
             const event = {
                 path : '/filters-rotate(90)/filters-grayscale()/thumbor-image.jpg'
             }
-            process.env.REWRITE_MATCH_PATTERN = /(filters-)/gm;
+            process.env.REWRITE_MATCH_PATTERN = "/(filters-)/gm";
             process.env.REWRITE_SUBSTITUTION = 'filters:';
             // Act
             const thumborMapping = new ThumborMapping();
@@ -249,8 +250,10 @@ describe('parseCustomPath()', function() {
     });
     describe('003/undefinedPath', function() {
         it('Should throw an error if the path is not defined', function() {
-            const event = {};
-            process.env.REWRITE_MATCH_PATTERN = /(filters-)/gm;
+            const event: {path: any} = {
+                path : undefined
+            };
+            process.env.REWRITE_MATCH_PATTERN = "/(filters-)/gm";
             process.env.REWRITE_SUBSTITUTION = 'filters:';
             // Act
             const thumborMapping = new ThumborMapping();
@@ -262,7 +265,9 @@ describe('parseCustomPath()', function() {
     });
     describe('004/undefinedAll', function() {
         it('Should throw an error if the path is not defined', function() {
-            const event = {};
+            const event : {path:any} = {
+                path: undefined
+            };
             delete process.env.REWRITE_MATCH_PATTERN;
             delete process.env.REWRITE_SUBSTITUTION;
             // Act
@@ -289,8 +294,10 @@ describe('mapFilter()', function() {
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { toFormat: 'jpeg' }
-            };
+                edits: { toFormat: 'jpeg' },
+                path: undefined,
+                cropping: {}
+        };
             expect(thumborMapping).toEqual(expectedResult);
         });
     });
@@ -304,7 +311,9 @@ describe('mapFilter()', function() {
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { flatten: { background: {r: 255, g: 255, b: 255}}}
+                edits: { flatten: { background: {r: 255, g: 255, b: 255}}},
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -319,7 +328,9 @@ describe('mapFilter()', function() {
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { blur: 30 }
+                edits: { blur: 30 },
+                path: undefined,
+                cropping: {}
             };
             // assert.deepStrictEqual(thumborMapping, expectedResult);
             expect(thumborMapping).toEqual(expectedResult);
@@ -335,7 +346,9 @@ describe('mapFilter()', function() {
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { blur: 2 }
+                edits: { blur: 2 },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -354,7 +367,9 @@ describe('mapFilter()', function() {
                     width: 3,
                     height: 3,
                     kernel: [1,2,1,2,4,2,1,2,1]
-                }}
+                }},
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -369,7 +384,9 @@ describe('mapFilter()', function() {
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { normalize: 'true' }
+                edits: { normalize: 'true' },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -384,7 +401,9 @@ describe('mapFilter()', function() {
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { resize: { background: { r: 255, g: 255, b: 255 }, fit: 'contain' }}
+                edits: { resize: { background: { r: 255, g: 255, b: 255 }, fit: 'contain' }},
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -401,7 +420,9 @@ describe('mapFilter()', function() {
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { resize: { background: { r: 255, g: 255, b: 255 }, fit: 'contain' }}
+                edits: { resize: { background: { r: 255, g: 255, b: 255 }, fit: 'contain' }},
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -416,7 +437,9 @@ describe('mapFilter()', function() {
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { toFormat: 'png' }
+                edits: { toFormat: 'png' },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -431,7 +454,9 @@ describe('mapFilter()', function() {
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { }
+                edits: { },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -450,7 +475,9 @@ describe('mapFilter()', function() {
                     resize: {
                         withoutEnlargement: true
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -475,7 +502,9 @@ describe('mapFilter()', function() {
                         width: 300,
                         withoutEnlargement: true
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -501,7 +530,9 @@ describe('mapFilter()', function() {
                         height: 60,
                         width: 60
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -534,7 +565,9 @@ describe('mapFilter()', function() {
                     jpeg: {
                         quality: 50
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -553,7 +586,9 @@ describe('mapFilter()', function() {
                     png: {
                         quality: 50
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -572,7 +607,9 @@ describe('mapFilter()', function() {
                     webp: {
                         quality: 50
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -591,7 +628,9 @@ describe('mapFilter()', function() {
                     tiff: {
                         quality: 50
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -610,7 +649,9 @@ describe('mapFilter()', function() {
                     heif: {
                         quality: 50
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -625,7 +666,9 @@ describe('mapFilter()', function() {
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = {
-                edits: { }
+                edits: { },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -646,7 +689,9 @@ describe('mapFilter()', function() {
                         g: 25.5,
                         b: 25.5
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -663,7 +708,9 @@ describe('mapFilter()', function() {
             const expectedResult = {
                 edits: {
                     rotate: 75
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -680,7 +727,9 @@ describe('mapFilter()', function() {
             const expectedResult = {
                 edits: {
                     sharpen: 3.5
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -697,7 +746,9 @@ describe('mapFilter()', function() {
             const expectedResult = {
                 edits: {
                     resize: { fit: 'fill' }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -722,7 +773,9 @@ describe('mapFilter()', function() {
                         height: 400,
                         fit: 'fill'
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -742,7 +795,9 @@ describe('mapFilter()', function() {
             const expectedResult = {
                 edits: {
                     resize: { fit: 'inside' }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -768,7 +823,9 @@ describe('mapFilter()', function() {
                         height: 300,
                         fit: 'inside'
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -785,7 +842,9 @@ describe('mapFilter()', function() {
             const expectedResult = {
                 edits: {
                     rotate: null
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -802,7 +861,9 @@ describe('mapFilter()', function() {
             const expectedResult = {
                 edits: {
                     rotate: null
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -821,7 +882,9 @@ describe('mapFilter()', function() {
                     resize: {
                         fit: 'inside'
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -841,7 +904,9 @@ describe('mapFilter()', function() {
                     resize: {
                         fit: 'inside'
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -868,7 +933,9 @@ describe('mapFilter()', function() {
                             top: '100'
                         }
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -895,7 +962,9 @@ describe('mapFilter()', function() {
                             top: '30p'
                         }
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -919,7 +988,9 @@ describe('mapFilter()', function() {
                         hRatio: undefined,
                         options: {}
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -946,7 +1017,9 @@ describe('mapFilter()', function() {
                             top: '100'
                         }
                     }
-                }
+                },
+                path: undefined,
+                cropping: {}
             };
             expect(thumborMapping).toEqual(expectedResult);
         });
@@ -960,7 +1033,9 @@ describe('mapFilter()', function() {
             const thumborMapping = new ThumborMapping();
             thumborMapping.mapFilter(edit, filetype);
             // Assert
-            const expectedResult = { edits: {} };
+            const expectedResult = { edits: {},
+                path: undefined,
+                cropping: {} };
             expect(thumborMapping).toEqual(expectedResult);
         });
     });
@@ -973,7 +1048,9 @@ describe('mapFilter()', function() {
             const thumborMapping = new ThumborMapping();
             thumborMapping.mapFilter(edit, filetype);
             // Assert
-            const expectedResult = {edits: {roundCrop: {}}};
+            const expectedResult = {edits: {roundCrop: {}},
+                path: undefined,
+                cropping: {} };
             expect(thumborMapping).toEqual(expectedResult);
         });
     });
@@ -986,7 +1063,9 @@ describe('mapFilter()', function() {
             const thumborMapping = new ThumborMapping();
             thumborMapping.mapFilter(edit, filetype);
             // Assert
-            const expectedResult = {edits: {roundCrop: {}}};
+            const expectedResult = {edits: {roundCrop: {}},
+                path: undefined,
+                cropping: {} };
             expect(thumborMapping).toEqual(expectedResult);
         });
     });

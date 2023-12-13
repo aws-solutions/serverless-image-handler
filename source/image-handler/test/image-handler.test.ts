@@ -1,29 +1,34 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-const fs = require('fs');
+import fs from "fs";
+import {DetectFacesCommand, Rekognition, RekognitionClient} from "@aws-sdk/client-rekognition";
+import {GetObjectCommand, S3, S3Client} from "@aws-sdk/client-s3";
+import {ImageHandler} from "../src/image-handler";
+import sharp from "sharp";
+import { beforeEach, describe, it } from 'vitest'
+import {mockClient} from "aws-sdk-client-mock";
+import {Readable} from "stream";
+import {sdkStreamMixin} from "@aws-sdk/util-stream-node";
 
-const mockAws = {
-  getObject: jest.fn(),
-  detectFaces: jest.fn()
-};
-jest.mock('aws-sdk', () => {
-  return {
-    S3: jest.fn(() => ({
-      getObject: mockAws.getObject
-    })),
-    Rekognition: jest.fn(() => ({
-      detectFaces: mockAws.detectFaces
-    }))
-  };
+const {expect} = require("expect");
+(globalThis as any).expect = expect;
+require("aws-sdk-client-mock-jest");
+
+function generateStream(data: string) {
+  const stream = Readable.from(Buffer.from(data, "base64"))
+  return sdkStreamMixin(stream)
+}
+
+const s3_mock = mockClient(S3Client);
+const rekognition_mock = mockClient(RekognitionClient);
+const s3 = new S3();
+const rekognition = new Rekognition();
+
+beforeEach(() => {
+    s3_mock.reset();
+    rekognition_mock.reset()
 });
-
-const AWS = require('aws-sdk');
-const s3 = new AWS.S3();
-const rekognition = new AWS.Rekognition();
-const ImageHandler = require('../image-handler');
-const sharp = require('sharp');
-
 // ----------------------------------------------------------------------------
 // [async] process()
 // ----------------------------------------------------------------------------
@@ -177,7 +182,7 @@ describe('process()', () => {
       const result = await imageHandler.process(request);
       // Assert
       const metadata = await sharp(Buffer.from(result, 'base64')).metadata();
-      expect(metadata).not.toHaveProperty('orientation');
+      expect(metadata.orientation).toEqual(1); // = 0 degrees: the correct orientation, no adjustment is required.
     });
   });
   describe('008/CropOutOfBounds', () => {
@@ -280,18 +285,12 @@ describe('applyEdits()', () => {
         }
       };
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')});
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({ Body: generateStream('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==') })
       // Act
       const imageHandler = new ImageHandler(s3, rekognition);
       const result = await imageHandler.applyEdits(image, edits);
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'aaa', Key: 'bbb'});
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'aaa', Key: 'bbb'});
       expect(result.options.input.buffer).toEqual(originalImage);
     });
   });
@@ -311,18 +310,12 @@ describe('applyEdits()', () => {
         }
       };
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')});
-          }
-        };
-      });
+     s3_mock.on(GetObjectCommand).resolves({ Body: generateStream('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==') })
       // Act
       const imageHandler = new ImageHandler(s3, rekognition);
       const result = await imageHandler.applyEdits(image, edits);
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'aaa', Key: 'bbb'});
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'aaa', Key: 'bbb'});
       expect(result.options.input.buffer).toEqual(originalImage);
     });
   });
@@ -342,18 +335,12 @@ describe('applyEdits()', () => {
         }
       };
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')});
-          }
-        };
-      });
+     s3_mock.on(GetObjectCommand).resolves({ Body: generateStream('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==') })
       // Act
       const imageHandler = new ImageHandler(s3, rekognition);
       const result = await imageHandler.applyEdits(image, edits);
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'aaa', Key: 'bbb'});
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'aaa', Key: 'bbb'});
       expect(result.options.input.buffer).toEqual(originalImage);
     });
   });
@@ -373,18 +360,12 @@ describe('applyEdits()', () => {
         }
       };
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')});
-          }
-        };
-      });
+     s3_mock.on(GetObjectCommand).resolves({ Body: generateStream('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==') })
       // Act
       const imageHandler = new ImageHandler(s3, rekognition);
       const result = await imageHandler.applyEdits(image, edits);
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'aaa', Key: 'bbb'});
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'aaa', Key: 'bbb'});
       expect(result.options.input.buffer).toEqual(originalImage);
     });
   });
@@ -404,18 +385,12 @@ describe('applyEdits()', () => {
         }
       };
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')});
-          }
-        };
-      });
+     s3_mock.on(GetObjectCommand).resolves({ Body: generateStream('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==') })
       // Act
       const imageHandler = new ImageHandler(s3, rekognition);
       const result = await imageHandler.applyEdits(image, edits);
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'aaa', Key: 'bbb'});
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'aaa', Key: 'bbb'});
       expect(result.options.input.buffer).toEqual(originalImage);
     });
   });
@@ -432,27 +407,21 @@ describe('applyEdits()', () => {
         }
       };
       // Mock
-      mockAws.detectFaces.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({
-              FaceDetails: [{
-                BoundingBox: {
-                  Height: 0.18,
-                  Left: 0.55,
-                  Top: 0.33,
-                  Width: 0.23
-                }
-              }]
-            });
+      rekognition_mock.on(DetectFacesCommand).resolves({
+        FaceDetails: [{
+          BoundingBox: {
+            Height: 0.18,
+            Left: 0.55,
+            Top: 0.33,
+            Width: 0.23
           }
-        };
-      });
+        }]
+      })
       // Act
       const imageHandler = new ImageHandler(s3, rekognition);
       const result = await imageHandler.applyEdits(image, edits);
       // Assert
-      expect(mockAws.detectFaces).toHaveBeenCalledWith({Image: {Bytes: buffer}});
+      expect(rekognition_mock).toHaveReceivedCommandWith(DetectFacesCommand, {Image: {Bytes: buffer}})
       expect(result.options.input).not.toEqual(originalImage);
     });
   });
@@ -469,29 +438,23 @@ describe('applyEdits()', () => {
         }
       };
       // Mock
-      mockAws.detectFaces.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({
-              FaceDetails: [{
-                BoundingBox: {
-                  Height: 0.18,
-                  Left: 0.55,
-                  Top: 0.33,
-                  Width: 0.23
-                }
-              }]
-            });
+      rekognition_mock.on(DetectFacesCommand).resolves({
+        FaceDetails: [{
+          BoundingBox: {
+            Height: 0.18,
+            Left: 0.55,
+            Top: 0.33,
+            Width: 0.23
           }
-        };
-      });
+        }]
+      })
       // Act
       try {
         const imageHandler = new ImageHandler(s3, rekognition);
         await imageHandler.applyEdits(image, edits);
       } catch (error) {
         // Assert
-        expect(mockAws.detectFaces).toHaveBeenCalledWith({Image: {Bytes: buffer}});
+        expect(rekognition_mock).toHaveReceivedCommandWith(DetectFacesCommand, {Image: {Bytes: buffer}})
         expect(error).toEqual({
           status: 400,
           code: 'SmartCrop::PaddingOutOfBounds',
@@ -513,29 +476,23 @@ describe('applyEdits()', () => {
         }
       };
       // Mock
-      mockAws.detectFaces.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({
-              FaceDetails: [{
-                BoundingBox: {
-                  Height: 0.18,
-                  Left: 0.55,
-                  Top: 0.33,
-                  Width: 0.23
-                }
-              }]
-            });
+      rekognition_mock.on(DetectFacesCommand).resolves({
+        FaceDetails: [{
+          BoundingBox: {
+            Height: 0.18,
+            Left: 0.55,
+            Top: 0.33,
+            Width: 0.23
           }
-        };
-      });
+        }]
+      })
       // Act
       try {
         const imageHandler = new ImageHandler(s3, rekognition);
         await imageHandler.applyEdits(image, edits);
       } catch (error) {
         // Assert
-        expect(mockAws.detectFaces).toHaveBeenCalledWith({Image: {Bytes: buffer}});
+        expect(rekognition_mock).toHaveReceivedCommandWith(DetectFacesCommand, {Image: {Bytes: buffer}})
         expect(error).toEqual({
           status: 400,
           code: 'SmartCrop::FaceIndexOutOfRange',
@@ -554,27 +511,21 @@ describe('applyEdits()', () => {
         smartCrop: true
       };
       // Mock
-      mockAws.detectFaces.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({
-              FaceDetails: [{
-                BoundingBox: {
-                  Height: 0.18,
-                  Left: 0.55,
-                  Top: 0.33,
-                  Width: 0.23
-                }
-              }]
-            });
+      rekognition_mock.on(DetectFacesCommand).resolves({
+        FaceDetails: [{
+          BoundingBox: {
+            Height: 0.18,
+            Left: 0.55,
+            Top: 0.33,
+            Width: 0.23
           }
-        };
-      });
+        }]
+      })
       // Act
       const imageHandler = new ImageHandler(s3, rekognition);
       const result = await imageHandler.applyEdits(image, edits);
       // Assert
-      expect(mockAws.detectFaces).toHaveBeenCalledWith({Image: {Bytes: buffer}});
+      expect(rekognition_mock).toHaveReceivedCommandWith(DetectFacesCommand, {Image: {Bytes: buffer}})
       expect(result.options.input).not.toEqual(originalImage);
     });
   });
@@ -606,7 +557,7 @@ describe('applyEdits()', () => {
       // Arrange
       const originalImage = Buffer.from('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAAEAAQDAREAAhEBAxEB/8QAFAABAAAAAAAAAAAAAAAAAAAACv/EABQQAQAAAAAAAAAAAAAAAAAAAAD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AfwD/2Q==', 'base64');
       const image = sharp(originalImage, {failOnError: false}).withMetadata();
-      const metadata = image.metadata();
+      const metadata = await image.metadata();
 
       const edits = {
         roundCrop: true
@@ -617,8 +568,7 @@ describe('applyEdits()', () => {
       const result = await imageHandler.applyEdits(image, edits);
 
       // Assert
-      const expectedResult = {width: metadata.width / 2, height: metadata.height / 2};
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'aaa', Key: 'bbb'});
+      const expectedResult = {width: metadata.width! / 2, height: metadata.height! / 2};
       expect(result.options.input).not.toEqual(expectedResult);
     });
   });
@@ -627,7 +577,7 @@ describe('applyEdits()', () => {
       // Arrange
       const originalImage = Buffer.from('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAAEAAQDAREAAhEBAxEB/8QAFAABAAAAAAAAAAAAAAAAAAAACv/EABQQAQAAAAAAAAAAAAAAAAAAAAD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AfwD/2Q==', 'base64');
       const image = sharp(originalImage, {failOnError: false}).withMetadata();
-      const metadata = image.metadata();
+      const metadata = await image.metadata();
 
       const edits = {
         roundCrop: {
@@ -638,14 +588,12 @@ describe('applyEdits()', () => {
         }
 
       };
-
       // Act
       const imageHandler = new ImageHandler(s3, rekognition);
       const result = await imageHandler.applyEdits(image, edits);
 
       // Assert
-      const expectedResult = {width: metadata.width / 2, height: metadata.height / 2};
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'aaa', Key: 'bbb'});
+      const expectedResult = {width: metadata.width! / 2, height: metadata.height! / 2};
       expect(result.options.input).not.toEqual(expectedResult);
     });
   });
@@ -658,49 +606,31 @@ describe('getOverlayImage()', () => {
   describe('001/validParameters', () => {
     it('Should pass if the proper bucket name and key are supplied, simulating an image file that can be retrieved', async () => {
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')});
-          }
-        };
-      });
+     s3_mock.on(GetObjectCommand).resolves({ Body: generateStream('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==') })
       // Act
       const imageHandler = new ImageHandler(s3, rekognition);
       const metadata = await sharp(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')).metadata();
       const result = await imageHandler.getOverlayImage('validBucket', 'validKey', '100', '100', '20', metadata);
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'validBucket', Key: 'validKey'});
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'validBucket', Key: 'validKey'});
       expect(result).toEqual(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAsTAAALEwEAmpwYAAAADUlEQVR4nGP4z8CQCgAEZgFltQhIfQAAAABJRU5ErkJggg==', 'base64'));
     });
   });
   describe('002/imageDoesNotExist', () => {
     it('Should throw an error if an invalid bucket or key name is provided, simulating a non-existant overlay image', async () => {
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.reject({
-              code: 'InternalServerError',
-              message: 'SimulatedInvalidParameterException'
-            });
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).callsFake(() => Promise.reject({
+        code: 'InternalServerError',
+        message: 'SimulatedInvalidParameterException'
+      }))
       // Act
       const imageHandler = new ImageHandler(s3, rekognition);
       const metadata = await sharp(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')).metadata();
-      try {
-        await imageHandler.getOverlayImage('invalidBucket', 'invalidKey', '100', '100', '20', metadata);
-      } catch (error) {
-        // Assert
-        expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'invalidBucket', Key: 'invalidKey'});
-        expect(error).toEqual({
-          status: 500,
-          code: 'InternalServerError',
-          message: 'SimulatedInvalidParameterException'
-        });
-      }
+      await imageHandler.getOverlayImage('invalidBucket', 'invalidKey', '100', '100', '20', metadata).catch(err => {
+          expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'invalidBucket', Key: 'invalidKey'});
+
+          expect(err).toEqual({status: 500, code: 'InternalServerError', message: 'SimulatedInvalidParameterException'})})
+
     });
   });
 });
@@ -749,22 +679,16 @@ describe('getBoundingBox()', () => {
       const currentImage = Buffer.from('TestImageData');
       const faceIndex = 0;
       // Mock
-      mockAws.detectFaces.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({
-              FaceDetails: [{
-                BoundingBox: {
-                  Height: 0.18,
-                  Left: 0.55,
-                  Top: 0.33,
-                  Width: 0.23
-                }
-              }]
-            });
+      rekognition_mock.on(DetectFacesCommand).resolves({
+        FaceDetails: [{
+          BoundingBox: {
+            Height: 0.18,
+            Left: 0.55,
+            Top: 0.33,
+            Width: 0.23
           }
-        };
-      });
+        }]
+      })
       // Act
       const imageHandler = new ImageHandler(s3, rekognition);
       const result = await imageHandler.getBoundingBox(currentImage, faceIndex);
@@ -775,7 +699,8 @@ describe('getBoundingBox()', () => {
         Top: 0.33,
         Width: 0.23
       };
-      expect(mockAws.detectFaces).toHaveBeenCalledWith({Image: {Bytes: currentImage}});
+      expect(rekognition_mock).toHaveReceivedCommandWith(DetectFacesCommand, {Image: {Bytes: currentImage}})
+      expect(rekognition_mock).toHaveReceivedCommandWith(DetectFacesCommand, {Image: {Bytes: currentImage}})
       expect(result).toEqual(expectedResult);
     });
   });
@@ -785,23 +710,17 @@ describe('getBoundingBox()', () => {
       const currentImage = Buffer.from('NotTestImageData');
       const faceIndex = 0;
       // Mock
-      mockAws.detectFaces.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.reject({
-              code: 'InternalServerError',
-              message: 'SimulatedError'
-            });
-          }
-        };
-      });
+      rekognition_mock.on(DetectFacesCommand).resolves(Promise.reject({
+        code: 'InternalServerError',
+        message: 'SimulatedError'
+      }))
       // Act
       const imageHandler = new ImageHandler(s3, rekognition);
       try {
         await imageHandler.getBoundingBox(currentImage, faceIndex);
       } catch (error) {
         // Assert
-        expect(mockAws.detectFaces).toHaveBeenCalledWith({Image: {Bytes: currentImage}});
+        expect(rekognition_mock).toHaveReceivedCommandWith(DetectFacesCommand, {Image: {Bytes: currentImage}})
         expect(error).toEqual({
           status: 500,
           code: 'InternalServerError',
@@ -817,15 +736,7 @@ describe('getBoundingBox()', () => {
       const faceIndex = 0;
 
       // Mock
-      mockAws.detectFaces.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({
-              FaceDetails: []
-            });
-          }
-        };
-      });
+      rekognition_mock.on(DetectFacesCommand).resolves({FaceDetails: []})
 
       //Act
       const imageHandler = new ImageHandler(s3, rekognition);
@@ -838,7 +749,7 @@ describe('getBoundingBox()', () => {
         Top: 0,
         Width: 1
       };
-      expect(mockAws.detectFaces).toHaveBeenCalledWith({Image: {Bytes: currentImage}});
+      expect(rekognition_mock).toHaveReceivedCommandWith(DetectFacesCommand, {Image: {Bytes: currentImage}})
       expect(result).toEqual(expectedResult);
     });
   });
@@ -849,22 +760,16 @@ describe('getBoundingBox()', () => {
       const faceIndex = 0;
 
       // Mock
-      mockAws.detectFaces.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({
-              FaceDetails: [{
-                BoundingBox: {
-                  Height: 1,
-                  Left: 0.50,
-                  Top: 0.30,
-                  Width: 0.65
-                }
-              }]
-            });
+      rekognition_mock.on(DetectFacesCommand).resolves({
+        FaceDetails: [{
+          BoundingBox: {
+            Height: 1,
+            Left: 0.50,
+            Top: 0.30,
+            Width: 0.65
           }
-        };
-      });
+        }]
+      })
 
       //Act
       const imageHandler = new ImageHandler(s3, rekognition);
@@ -877,7 +782,7 @@ describe('getBoundingBox()', () => {
         Top: 0.30,
         Width: 0.50
       };
-      expect(mockAws.detectFaces).toHaveBeenCalledWith({Image: {Bytes: currentImage}});
+      expect(rekognition_mock).toHaveReceivedCommandWith(DetectFacesCommand, {Image: {Bytes: currentImage}})
       expect(result).toEqual(expectedResult);
     });
   });

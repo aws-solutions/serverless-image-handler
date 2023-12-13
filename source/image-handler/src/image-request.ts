@@ -1,12 +1,38 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-const logger = require("./logger");
-const ThumborMapping = require("./thumbor-mapping");
 
-class ImageRequest {
-  constructor(s3) {
-    this.s3 = s3;
+import {Logger} from '@aws-lambda-powertools/logger'
+import {LogStashFormatter} from "./lib/logging/LogStashFormatter";
+import {ThumborMapping} from "./thumbor-mapping";
+import {GetObjectCommandOutput, S3} from "@aws-sdk/client-s3";
+
+const logger = new Logger({
+  serviceName: process.env.AWS_LAMBDA_FUNCTION_NAME ?? '',
+  logFormatter: new LogStashFormatter(),
+})
+
+
+export class ImageRequest {
+
+  requestType: any;
+  bucket: any;
+  key: any;
+  edits: any;
+  cropping: any;
+  originalImage: any;
+  headers: any;
+  isAlb: any;
+  ContentType: any;
+  outputFormat: any;
+  Expires: any;
+  LastModified: any;
+  CacheControl: any;
+  ETag: any;
+  private s3: any;
+
+  constructor(s3: S3) {
+    this.s3 = s3
   }
 
   /**
@@ -14,7 +40,8 @@ class ImageRequest {
    * handler to perform image modifications.
    * @param {object} event - Lambda request body.
    */
-  async setup(event) {
+  async setup(event: any): Promise<any> {
+
 
     this.requestType = this.parseRequestType(event);
     this.bucket = this.parseImageBucket(event, this.requestType);
@@ -84,17 +111,18 @@ class ImageRequest {
    * @param {string} key - The key name corresponding to the image.
    * @return {Promise} - The original image or an error.
    */
-  async getOriginalImage(bucket, key) {
+  async getOriginalImage(bucket: string, key: string): Promise<any> {
     const imageLocation = {Bucket: bucket, Key: key};
     try {
-      const originalImage = await this.s3.getObject(imageLocation).promise();
+      const originalImage: GetObjectCommandOutput = await this.s3.getObject(imageLocation);
       const metaData = originalImage['Metadata'];
       const isGone = metaData && metaData['buzz-status-code'] && metaData['buzz-status-code'] === '410'
+
+      const imageBuffer =  Buffer.from(await originalImage.Body?.transformToByteArray()!);
 
       if (originalImage.ContentType) {
         // If using default s3 ContentType infer from hex headers
         if (originalImage.ContentType === 'binary/octet-stream') {
-          const imageBuffer = Buffer.from(originalImage.Body);
           this.ContentType = this.inferImageType(imageBuffer);
         } else {
           this.ContentType = originalImage.ContentType;
@@ -124,11 +152,11 @@ class ImageRequest {
         this.ETag = originalImage.ETag;
       }
 
-      return originalImage.Body;
-    } catch (err) {
+      return imageBuffer;
+    } catch (err: any) {
       throw {
-        status: "NoSuchKey" === err.code ? 404 : 500,
-        code: (err.code).toString(),
+        status: "NoSuchKey" === (err?.code || err?.Code || err).toString() ? 404 : 500,
+        code: (err?.code || err?.Code || err).toString(),
         message: err.message
       };
     }
@@ -140,7 +168,7 @@ class ImageRequest {
    * @param {string} event - Lambda request body.
    * @param {string} requestType - Image handler request type.
    */
-  parseImageBucket(event, requestType) {
+  parseImageBucket(event: any, requestType: string) {
     if (requestType === "Default") {
       // Decode the image request
       const decoded = this.decodeRequest(event);
@@ -184,7 +212,7 @@ class ImageRequest {
    * @param {string} event - Lambda request body.
    * @param {string} requestType - Image handler request type.
    */
-  parseImageEdits(event, requestType) {
+  parseImageEdits(event: any, requestType: string) {
     if (requestType === "Default") {
       const decoded = this.decodeRequest(event);
       return decoded.edits;
@@ -207,7 +235,7 @@ class ImageRequest {
     }
   }
 
-  parseCropping(event, requestType) {
+  parseCropping(event: any, requestType: string) {
     if (requestType === "Default") {
       const decoded = this.decodeRequest(event);
       return decoded.cropping;
@@ -236,7 +264,7 @@ class ImageRequest {
    * @param {String} event - Lambda request body.
    * @param {String} requestType - Type, either "Default", "Thumbor", or "Custom".
    */
-  parseImageKey(event, requestType) {
+  parseImageKey(event: any, requestType: string) {
     if (requestType === "Default") {
       // Decode the image request and return the image key
       const decoded = this.decodeRequest(event);
@@ -253,7 +281,7 @@ class ImageRequest {
         if (typeof matchPattern === "string") {
           const patternStrings = matchPattern.split("/");
           const flags = patternStrings.pop();
-          const parsedPatternString = matchPattern.slice(1, matchPattern.length - 1 - flags.length);
+          const parsedPatternString = matchPattern.slice(1, matchPattern.length - 1 - flags!.length);
           const regExp = new RegExp(parsedPatternString, flags);
           path = path.replace(regExp, substitution);
         } else {
@@ -294,7 +322,7 @@ class ImageRequest {
    * (uses the rewrite function).
    * @param {object} event - Lambda request body.
    */
-  parseRequestType(event) {
+  parseRequestType(event: any) {
     const path = event["path"] || event['rawPath'];
     const matchDefault = new RegExp(/^(\/?)([0-9a-zA-Z+\/]{4})*(([0-9a-zA-Z+\/]{2}==)|([0-9a-zA-Z+\/]{3}=))?$/);
     const matchThumbor = new RegExp(/^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(\.+jpg|\.+png|\.+webp|\.tiff|\.jpeg|\.svg|\.gif|\.avif)$/i);
@@ -338,7 +366,7 @@ class ImageRequest {
    * @param {string} requestType - Image handler request type.
    * @return {object} Custom headers
    */
-  parseImageHeaders(event, requestType) {
+  parseImageHeaders(event: any, requestType: string) {
     if (requestType === "Default") {
       const decoded = this.decodeRequest(event);
       if (decoded.headers) {
@@ -355,7 +383,7 @@ class ImageRequest {
    * image requests. Provides error handling for invalid or undefined path values.
    * @param {object} event - The proxied request object.
    */
-  decodeRequest(event) {
+  decodeRequest(event: any) {
     const path = event["path"];
     if (path !== undefined) {
       const encoded = path.charAt(0) === "/" ? path.slice(1) : path;
@@ -397,16 +425,16 @@ class ImageRequest {
       };
     } else {
       const formatted = sourceBuckets.replace(/\s+/g, "");
-      const buckets = formatted.split(",");
-      return buckets;
+      return formatted.split(",");
     }
   }
 
   /**
    * Return the output format depending on the accepts headers and request type
    * @param {Object} event - The request body.
+   * @param requestType
    */
-  getOutputFormat(event) {
+  getOutputFormat(event: any) {
     const autoWebP = process.env.AUTO_WEBP;
     const autoAvif = process.env.AUTO_AVIF;
     let accept = event.headers ? event.headers.Accept || event.headers.accept : [];
@@ -426,7 +454,7 @@ class ImageRequest {
    * Return the output format depending on first four hex values of an image file.
    * @param {Buffer} imageBuffer - Image buffer.
    */
-  inferImageType(imageBuffer) {
+  inferImageType(imageBuffer: Buffer) {
     switch (imageBuffer.toString("hex").substring(0, 8).toUpperCase()) {
       case "89504E47":
         return "image/png";
@@ -454,6 +482,3 @@ class ImageRequest {
     }
   }
 }
-
-// Exports
-module.exports = ImageRequest;

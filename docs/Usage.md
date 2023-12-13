@@ -1,23 +1,7 @@
-# Stroeer serverless image handler
+# Usage
 
-This is a customized variant of the [AWS Serverless Image Handler].
-Its **code** is open source and can be found by following the _forked from_ 
-link above or otherwise [on GitHub][AWS Serverless Image Handler Repository].
-
-Under the hood it uses the [sharp image processing library][sharp].
-
-It is recommended to have a look at the [output options][output options], 
-[resize operations][resize operations] and [image operations][image operations].
-
-## Architecture
-
-![architecture](arch.png)
-
-* `pub` and `sub` lambda are described [here][peruggia]. Their task is to publish
-  the master images into the S3 bucket
-* As for the image delivery, we're using CloudFront CDN as an entrypoint
-* Its origin is an API Gateway
-* Which then calls an AWS Lambda who is doing the actual work (image serving and manipulation).
+It is recommended to have a look at the [output options](https://sharp.pixelplumbing.com/api-output), 
+[resize operations](https://sharp.pixelplumbing.com/api-resize) and [image operations](https://sharp.pixelplumbing.com/api-operation).
 
 ### Feature: AUTO WEBP
 
@@ -97,9 +81,9 @@ $ curl -v 'https://images.t-online.de/4k_hdr.jpg' \
 
 ## Filters
 
-Most of the filter are documented on the [AWS Solution page][Serverless Image Handler Filters].
+Most of the filter are documented on the [AWS Solution page](https://docs.aws.amazon.com/solutions/latest/serverless-image-handler/appendix-d.html).
 
-Here is a tl;dr for the most important ones, demonstrated on an image from [the internet][img source]:
+Here is a tl;dr for the most important ones, demonstrated on an image from [the internet](https://wallpapersafari.com/w/pEwDaY):
 ### #nofilter
 
 will simply output the original image as is 
@@ -187,20 +171,9 @@ black frame.
 
 ## Try it out
 
-Visit the [Demo UI], enter the following
+Visit the [Demo UI](https://master-images-053041861227-eu-west-1.s3-eu-west-1.amazonaws.com/index.html), enter the following
 
 * `bucket name = master-images-053041861227-eu-west-1`
 * `image key = oat.jpg`
 
 There are many other images already automatically imported into the image bucket, just check the API for more `keys`.
-
-[AWS Serverless Image Handler]: https://docs.aws.amazon.com/solutions/latest/serverless-image-handler/welcome.html
-[AWS Serverless Image Handler Repository]: https://github.com/awslabs/serverless-image-handler
-[sharp]: https://sharp.pixelplumbing.com/
-[output options]: https://sharp.pixelplumbing.com/api-output
-[resize operations]: https://sharp.pixelplumbing.com/api-resize
-[image operations]: https://sharp.pixelplumbing.com/api-operation
-[Serverless Image Handler Filters]: https://docs.aws.amazon.com/solutions/latest/serverless-image-handler/appendix-d.html
-[Demo UI]: https://master-images-053041861227-eu-west-1.s3-eu-west-1.amazonaws.com/index.html
-[img source]: https://wallpapersafari.com/w/pEwDaY
-[peruggia]: github.com/stroeer/peruggia

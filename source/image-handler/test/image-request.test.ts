@@ -1,32 +1,32 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-const mockAws = {
-  getObject: jest.fn(),
-  getSecretValue: jest.fn()
-};
-jest.mock('aws-sdk', () => {
-  return {
-    S3: jest.fn(() => ({
-      getObject: mockAws.getObject
-    })),
-    SecretsManager: jest.fn(() => ({
-      getSecretValue: mockAws.getSecretValue
-    }))
-  };
-});
+import { ImageRequest } from "../src/image-request";
+import {sdkStreamMixin} from "@aws-sdk/util-stream-node";
 
-const AWS = require('aws-sdk');
-const s3 = new AWS.S3();
-const secretsManager = new AWS.SecretsManager();
-const ImageRequest = require('../image-request');
+import { beforeEach, describe, it } from 'vitest'
+import { mockClient } from 'aws-sdk-client-mock'
+import {GetObjectCommand, S3} from "@aws-sdk/client-s3";
+import {Readable} from "stream";
+
+const {expect} = require("expect");
+(globalThis as any).expect = expect;
+require("aws-sdk-client-mock-jest");
+
+const s3 = new S3();
+const s3_mock = mockClient(S3);
+
+function generateStream(data: string) {
+  const stream = Readable.from(Buffer.from(data))
+  return sdkStreamMixin(stream)
+}
 
 // ----------------------------------------------------------------------------
 // [async] setup()
 // ----------------------------------------------------------------------------
 describe('setup()', function () {
   beforeEach(() => {
-    mockAws.getObject.mockReset();
+    s3_mock.reset();
   });
 
   describe('001/defaultImageRequest', function () {
@@ -39,16 +39,10 @@ describe('setup()', function () {
         SOURCE_BUCKETS: "validBucket, validBucket2"
       }
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('SampleImageContent\n')});
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({Body: generateStream('SampleImageContent\n')});
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result = await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Default',
         bucket: 'validBucket',
@@ -60,8 +54,8 @@ describe('setup()', function () {
         ContentType: 'image/jpeg'
       };
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'validBucket', Key: 'validKey'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'validBucket', Key: 'validKey'});
+      expect(result).toEqual(expectedResult);
     });
   });
   describe('002/defaultImageRequest/toFormat', function () {
@@ -74,16 +68,10 @@ describe('setup()', function () {
         SOURCE_BUCKETS: "validBucket, validBucket2"
       }
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('SampleImageContent\n')});
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({Body: generateStream('SampleImageContent\n')});
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result = await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Default',
         bucket: 'validBucket',
@@ -95,8 +83,8 @@ describe('setup()', function () {
         ContentType: 'image/png'
       }
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'validBucket', Key: 'validKey'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'validBucket', Key: 'validKey'});
+      expect(result).toEqual(expectedResult);
     });
   });
   describe('003/thumborImageRequest', function () {
@@ -109,16 +97,10 @@ describe('setup()', function () {
         SOURCE_BUCKETS: "allowedBucket001, allowedBucket002"
       }
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('SampleImageContent\n')});
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({Body: generateStream('SampleImageContent\n')});
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result =  await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Thumbor',
         bucket: 'allowedBucket001',
@@ -126,11 +108,13 @@ describe('setup()', function () {
         edits: {grayscale: true},
         originalImage: Buffer.from('SampleImageContent\n'),
         CacheControl: 'public, max-age=31536000, immutable',
-        ContentType: 'image'
+        ContentType: 'image',
+        cropping: {},
+        isAlb: undefined
       }
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'allowedBucket001', Key: 'test-image-001.jpg'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'allowedBucket001', Key: 'test-image-001.jpg'});
+      expect(result).toEqual(expectedResult);
     });
   });
   describe('004/thumborImageRequest/quality', function () {
@@ -143,16 +127,10 @@ describe('setup()', function () {
         SOURCE_BUCKETS: "allowedBucket001, allowedBucket002"
       }
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('SampleImageContent\n')});
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({Body: generateStream('SampleImageContent\n')});
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result = await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Thumbor',
         bucket: 'allowedBucket001',
@@ -164,11 +142,13 @@ describe('setup()', function () {
         originalImage: Buffer.from('SampleImageContent\n'),
         CacheControl: 'public, max-age=31536000, immutable',
         outputFormat: 'png',
-        ContentType: 'image/png'
+        ContentType: 'image/png',
+        cropping: {},
+        isAlb: undefined
       }
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'allowedBucket001', Key: 'test-image-001.jpg'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'allowedBucket001', Key: 'test-image-001.jpg'});
+      expect(result).toEqual(expectedResult);
     });
   });
 describe('004.1/path_with_coordinates', function () {
@@ -181,16 +161,10 @@ describe('004.1/path_with_coordinates', function () {
         SOURCE_BUCKETS: "allowedBucket001"
       }
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('SampleImageContent\n')});
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({Body: generateStream('SampleImageContent\n')});
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result = await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Thumbor',
         bucket: 'allowedBucket001',
@@ -198,11 +172,13 @@ describe('004.1/path_with_coordinates', function () {
         edits: {},
         originalImage: Buffer.from('SampleImageContent\n'),
         CacheControl: 'public, max-age=31536000, immutable',
-        ContentType: 'image'
+        ContentType: 'image',
+        cropping: {},
+        isAlb: undefined
       }
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'allowedBucket001', Key: '2021/07/Jj0nKOg0x7Cw/image.jpg'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'allowedBucket001', Key: '2021/07/Jj0nKOg0x7Cw/image.jpg'});
+      expect(result).toEqual(expectedResult);
     });
   });
 
@@ -214,26 +190,19 @@ describe('004.1/path_with_coordinates', function () {
       }
       process.env = {
         SOURCE_BUCKETS: "allowedBucket001, allowedBucket002",
-        REWRITE_MATCH_PATTERN: /(filters-)/gm,
+        REWRITE_MATCH_PATTERN: '/(filters-)/gm',
         REWRITE_SUBSTITUTION: 'filters:'
       }
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({
-              CacheControl: 'max-age=300,public',
-              ContentType: 'custom-type',
-              Expires: 'Tue, 24 Dec 2019 13:46:28 GMT',
-              LastModified: 'Sat, 19 Dec 2009 16:30:47 GMT',
-              Body: Buffer.from('SampleImageContent\n')
-            });
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({
+        CacheControl: 'max-age=300,public',
+        ContentType: 'custom-type',
+        Expires: new Date('Tue, 24 Dec 2019 13:46:28 GMT'),
+        LastModified: new Date('Sat, 19 Dec 2009 16:30:47 GMT'),
+        Body: generateStream('SampleImageContent\n')});
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result = await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Custom',
         bucket: 'allowedBucket001',
@@ -247,10 +216,12 @@ describe('004.1/path_with_coordinates', function () {
         ContentType: 'custom-type',
         Expires: new Date(Date.parse('Tue, 24 Dec 2019 13:46:28 GMT')),
         LastModified: new Date(Date.parse('Sat, 19 Dec 2009 16:30:47 GMT')),
+        cropping: {},
+        isAlb: undefined
       }
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'allowedBucket001', Key: 'custom-image.jpg'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'allowedBucket001', Key: 'custom-image.jpg'});
+      expect(result).toEqual(expectedResult);
     });
   });
   describe('006/errorCase', function () {
@@ -263,17 +234,17 @@ describe('004.1/path_with_coordinates', function () {
         SOURCE_BUCKETS: "allowedBucket001, allowedBucket002"
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       // Assert
       try {
-        await imageRequest.setup(event);
-      } catch (error) {
+      await imageRequest.setup(event);
+      } catch (error: any) {
         expect(error.code).toEqual('ImageBucket::CannotAccessBucket');
       }
     });
   });
   describe('008/SVGSupport', function () {
-    beforeAll(() => {
+    beforeEach(() => {
       process.env.ENABLE_SIGNATURE = 'No';
       process.env.SOURCE_BUCKETS = 'validBucket';
     });
@@ -283,19 +254,10 @@ describe('004.1/path_with_coordinates', function () {
         path: '/image.svg'
       };
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({
-              ContentType: 'image/svg+xml',
-              Body: Buffer.from('SampleImageContent\n')
-            });
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({ContentType: 'image/svg+xml', Body: generateStream('SampleImageContent\n')});
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result =  await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Thumbor',
         bucket: 'validBucket',
@@ -303,11 +265,13 @@ describe('004.1/path_with_coordinates', function () {
         edits: {},
         originalImage: Buffer.from('SampleImageContent\n'),
         CacheControl: 'public, max-age=31536000, immutable',
-        ContentType: 'image/svg+xml'
+        ContentType: 'image/svg+xml',
+        cropping: {},
+        isAlb: undefined
       };
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'validBucket', Key: 'image.svg'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'validBucket', Key: 'image.svg'});
+      expect(result).toEqual(expectedResult);
     });
     it('Should return WebP image when there are any edits and no output is specified for the SVG image', async function () {
       // Arrange
@@ -315,19 +279,12 @@ describe('004.1/path_with_coordinates', function () {
         path: '/100x100/image.svg',
       };
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({
-              ContentType: 'image/svg+xml',
-              Body: Buffer.from('SampleImageContent\n')
-            });
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({
+        ContentType: 'image/svg+xml',
+        Body: generateStream('SampleImageContent\n')});
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result = await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Thumbor',
         bucket: 'validBucket',
@@ -336,11 +293,13 @@ describe('004.1/path_with_coordinates', function () {
         outputFormat: 'png',
         originalImage: Buffer.from('SampleImageContent\n'),
         CacheControl: 'public, max-age=31536000, immutable',
-        ContentType: 'image/png'
+        ContentType: 'image/png',
+        cropping: {},
+        isAlb: undefined
       };
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'validBucket', Key: 'image.svg'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'validBucket', Key: 'image.svg'});
+      expect(result).toEqual(expectedResult);
     });
     it('Should return JPG image when output is specified to JPG for the SVG image', async function () {
       // Arrange
@@ -348,19 +307,10 @@ describe('004.1/path_with_coordinates', function () {
         path: '/filters:format(jpg)/image.svg',
       };
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({
-              ContentType: 'image/svg+xml',
-              Body: Buffer.from('SampleImageContent\n')
-            });
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({  ContentType: 'image/svg+xml',Body: generateStream('SampleImageContent\n')});
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result = await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Thumbor',
         bucket: 'validBucket',
@@ -369,11 +319,13 @@ describe('004.1/path_with_coordinates', function () {
         outputFormat: 'jpeg',
         originalImage: Buffer.from('SampleImageContent\n'),
         CacheControl: 'public, max-age=31536000, immutable',
-        ContentType: 'image/jpeg'
+        ContentType: 'image/jpeg',
+        cropping: {},
+        isAlb: undefined
       };
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'validBucket', Key: 'image.svg'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'validBucket', Key: 'image.svg'});
+      expect(result).toEqual(expectedResult);
     });
     it('Should return Avif image when output is specified.', async function () {
       // Arrange
@@ -382,19 +334,11 @@ describe('004.1/path_with_coordinates', function () {
         path: '/filters:format(avif)/image.png',
       };
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({
-              ContentType: 'image/png',
-              Body: Buffer.from('SampleImageContent\n')
-            });
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({  ContentType: 'image/png',Body: generateStream('SampleImageContent\n')});
+
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result = await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Thumbor',
         bucket: 'validBucket',
@@ -403,11 +347,13 @@ describe('004.1/path_with_coordinates', function () {
         outputFormat: 'avif',
         originalImage: Buffer.from('SampleImageContent\n'),
         CacheControl: 'public, max-age=31536000, immutable',
-        ContentType: 'image/avif'
+        ContentType: 'image/avif',
+        cropping: {},
+        isAlb: undefined
       };
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'validBucket', Key: 'image.png'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'validBucket', Key: 'image.png'});
+      expect(result).toEqual(expectedResult);
     });
   });
   describe('009/customHeaders', function () {
@@ -418,16 +364,11 @@ describe('004.1/path_with_coordinates', function () {
       }
       process.env.SOURCE_BUCKETS = 'validBucket, validBucket2';
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('SampleImageContent\n')});
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({Body: generateStream('SampleImageContent\n')});
+
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result = await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Default',
         bucket: 'validBucket',
@@ -439,8 +380,8 @@ describe('004.1/path_with_coordinates', function () {
         ContentType: 'image/jpeg'
       };
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'validBucket', Key: 'validKey'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'validBucket', Key: 'validKey'});
+      expect(result).toEqual(expectedResult);
     });
   });
 });
@@ -449,47 +390,37 @@ describe('004.1/path_with_coordinates', function () {
 // ----------------------------------------------------------------------------
 describe('getOriginalImage()', function () {
   beforeEach(() => {
-    mockAws.getObject.mockReset();
+   s3_mock.reset();
   });
 
   describe('001/imageExists', function () {
     it('Should pass if the proper bucket name and key are supplied, simulating an image file that can be retrieved', async function () {
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('SampleImageContent\n')});
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({Body: generateStream('SampleImageContent\n')});
+
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = await imageRequest.getOriginalImage('validBucket', 'validKey');
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'validBucket', Key: 'validKey'});
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'validBucket', Key: 'validKey'});
       expect(result).toEqual(Buffer.from('SampleImageContent\n'));
     });
   });
   describe('002/imageDoesNotExist', function () {
     it('Should throw an error if an invalid bucket or key name is provided, simulating a non-existant original image', async function () {
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.reject({
-              code: 'NoSuchKey',
-              message: 'SimulatedException'
-            });
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves(Promise.reject({
+        code: 'NoSuchKey',
+        message: 'SimulatedException'
+      }));
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       // Assert
       try {
         await imageRequest.getOriginalImage('invalidBucket', 'invalidKey');
-      } catch (error) {
-        expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'invalidBucket', Key: 'invalidKey'});
+      } catch (error: any) {
+        expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'invalidBucket', Key: 'invalidKey'});
+
         expect(error.status).toEqual(404);
       }
     });
@@ -497,23 +428,17 @@ describe('getOriginalImage()', function () {
   describe('003/unknownError', function () {
     it('Should throw an error if an unkown problem happens when getting an object', async function () {
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.reject({
-              code: 'InternalServerError',
-              message: 'SimulatedException'
-            });
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves(Promise.reject({
+        code: 'InternalServerError',
+        message: 'SimulatedException'
+      }));
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       // Assert
       try {
         await imageRequest.getOriginalImage('invalidBucket', 'invalidKey');
-      } catch (error) {
-        expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'invalidBucket', Key: 'invalidKey'});
+      } catch (error: any) {
+        expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'invalidBucket', Key: 'invalidKey'});
         expect(error.status).toEqual(500);
       }
     });
@@ -534,7 +459,7 @@ describe('parseImageBucket()', function () {
         SOURCE_BUCKETS: "allowedBucket001, allowedBucket002"
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.parseImageBucket(event, 'Default');
       // Assert
       const expectedResult = 'allowedBucket001';
@@ -551,7 +476,7 @@ describe('parseImageBucket()', function () {
         SOURCE_BUCKETS: "allowedBucket003, allowedBucket004"
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       // Assert
       try {
         imageRequest.parseImageBucket(event, 'Default');
@@ -574,7 +499,7 @@ describe('parseImageBucket()', function () {
         SOURCE_BUCKETS: "allowedBucket001, allowedBucket002"
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.parseImageBucket(event, 'Default');
       // Assert
       const expectedResult = 'allowedBucket001';
@@ -591,7 +516,7 @@ describe('parseImageBucket()', function () {
         SOURCE_BUCKETS: "allowedBucket001, allowedBucket002"
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.parseImageBucket(event, 'Thumbor');
       // Assert
       const expectedResult = 'allowedBucket001';
@@ -608,7 +533,7 @@ describe('parseImageBucket()', function () {
         SOURCE_BUCKETS: "allowedBucket001, allowedBucket002"
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.parseImageBucket(event, 'Custom');
       // Assert
       const expectedResult = 'allowedBucket001';
@@ -625,10 +550,10 @@ describe('parseImageBucket()', function () {
         SOURCE_BUCKETS: "allowedBucket001, allowedBucket002"
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       // Assert
       try {
-        imageRequest.parseImageBucket(event, undefined);
+        imageRequest.parseImageBucket(event, "");
       } catch (error) {
         expect(error).toEqual({
           status: 404,
@@ -651,7 +576,7 @@ describe('parseImageEdits()', function () {
         path: '/eyJlZGl0cyI6eyJncmF5c2NhbGUiOiJ0cnVlIiwicm90YXRlIjo5MCwiZmxpcCI6InRydWUifX0='
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.parseImageEdits(event, 'Default');
       // Assert
       const expectedResult = {
@@ -669,7 +594,7 @@ describe('parseImageEdits()', function () {
         path: '/filters:rotate(90)/filters:grayscale()/thumbor-image.jpg'
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.parseImageEdits(event, 'Thumbor');
       // Assert
       const expectedResult = {
@@ -689,16 +614,11 @@ describe('parseImageEdits()', function () {
         SOURCE_BUCKETS: "allowedBucket001, allowedBucket002"
       }
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('SampleImageContent\n')});
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({Body: generateStream('SampleImageContent\n')});
+
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result = await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Thumbor',
         bucket: 'allowedBucket001',
@@ -721,8 +641,9 @@ describe('parseImageEdits()', function () {
         ContentType: 'image'
       }
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'allowedBucket001', Key: 'test-image-001.jpg'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'allowedBucket001', Key: 'test-image-001.jpg'});
+
+      expect(result).toEqual(expectedResult);
     });
   });
   describe('004/thumborRequestRoundCrop', function () {
@@ -735,16 +656,11 @@ describe('parseImageEdits()', function () {
         SOURCE_BUCKETS: "allowedBucket001, allowedBucket002"
       }
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('SampleImageContent\n')});
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({Body: generateStream('SampleImageContent\n')});
+
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result =  await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Thumbor',
         bucket: 'allowedBucket001',
@@ -759,11 +675,14 @@ describe('parseImageEdits()', function () {
         },
         originalImage: Buffer.from('SampleImageContent\n'),
         CacheControl: 'public, max-age=31536000, immutable',
-        ContentType: 'image'
+        ContentType: 'image',
+        cropping: {},
+        isAlb: undefined
       }
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'allowedBucket001', Key: 'test-image-001.jpg'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'allowedBucket001', Key: 'test-image-001.jpg'});
+
+      expect(result).toEqual(expectedResult);
     });
   });
   describe('005/customRequestType', function () {
@@ -772,10 +691,10 @@ describe('parseImageEdits()', function () {
       const event = {
         path: '/filters-rotate(90)/filters-grayscale()/thumbor-image.jpg'
       }
-      process.env.REWRITE_MATCH_PATTERN = /(filters-)/gm;
+      process.env.REWRITE_MATCH_PATTERN = '/(filters-)/gm';
       process.env.REWRITE_SUBSTITUTION = 'filters:';
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.parseImageEdits(event, 'Custom');
       // Assert
       const expectedResult = {
@@ -792,10 +711,10 @@ describe('parseImageEdits()', function () {
         path: '/filters:rotate(90)/filters:grayscale()/other-image.jpg'
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       // Assert
       try {
-        imageRequest.parseImageEdits(event, undefined);
+        imageRequest.parseImageEdits(event, "");
       } catch (error) {
         expect(error).toEqual({
           status: 400,
@@ -815,16 +734,10 @@ describe('parseImageEdits()', function () {
         SOURCE_BUCKETS: "allowedBucket001"
       }
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('SampleImageContent\n')});
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({Body: generateStream('SampleImageContent\n')});
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result =   await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Thumbor',
         bucket: 'allowedBucket001',
@@ -832,11 +745,13 @@ describe('parseImageEdits()', function () {
         edits: {},
         originalImage: Buffer.from('SampleImageContent\n'),
         CacheControl: 'public, max-age=31536000, immutable',
-        ContentType: 'image'
+        ContentType: 'image',
+        cropping: {},
+        isAlb: undefined
       }
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'allowedBucket001', Key: 'test-image-001.jpg'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'allowedBucket001', Key: 'test-image-001.jpg'});
+      expect(result).toEqual(expectedResult);
     });
   });
 });
@@ -852,7 +767,7 @@ describe('parseImageKey()', function () {
         path: '/eyJidWNrZXQiOiJteS1zYW1wbGUtYnVja2V0Iiwia2V5Ijoic2FtcGxlLWltYWdlLTAwMS5qcGcifQ=='
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.parseImageKey(event, 'Default');
       // Assert
       const expectedResult = 'sample-image-001.jpg';
@@ -865,7 +780,7 @@ describe('parseImageKey()', function () {
         path: '/eyJidWNrZXQiOiJlbGFzdGljYmVhbnN0YWxrLXVzLWVhc3QtMi0wNjY3ODQ4ODU1MTgiLCJrZXkiOiJlbnYtcHJvZC9nY2MvbGFuZGluZ3BhZ2UvMV81N19TbGltTl9MaWZ0LUNvcnNldC1Gb3ItTWVuLVNOQVAvYXR0YWNobWVudHMvZmZjMWYxNjAtYmQzOC00MWU4LThiYWQtZTNhMTljYzYxZGQzX1/Ys9mE2YrZhSDZhNmK2YHYqiAoMikuanBnIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo0ODAsImZpdCI6ImNvdmVyIn19fQ=='
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.parseImageKey(event, 'Default');
       // Assert
       const expectedResult = 'env-prod/gcc/landingpage/1_57_SlimN_Lift-Corset-For-Men-SNAP/attachments/ffc1f160-bd38-41e8-8bad-e3a19cc61dd3__سليم ليفت (2).jpg';
@@ -880,7 +795,7 @@ describe('parseImageKey()', function () {
         path: '/filters:rotate(90)/filters:grayscale()/thumbor-image.jpg'
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.parseImageKey(event, 'Thumbor');
       // Assert
       const expectedResult = 'thumbor-image.jpg';
@@ -893,43 +808,27 @@ describe('parseImageKey()', function () {
       const event = {
         path: '/filters-rotate(90)/filters-grayscale()/custom-image.jpg'
       };
-      process.env.REWRITE_MATCH_PATTERN = /(filters-)/gm;
-      process.env.REWRITE_SUBSTITUTION = 'filters:';
-      // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      const result = imageRequest.parseImageKey(event, 'Custom');
-      // Assert
-      const expectedResult = 'custom-image.jpg';
-      expect(result).toEqual(expectedResult);
-    });
-  });
-  describe('005/customRequestStringType', function () {
-    it('Should pass if an image key value is provided in the custom request format', function () {
-      // Arrange
-      const event = {
-        path: '/filters-rotate(90)/filters-grayscale()/custom-image.jpg'
-      };
       process.env.REWRITE_MATCH_PATTERN = '/(filters-)/gm';
       process.env.REWRITE_SUBSTITUTION = 'filters:';
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.parseImageKey(event, 'Custom');
       // Assert
       const expectedResult = 'custom-image.jpg';
       expect(result).toEqual(expectedResult);
     });
   });
-  describe('006/elseCondition', function () {
+  describe('005/elseCondition', function () {
     it('Should throw an error if an unrecognized requestType is passed into the function as a parameter', function () {
       // Arrange
       const event = {
         path: '/filters:rotate(90)/filters:grayscale()/other-image.jpg'
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       // Assert
       try {
-        imageRequest.parseImageKey(event, undefined);
+        imageRequest.parseImageKey(event, "");
       } catch (error) {
         expect(error).toEqual({
           status: 404,
@@ -939,7 +838,7 @@ describe('parseImageKey()', function () {
       }
     });
   });
-  describe('007/alterKeyForMasterImage', function () {
+  describe('006/alterKeyForMasterImage', function () {
     it('Should pass when a when the key was replaced with the default image.ext when using our pattern', async function () {
       // Arrange
       const event = {
@@ -949,16 +848,10 @@ describe('parseImageKey()', function () {
         SOURCE_BUCKETS: "allowedBucket001"
       }
       // Mock
-      mockAws.getObject.mockImplementationOnce(() => {
-        return {
-          promise() {
-            return Promise.resolve({Body: Buffer.from('SampleImageContent\n')});
-          }
-        };
-      });
+      s3_mock.on(GetObjectCommand).resolves({Body: generateStream('SampleImageContent\n')});
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
-      await imageRequest.setup(event);
+      const imageRequest = new ImageRequest(s3);
+      const result =  await imageRequest.setup(event);
       const expectedResult = {
         requestType: 'Thumbor',
         bucket: 'allowedBucket001',
@@ -966,11 +859,14 @@ describe('parseImageKey()', function () {
         edits: {},
         originalImage: Buffer.from('SampleImageContent\n'),
         CacheControl: 'public, max-age=31536000, immutable',
-        ContentType: 'image'
+        ContentType: 'image',
+        cropping: {},
+        isAlb: undefined
       }
       // Assert
-      expect(mockAws.getObject).toHaveBeenCalledWith({Bucket: 'allowedBucket001', Key: '2021/04/media_id/image.jpg'});
-      expect(imageRequest).toEqual(expectedResult);
+      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'allowedBucket001', Key: '2021/04/media_id/image.jpg'});
+
+      expect(result).toEqual(expectedResult);
     });
   });
 });
@@ -987,7 +883,7 @@ describe('parseRequestType()', function () {
       }
       process.env = {};
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.parseRequestType(event);
       // Assert
       const expectedResult = 'Default';
@@ -1002,7 +898,7 @@ describe('parseRequestType()', function () {
       }
       process.env = {};
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.parseRequestType(event);
       // Assert
       const expectedResult = 'Thumbor';
@@ -1020,7 +916,7 @@ describe('parseRequestType()', function () {
         REWRITE_SUBSTITUTION: 'substitutionString'
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.parseRequestType(event);
       // Assert
       const expectedResult = 'Custom';
@@ -1035,7 +931,7 @@ describe('parseRequestType()', function () {
       }
       process.env = {};
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       // Assert
       try {
         imageRequest.parseRequestType(event);
@@ -1060,7 +956,7 @@ describe('parseImageHaders()', function () {
       path: '/eyJidWNrZXQiOiJ2YWxpZEJ1Y2tldCIsImtleSI6InZhbGlkS2V5IiwiaGVhZGVycyI6eyJDYWNoZS1Db250cm9sIjoibWF4LWFnZT0zMTUzNjAwMCxwdWJsaWMifSwib3V0cHV0Rm9ybWF0IjoianBlZyJ9'
     };
     // Act
-    const imageRequest = new ImageRequest(s3, secretsManager);
+    const imageRequest = new ImageRequest(s3);
     const result = imageRequest.parseImageHeaders(event, 'Default');
     // Assert
     const expectedResult = {};
@@ -1072,7 +968,7 @@ describe('parseImageHaders()', function () {
       path: '/eyJidWNrZXQiOiJ2YWxpZEJ1Y2tldCIsImtleSI6InZhbGlkS2V5In0='
     };
     // Act
-    const imageRequest = new ImageRequest(s3, secretsManager);
+    const imageRequest = new ImageRequest(s3);
     const result = imageRequest.parseImageHeaders(event, 'Default');
     // Assert
     expect(result).toEqual(undefined);
@@ -1083,7 +979,7 @@ describe('parseImageHaders()', function () {
       path: '/test.jpg'
     };
     // Act
-    const imageRequest = new ImageRequest(s3, secretsManager);
+    const imageRequest = new ImageRequest(s3);
     const result = imageRequest.parseImageHeaders(event, 'Thumbor');
     // Assert
     expect(result).toEqual(undefined);
@@ -1101,7 +997,7 @@ describe('decodeRequest()', function () {
         path: '/eyJidWNrZXQiOiJidWNrZXQtbmFtZS1oZXJlIiwia2V5Ijoia2V5LW5hbWUtaGVyZSJ9'
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.decodeRequest(event);
       // Assert
       const expectedResult = {
@@ -1118,7 +1014,7 @@ describe('decodeRequest()', function () {
         path: '/someNonBase64EncodedContentHere'
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       // Assert
       try {
         imageRequest.decodeRequest(event);
@@ -1137,7 +1033,7 @@ describe('decodeRequest()', function () {
         // Arrange
         const event = {}
         // Act
-        const imageRequest = new ImageRequest(s3, secretsManager);
+        const imageRequest = new ImageRequest(s3);
         // Assert
         try {
           imageRequest.decodeRequest(event);
@@ -1163,7 +1059,7 @@ describe('getAllowedSourceBuckets()', function () {
         SOURCE_BUCKETS: 'allowedBucket001, allowedBucket002'
       }
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.getAllowedSourceBuckets();
       // Assert
       const expectedResult = ['allowedBucket001', 'allowedBucket002'];
@@ -1175,7 +1071,7 @@ describe('getAllowedSourceBuckets()', function () {
       // Arrange
       process.env = {};
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       // Assert
       try {
         imageRequest.getAllowedSourceBuckets();
@@ -1206,7 +1102,7 @@ describe('getOutputFormat()', function () {
         }
       };
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.getOutputFormat(event);
       // Assert
       expect(result).toEqual('webp');
@@ -1224,7 +1120,7 @@ describe('getOutputFormat()', function () {
         }
       };
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.getOutputFormat(event);
       // Assert
       expect(result).toEqual(null);
@@ -1242,7 +1138,7 @@ describe('getOutputFormat()', function () {
         }
       };
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.getOutputFormat(event);
       // Assert
       expect(result).toEqual(null);
@@ -1257,7 +1153,7 @@ describe('getOutputFormat()', function () {
         }
       };
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.getOutputFormat(event);
       // Assert
       expect(result).toEqual(null);
@@ -1276,7 +1172,7 @@ describe('getOutputFormat()', function () {
         },
       };
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.getOutputFormat(event);
       // Assert
       expect(result).toEqual(null);
@@ -1292,7 +1188,7 @@ describe('getOutputFormat()', function () {
         },
       };
       // Act
-      const imageRequest = new ImageRequest(s3, secretsManager);
+      const imageRequest = new ImageRequest(s3);
       const result = imageRequest.getOutputFormat(event);
       // Assert
       expect(result).toEqual(null);
