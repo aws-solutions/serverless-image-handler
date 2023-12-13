@@ -15,7 +15,7 @@ module "lambda" {
   description                      = "provider of cute kitty pics."
   function_name                    = local.function_name
   ignore_external_function_updates = true
-  memory_size                      = 1024
+  memory_size                      = 1536
   publish                          = true
   runtime                          = "nodejs20.x"
   handler                          = "index.handler"
@@ -68,9 +68,9 @@ resource "aws_s3_object" "this" {
   source = fileexists(local.zip_package) ? local.zip_package : null
   etag   = fileexists(local.zip_package) ? filemd5(local.zip_package) : null
 
-  lifecycle {
-    ignore_changes = [etag, source, version_id, tags_all]
-  }
+#  lifecycle {
+#    ignore_changes = [etag, source, version_id, tags_all]
+#  }
 }
 
 resource "aws_lambda_alias" "this" {

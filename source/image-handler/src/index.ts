@@ -28,7 +28,7 @@ export async function handler(event: any): Promise<any> {
 
   try {
     const request = await imageRequest.setup(event);
-    logger.info("Image manipulation request", {request});
+    logger.info("Image manipulation request", {...request, originalImage: undefined});
 
     let now = Date.now();
     if (request.Expires && request.Expires.getTime() < now) {

@@ -14,7 +14,9 @@ resource "aws_s3_bucket_versioning" "images" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "images" {
-  bucket = aws_s3_bucket.images.bucket
+  count = var.app_suffix == "" ? 1 : 0
+
+  bucket = aws_s3_bucket.images[count.index].bucket
   rule {
     id     = "delete_old_versions"
     status = "Enabled"
@@ -31,13 +33,14 @@ resource "aws_s3_bucket_lifecycle_configuration" "images" {
 resource "aws_kms_key" "images" {
   count                   = var.app_suffix == "" ? 1 : 0
   description             = "This key is used to encrypt bucket objects within the ${aws_s3_bucket.images[count.index].bucket} bucket."
-  deletion_window_in_days = 10
+  deletion_window_in_days = 30
+  enable_key_rotation     = true
 }
 
 resource "aws_kms_alias" "images" {
-  count         = var.app_suffix == "" ? 1 : 0
-  target_key_id = aws_kms_key.images[count.index].key_id
-  name          = "alias/s3_image_bucket"
+  count                   = var.app_suffix == "" ? 1 : 0
+  target_key_id           = aws_kms_key.images[count.index].key_id
+  name                    = "alias/s3_image_bucket"
 }
 
 resource "aws_kms_key_policy" "images" {
@@ -103,7 +106,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "images" {
   count  = var.app_suffix == "" ? 1 : 0
   bucket = aws_s3_bucket.images[count.index].bucket
   rule {
-    bucket_key_enabled = false
+    bucket_key_enabled = true
     apply_server_side_encryption_by_default {
       sse_algorithm     = "aws:kms"
       kms_master_key_id = aws_kms_key.images[count.index].arn
