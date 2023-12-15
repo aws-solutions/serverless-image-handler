@@ -123,7 +123,7 @@ export class CustomResourcesConstruct extends Construct {
 
     this.customResourceLambda = new NodejsFunction(this, "CustomResourceFunction", {
       description: `${props.solutionName} (${props.solutionVersion}): Custom resource`,
-      runtime: Runtime.NODEJS_16_X,
+      runtime: Runtime.NODEJS_20_X,
       timeout: Duration.minutes(1),
       memorySize: 128,
       role: this.customResourceRole,

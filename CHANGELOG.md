@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.2.4] - 2023-12-06
+
+### Changed
+
+- node 20.x Lambda runtimes
+- cdk update to 2.111.0
+- disable gzip compression in cloudfront cache option to improve cache hit ratio [#373](https://github.com/aws-solutions/serverless-image-handler/pull/373)
+- requests for webp images supported for upper/lower case Accept header [#490](https://github.com/aws-solutions/serverless-image-handler/pull/490)
+- changed axios version to 1.6.2 for github dependabot reported vulnerability CVE-2023-45857
+- enabled thumbor filter chaining [#343](https://github.com/aws-solutions/serverless-image-handler/issues/343)
+
 ## [6.2.3] - 2023-10-20
 
 ### Fixed
