@@ -44,7 +44,7 @@ In addition to the AWS Solutions Constructs, the solution uses AWS CDK directly 
 ## Prerequisites for Customization
 
 - [AWS Command Line Interface](https://aws.amazon.com/cli/)
-- Node.js 16.x or later
+- Node.js 20.x or later
 
 ### 1. Clone the repository
 
@@ -102,6 +102,9 @@ This solution collects anonymous operational metrics to help AWS improve the qua
 - [@njtmead](https://github.com/njtmead) for [#276](https://github.com/aws-solutions/serverless-image-handler/pull/276)
 - [@StaymanHou](https://github.com/StaymanHou) for [#320](https://github.com/aws-solutions/serverless-image-handler/pull/320)
 - [@alenpaulvarghese](https://github.com/alenpaulvarghese) for [#392](https://github.com/aws-solutions/serverless-image-handler/pull/392)
+- [@Fjool](https://github.com/Fjool) for [#489](https://github.com/aws-solutions/serverless-image-handler/pull/489)
+- [@fvsnippets](https://github.com/fvsnippets) for [#373](https://github.com/aws-solutions/serverless-image-handler/pull/373), [#380](https://github.com/aws-solutions/serverless-image-handler/pull/380)
+- [@ccchapman](https://github.com/ccchapman) for [#490](https://github.com/aws-solutions/serverless-image-handler/pull/490)
 
 # License
 
