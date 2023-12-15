@@ -1,6 +1,6 @@
 {
   "name": "constructs",
-  "version": "6.2.3",
+  "version": "6.2.4",
   "description": "Serverless Image Handler Constructs",
   "license": "Apache-2.0",
   "author": {
@@ -17,7 +17,7 @@
     "pretest": "npm run clean:install",
     "build": "tsc",
     "watch": "tsc -w",
-    "test": "overrideWarningsEnabled=false jest --coverage -u"
+    "test": "overrideWarningsEnabled=false jest --coverage"
   },
   "devDependencies": {
     "@aws-cdk/aws-servicecatalogappregistry-alpha": "v2.102.0-alpha.0",
@@ -27,8 +27,8 @@
     "@aws-solutions-constructs/core": "2.45.0",
     "@types/jest": "^29.5.6",
     "@types/node": "^20.8.7",
-    "aws-cdk": "^2.102.0",
-    "aws-cdk-lib": "^2.102.0",
+    "aws-cdk": "^2.111.0",
+    "aws-cdk-lib": "^2.111.0",
     "constructs": "^10.3.0",
     "esbuild": "^0.19.5",
     "jest": "^29.7.0",

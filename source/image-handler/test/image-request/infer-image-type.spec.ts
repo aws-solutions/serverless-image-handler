@@ -12,21 +12,16 @@ describe("inferImageType", () => {
   const secretsManager = new SecretsManager();
   const secretProvider = new SecretProvider(secretsManager);
 
-  it('Should pass if it returns "image/jpeg"', () => {
-    // Arrange
-    const imageBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xee, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
-
-    // Act
-    const imageRequest = new ImageRequest(s3Client, secretProvider);
-    const result = imageRequest.inferImageType(imageBuffer);
-
-    // Assert
-    expect(result).toEqual("image/jpeg");
-  });
-
-  it('Should pass if it returns "image/jpeg for a magic number of FFD8FFED"', () => {
-    // Arrange
-    const imageBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xed, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+    test.each([
+      { value: "FFD8FFDB" },
+      { value: "FFD8FFE0" },
+      { value: "FFD8FFED" },
+      { value: "FFD8FFEE" },
+      { value: "FFD8FFE1" },
+      { value: "FFD8FFE2" },
+    ])('Should pass if it returns "image/jpeg" for a magic number of $value', ({ value }) => {
+      const byteValues = value.match(/.{1,2}/g).map((x) => parseInt(x, 16));
+      const imageBuffer = Buffer.from(byteValues.concat(new Array(8).fill(0x00)));
 
     // Act
     const imageRequest = new ImageRequest(s3Client, secretProvider);

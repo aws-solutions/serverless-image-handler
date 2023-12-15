@@ -12,11 +12,26 @@ test("Serverless Image Handler Stack Snapshot", () => {
   const stack = new ServerlessImageHandlerStack(app, "TestStack", {
     solutionId: "S0ABC",
     solutionName: "sih",
-    solutionVersion: "v6.2.2",
+    solutionVersion: "v6.2.4",
   });
 
   const template = Template.fromStack(stack);
 
+  const templateJson = template.toJSON();
+
+  /**
+   * iterate templateJson and for any attribute called S3Key, replace the value for that attribute with "Omitted to remove snapshot dependency on hash",
+   * this is so that the snapshot can be saved and will not change because the hash has been regenerated
+   */
+  Object.keys(templateJson.Resources).forEach((key) => {
+    if (templateJson.Resources[key].Properties?.Code?.S3Key) {
+      templateJson.Resources[key].Properties.Code.S3Key = "Omitted to remove snapshot dependency on hash";
+    }
+    if (templateJson.Resources[key].Properties?.Content?.S3Key) {
+      templateJson.Resources[key].Properties.Content.S3Key = "Omitted to remove snapshot dependency on hash";
+    }
+  });
+
   expect.assertions(1);
-  expect(template.toJSON()).toMatchSnapshot();
+  expect(templateJson).toMatchSnapshot();
 });
