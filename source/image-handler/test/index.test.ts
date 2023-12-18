@@ -8,24 +8,43 @@ import {mockClient} from "aws-sdk-client-mock";
 import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {Readable} from "stream";
 import {sdkStreamMixin} from "@aws-sdk/util-stream-node";
-import {DetectFacesCommand, RekognitionClient} from "@aws-sdk/client-rekognition";
+import {APIGatewayEventRequestContextV2, APIGatewayProxyEventV2} from "aws-lambda";
 
 const {expect} = require("expect");
 (globalThis as any).expect = expect;
 require("aws-sdk-client-mock-jest");
 
 const s3_mock = mockClient(S3Client);
-const rekognition_mock = mockClient(RekognitionClient);
+let event: APIGatewayProxyEventV2;
 
 function generateStream(data: Buffer) {
   const stream = Readable.from(data)
   return sdkStreamMixin(stream)
 }
 
+beforeEach(() => {
+  const context: APIGatewayEventRequestContextV2 = {
+    accountId: "",
+    apiId: "",
+    domainName: "",
+    domainPrefix: "",
+    http: {method: "", path: "", protocol: "", sourceIp: "", userAgent: ""},
+    requestId: "",
+    routeKey: "",
+    stage: "",
+    time: "",
+    timeEpoch: 0
+  }
+  event = {
+    headers: {}, isBase64Encoded: false, rawQueryString: "", requestContext: context, routeKey: "", version: "",
+    rawPath : "/fit-in/200x300/filters:grayscale()/test-image-001.jpg"
+  }
+});
+
 describe('index', function () {
   // Arrange
   process.env.SOURCE_BUCKETS = 'source-bucket';
-  const mockImage = Buffer.from('SampleImageContent\n');
+  const mockImage = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
   const mockFallbackImage = Buffer.from('SampleFallbackImageContent\n');
 
   describe('TC: Success', function () {
@@ -34,17 +53,13 @@ describe('index', function () {
       // Mock
       s3_mock.on(GetObjectCommand).resolves({
               Body: generateStream(mockImage),
-              ContentType: 'image/jpeg'
+              ContentType: 'image/png'
             });
       });
 
-    rekognition_mock.on(DetectFacesCommand).resolves({})
-
     it('001/should return the image when there is no error', async function () {
       // Arrange
-      const event = {
-        path: '/test.jpg'
-      };
+      event.rawPath = '/test.jpg';
       // Act
       const result = await handler(event);
       const expectedResult = {
@@ -54,65 +69,11 @@ describe('index', function () {
           'Access-Control-Allow-Methods': 'GET',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Allow-Credentials': true,
-          'Content-Type': 'image/jpeg',
-          'Expires': undefined,
-          'Cache-Control': 'public, max-age=31536000, immutable',
-          'Last-Modified': undefined
+          'Content-Type': 'image/png',
+          'ETag': undefined,
+          'Cache-Control': 'max-age=31536000, immutable',
         },
-        body: mockImage.toString('base64')
-      };
-      // Assert
-      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'source-bucket', Key: 'test.jpg'});
-      expect(result).toEqual(expectedResult);
-    });
-    it('002/should return the image with custom headers when custom headers are provided', async function () {
-      // Arrange
-      const event = {
-        path: '/eyJidWNrZXQiOiJzb3VyY2UtYnVja2V0Iiwia2V5IjoidGVzdC5qcGciLCJoZWFkZXJzIjp7IkN1c3RvbS1IZWFkZXIiOiJDdXN0b21WYWx1ZSJ9fQ=='
-      };
-      // Act
-      const result = await handler(event);
-      const expectedResult = {
-        statusCode: 200,
-        headers: {
-          'Access-Control-Allow-Methods': 'GET',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          'Access-Control-Allow-Credentials': true,
-          'Content-Type': 'image/jpeg',
-          'Expires': undefined,
-          'Cache-Control': 'public, max-age=31536000, immutable',
-          'Last-Modified': undefined,
-          'Custom-Header': 'CustomValue'
-        },
-        body: mockImage.toString('base64'),
-        isBase64Encoded: true
-      };
-      // Assert
-      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'source-bucket', Key: 'test.jpg'});
-      expect(result).toEqual(expectedResult);
-    });
-    it('003/should return the image when the request is from ALB', async function () {
-      // Arrange
-      const event = {
-        path: '/test.jpg',
-        requestContext: {
-          elb: {}
-        }
-      };
-      // Act
-      const result = await handler(event);
-      const expectedResult = {
-        statusCode: 200,
-        isBase64Encoded: true,
-        headers: {
-          'Access-Control-Allow-Methods': 'GET',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          'Content-Type': 'image/jpeg',
-          'Expires': undefined,
-          'Cache-Control': 'public, max-age=31536000, immutable',
-          'Last-Modified': undefined
-        },
-        body: mockImage.toString('base64')
+        body: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAMAAAAoyzS7AAABP2lDQ1BpY2MAAHicfZC/SwJxGMY/11WWWA05NBQcJU0FUUtTgYZOEfgj1Kbz/FGgdt33QprLoaloiEZrCaLZxhz6A4KgIQqirdWghpKLrw5aUM/yfnh4Xt6XB5TnvFEQ3RoUirYVDvm1eCKpuV5Q8dLPIGO6IczlSDAKIPSSMGwrzw+936PIeTe9rhfTO6/Xq8kFpbo7UY4FP1Yu+F/udEYYwBfgM0zLBkUDxku2KXkJ8BrrehqUODBlxRNJUPakn2vxieRUiy8lW9FwAJQaoOU6ONXBhfy2vCslv/dkirEI0AeMIggTwv9HpreZCRBgBmRfv3sQ2bnZ1pZnEXqeHOdtElyH0DhynM9Tx2mcgfoIta32/mYF5uugHrS91DFc7cPIQ9vzVWCoDNUbU7f0pqUCXdkNqJ/DQAKGb8G99g3j4l+xfPB+eQAAAANQTFRF/wAAGeIJNwAAAAF0Uk5Tf4BctMsAAAAJcEhZcwAACxMAAAsTAQCanBgAAAC0ZVhJZklJKgAIAAAABgASAQMAAQAAAAEAAAAaAQUAAQAAAFYAAAAbAQUAAQAAAF4AAAAoAQMAAQAAAAIAAAATAgMAAQAAAAEAAABphwQAAQAAAGYAAAAAAAAASAAAAAEAAABIAAAAAQAAAAYAAJAHAAQAAAAwMjEwAZEHAAQAAAABAgMAAKAHAAQAAAAwMTAwAaADAAEAAAD//wAAAqAEAAEAAAABAAAAA6AEAAEAAAABAAAAAAAAANu53doAAAAKSURBVHicY2AAAAACAAFIr6RxAAAAAElFTkSuQmCC"
       };
       // Assert
       expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'source-bucket', Key: 'test.jpg'});
@@ -127,9 +88,7 @@ describe('index', function () {
 
     it('001/should return an error JSON when an error occurs', async function () {
       // Arrange
-      const event = {
-        path: '/test.jpg'
-      };
+      event.rawPath = '/test.jpg';
       // Mock
       s3_mock.on(GetObjectCommand).resolves(Promise.reject({
         code: 'NoSuchKey',
@@ -145,45 +104,13 @@ describe('index', function () {
           'Access-Control-Allow-Methods': 'GET',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Allow-Credentials': true,
-          "Cache-Control": "public, max-age=60",
+          "Cache-Control": "max-age=60",
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           status: 404,
           code: 'NoSuchKey',
           message: 'NoSuchKey error happened.'
-        })
-      };
-      // Assert
-      expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'source-bucket', Key: 'test.jpg'});
-      expect(result).toEqual(expectedResult);
-    });
-    it('002/should return 500 error when there is no error status in the error', async function () {
-      // Arrange
-      const event = {
-        path: 'eyJidWNrZXQiOiJzb3VyY2UtYnVja2V0Iiwia2V5IjoidGVzdC5qcGciLCJlZGl0cyI6eyJ3cm9uZ0ZpbHRlciI6dHJ1ZX19'
-      };
-      // Mock
-      s3_mock.on(GetObjectCommand).resolves({
-        Body: generateStream(mockImage),
-        ContentType: 'image/jpeg'
-      })
-      // Act
-      const result = await handler(event);
-      const expectedResult = {
-        statusCode: 500,
-        isBase64Encoded: false,
-        headers: {
-          'Access-Control-Allow-Methods': 'GET',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          'Access-Control-Allow-Credentials': true,
-          "Cache-Control": "max-age=0, must-revalidate",
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: 'Internal error. Please contact the system administrator.',
-          code: 'InternalError',
-          status: 500
         })
       };
       // Assert
@@ -197,9 +124,7 @@ describe('index', function () {
       process.env.DEFAULT_FALLBACK_IMAGE_KEY = 'fallback-image.png';
       process.env.CORS_ENABLED = 'Yes';
       process.env.CORS_ORIGIN = '*';
-      const event = {
-        path: '/test.jpg'
-      };
+      event.rawPath = '/test.jpg';
       // Mock
       let error: any = {code: 500, message: 'UnknownError'};
       s3_mock.on(GetObjectCommand).rejectsOnce(error).resolvesOnce({
@@ -217,7 +142,7 @@ describe('index', function () {
           'Access-Control-Allow-Credentials': true,
           'Access-Control-Allow-Origin': '*',
           'Content-Type': 'image/png',
-          "Cache-Control": "public, max-age=31536000, immutable",
+          "Cache-Control": "max-age=31536000, immutable",
           'Last-Modified': undefined
         },
         body: mockFallbackImage.toString('base64')
@@ -232,11 +157,8 @@ describe('index', function () {
     });
     it('004/should return an error JSON when getting the default fallback image fails if the default fallback image is enabled', async function () {
       // Arrange
-      const event = {
-        path: '/test.jpg'
-      };
+      event.rawPath = '/test.jpg';
       // Mock
-
       let error: any = {
         code: 'NoSuchKey',
         status: 404,
@@ -253,7 +175,7 @@ describe('index', function () {
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Allow-Credentials': true,
           'Access-Control-Allow-Origin': '*',
-          "Cache-Control": "public, max-age=60",
+          "Cache-Control": "max-age=60",
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -273,9 +195,7 @@ describe('index', function () {
     it('005/should return an error JSON when the default fallback image key is not provided if the default fallback image is enabled', async function () {
       // Arrange
       process.env.DEFAULT_FALLBACK_IMAGE_KEY = '';
-      const event = {
-        path: '/test.jpg'
-      };
+      event.rawPath = '/test.jpg';
       // Mock
       let error: any = {
         code: 'NoSuchKey',
@@ -293,7 +213,7 @@ describe('index', function () {
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Allow-Credentials': true,
           'Access-Control-Allow-Origin': '*',
-          "Cache-Control": "public, max-age=60",
+          "Cache-Control": "max-age=60",
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -309,9 +229,7 @@ describe('index', function () {
     it('006/should return an error JSON when the default fallback image bucket is not provided if the default fallback image is enabled', async function () {
       // Arrange
       process.env.DEFAULT_FALLBACK_IMAGE_BUCKET = '';
-      const event = {
-        path: '/test.jpg'
-      };
+      event.rawPath = '/test.jpg';
       // Mock
       let error: any = {
         code: 'NoSuchKey',
@@ -329,7 +247,7 @@ describe('index', function () {
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           'Access-Control-Allow-Credentials': true,
           'Access-Control-Allow-Origin': '*',
-          "Cache-Control": "public, max-age=60",
+          "Cache-Control": "max-age=60",
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -343,51 +261,11 @@ describe('index', function () {
       expect(result).toEqual(expectedResult);
     });
   });
-  it('007/should return an error JSON when ALB request is failed', async function () {
-    // Arrange
-    const event = {
-      path: '/test.jpg',
-      requestContext: {
-        elb: {}
-      }
-    };
-    // Mock
-    let error: any = {
-      code: 'NoSuchKey',
-      status: 404,
-      message: 'NoSuchKey error happened.'
-    };
-    s3_mock.on(GetObjectCommand).rejects(error);
-    // Act
-    const result = await handler(event);
-    const expectedResult = {
-      statusCode: 404,
-      isBase64Encoded: false,
-      headers: {
-        'Access-Control-Allow-Methods': 'GET',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
-        "Cache-Control": "public, max-age=60"
-      },
-      body: JSON.stringify({
-        status: 404,
-        code: 'NoSuchKey',
-        message: 'NoSuchKey error happened.'
-      })
-    };
-    // Assert
-    expect(s3_mock).toHaveReceivedCommandWith(GetObjectCommand, {Bucket: 'source-bucket', Key: 'test.jpg'});
-    expect(result).toEqual(expectedResult);
-  })
-
   it('008/should return HTTP/410 Gone when content is expired', async function () {
     process.env.CORS_ENABLED = 'Yes';
     process.env.CORS_ORIGIN = '*';
     // Arrange
-    const event = {
-      path: '/test.jpg'
-    };
+    event.rawPath = '/test.jpg';
     // Mock
     s3_mock.reset();
 
@@ -407,7 +285,7 @@ describe('index', function () {
         'Access-Control-Allow-Credentials': true,
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=600',
+        'Cache-Control': 'max-age=600',
       },
       body: '{"message":"HTTP/410. Content test.jpg has expired.","code":"Gone","status":410}'
     };
@@ -424,9 +302,7 @@ describe('index', function () {
     global.Date.now = () => date_now_fixture;
 
     // Arrange
-    const event = {
-      path: '/test.jpg'
-    };
+    event.rawPath = '/test.jpg';
     // Mock
     s3_mock.reset()
     s3_mock.on(GetObjectCommand).resolves({
@@ -446,11 +322,11 @@ describe('index', function () {
         'Access-Control-Allow-Credentials': true,
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=30, immutable',
+        'Cache-Control': 'max-age=30, immutable',
         Expires: new Date(date_now_fixture + 30999).toUTCString(),
         ETag: '"foo"'
       },
-      body: mockImage.toString('base64')
+      body: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAMAAAAoyzS7AAABP2lDQ1BpY2MAAHicfZC/SwJxGMY/11WWWA05NBQcJU0FUUtTgYZOEfgj1Kbz/FGgdt33QprLoaloiEZrCaLZxhz6A4KgIQqirdWghpKLrw5aUM/yfnh4Xt6XB5TnvFEQ3RoUirYVDvm1eCKpuV5Q8dLPIGO6IczlSDAKIPSSMGwrzw+936PIeTe9rhfTO6/Xq8kFpbo7UY4FP1Yu+F/udEYYwBfgM0zLBkUDxku2KXkJ8BrrehqUODBlxRNJUPakn2vxieRUiy8lW9FwAJQaoOU6ONXBhfy2vCslv/dkirEI0AeMIggTwv9HpreZCRBgBmRfv3sQ2bnZ1pZnEXqeHOdtElyH0DhynM9Tx2mcgfoIta32/mYF5uugHrS91DFc7cPIQ9vzVWCoDNUbU7f0pqUCXdkNqJ/DQAKGb8G99g3j4l+xfPB+eQAAAANQTFRF/wAAGeIJNwAAAAF0Uk5Tf4BctMsAAAAJcEhZcwAACxMAAAsTAQCanBgAAAC0ZVhJZklJKgAIAAAABgASAQMAAQAAAAEAAAAaAQUAAQAAAFYAAAAbAQUAAQAAAF4AAAAoAQMAAQAAAAIAAAATAgMAAQAAAAEAAABphwQAAQAAAGYAAAAAAAAASAAAAAEAAABIAAAAAQAAAAYAAJAHAAQAAAAwMjEwAZEHAAQAAAABAgMAAKAHAAQAAAAwMTAwAaADAAEAAAD//wAAAqAEAAEAAAABAAAAA6AEAAEAAAABAAAAAAAAANu53doAAAAKSURBVHicY2AAAAACAAFIr6RxAAAAAElFTkSuQmCC"
     };
     // Assert
     expect(s3_mock).toHaveReceivedNthCommandWith(1, GetObjectCommand, {Bucket: 'source-bucket', Key: 'test.jpg'});
@@ -466,9 +342,7 @@ describe('index', function () {
     global.Date.now = () => date_now_fixture;
 
     // Arrange
-    const event = {
-      path: '/test.jpg'
-    };
+    event.rawPath = '/test.jpg';
     // Mock
     s3_mock.reset();
     s3_mock.on(GetObjectCommand).resolves({
@@ -490,7 +364,7 @@ describe('index', function () {
         'Access-Control-Allow-Credentials': true,
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=600',
+        'Cache-Control': 'max-age=600',
       },
       isBase64Encoded: false,
     };

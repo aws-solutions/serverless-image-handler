@@ -15,7 +15,7 @@ resource "aws_iam_policy" "lambda" {
   policy      = data.aws_iam_policy_document.lambda.json
 }
 
-resource "aws_iam_role_policy_attachment" "rekognition" {
+resource "aws_iam_role_policy_attachment" "lambda" {
   role       = module.lambda.role_name
   policy_arn = aws_iam_policy.lambda.arn
 }

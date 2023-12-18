@@ -10,9 +10,10 @@ export class ThumborMapping {
   private path: any;
   cropping: any;
   edits: any;
+
   constructor() {
     this.edits = {};
-    this.cropping= {}
+    this.cropping = {}
   }
 
   /**
@@ -92,36 +93,6 @@ export class ThumborMapping {
     return this;
   }
 
-  /**
-   * Enables users to migrate their current image request model to the SIH solution,
-   * without changing their legacy application code to accommodate new image requests.
-   * @param {string} path - The URL path extracted from the web request.
-   * @return {object} - The parsed path using the match pattern and the substitution.
-   */
-  parseCustomPath(path: string): { path: string } {
-    // Setup from the environment variables
-    const matchPattern = process.env.REWRITE_MATCH_PATTERN;
-    const substitution = process.env.REWRITE_SUBSTITUTION;
-
-    // Perform the substitution and return
-    if (path !== undefined && matchPattern !== undefined && substitution !== undefined) {
-      let parsedPath = '';
-
-      if (typeof (matchPattern) === 'string') {
-        const patternStrings = matchPattern.split('/');
-        const flags: any = patternStrings.pop();
-        const parsedPatternString = matchPattern.slice(1, matchPattern.length - 1 - flags.length);
-        const regExp = new RegExp(parsedPatternString, flags);
-        parsedPath = path.replace(regExp, substitution);
-      } else {
-        parsedPath = path.replace(matchPattern, substitution);
-      }
-
-      return {path: parsedPath};
-    } else {
-      throw new Error('ThumborMapping::ParseCustomPath::ParsingError');
-    }
-  }
 
   /**
    * Scanner function for matching supported Thumbor filters and converting their
@@ -269,22 +240,22 @@ export class ThumborMapping {
         this.edits.overlayWith.options['top'] = yPos;
       }
     } else if (editKey === 'roundCrop') {
-        // Rounded crops, with optional coordinates
-        const roundedImages = value.match(/(\d+)x(\d+)(:(\d+)x(\d+))?/);
-        if (roundedImages) {
-            const left = Number(roundedImages[1])
-            const top = Number(roundedImages[2])
-            const r_x = Number(roundedImages[4])
-            const r_y = Number(roundedImages[5])
+      // Rounded crops, with optional coordinates
+      const roundedImages = value.match(/(\d+)x(\d+)(:(\d+)x(\d+))?/);
+      if (roundedImages) {
+        const left = Number(roundedImages[1])
+        const top = Number(roundedImages[2])
+        const r_x = Number(roundedImages[4])
+        const r_y = Number(roundedImages[5])
 
-            this.edits.roundCrop = {};
-            if (!isNaN(left)) this.edits.roundCrop.left = left;
-            if (!isNaN(top)) this.edits.roundCrop.top = top;
-            if (!isNaN(r_x)) this.edits.roundCrop.rx = r_x;
-            if (!isNaN(r_y)) this.edits.roundCrop.ry = r_y;
-        } else if (value === 'true' || value === '') {
-          this.edits.roundCrop = {};
-        }
+        this.edits.roundCrop = {};
+        if (!isNaN(left)) this.edits.roundCrop.left = left;
+        if (!isNaN(top)) this.edits.roundCrop.top = top;
+        if (!isNaN(r_x)) this.edits.roundCrop.rx = r_x;
+        if (!isNaN(r_y)) this.edits.roundCrop.ry = r_y;
+      } else if (value === 'true' || value === '') {
+        this.edits.roundCrop = {};
+      }
     } else {
       return undefined;
     }

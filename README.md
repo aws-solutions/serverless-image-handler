@@ -36,15 +36,15 @@ It aws originally forked from [aws-solutions/serverless-image-handler repository
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/en/) v18.x or later
+- [Node.js](https://nodejs.org/en/) v20.x or later
 - [Terraform](https://www.terraform.io/downloads.html)
-- Make
-- AWS credentials with sufficient permissions
+- Make / npm
+- AWS credentials with sufficient permissions to read images from S3
 
 ### Usage
 
 To scale images dynamically on the fly, you can make HTTP requests to the AWS CloudFront distribution URL. 
-The images are fetched from AWS S3, processed using Node.js 18 and Sharp, and then served through CloudFront.
+The images are fetched from AWS S3, processed using Node.js 20 and Sharp / libvips, and then served through CloudFront.
 
 Example URL:
 
@@ -61,7 +61,6 @@ The following environment variables are used by the image-handler:
 | `AUTO_WEBP`               | Flag if the AUTO WEBP feature should be enabled |
 | `CORS_ENABLED`            | Flag if CORS should be enabled                  |
 | `CORS_ORIGIN`             | CORS origin.                                    |
-| `LOG_EXT_OPEN_SEARCH_URL` | URL of OpenSearch                               |
 | `SOURCE_BUCKETS`          | S3 Bucket with source images                    |
 
 ### Building

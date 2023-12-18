@@ -3,22 +3,23 @@
 
 import {Logger} from "@aws-lambda-powertools/logger";
 import {S3} from "@aws-sdk/client-s3";
-import { Rekognition} from "@aws-sdk/client-rekognition";
 import sharp from 'sharp';
 
 import {LogStashFormatter} from "./lib/logging/LogStashFormatter";
+import {ImageRequest} from "./image-request";
 
 const logger = new Logger({
-  serviceName: process.env.AWS_LAMBDA_FUNCTION_NAME ?? '',
+  serviceName: process.env.AWS_LAMBDA_FUNCTION_NAME ?? 'image-handler',
   logFormatter: new LogStashFormatter(),
 })
 
+const ApiGWResponseSizeLimit = 6 * 1024 * 1024;
+
 export class ImageHandler {
   private s3: any;
-  private rekognition: Rekognition;
-  constructor(s3: S3, rekognition: Rekognition) {
+
+  constructor(s3: S3) {
     this.s3 = s3;
-    this.rekognition = rekognition;
   }
 
   /**
@@ -26,7 +27,7 @@ export class ImageHandler {
    * @param request An image request.
    * @returns Processed and modified image encoded as base64 string.
    */
-  async process(request: any) {
+  async process(request: ImageRequest) {
     let returnImage;
     const originalImage = request.originalImage;
     const edits = request.edits;
@@ -34,12 +35,12 @@ export class ImageHandler {
 
     const hasEdits = edits !== undefined && Object.keys(edits).length > 0;
     const hasCropping = cropping !== undefined && Object.keys(cropping).length > 0;
+    let image: sharp.Sharp;
     if (hasEdits || hasCropping) {
-      let image;
       const keys = Object.keys(edits);
 
       if (keys.includes("rotate") && edits.rotate === null) {
-        image = sharp(originalImage, {failOnError: false});
+        image = sharp(originalImage, {failOnError: false}).withMetadata();
       } else {
         const metadata = await sharp(originalImage, {
           failOnError: false
@@ -77,42 +78,37 @@ export class ImageHandler {
       if (hasEdits) {
         image = await this.applyEdits(image, edits);
       }
-
-      if ('image/webp' === request['ContentType'] && request.outputFormat === "webp") {
-        image.webp({effort: 6, alphaQuality: 75});
-      } else if ("image/png" === request['ContentType']) {
-        image.png({quality: 80, effort: 9, compressionLevel: 9});
-      } else if ("image/jpeg" === request['ContentType']) {
-        image.jpeg({mozjpeg: true});
-      } else if (request.outputFormat !== undefined) {
-        image.toFormat(request.outputFormat);
-      }
-      try {
-        const bufferImage = await image.toBuffer();
-        returnImage = bufferImage.toString("base64");
-      } catch (e) {
-        throw {
-          status: 400,
-          code: 'Cropping failed',
-          message: `Cropping failed with "${e}"`
-        }
-      }
-
     } else {
-      returnImage = originalImage.toString("base64");
+      image = sharp(originalImage, {failOnError: false}).withMetadata();
+    }
+
+    if ('image/webp' === request.ContentType && request.outputFormat === "webp") {
+      image.webp({effort: 6, alphaQuality: 75});
+    } else if ("image/png" === request.ContentType) {
+      image.png({quality: 100, effort: 7, compressionLevel: 6});
+    } else if ("image/jpeg" === request.ContentType) {
+      image.jpeg({mozjpeg: true});
+    } else if (request.outputFormat !== undefined) {
+      image.toFormat(request.outputFormat);
+    }
+
+    try {
+      const bufferImage = await image.toBuffer();
+      returnImage = bufferImage.toString("base64");
+    } catch (e) {
+      throw {
+        status: 400,
+        code: 'Cropping failed',
+        message: `Cropping failed with "${e}"`
+      }
     }
 
     // If the converted image is larger than Lambda's payload hard limit, throw an error.
-    let lambdaPayloadLimit = 6 * 1024 * 1024;
-    if (request.isAlb) {
-      // lambda attached to ALB have a one MB hard limit
-      lambdaPayloadLimit = 1024 * 1024;
-    }
-    if (returnImage.length > lambdaPayloadLimit) {
+    if (returnImage.length > ApiGWResponseSizeLimit) {
       throw {
         status: 413,
         code: "TooLargeImageException",
-        message: `The converted image is too large to return. Actual = ${returnImage.length} - max ${lambdaPayloadLimit}`
+        message: `The converted image is too large to return. Actual = ${returnImage.length} - max ${ApiGWResponseSizeLimit}`
       };
     }
 
@@ -125,7 +121,7 @@ export class ImageHandler {
    * @param {Sharp} image - The original sharp image.
    * @param {object} edits - The edits to be made to the original image.
    */
-  async applyEdits(image: any, edits: any) {
+  async applyEdits(image: sharp.Sharp, edits: any) {
     if (edits.resize === undefined) {
       edits.resize = {};
       edits.resize.fit = "inside";
@@ -142,8 +138,8 @@ export class ImageHandler {
         if (edits.resize) {
           let imageBuffer = await image.toBuffer();
           imageMetadata = await sharp(imageBuffer)
-              .resize(edits.resize)
-              .metadata();
+            .resize(edits.resize)
+            .metadata();
         }
 
         const {bucket, key, wRatio, hRatio, alpha} = value;
@@ -155,7 +151,7 @@ export class ImageHandler {
           alpha,
           imageMetadata
         );
-        const overlayMetadata: any = await sharp(overlay).metadata();
+        const overlayMetadata = await sharp(overlay).metadata();
 
         let {options} = value;
         if (options) {
@@ -197,20 +193,6 @@ export class ImageHandler {
 
         const params = [{...options, input: overlay}];
         image.composite(params);
-      } else if (editKey === "smartCrop") {
-        const options = value;
-        const imageBuffer = await image.toBuffer({resolveWithObject: true});
-        const boundingBox = await this.getBoundingBox(imageBuffer.data, options.faceIndex);
-        const cropArea = this.getCropArea(boundingBox, options, imageBuffer.info);
-        try {
-          image.extract(cropArea);
-        } catch (err) {
-          throw {
-            status: 400,
-            code: "SmartCrop::PaddingOutOfBounds",
-            message: "The padding value you provided exceeds the boundaries of the original image. Please try choosing a smaller value or applying padding via Sharp for greater specificity."
-          };
-        }
       } else if (editKey === 'roundCrop') {
         const options = value;
         const imageBuffer = await image.toBuffer({resolveWithObject: true});
@@ -250,22 +232,22 @@ export class ImageHandler {
    * @param {number} alpha - The transparency alpha to the overlay.
    * @param {object} sourceImageMetadata - The metadata of the source image.
    */
-  async getOverlayImage(bucket: any, key: any, wRatio: any, hRatio: any, alpha: any, sourceImageMetadata: sharp.Metadata) : Promise<Buffer> {
+  async getOverlayImage(bucket: any, key: any, wRatio: any, hRatio: any, alpha: any, sourceImageMetadata: sharp.Metadata): Promise<Buffer> {
     const params = {Bucket: bucket, Key: key};
     try {
       const {width, height}: sharp.Metadata = sourceImageMetadata;
       const overlayImage = await this.s3.getObject(params);
-      let resize : Record<any, any> = {
+      let resize: Record<any, any> = {
         fit: 'inside'
       };
 
       // Set width and height of the watermark image based on the ratio
       const zeroToHundred = /^(100|[1-9]?[0-9])$/;
       if (zeroToHundred.test(wRatio)) {
-        resize['width'] =  Math.floor(width! * wRatio / 100);
+        resize['width'] = Math.floor(width! * wRatio / 100);
       }
       if (zeroToHundred.test(hRatio)) {
-        resize['height'] = Math.floor(height! *  hRatio / 100);
+        resize['height'] = Math.floor(height! * hRatio / 100);
       }
 
       // If alpha is not within 0-100, the default alpha is 0 (fully opaque).
@@ -277,96 +259,23 @@ export class ImageHandler {
 
       let input = Buffer.from(await overlayImage.Body?.transformToByteArray()!);
       return await sharp(input)
-          .resize(resize)
-          .composite([{
-            input: Buffer.from([255, 255, 255, 255 * (1 - alpha / 100)]),
-            raw: {
-              width: 1,
-              height: 1,
-              channels: 4
-            },
-            tile: true,
-            blend: 'dest-in'
-          }]).toBuffer();
+        .resize(resize)
+        .composite([{
+          input: Buffer.from([255, 255, 255, 255 * (1 - alpha / 100)]),
+          raw: {
+            width: 1,
+            height: 1,
+            channels: 4
+          },
+          tile: true,
+          blend: 'dest-in'
+        }]).toBuffer();
     } catch (err: any) {
       throw {
         status: err.statusCode ? err.statusCode : 500,
         code: (err.code).toString(),
         message: err.message
       };
-    }
-  }
-
-  /**
-   * Calculates the crop area for a smart-cropped image based on the bounding
-   * box data returned by Amazon Rekognition, as well as padding options and
-   * the image metadata.
-   * @param {Object} boundingBox - The bounding box of the detected face.
-   * @param {Object} options - Set of options for smart cropping.
-   * @param {Object} metadata - Sharp image metadata.
-   */
-  getCropArea(boundingBox: any, options: any, metadata: any) {
-    const padding = (options.padding !== undefined) ? parseFloat(options.padding) : 0;
-    // Calculate the smart crop area
-    // Return the crop area
-    return {
-      left: Math.floor((boundingBox.Left * metadata.width) - padding),
-      top: Math.floor((boundingBox.Top * metadata.height) - padding),
-      width: Math.floor((boundingBox.Width * metadata.width) + (padding * 2)),
-      height: Math.floor((boundingBox.Height * metadata.height) + (padding * 2))
-    };
-  }
-
-  /**
-   * Gets the bounding box of the specified face index within an image, if specified.
-   * @param {Sharp} imageBuffer - The original image.
-   * @param {Integer} faceIndex - The zero-based face index value, moving from 0 and up as
-   * confidence decreases for detected faces within the image.
-   */
-  async getBoundingBox(imageBuffer: Buffer, faceIndex: number) {
-    const params = {Image: {Bytes: imageBuffer}};
-    const faceIdx = (faceIndex !== undefined) ? faceIndex : 0;
-    try {
-      const response: any = await this.rekognition.detectFaces(params);
-      if (response.FaceDetails.length <= 0) {
-        return {Height: 1, Left: 0, Top: 0, Width: 1};
-      }
-      let boundingBox: any = {};
-
-      if (!response.FaceDetails || response.FaceDetails.length < faceIdx)
-        throw new Error("Cannot read property 'BoundingBox' of undefined");
-
-      //handle bounds > 1 and < 0
-      for (let bound in response.FaceDetails[faceIdx].BoundingBox) {
-        if (response.FaceDetails[faceIdx].BoundingBox[bound] < 0) boundingBox[bound] = 0;
-        else if (response.FaceDetails[faceIdx].BoundingBox[bound] > 1) boundingBox[bound] = 1;
-        else boundingBox[bound] = response.FaceDetails[faceIdx].BoundingBox[bound];
-      }
-
-      //handle bounds greater than the size of the image
-      if (boundingBox.Left + boundingBox.Width > 1) {
-        boundingBox.Width = 1 - boundingBox.Left;
-      }
-      if (boundingBox.Top + boundingBox.Height > 1) {
-        boundingBox.Height = 1 - boundingBox.Top;
-      }
-
-      return boundingBox;
-    } catch (err: any) {
-      logger.error(err);
-      if (err.message === "Cannot read property 'BoundingBox' of undefined") {
-        throw {
-          status: 400,
-          code: "SmartCrop::FaceIndexOutOfRange",
-          message: "You have provided a FaceIndex value that exceeds the length of the zero-based detectedFaces array. Please specify a value that is in-range."
-        };
-      } else {
-        throw {
-          status: err.statusCode ? err.statusCode : 500,
-          code: (err.code).toString(),
-          message: err.message
-        };
-      }
     }
   }
 }

@@ -1,17 +1,15 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from '@aws-lambda-powertools/logger'
+import {Logger} from '@aws-lambda-powertools/logger'
 import {LogStashFormatter} from "./lib/logging/LogStashFormatter";
-import { ImageRequest } from "./image-request";
-import { ImageHandler } from "./image-handler";
-import {S3} from "@aws-sdk/client-s3";
-import {Rekognition} from "@aws-sdk/client-rekognition";
+import {ImageRequest} from "./image-request";
+import {ImageHandler} from "./image-handler";
+import {GetObjectCommandOutput, S3} from "@aws-sdk/client-s3";
+import {APIGatewayProxyEventV2} from "aws-lambda";
+import {APIGatewayProxyStructuredResultV2} from "aws-lambda/trigger/api-gateway-proxy";
 
 const s3 = new S3({
-  region: process.env.AWS_REGION,
-})
-const rekognition = new Rekognition({
   region: process.env.AWS_REGION,
 })
 
@@ -20,14 +18,14 @@ const logger = new Logger({
   logFormatter: new LogStashFormatter(),
 })
 
-export async function handler(event: any): Promise<any> {
+export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
 
   const imageRequest = new ImageRequest(s3);
-  const imageHandler = new ImageHandler(s3, rekognition);
+  const imageHandler = new ImageHandler(s3);
   const isAlb = event.requestContext && event.requestContext.hasOwnProperty("elb");
 
   try {
-    const request = await imageRequest.setup(event);
+    const request: ImageRequest = await imageRequest.setup(event);
     logger.info("Image manipulation request", {...request, originalImage: undefined});
 
     let now = Date.now();
@@ -57,7 +55,7 @@ export async function handler(event: any): Promise<any> {
           31536000,
           Math.floor((request.Expires.getTime() - now) / 1000)
         );
-        headers["Cache-Control"] = "public, max-age=" + seconds_until_expiry + ", immutable";
+        headers["Cache-Control"] = "max-age=" + seconds_until_expiry + ", immutable";
       } else {
         headers["Cache-Control"] = request.CacheControl;
       }
@@ -99,11 +97,13 @@ export async function handler(event: any): Promise<any> {
       try {
         const bucket = process.env.DEFAULT_FALLBACK_IMAGE_BUCKET;
         const objectKey = process.env.DEFAULT_FALLBACK_IMAGE_KEY;
-        const defaultFallbackImage = await s3.getObject({Bucket: bucket, Key: objectKey});
+        const defaultFallbackImage: GetObjectCommandOutput = await s3.getObject({Bucket: bucket, Key: objectKey});
         const headers = getResponseHeaders(200, isAlb);
-        headers["Content-Type"] = defaultFallbackImage.ContentType;
-        headers["Last-Modified"] = defaultFallbackImage.LastModified;
-        headers["Cache-Control"] = "public, max-age=31536000, immutable";
+        headers["Content-Type"] = defaultFallbackImage.ContentType ?? "image/png";
+        if (defaultFallbackImage.LastModified) {
+          headers["Last-Modified"] = defaultFallbackImage.LastModified.toUTCString();
+        }
+        headers["Cache-Control"] = "max-age=31536000, immutable";
 
         return {
           statusCode: err.status ? err.status : 500,
@@ -112,7 +112,7 @@ export async function handler(event: any): Promise<any> {
           body: await defaultFallbackImage.Body!.transformToString("base64")
         };
       } catch (error) {
-        logger.warn("Error occurred while getting the default fallback image.",  error as Error);
+        logger.warn("Error occurred while getting the default fallback image.", error as Error);
       }
     }
 
@@ -142,18 +142,19 @@ export async function handler(event: any): Promise<any> {
       };
     }
   }
-};
+}
 
+type Headers = { [header: string]: boolean | number | string };
 /**
  * Generates the appropriate set of response headers based on a success
  * or error condition.
- * @param {number} status_code - has an error been thrown?
- * @param {boolean} isAlb - is the request from ALB?
- * @return {object} - Headers object
+ * @param status_code - has an error been thrown?
+ * @param isAlb - is the request from ALB?
+ * @return Headers object
  */
-const getResponseHeaders = (status_code = 200, isAlb = false) => {
+const getResponseHeaders = (status_code: number = 200, isAlb: boolean = false): Headers => {
   const corsEnabled = process.env.CORS_ENABLED === "Yes";
-  const headers: any = {
+  const headers: Headers = {
     "Access-Control-Allow-Methods": "GET",
     "Access-Control-Allow-Headers": "Content-Type, Authorization"
   };
@@ -161,15 +162,15 @@ const getResponseHeaders = (status_code = 200, isAlb = false) => {
     headers["Access-Control-Allow-Credentials"] = true;
   }
   if (corsEnabled) {
-    headers["Access-Control-Allow-Origin"] = process.env.CORS_ORIGIN;
+    headers["Access-Control-Allow-Origin"] = process.env.CORS_ORIGIN ?? "*";
   }
   if (200 !== status_code) {
     headers["Content-Type"] = "application/json";
   }
   if (status_code === 404) {
-    headers["Cache-Control"] = "public, max-age=60";
+    headers["Cache-Control"] = "max-age=60";
   } else if (status_code >= 400 && status_code < 500) {
-    headers["Cache-Control"] = "public, max-age=600";
+    headers["Cache-Control"] = "max-age=600";
   } else if (status_code >= 500 && status_code < 600) {
     headers["Cache-Control"] = "max-age=0, must-revalidate";
   }
