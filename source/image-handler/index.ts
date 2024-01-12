@@ -88,25 +88,13 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
       }
     }
 
-    if (error.status) {
-      return {
-        statusCode: error.status,
-        isBase64Encoded: false,
-        headers: getResponseHeaders(true, isAlb),
-        body: JSON.stringify(error),
-      };
-    } else {
-      return {
-        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-        isBase64Encoded: false,
-        headers: getResponseHeaders(true, isAlb),
-        body: JSON.stringify({
-          message: "Internal error. Please contact the system administrator.",
-          code: "InternalError",
-          status: StatusCodes.INTERNAL_SERVER_ERROR,
-        }),
-      };
-    }
+    const { statusCode, body } = getErrorResponse(error);
+    return {
+      statusCode,
+      isBase64Encoded: false,
+      headers: getResponseHeaders(true, isAlb),
+      body,
+    };
   }
 }
 
@@ -137,4 +125,44 @@ function getResponseHeaders(isError: boolean = false, isAlb: boolean = false): H
   }
 
   return headers;
+}
+
+/**
+ * Determines the appropriate error response values
+ * @param error The error object from a try/catch block
+ * @returns appropriate status code and body
+ */
+export function getErrorResponse(error) {
+  if (error?.status) {
+    return {
+      statusCode: error.status,
+      body: JSON.stringify(error),
+    };
+  }
+  /**
+   * if an image overlay is attempted and the overlaying image has greater dimensions
+   * that the base image, sharp will throw an exception and return this string
+   */
+  if (error?.message === "Image to composite must have same dimensions or smaller") {
+    return {
+      statusCode: StatusCodes.BAD_REQUEST,
+      body: JSON.stringify({
+        /**
+         * return a message indicating overlay dimensions is the issue, the caller may not
+         * know that the sharp composite function was used
+         */
+        message: "Image to overlay must have same dimensions or smaller",
+        code: "BadRequest",
+        status: StatusCodes.BAD_REQUEST,
+      }),
+    };
+  }
+  return {
+    statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+    body: JSON.stringify({
+      message: "Internal error. Please contact the system administrator.",
+      code: "InternalError",
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+    }),
+  };
 }

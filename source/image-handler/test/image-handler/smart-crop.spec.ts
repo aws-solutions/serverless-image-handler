@@ -48,6 +48,39 @@ describe("smartCrop", () => {
     expect(result["options"].input).not.toEqual(originalImage);
   });
 
+  it("should format to png before call to rekognition regardless of toFormat ", async () => {
+    // Arrange
+    const originalImage = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", // PNG
+      "base64"
+    );
+    const image = sharp(originalImage, { failOnError: false }).withMetadata();
+    const edits: ImageEdits = {
+      toFormat: "webp",
+      smartCrop: { padding: 60 }
+    };
+
+    // Mock
+    mockAwsRekognition.detectFaces.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({
+          FaceDetails: [
+            {
+              BoundingBox: { Height: 0.18, Left: 0.55, Top: 0.33, Width: 0.23 },
+            },
+          ],
+        });
+      },
+    }));
+
+    // Act
+    const imageHandler = new ImageHandler(s3Client, rekognitionClient);
+    await imageHandler.applyEdits(image, edits, false);
+
+    // Rekognition should have been called with a png image, regardless of the toFormat edit
+    expect((await sharp(mockAwsRekognition.detectFaces.mock.calls[0][0].Image.Bytes).metadata()).format).toEqual("png");
+  });
+
   it("Should pass if an excessive padding value is passed to the smartCrop filter", async () => {
     // Arrange
     const originalImage = Buffer.from(
