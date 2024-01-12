@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.2.5] - 2024-01-12
+
+### Fixed
+
+- Ensure accurate image metadata when generating Amazon Rekognition compatible images [#374](https://github.com/aws-solutions/serverless-image-handler/issues/374)
+- Upgraded axios to v1.6.5 for vulnerability CVE-2023-26159
+- Exclude demo-ui-config from being deleted upon BucketDeployment update sync when updating to a new version
+
+### Changed
+
+- Overlay requests with an overlay image with one or both dimensions greater than the base image now returns a 400 bad request status with the message "Image to overlay must have same dimensions or smaller", previously returned a 500 internal error [#405](https://github.com/aws-solutions/serverless-image-handler/issues/405)
+- cdk update to 2.118.0
+- typescript update to 5.3.3
+- GIF files without multiple pages are now treated as non-animated, allowing all filters to be used on them [#460](https://github.com/aws-solutions/serverless-image-handler/issues/460)
+
 ## [6.2.4] - 2023-12-06
 
 ### Changed

@@ -20,7 +20,7 @@ describe("crop", () => {
     );
     const image = sharp(originalImage, { failOnError: false }).withMetadata();
     const edits: ImageEdits = {
-      crop: { left: 0, right: 0, width: 100, height: 100 },
+      crop: { left: 0, top: 0, width: 100, height: 100 },
     };
 
     // Act

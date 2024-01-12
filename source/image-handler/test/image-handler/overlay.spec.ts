@@ -9,7 +9,7 @@ import fs from "fs";
 import sharp from "sharp";
 
 import { ImageHandler } from "../../image-handler";
-import { ImageEdits, ImageHandlerError, StatusCodes } from "../../lib";
+import { ImageEdits, ImageHandlerError, StatusCodes, ImageRequestInfo, RequestTypes } from "../../lib";
 
 const s3Client = new S3();
 const rekognitionClient = new Rekognition();
@@ -413,5 +413,368 @@ describe("calcOverlaySizeOption", () => {
 
     // Assert
     expect(result).toEqual(NaN);
+  });
+});
+
+/**
+ * series of tests to confirm sharp and SIH behavior with overlays in relation to base images that are:
+ * - dimensions are both equal
+ * - dimensions are both smaller
+ * - dimensions are both larger
+ * - width is greater
+ * - height is greater
+ */
+describe("overlay-dimensions", () => {
+  const SHARP_ERROR = "Image to composite must have same dimensions or smaller";
+  it("Should pass and not throw an exception when the overlay image dimensions are both equal - png", async () => {
+    // Mock
+    const originalImage = fs.readFileSync("./test/image/25x15.png");
+    const request: ImageRequestInfo = {
+      requestType: RequestTypes.DEFAULT,
+      bucket: "sample-bucket",
+      key: "test.jpg",
+      edits: {
+        overlayWith: {
+          bucket: "sample-bucket",
+          key: "test.jpg",
+        },
+      },
+      originalImage,
+    };
+    const overlayImage = fs.readFileSync("./test/image/25x15.png");
+
+    // Mock
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({
+          Body: overlayImage,
+        });
+      },
+    }));
+
+    // Act
+    const imageHandler = new ImageHandler(s3Client, rekognitionClient);
+    try {
+      await imageHandler.process(request);
+    } catch (error) {
+      // Assert
+      expect(error).not.toThrow(error);
+    }
+  });
+  it("Should pass and not throw an exception when the overlay image dimensions are both smaller - png", async () => {
+    // Mock
+    const originalImage = fs.readFileSync("./test/image/aws_logo.png");
+    const request: ImageRequestInfo = {
+      requestType: RequestTypes.DEFAULT,
+      bucket: "sample-bucket",
+      key: "test.jpg",
+      edits: {
+        overlayWith: {
+          bucket: "sample-bucket",
+          key: "test.jpg",
+        },
+      },
+      originalImage,
+    };
+    const overlayImage = fs.readFileSync("./test/image/25x15.png");
+
+    // Mock
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({
+          Body: overlayImage,
+        });
+      },
+    }));
+
+    // Act
+    const imageHandler = new ImageHandler(s3Client, rekognitionClient);
+    try {
+      await imageHandler.process(request);
+    } catch (error) {
+      // Assert
+      expect(error).not.toThrow(error);
+    }
+  });
+  it("Should pass and throw an exception that the overlay image dimensions are both larger - png", async () => {
+    // Mock
+    const originalImage = fs.readFileSync("./test/image/25x15.png");
+    const request: ImageRequestInfo = {
+      requestType: RequestTypes.DEFAULT,
+      bucket: "sample-bucket",
+      key: "test.jpg",
+      edits: {
+        overlayWith: {
+          bucket: "sample-bucket",
+          key: "test.jpg",
+        },
+      },
+      originalImage,
+    };
+    const overlayImage = fs.readFileSync("./test/image/aws_logo.png");
+
+    // Mock
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({
+          Body: overlayImage,
+        });
+      },
+    }));
+
+    // Act
+    const imageHandler = new ImageHandler(s3Client, rekognitionClient);
+    try {
+      await imageHandler.process(request);
+    } catch (error) {
+      // Assert
+      expect(error.message).toMatch(SHARP_ERROR);
+    }
+  });
+  it("Should pass and throw an exception that the overlay image width is greater", async () => {
+    // Mock
+    const originalImage = fs.readFileSync("./test/image/transparent-5x10.png");
+    const request: ImageRequestInfo = {
+      requestType: RequestTypes.DEFAULT,
+      bucket: "sample-bucket",
+      key: "test.jpg",
+      edits: {
+        overlayWith: {
+          bucket: "sample-bucket",
+          key: "test.jpg",
+        },
+      },
+      originalImage,
+    };
+    const overlayImage = fs.readFileSync("./test/image/transparent-10x10.png");
+
+    // Mock
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({
+          Body: overlayImage,
+        });
+      },
+    }));
+
+    // Act
+    const imageHandler = new ImageHandler(s3Client, rekognitionClient);
+    try {
+      await imageHandler.process(request);
+    } catch (error) {
+      // Assert
+      expect(error.message).toMatch(SHARP_ERROR);
+    }
+  });
+  it("Should pass and throw an exception that the overlay image height is greater", async () => {
+    // Mock
+    const originalImage = fs.readFileSync("./test/image/transparent-10x5.png");
+    const request: ImageRequestInfo = {
+      requestType: RequestTypes.DEFAULT,
+      bucket: "sample-bucket",
+      key: "test.jpg",
+      edits: {
+        overlayWith: {
+          bucket: "sample-bucket",
+          key: "test.jpg",
+        },
+      },
+      originalImage,
+    };
+    const overlayImage = fs.readFileSync("./test/image/transparent-10x10.png");
+
+    // Mock
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({
+          Body: overlayImage,
+        });
+      },
+    }));
+
+    // Act
+    const imageHandler = new ImageHandler(s3Client, rekognitionClient);
+    try {
+      await imageHandler.process(request);
+    } catch (error) {
+      // Assert
+      expect(error.message).toMatch(SHARP_ERROR);
+    }
+  });
+
+  it("Should pass and not throw an exception when the overlay image dimensions are both equal - jpeg", async () => {
+    // Mock
+    const originalImage = fs.readFileSync("./test/image/transparent-10x10.jpeg");
+    const request: ImageRequestInfo = {
+      requestType: RequestTypes.DEFAULT,
+      bucket: "sample-bucket",
+      key: "test.jpg",
+      edits: {
+        overlayWith: {
+          bucket: "sample-bucket",
+          key: "test.jpg",
+        },
+      },
+      originalImage,
+    };
+    const overlayImage = fs.readFileSync("./test/image/transparent-10x10.jpeg");
+
+    // Mock
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({
+          Body: overlayImage,
+        });
+      },
+    }));
+
+    // Act
+    const imageHandler = new ImageHandler(s3Client, rekognitionClient);
+    try {
+      await imageHandler.process(request);
+    } catch (error) {
+      // Assert
+      expect(error).not.toThrow(error);
+    }
+  });
+  it("Should pass and not throw an exception when the overlay image dimensions are both smaller - jpeg", async () => {
+    // Mock
+    const originalImage = fs.readFileSync("./test/image/transparent-10x10.jpeg");
+    const request: ImageRequestInfo = {
+      requestType: RequestTypes.DEFAULT,
+      bucket: "sample-bucket",
+      key: "test.jpg",
+      edits: {
+        overlayWith: {
+          bucket: "sample-bucket",
+          key: "test.jpg",
+        },
+      },
+      originalImage,
+    };
+    const overlayImage = fs.readFileSync("./test/image/transparent-10x5.jpeg");
+
+    // Mock
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({
+          Body: overlayImage,
+        });
+      },
+    }));
+
+    // Act
+    const imageHandler = new ImageHandler(s3Client, rekognitionClient);
+    try {
+      await imageHandler.process(request);
+    } catch (error) {
+      // Assert
+      expect(error).not.toThrow(error);
+    }
+  });
+  it("Should pass and throw an exception that the overlay image dimensions are both larger - jpeg", async () => {
+    // Mock
+    const originalImage = fs.readFileSync("./test/image/transparent-5x5.jpeg");
+    const request: ImageRequestInfo = {
+      requestType: RequestTypes.DEFAULT,
+      bucket: "sample-bucket",
+      key: "test.jpg",
+      edits: {
+        overlayWith: {
+          bucket: "sample-bucket",
+          key: "test.jpg",
+        },
+      },
+      originalImage,
+    };
+    const overlayImage = fs.readFileSync("./test/image/transparent-10x10.jpeg");
+
+    // Mock
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({
+          Body: overlayImage,
+        });
+      },
+    }));
+
+    // Act
+    const imageHandler = new ImageHandler(s3Client, rekognitionClient);
+    try {
+      await imageHandler.process(request);
+    } catch (error) {
+      // Assert
+      expect(error.message).toMatch(SHARP_ERROR);
+    }
+  });
+  it("Should pass and throw an exception that the overlay image width is greater - jpeg", async () => {
+    // Mock
+    const originalImage = fs.readFileSync("./test/image/transparent-5x10.jpeg");
+    const request: ImageRequestInfo = {
+      requestType: RequestTypes.DEFAULT,
+      bucket: "sample-bucket",
+      key: "test.jpg",
+      edits: {
+        overlayWith: {
+          bucket: "sample-bucket",
+          key: "test.jpg",
+        },
+      },
+      originalImage,
+    };
+    const overlayImage = fs.readFileSync("./test/image/transparent-10x10.jpeg");
+
+    // Mock
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({
+          Body: overlayImage,
+        });
+      },
+    }));
+
+    // Act
+    const imageHandler = new ImageHandler(s3Client, rekognitionClient);
+    try {
+      await imageHandler.process(request);
+    } catch (error) {
+      // Assert
+      expect(error.message).toMatch(SHARP_ERROR);
+    }
+  });
+  it("Should pass and throw an exception that the overlay image height is greater - jpeg", async () => {
+    // Mock
+    const originalImage = fs.readFileSync("./test/image/transparent-10x5.jpeg");
+    const request: ImageRequestInfo = {
+      requestType: RequestTypes.DEFAULT,
+      bucket: "sample-bucket",
+      key: "test.jpg",
+      edits: {
+        overlayWith: {
+          bucket: "sample-bucket",
+          key: "test.jpg",
+        },
+      },
+      originalImage,
+    };
+    const overlayImage = fs.readFileSync("./test/image/transparent-10x10.jpeg");
+
+    // Mock
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({
+          Body: overlayImage,
+        });
+      },
+    }));
+
+    // Act
+    const imageHandler = new ImageHandler(s3Client, rekognitionClient);
+    try {
+      await imageHandler.process(request);
+    } catch (error) {
+      // Assert
+      expect(error.message).toMatch(SHARP_ERROR);
+    }
   });
 });

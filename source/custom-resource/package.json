@@ -1,6 +1,6 @@
 {
   "name": "custom-resource",
-  "version": "6.2.4",
+  "version": "6.2.5",
   "private": true,
   "description": "Serverless Image Handler custom resource",
   "license": "Apache-2.0",
@@ -15,19 +15,19 @@
     "test": "jest --coverage --silent"
   },
   "dependencies": {
-    "aws-sdk": "^2.1477.0",
-    "axios": "^1.6.2",
-    "moment": "^2.29.4",
+    "aws-sdk": "^2.1529.0",
+    "axios": "^1.6.5",
+    "moment": "^2.30.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@types/jest": "^29.5.6",
-    "@types/node": "^20.8.7",
+    "@types/node": "^20.10.4",
     "@types/uuid": "^9.0.6",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.1",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   },
   "overrides": {
     "semver": "7.5.4"
