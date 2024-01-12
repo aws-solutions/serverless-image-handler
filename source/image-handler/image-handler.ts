@@ -21,7 +21,7 @@ import {
 export class ImageHandler {
   private readonly LAMBDA_PAYLOAD_LIMIT = 6 * 1024 * 1024;
 
-  constructor(private readonly s3Client: S3, private readonly rekognitionClient: Rekognition) {}
+  constructor(private readonly s3Client: S3, private readonly rekognitionClient: Rekognition) { }
 
   /**
    * Creates a Sharp object from Buffer
@@ -81,7 +81,17 @@ export class ImageHandler {
     // Apply edits if specified
     if (edits && Object.keys(edits).length) {
       // convert image to Sharp object
-      const image = await this.instantiateSharpImage(originalImage, edits, options);
+      let image = await this.instantiateSharpImage(originalImage, edits, options);
+
+      // default to non animated if image is a GIF without multiple pages
+      if (options.animated) {
+        const metadata = await image.metadata();
+        if (!metadata.pages || metadata.pages <= 1) {
+          options.animated = false;
+          image = await this.instantiateSharpImage(originalImage, edits, options);
+        }
+      }
+
       // apply image edits
       let modifiedImage = await this.applyEdits(image, edits, options.animated);
       // modify image output if requested
@@ -263,9 +273,9 @@ export class ImageHandler {
         typeof edits.smartCrop === "object"
           ? edits.smartCrop
           : {
-              faceIndex: undefined,
-              padding: undefined,
-            };
+            faceIndex: undefined,
+            padding: undefined,
+          };
       const { imageBuffer, format } = await this.getRekognitionCompatibleImage(originalImage);
       const boundingBox = await this.getBoundingBox(imageBuffer.data, faceIndex ?? 0);
       const cropArea = this.getCropArea(boundingBox, padding ?? 0, imageBuffer.info);
@@ -314,11 +324,11 @@ export class ImageHandler {
         typeof edits.roundCrop === "object"
           ? edits.roundCrop
           : {
-              top: undefined,
-              left: undefined,
-              rx: undefined,
-              ry: undefined,
-            };
+            top: undefined,
+            left: undefined,
+            rx: undefined,
+            ry: undefined,
+          };
       const imageBuffer = await originalImage.toBuffer({ resolveWithObject: true });
       const width = imageBuffer.info.width;
       const height = imageBuffer.info.height;
@@ -383,10 +393,10 @@ export class ImageHandler {
         typeof edits.contentModeration === "object"
           ? edits.contentModeration
           : {
-              minConfidence: undefined,
-              blur: undefined,
-              moderationLabels: undefined,
-            };
+            minConfidence: undefined,
+            blur: undefined,
+            moderationLabels: undefined,
+          };
       const { imageBuffer, format } = await this.getRekognitionCompatibleImage(originalImage);
       const inappropriateContent = await this.detectInappropriateContent(imageBuffer.data, minConfidence);
 
@@ -658,7 +668,8 @@ export class ImageHandler {
    * @returns object containing image buffer data and original image format.
    */
   private async getRekognitionCompatibleImage(image: sharp.Sharp): Promise<RekognitionCompatibleImage> {
-    const metadata = await image.metadata();
+    const sharp_image = sharp(await image.toBuffer()); // Reload sharp image to ensure current metadata
+    const metadata = await sharp_image.metadata();
     const format = metadata.format;
     let imageBuffer: { data: Buffer; info: sharp.OutputInfo };
 

@@ -1,6 +1,6 @@
 {
   "name": "source",
-  "version": "6.2.4",
+  "version": "6.2.5",
   "private": true,
   "description": "ESLint and prettier dependencies to be used within the solution",
   "license": "Apache-2.0",
@@ -16,7 +16,7 @@
     "install:dependencies": "npm run install:custom-resource && npm run install:image-handler"
   },
   "devDependencies": {
-    "@types/node": "^20.7.2",
+    "@types/node": "^20.10.4",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "eslint": "^8.50.0",
