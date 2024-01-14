@@ -101,7 +101,7 @@ export class ImageRequest {
 
       imageRequestInfo.requestType = this.parseRequestType(event);
       imageRequestInfo.bucket = this.parseImageBucket(event, imageRequestInfo.requestType);
-      imageRequestInfo.key = this.parseImageKey(event, imageRequestInfo.requestType);
+      imageRequestInfo.key = this.parseImageKey(event, imageRequestInfo.requestType, imageRequestInfo.bucket);
       imageRequestInfo.edits = this.parseImageEdits(event, imageRequestInfo.requestType);
 
       const originalImage = await this.getOriginalImage(imageRequestInfo.bucket, imageRequestInfo.key);
@@ -223,6 +223,16 @@ export class ImageRequest {
     } else if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
       // Use the default image source bucket env var
       const sourceBuckets = this.getAllowedSourceBuckets();
+      // Take the path and split it at "/" to get each "word" in the url as array
+      let potentialBucket = event.path
+        .split("/")
+        .filter(e => e.startsWith('s3:'))
+        .map(e => e.replace("s3:", ""));
+      // filter out all parts that are not an bucket-url
+      potentialBucket = potentialBucket.filter(e => sourceBuckets.includes(e));
+      // return the first match
+      if (potentialBucket.length > 0) return potentialBucket[0];
+
       return sourceBuckets[0];
     } else {
       throw new ImageHandlerError(
@@ -265,7 +275,7 @@ export class ImageRequest {
    * @param requestType Type of the request.
    * @returns The name of the appropriate Amazon S3 key.
    */
-  public parseImageKey(event: ImageHandlerEvent, requestType: RequestTypes): string {
+  public parseImageKey(event: ImageHandlerEvent, requestType: RequestTypes, bucket: string = null): string {
     if (requestType === RequestTypes.DEFAULT) {
       // Decode the image request and return the image key
       const { key } = this.decodeRequest(event);
@@ -299,6 +309,7 @@ export class ImageRequest {
           .replace(/\/fit-in(?=\/)/g, "")
           .replace(/^\/+/g, "")
           .replace(/^\/+/, "")
+          .replace(new RegExp("s3:" + bucket + "\/"), '')
       );
     }
 
