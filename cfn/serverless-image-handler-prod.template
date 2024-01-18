@@ -1297,8 +1297,8 @@
    "Type": "AWS::Lambda::Function",
    "Properties": {
     "Code": {
-     "S3Bucket": "serverless-image-handler-custom",
-     "S3Key": "serverless-image-handler/<TODO: ADD SHA>.zip"
+     "S3Bucket": "media-processor-serverless-image-handler-backend-code-prod",
+     "S3Key": "serverless-image-handler/4489a205d1204c812aaf0b4abfae04e60f1434ef.zip"
     },
     "Description": "serverless-image-handler (custom-v6.2.4): Performs image edits and manipulations",
     "Environment": {
@@ -1338,7 +1338,7 @@
       "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
      }
     },
-    "Handler": "index.handler",
+    "Handler": "image-handler/index.handler",
     "MemorySize": 1024,
     "Role": {
      "Fn::GetAtt": [
