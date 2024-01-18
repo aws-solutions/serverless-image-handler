@@ -1,0 +1,9 @@
+{
+    "name": "s3-upload",
+    "private": true,
+    "dependencies": {
+        "archiver": "^6.0.1",
+        "aws-sdk": "^2.1539.0",
+        "yargs": "^17.7.2"
+    }
+}

@@ -4,7 +4,7 @@
 **/regional-s3-assets
 **/staging
 **/open-source
-**/.zip
+**/*.zip
 **/tmp
 **/out-tsc
 
