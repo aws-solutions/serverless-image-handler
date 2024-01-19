@@ -345,7 +345,7 @@ export class ImageHandler {
       const overlayOptions: OverlayOptions[] = [{ input: ellipse, blend: "dest-in" }];
 
       // Need to break out into another sharp pipeline to allow for resize after composite
-      const data = await originalImage.composite(overlayOptions).toBuffer();
+      const data = await originalImage.png().composite(overlayOptions).toBuffer();
       return sharp(data).withMetadata().trim();
     }
 
