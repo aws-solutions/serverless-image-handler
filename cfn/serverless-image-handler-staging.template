@@ -1298,7 +1298,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "media-processor-serverless-image-handler-backend-code-staging",
-     "S3Key": "serverless-image-handler/4489a205d1204c812aaf0b4abfae04e60f1434ef.zip"
+     "S3Key": "serverless-image-handler/2333ad1c8781d583a74fd02df640c294571f9f21.zip"
     },
     "Description": "serverless-image-handler (custom-v6.2.4): Performs image edits and manipulations",
     "Environment": {
