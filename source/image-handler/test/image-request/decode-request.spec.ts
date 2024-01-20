@@ -5,8 +5,9 @@ import S3 from "aws-sdk/clients/s3";
 import SecretsManager from "aws-sdk/clients/secretsmanager";
 
 import { ImageRequest } from "../../image-request";
-import { StatusCodes } from "../../lib";
+import { ImageHandlerEvent, StatusCodes } from "../../lib";
 import { SecretProvider } from "../../secret-provider";
+import { mockAwsS3 } from '../mock';
 
 describe("decodeRequest", () => {
   const s3Client = new S3();
@@ -69,5 +70,52 @@ describe("decodeRequest", () => {
           "The URL path you provided could not be read. Please ensure that it is properly formed according to the solution documentation.",
       });
     }
+  });
+
+  describe('expires', () => {
+    const baseRequest = {
+      bucket: 'test',
+      requestType: 'Default',
+      key: 'test.png',
+    };
+    const path = `/${Buffer.from(JSON.stringify(baseRequest)).toString('base64')}`;
+    it.each([
+      {
+        expires: 'Thu, 01 Jan 1970 00:00:00 GMT',
+        error: {
+          code: 'ImageRequestExpired',
+          message: 'Request has expired.',
+          status: StatusCodes.FORBIDDEN,
+        },
+      },
+      {
+        expires: 'invalidKey',
+        error: {
+          code: 'ImageRequestExpiryFormat',
+          message: 'Request has invalid expiry date.',
+          status: StatusCodes.BAD_REQUEST,
+        }
+      }
+    ] as { expires: ImageHandlerEvent['queryStringParameters']['expires'], error: object, }[])(
+      "Should throw an error when $error.message",
+      (async ({ error: expectedError, expires }) => {
+        // Arrange
+        const event: ImageHandlerEvent = {
+          path,
+          queryStringParameters: {
+            expires,
+          },
+        };
+        // Mock
+        mockAwsS3.getObject.mockImplementationOnce(() => ({
+          promise() {
+            return Promise.resolve({ Body: Buffer.from('SampleImageContent\n') });
+          }
+        }));
+        // Act
+        const imageRequest = new ImageRequest(s3Client, secretProvider);
+        await expect(imageRequest.setup(event)).rejects.toMatchObject(expectedError);
+      })
+    );
   });
 });
