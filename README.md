@@ -67,7 +67,7 @@ The following environment variables are used by the image-handler:
 
 To build the package run:
 
-```make build```
+```make FUNC=image-handler build```
 
 ### Testing
 
@@ -79,7 +79,7 @@ Run tests using the following Make command:
 
 Deploy the infrastructure using Terraform with the following Make command:
 
-```make tf```
+```make FUNC=image-handler tf```
 
 ## Image Thumbs
 
@@ -95,7 +95,7 @@ Image-thumbs is an implementation of [thumbhash](https://evanw.github.io/thumbha
 
 To build the package run:
 
-```make SERVICE=thumbs build```
+```make FUNC=thumbs build```
 
 ### Test / Invoke
 
@@ -112,4 +112,4 @@ cargo lambda invoke --data-file apigw-request.json
 
 To deploy the infrastructure run:
 
-```make SERVICE=thumb tf```
+```make FUNC=thumb tf```

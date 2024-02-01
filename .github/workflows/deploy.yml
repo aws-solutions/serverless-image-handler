@@ -28,30 +28,30 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
       - name: install
-        run: make npm/install
+        run: make FUNC=image-handler npm/install
       - name: install
-        run: make npm/test
+        run: make FUNC=image-handler npm/test
       - name: build
-        run: make build
+        run: make FUNC=image-handler build
 
       - name: configure aws credentials
         # 📌 Runs only if:
         # 1. is a 'push to main'
         # 2. did not run in a fork
         if: ${{ github.ref == 'refs/heads/main' && github.repository_owner == 'stroeer' }}
-        uses: aws-actions/configure-aws-credentials@master
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::053041861227:role/github-s3-access-eu-west-1
           role-session-name: GitHubActions
@@ -62,7 +62,7 @@ jobs:
         # 1. is a 'push to main'
         # 2. did not run in a fork
         if: ${{ github.ref == 'refs/heads/main' && github.repository_owner == 'stroeer' }}
-        run: make upload
+        run: make FUNC=image-handler upload
 
   thumbnail-generator:
     env:
@@ -72,14 +72,14 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
       - name: Set up cargo cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         continue-on-error: false
         with:
           path: |
@@ -93,14 +93,14 @@ jobs:
       - name: install cargo lambda
         run: pip3 install cargo-lambda
       - name: cargo lambda build
-        run: make build SERVICE=thumbs
+        run: make build FUNC=thumbs
 
       - name: configure aws credentials
         # 📌 Runs only if:
         # 1. is a 'push to main'
         # 2. did not run in a fork
         if: ${{ github.ref == 'refs/heads/main' && github.repository_owner == 'stroeer' }}
-        uses: aws-actions/configure-aws-credentials@master
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::053041861227:role/github-s3-access-eu-west-1
           role-session-name: GitHubActions
@@ -111,4 +111,4 @@ jobs:
         # 1. is a 'push to main'
         # 2. did not run in a fork
         if: ${{ github.ref == 'refs/heads/main' && github.repository_owner == 'stroeer' }}
-        run: make upload SERVICE=thumbs
+        run: make upload FUNC=thumbs

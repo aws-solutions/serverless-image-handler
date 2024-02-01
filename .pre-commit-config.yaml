@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.77.0
+    rev: v1.86.0
     hooks:
       - id: terraform_fmt
       - id: terraform_validate
@@ -12,14 +12,12 @@ repos:
       - id: terraform_tflint
         args:
           - --args=--module
-      - id: terraform_tfsec
+      - id: terraform_trivy
         args:
-          - --args=--minimum-severity HIGH --exclude-downloaded-modules
-      - id: terraform_providers_lock
-        args:
-          - --args=-platform=linux_amd64
-          - --args=-platform=darwin_amd64
+          - --args=--tf-exclude-downloaded-modules
+          - --args=--skip-dirs "**/.terraform/**/*"
+          - --args=--severity=HIGH,CRITICAL
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v4.5.0
     hooks:
       - id: check-merge-conflict

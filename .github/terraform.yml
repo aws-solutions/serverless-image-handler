@@ -1,0 +1,17 @@
+name: terraform
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - "**.tf"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    uses: stroeer/buzz-up/.github/workflows/tmpl_staticcheck.yml@main

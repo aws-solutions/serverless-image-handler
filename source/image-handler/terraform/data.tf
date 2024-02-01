@@ -45,5 +45,5 @@ data "aws_cloudfront_distribution" "images" {
 }
 
 data "aws_ssm_parameter" "logging_layer" {
-  name      = "/internal/lambda-logging-oss/arm64/layer_arn"
+  name = "/internal/lambda-logging-oss/arm64/layer_arn"
 }

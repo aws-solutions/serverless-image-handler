@@ -38,9 +38,9 @@ resource "aws_kms_key" "images" {
 }
 
 resource "aws_kms_alias" "images" {
-  count                   = var.app_suffix == "" ? 1 : 0
-  target_key_id           = aws_kms_key.images[count.index].key_id
-  name                    = "alias/s3_image_bucket"
+  count         = var.app_suffix == "" ? 1 : 0
+  target_key_id = aws_kms_key.images[count.index].key_id
+  name          = "alias/s3_image_bucket"
 }
 
 resource "aws_kms_key_policy" "images" {

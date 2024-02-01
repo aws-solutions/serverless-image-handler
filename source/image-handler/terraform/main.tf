@@ -7,7 +7,7 @@ locals {
 
 module "lambda" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws"
-  version = "7.2.0"
+  version = "7.5.0"
 
   architectures                    = ["arm64"]
   layers                           = [nonsensitive(data.aws_ssm_parameter.logging_layer.value)]
@@ -68,9 +68,9 @@ resource "aws_s3_object" "this" {
   source = fileexists(local.zip_package) ? local.zip_package : null
   etag   = fileexists(local.zip_package) ? filemd5(local.zip_package) : null
 
-#  lifecycle {
-#    ignore_changes = [etag, source, version_id, tags_all]
-#  }
+  #  lifecycle {
+  #    ignore_changes = [etag, source, version_id, tags_all]
+  #  }
 }
 
 resource "aws_lambda_alias" "this" {
@@ -86,12 +86,13 @@ resource "aws_lambda_alias" "this" {
 
 module "deployment" {
   source  = "registry.terraform.io/moritzzimmer/lambda/aws//modules/deployment"
-  version = "7.2.0"
+  version = "7.5.0"
 
   alias_name                                  = aws_lambda_alias.this.name
   codebuild_cloudwatch_logs_retention_in_days = 7
   codestar_notifications_target_arn           = data.aws_sns_topic.notifications.arn
   codepipeline_artifact_store_bucket          = data.aws_s3_bucket.pipeline_artifacts.bucket
+  codepipeline_type                           = "V2"
   s3_bucket                                   = data.aws_s3_bucket.ci.bucket
   s3_key                                      = local.s3_key
   function_name                               = local.function_name
