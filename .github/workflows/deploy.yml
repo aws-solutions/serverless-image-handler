@@ -62,7 +62,7 @@ jobs:
         # 1. is a 'push to main'
         # 2. did not run in a fork
         if: ${{ github.ref == 'refs/heads/main' && github.repository_owner == 'stroeer' }}
-        run: make FUNC=image-handler upload
+        run: make FUNC=image-handler deploy
 
   thumbnail-generator:
     env:
@@ -111,4 +111,4 @@ jobs:
         # 1. is a 'push to main'
         # 2. did not run in a fork
         if: ${{ github.ref == 'refs/heads/main' && github.repository_owner == 'stroeer' }}
-        run: make upload FUNC=thumbs
+        run: make deploy FUNC=thumbs

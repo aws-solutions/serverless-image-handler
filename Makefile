@@ -62,7 +62,7 @@ deploy: check-func build ## Uploads the `FUNC` to start CodePipeline deployment
 	elif [ "thumbs" = "$(FUNC)" ] ; then \
         aws s3 cp $(WORK_DIR)/target/lambda/arm64/thumbs/bootstrap.zip s3://ci-$(ACCOUNT_ID)-$(REGION)/image-thumbs/image-thumbs$(APP_SUFFIX).zip ; \
 	else \
-		echo "Unknown FUNC/Upload: $(FUNC). Aborting." ; exit 1 ; \
+		echo "Unknown FUNC/Deploy: $(FUNC). Aborting." ; exit 1 ; \
 	fi
 
 .PHONY: help
