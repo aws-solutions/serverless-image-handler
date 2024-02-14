@@ -18,6 +18,7 @@ import {
 } from "./lib";
 import { SecretProvider } from "./secret-provider";
 import { ThumborMapper } from "./thumbor-mapper";
+import { CustomMapper } from "./custom-mapper";
 
 type OriginalImageInfo = Partial<{
   contentType: string;
@@ -247,9 +248,8 @@ export class ImageRequest {
       const thumborMapping = new ThumborMapper();
       return thumborMapping.mapPathToEdits(event.path);
     } else if (requestType === RequestTypes.CUSTOM) {
-      const thumborMapping = new ThumborMapper();
-      const parsedPath = thumborMapping.parseCustomPath(event.path);
-      return thumborMapping.mapPathToEdits(parsedPath);
+      const customMapping = new CustomMapper();
+      return customMapping.mapPathToEdits(event.path);
     } else {
       throw new ImageHandlerError(
         StatusCodes.BAD_REQUEST,
