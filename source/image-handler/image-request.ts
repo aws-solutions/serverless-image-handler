@@ -18,7 +18,7 @@ import {
 } from "./lib";
 import { SecretProvider } from "./secret-provider";
 import { ThumborMapper } from "./thumbor-mapper";
-import { CustomMapper } from "./custom-mapper";
+import { PortalMapper } from "./portal-mapper";
 
 type OriginalImageInfo = Partial<{
   contentType: string;
@@ -247,9 +247,13 @@ export class ImageRequest {
     } else if (requestType === RequestTypes.THUMBOR) {
       const thumborMapping = new ThumborMapper();
       return thumborMapping.mapPathToEdits(event.path);
+    } else if (requestType === RequestTypes.PORTAL) {
+      const portalMapping = new PortalMapper();
+      return portalMapping.mapPathToEdits(event.path);
     } else if (requestType === RequestTypes.CUSTOM) {
-      const customMapping = new CustomMapper();
-      return customMapping.mapPathToEdits(event.path);
+      const thumborMapping = new ThumborMapper();
+      const parsedPath = thumborMapping.parseCustomPath(event.path);
+      return thumborMapping.mapPathToEdits(parsedPath);
     } else {
       throw new ImageHandlerError(
         StatusCodes.BAD_REQUEST,
@@ -329,6 +333,8 @@ export class ImageRequest {
       REWRITE_MATCH_PATTERN !== undefined &&
       REWRITE_SUBSTITUTION !== undefined;
 
+    const isPortal = REWRITE_MATCH_PATTERN === "PORTAL";
+
     // Check if path is base 64 encoded
     let isBase64Encoded = true;
     try {
@@ -344,6 +350,9 @@ export class ImageRequest {
     } else if (definedEnvironmentVariables) {
       // use rewrite function then thumbor mappings
       return RequestTypes.CUSTOM;
+    } else if (isPortal) {
+      // use rewrite function then thumbor mappings
+      return RequestTypes.PORTAL;
     } else if (matchThumbor1.test(path) && (matchThumbor2.test(path) || matchThumbor3.test(path))) {
       // use thumbor mappings
       return RequestTypes.THUMBOR;

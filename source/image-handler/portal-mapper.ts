@@ -4,7 +4,7 @@
 
 import { ImageEdits, ImageFitTypes, ImageFormatTypes } from "./lib";
 
-export class CustomMapper {
+export class PortalMapper {
   private static readonly EMPTY_IMAGE_EDITS: ImageEdits = {};
 
   /**
@@ -62,7 +62,7 @@ export class CustomMapper {
   private mapCrop(path: string): ImageEdits {
     // not implemented
 
-    return CustomMapper.EMPTY_IMAGE_EDITS;
+    return PortalMapper.EMPTY_IMAGE_EDITS;
   }
 
   /**
@@ -75,27 +75,25 @@ export class CustomMapper {
     const widthMatchResult = path.match(/w=(\d+)/);
     const heightMatchResult = path.match(/h=(\d+)/);
 
-    if (widthMatchResult && heightMatchResult) {
-      // Parse width and height from the match results
-      const width = Number(widthMatchResult[1]);
-      const height = Number(heightMatchResult[1]);
+    // Parse width and height from the match results
+    const width = widthMatchResult ? Number(widthMatchResult[1]) : null;
+    const height = heightMatchResult ? Number(heightMatchResult[1]) : null;
 
-      // Set only if the dimensions provided are valid
-      if (!isNaN(width) && !isNaN(height)) {
-        const resizeEdit: ImageEdits = { resize: {} };
-
-        // If width or height is 0, fit would be inside.
-        if (width === 0 || height === 0) {
-          resizeEdit.resize.fit = ImageFitTypes.INSIDE;
-        }
-        resizeEdit.resize.width = width === 0 ? null : width;
-        resizeEdit.resize.height = height === 0 ? null : height;
-
-        return resizeEdit;
-      }
+    // If either width or height is missing, return EMPTY_IMAGE_EDITS
+    if (width === null && height === null) {
+      return PortalMapper.EMPTY_IMAGE_EDITS;
     }
 
-    return CustomMapper.EMPTY_IMAGE_EDITS;
+    const resizeEdit: ImageEdits = { resize: {} };
+
+    // If width or height is 0 or missing, fit would be inside.
+    if (width === 0 || height === 0 || width === null || height === null) {
+      resizeEdit.resize.fit = ImageFitTypes.INSIDE;
+    }
+    resizeEdit.resize.width = width === 0 || width === null ? null : width;
+    resizeEdit.resize.height = height === 0 || height === null ? null : height;
+
+    return resizeEdit;
   }
 
   /**
@@ -104,8 +102,7 @@ export class CustomMapper {
    * @returns Image edits associated with fit-in filter.
    */
   private mapFitIn(path: string): ImageEdits {
-    // not implemented
-    return CustomMapper.EMPTY_IMAGE_EDITS;
+    return path.includes("fit-in") ? { resize: { fit: ImageFitTypes.INSIDE } } : PortalMapper.EMPTY_IMAGE_EDITS;
   }
 
   /**

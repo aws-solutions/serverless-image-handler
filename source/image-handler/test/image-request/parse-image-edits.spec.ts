@@ -72,6 +72,25 @@ describe("parseImageEdits", () => {
     expect(result).toEqual(expectedResult);
   });
 
+  it("Should pass if the proper result is returned for a sample portal-type image request", () => {
+    // Arrange
+    const event = {
+      path: "/thumbor-image.jpg?w=234&h=345",
+    };
+
+    process.env = {
+      REWRITE_MATCH_PATTERN: "portal",
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseImageEdits(event, RequestTypes.PORTAL);
+
+    // Assert
+    const expectedResult = { resize: { width: 234, height: 345 } };
+    expect(result).toEqual(expectedResult);
+  });
+
   it("Should throw an error if a requestType is not specified and/or the image edits cannot be parsed", () => {
     // Arrange
     const event = {
