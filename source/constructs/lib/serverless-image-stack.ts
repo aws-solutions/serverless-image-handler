@@ -41,14 +41,6 @@ export class ServerlessImageHandlerStack extends Stack {
       default: "defaultBucket, bucketNo2, bucketNo3, ...",
     });
 
-    const rewriteMatchPatternParameter = new CfnParameter(this, "RewriteMatchPatternParameter", {
-      type: "String",
-      description:
-        "Rewrite match pattern",
-        allowedValues: ["PORTAL"],
-      default: "PORTAL",
-    });
-
     const deployDemoUIParameter = new CfnParameter(this, "DeployDemoUIParameter", {
       type: "String",
       description:
@@ -155,7 +147,6 @@ export class ServerlessImageHandlerStack extends Stack {
       corsEnabled: corsEnabledParameter.valueAsString,
       corsOrigin: corsOriginParameter.valueAsString,
       sourceBuckets: sourceBucketsParameter.valueAsString,
-      rewriteMatchPattern: rewriteMatchPatternParameter.valueAsString,
       deployUI: deployDemoUIParameter.valueAsString as YesNo,
       logRetentionPeriod: logRetentionPeriodParameter.valueAsNumber,
       autoWebP: autoWebPParameter.valueAsString,
@@ -235,10 +226,6 @@ export class ServerlessImageHandlerStack extends Stack {
             Parameters: [sourceBucketsParameter.logicalId],
           },
           {
-            Label: { default: "Rewrite pattern" },
-            Parameters: [rewriteMatchPatternParameter.logicalId],
-          },
-          {
             Label: { default: "Demo UI" },
             Parameters: [deployDemoUIParameter.logicalId],
           },
@@ -277,7 +264,6 @@ export class ServerlessImageHandlerStack extends Stack {
           [corsEnabledParameter.logicalId]: { default: "CORS Enabled" },
           [corsOriginParameter.logicalId]: { default: "CORS Origin" },
           [sourceBucketsParameter.logicalId]: { default: "Source Buckets" },
-          [rewriteMatchPatternParameter.logicalId]: { default: "Rewrite Match Pattern" },
           [deployDemoUIParameter.logicalId]: { default: "Deploy Demo UI" },
           [logRetentionPeriodParameter.logicalId]: {
             default: "Log Retention Period",
@@ -319,10 +305,6 @@ export class ServerlessImageHandlerStack extends Stack {
     new CfnOutput(this, "SourceBuckets", {
       value: sourceBucketsParameter.valueAsString,
       description: "Amazon S3 bucket location containing original image files.",
-    });
-    new CfnOutput(this, "RewriteMatchPattern", {
-      value: rewriteMatchPatternParameter.valueAsString,
-      description: "Rewrite Match Pattern",
     });
     new CfnOutput(this, "CorsEnabled", {
       value: corsEnabledParameter.valueAsString,
