@@ -98,7 +98,7 @@ export class BackEnd extends Construct {
         CORS_ENABLED: props.corsEnabled,
         CORS_ORIGIN: props.corsOrigin,
         SOURCE_BUCKETS: props.sourceBuckets,
-        REWRITE_MATCH_PATTERN: "",
+        REWRITE_MATCH_PATTERN: props.rewriteMatchPattern,
         REWRITE_SUBSTITUTION: "",
         ENABLE_SIGNATURE: props.enableSignature,
         SECRETS_MANAGER: props.secretsManager,
