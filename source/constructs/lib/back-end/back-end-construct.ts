@@ -106,6 +106,7 @@ export class BackEnd extends Construct {
         ENABLE_DEFAULT_FALLBACK_IMAGE: props.enableDefaultFallbackImage,
         DEFAULT_FALLBACK_IMAGE_BUCKET: props.fallbackImageS3Bucket,
         DEFAULT_FALLBACK_IMAGE_KEY: props.fallbackImageS3KeyBucket,
+        USE_SEMANTIC_URL: props.useSemanticUrl,
       },
       bundling: {
         externalModules: ["sharp"],

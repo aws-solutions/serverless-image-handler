@@ -326,14 +326,14 @@ export class ImageRequest {
     const matchThumbor1 = /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?)/i;
     const matchThumbor2 = /((.(?!(\.[^.\\/]+$)))*$)/i; // NOSONAR
     const matchThumbor3 = /.*(\.jpg$|\.jpeg$|.\.png$|\.webp$|\.tiff$|\.tif$|\.svg$|\.gif$)/i; // NOSONAR
-    const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION, USE_SEMANTIC} = process.env;
+    const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION, USE_SEMANTIC_URL} = process.env;
     const definedEnvironmentVariables =
       REWRITE_MATCH_PATTERN !== "" &&
       REWRITE_SUBSTITUTION !== "" &&
       REWRITE_MATCH_PATTERN !== undefined &&
       REWRITE_SUBSTITUTION !== undefined;
 
-    const isSemantic = USE_SEMANTIC === "Yes";
+    const isSemantic = USE_SEMANTIC_URL === "Yes";
 
     // Check if path is base 64 encoded
     let isBase64Encoded = true;

@@ -58,6 +58,14 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
         },
         {
           "Label": {
+            "default": "Use Semantic URL",
+          },
+          "Parameters": [
+            "UseSemanticUrlParameter",
+          ],
+        },
+        {
+          "Label": {
             "default": "Demo UI",
           },
           "Parameters": [
@@ -141,6 +149,9 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
         "SourceBucketsParameter": {
           "default": "Source Buckets",
         },
+        "UseSemanticUrlParameter": {
+          "default": "Use Semantic URL",
+        },
       },
     },
   },
@@ -204,6 +215,12 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       "Description": "Amazon S3 bucket location containing original image files.",
       "Value": {
         "Ref": "SourceBucketsParameter",
+      },
+    },
+    "UseSemanticUrl": {
+      "Description": "Indicates whether automatic semantic URL has been enabled for the image handler API.",
+      "Value": {
+        "Ref": "UseSemanticUrlParameter",
       },
     },
   },
@@ -321,6 +338,15 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       "AllowedPattern": ".+",
       "Default": "defaultBucket, bucketNo2, bucketNo3, ...",
       "Description": "(Required) List the buckets (comma-separated) within your account that contain original image files. If you plan to use Thumbor or Custom image requests with this solution, the source bucket for those requests will be the first bucket listed in this field.",
+      "Type": "String",
+    },
+    "UseSemanticUrlParameter": {
+      "AllowedValues": [
+        "Yes",
+        "No",
+      ],
+      "Default": "No",
+      "Description": "Would you like to enable automatic semantic url? Select 'Yes' if so.",
       "Type": "String",
     },
   },
@@ -1177,6 +1203,9 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
             },
             "SOURCE_BUCKETS": {
               "Ref": "SourceBucketsParameter",
+            },
+            "USE_SEMANTIC_URL": {
+              "Ref": "UseSemanticUrlParameter",
             },
           },
         },

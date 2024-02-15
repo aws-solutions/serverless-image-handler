@@ -41,6 +41,13 @@ export class ServerlessImageHandlerStack extends Stack {
       default: "defaultBucket, bucketNo2, bucketNo3, ...",
     });
 
+    const useSemanticUrlParameter = new CfnParameter(this, "UseSemanticUrlParameter", {
+      type: "String",
+      description: `Would you like to enable automatic semantic url? Select 'Yes' if so.`,
+      allowedValues: ["Yes", "No"],
+      default: "No",
+    });
+
     const deployDemoUIParameter = new CfnParameter(this, "DeployDemoUIParameter", {
       type: "String",
       description:
@@ -156,6 +163,7 @@ export class ServerlessImageHandlerStack extends Stack {
       enableDefaultFallbackImage: enableDefaultFallbackImageParameter.valueAsString as YesNo,
       fallbackImageS3Bucket: fallbackImageS3BucketParameter.valueAsString,
       fallbackImageS3KeyBucket: fallbackImageS3KeyParameter.valueAsString,
+      useSemanticUrl: useSemanticUrlParameter.valueAsString as YesNo,
     };
 
     const commonResources = new CommonResources(this, "CommonResources", {
@@ -226,6 +234,10 @@ export class ServerlessImageHandlerStack extends Stack {
             Parameters: [sourceBucketsParameter.logicalId],
           },
           {
+            Label: { default: "Use Semantic URL" },
+            Parameters: [useSemanticUrlParameter.logicalId],
+          },
+          {
             Label: { default: "Demo UI" },
             Parameters: [deployDemoUIParameter.logicalId],
           },
@@ -265,6 +277,7 @@ export class ServerlessImageHandlerStack extends Stack {
           [corsOriginParameter.logicalId]: { default: "CORS Origin" },
           [sourceBucketsParameter.logicalId]: { default: "Source Buckets" },
           [deployDemoUIParameter.logicalId]: { default: "Deploy Demo UI" },
+          [useSemanticUrlParameter.logicalId]: { default: "Use Semantic URL" },
           [logRetentionPeriodParameter.logicalId]: {
             default: "Log Retention Period",
           },
@@ -305,6 +318,10 @@ export class ServerlessImageHandlerStack extends Stack {
     new CfnOutput(this, "SourceBuckets", {
       value: sourceBucketsParameter.valueAsString,
       description: "Amazon S3 bucket location containing original image files.",
+    });
+    new CfnOutput(this, "UseSemanticUrl", {
+      value: useSemanticUrlParameter.valueAsString,
+      description: "Indicates whether automatic semantic URL has been enabled for the image handler API.",
     });
     new CfnOutput(this, "CorsEnabled", {
       value: corsEnabledParameter.valueAsString,
