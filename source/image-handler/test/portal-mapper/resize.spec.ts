@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PortalMapper } from "../../portal-mapper";
+import { SemanticMapper } from "../../semantic-mapper";
 
 describe("resize", () => {
   it("Should pass if the proper edit translations are applied and in the correct order", () => {
@@ -9,7 +9,7 @@ describe("resize", () => {
     const path = "/test-image-001.jpg?w=400&h=300&fit-in";
 
     // Act
-    const customMapper = new PortalMapper();
+    const customMapper = new SemanticMapper();
     const edits = customMapper.mapPathToEdits(path);
 
     // Assert
@@ -24,7 +24,7 @@ describe("resize", () => {
     const path = "/test-image-001.jpg?fit-in";
 
     // Act
-    const customMapper = new PortalMapper();
+    const customMapper = new SemanticMapper();
     const edits = customMapper.mapPathToEdits(path);
 
     // Assert
@@ -37,7 +37,7 @@ describe("resize", () => {
     const path = "/test-image-001.jpg?h=300";
 
     // Act
-    const customMapper = new PortalMapper();
+    const customMapper = new SemanticMapper();
     const edits = customMapper.mapPathToEdits(path);
 
     // Assert
@@ -52,7 +52,7 @@ describe("resize", () => {
     const path = "/test-image-001.jpg?w=400";
 
     // Act
-    const customMapper = new PortalMapper();
+    const customMapper = new SemanticMapper();
     const edits = customMapper.mapPathToEdits(path);
 
     // Assert
@@ -67,7 +67,7 @@ describe("resize", () => {
     const path = "/test-image-001.jpg?w=0&h=0";
 
     // Act
-    const customMapper = new PortalMapper();
+    const customMapper = new SemanticMapper();
     const edits = customMapper.mapPathToEdits(path);
 
     // Assert

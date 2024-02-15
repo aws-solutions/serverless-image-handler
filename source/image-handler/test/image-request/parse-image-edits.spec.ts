@@ -72,19 +72,19 @@ describe("parseImageEdits", () => {
     expect(result).toEqual(expectedResult);
   });
 
-  it("Should pass if the proper result is returned for a sample portal-type image request", () => {
+  it("Should pass if the proper result is returned for a sample semantic-type image request", () => {
     // Arrange
     const event = {
       path: "/thumbor-image.jpg?w=234&h=345",
     };
 
     process.env = {
-      REWRITE_MATCH_PATTERN: "portal",
+      USE_SEMANTIC: "Yes"
     };
 
     // Act
     const imageRequest = new ImageRequest(s3Client, secretProvider);
-    const result = imageRequest.parseImageEdits(event, RequestTypes.PORTAL);
+    const result = imageRequest.parseImageEdits(event, RequestTypes.SEMANTIC);
 
     // Assert
     const expectedResult = { resize: { width: 234, height: 345 } };

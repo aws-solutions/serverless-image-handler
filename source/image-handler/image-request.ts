@@ -18,7 +18,7 @@ import {
 } from "./lib";
 import { SecretProvider } from "./secret-provider";
 import { ThumborMapper } from "./thumbor-mapper";
-import { PortalMapper } from "./portal-mapper";
+import { SemanticMapper } from "./semantic-mapper";
 
 type OriginalImageInfo = Partial<{
   contentType: string;
@@ -247,9 +247,9 @@ export class ImageRequest {
     } else if (requestType === RequestTypes.THUMBOR) {
       const thumborMapping = new ThumborMapper();
       return thumborMapping.mapPathToEdits(event.path);
-    } else if (requestType === RequestTypes.PORTAL) {
-      const portalMapping = new PortalMapper();
-      return portalMapping.mapPathToEdits(event.path);
+    } else if (requestType === RequestTypes.SEMANTIC) {
+      const semanticMapping = new SemanticMapper();
+      return semanticMapping.mapPathToEdits(event.path);
     } else if (requestType === RequestTypes.CUSTOM) {
       const thumborMapping = new ThumborMapper();
       const parsedPath = thumborMapping.parseCustomPath(event.path);
@@ -326,14 +326,14 @@ export class ImageRequest {
     const matchThumbor1 = /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?)/i;
     const matchThumbor2 = /((.(?!(\.[^.\\/]+$)))*$)/i; // NOSONAR
     const matchThumbor3 = /.*(\.jpg$|\.jpeg$|.\.png$|\.webp$|\.tiff$|\.tif$|\.svg$|\.gif$)/i; // NOSONAR
-    const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION } = process.env;
+    const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION, USE_SEMANTIC} = process.env;
     const definedEnvironmentVariables =
       REWRITE_MATCH_PATTERN !== "" &&
       REWRITE_SUBSTITUTION !== "" &&
       REWRITE_MATCH_PATTERN !== undefined &&
       REWRITE_SUBSTITUTION !== undefined;
 
-    const isPortal = REWRITE_MATCH_PATTERN === "PORTAL";
+    const isSemantic = USE_SEMANTIC === "Yes";
 
     // Check if path is base 64 encoded
     let isBase64Encoded = true;
@@ -350,9 +350,9 @@ export class ImageRequest {
     } else if (definedEnvironmentVariables) {
       // use rewrite function then thumbor mappings
       return RequestTypes.CUSTOM;
-    } else if (isPortal) {
+    } else if (isSemantic) {
       // use rewrite function then thumbor mappings
-      return RequestTypes.PORTAL;
+      return RequestTypes.SEMANTIC;
     } else if (matchThumbor1.test(path) && (matchThumbor2.test(path) || matchThumbor3.test(path))) {
       // use thumbor mappings
       return RequestTypes.THUMBOR;

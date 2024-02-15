@@ -4,7 +4,7 @@
 
 import { ImageEdits, ImageFitTypes, ImageFormatTypes } from "./lib";
 
-export class PortalMapper {
+export class SemanticMapper {
   private static readonly EMPTY_IMAGE_EDITS: ImageEdits = {};
 
   /**
@@ -22,39 +22,6 @@ export class PortalMapper {
   }
 
   /**
-   * Enables users to migrate their current image request model to the SIH solution,
-   * without changing their legacy application code to accommodate new image requests.
-   * @param path The URL path extracted from the web request.
-   * @returns The parsed path using the match pattern and the substitution.
-   */
-  public parseCustomPath(path: string): string {
-    // Perform the substitution and return
-    const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION } = process.env;
-
-    if (path === undefined) {
-      throw new Error("CustomMapper::ParseCustomPath::PathUndefined");
-    } else if (REWRITE_MATCH_PATTERN === undefined) {
-      throw new Error("CustomMapper::ParseCustomPath::RewriteMatchPatternUndefined");
-    } else if (REWRITE_SUBSTITUTION === undefined) {
-      throw new Error("CustomMapper::ParseCustomPath::RewriteSubstitutionUndefined");
-    } else {
-      let parsedPath = "";
-
-      if (typeof REWRITE_MATCH_PATTERN === "string") {
-        const patternStrings = REWRITE_MATCH_PATTERN.split("/");
-        const flags = patternStrings.pop();
-        const parsedPatternString = REWRITE_MATCH_PATTERN.slice(1, REWRITE_MATCH_PATTERN.length - 1 - flags.length);
-        const regExp = new RegExp(parsedPatternString, flags);
-        parsedPath = path.replace(regExp, REWRITE_SUBSTITUTION);
-      } else {
-        parsedPath = path.replace(REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION);
-      }
-
-      return parsedPath;
-    }
-  }
-
-  /**
    * Maps the image path to crop image edit.
    * @param path an image path.
    * @returns image edits associated with crop.
@@ -62,7 +29,7 @@ export class PortalMapper {
   private mapCrop(path: string): ImageEdits {
     // not implemented
 
-    return PortalMapper.EMPTY_IMAGE_EDITS;
+    return SemanticMapper.EMPTY_IMAGE_EDITS;
   }
 
   /**
@@ -81,7 +48,7 @@ export class PortalMapper {
 
     // If either width or height is missing, return EMPTY_IMAGE_EDITS
     if (width === null && height === null) {
-      return PortalMapper.EMPTY_IMAGE_EDITS;
+      return SemanticMapper.EMPTY_IMAGE_EDITS;
     }
 
     const resizeEdit: ImageEdits = { resize: {} };
@@ -102,7 +69,7 @@ export class PortalMapper {
    * @returns Image edits associated with fit-in filter.
    */
   private mapFitIn(path: string): ImageEdits {
-    return path.includes("fit-in") ? { resize: { fit: ImageFitTypes.INSIDE } } : PortalMapper.EMPTY_IMAGE_EDITS;
+    return path.includes("fit-in") ? { resize: { fit: ImageFitTypes.INSIDE } } : SemanticMapper.EMPTY_IMAGE_EDITS;
   }
 
   /**
