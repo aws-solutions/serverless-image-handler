@@ -305,6 +305,50 @@ describe("setup", () => {
     expect(imageRequestInfo).toEqual(expectedResult);
   });
 
+  it("Should pass when a semantic image request is provided and populate the ImageRequest object with the proper values", async () => {
+    // Arrange
+    const event = {
+      path: "/test-image-001.jpg?w=100&h=100",
+    };
+
+    process.env =
+      {
+        SOURCE_BUCKETS: "allowedBucket001, allowedBucket002",
+        USE_SEMANTIC_URL: "Yes",
+      };
+    
+
+    // Mock
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({ Body: Buffer.from("SampleImageContent\n") });
+      },
+    }));
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const imageRequestInfo = await imageRequest.setup(event);
+    const expectedResult = {
+      requestType: RequestTypes.SEMANTIC,
+      bucket: "allowedBucket001",
+      key: "test-image-001.jpg",
+      edits: {
+        resize: { width: 100, height: 100 },
+      },
+      originalImage: Buffer.from("SampleImageContent\n"),
+      cacheControl: "max-age=31536000,public",
+      contentType: "image",
+      headers: undefined
+    };
+
+    // Assert
+    expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+      Bucket: "allowedBucket001",
+      Key: "test-image-001.jpg",
+    });
+    expect(imageRequestInfo).toEqual(expectedResult);
+  });
+
   it("Should pass when an error is caught", async () => {
     // Arrange
     const event = {

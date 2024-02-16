@@ -16,20 +16,9 @@ export class SemanticMapper {
   public mapPathToEdits(path: string): ImageEdits {
     const fileFormat = this.extractFileFormat(path);
 
-    let edits: ImageEdits = this.mergeEdits(this.mapCrop(path), this.mapResize(path), this.mapFitIn(path));
+    let edits: ImageEdits = this.mergeEdits(this.mapResize(path), this.mapFitIn(path));
 
     return edits;
-  }
-
-  /**
-   * Maps the image path to crop image edit.
-   * @param path an image path.
-   * @returns image edits associated with crop.
-   */
-  private mapCrop(path: string): ImageEdits {
-    // not implemented
-
-    return SemanticMapper.EMPTY_IMAGE_EDITS;
   }
 
   /**
@@ -38,27 +27,21 @@ export class SemanticMapper {
    * @returns Image edits associated with resize.
    */
   private mapResize(path: string): ImageEdits {
-    // Process the dimensions
-    const widthMatchResult = path.match(/w=(\d+)/);
-    const heightMatchResult = path.match(/h=(\d+)/);
+    const url = this.getUrlObject(path);
 
-    // Parse width and height from the match results
-    const width = widthMatchResult ? Number(widthMatchResult[1]) : null;
-    const height = heightMatchResult ? Number(heightMatchResult[1]) : null;
-
-    // If either width or height is missing, return EMPTY_IMAGE_EDITS
-    if (width === null && height === null) {
-      return SemanticMapper.EMPTY_IMAGE_EDITS;
-    }
+    // Extract query parameters (w and h)
+    const queryParams = new URLSearchParams(url.search);
+    const width = Number(queryParams.get("w"));
+    const height = Number(queryParams.get("h"));
 
     const resizeEdit: ImageEdits = { resize: {} };
 
     // If width or height is 0 or missing, fit would be inside.
-    if (width === 0 || height === 0 || width === null || height === null) {
+    if (width === 0 || height === 0) {
       resizeEdit.resize.fit = ImageFitTypes.INSIDE;
     }
-    resizeEdit.resize.width = width === 0 || width === null ? null : width;
-    resizeEdit.resize.height = height === 0 || height === null ? null : height;
+    resizeEdit.resize.width = width === 0 ? null : width;
+    resizeEdit.resize.height = height === 0 ? null : height;
 
     return resizeEdit;
   }
@@ -69,7 +52,13 @@ export class SemanticMapper {
    * @returns Image edits associated with fit-in filter.
    */
   private mapFitIn(path: string): ImageEdits {
-    return path.includes("fit-in") ? { resize: { fit: ImageFitTypes.INSIDE } } : SemanticMapper.EMPTY_IMAGE_EDITS;
+    const url = this.getUrlObject(path);
+
+    // Extract query parameters (w and h)
+    const queryParams = new URLSearchParams(url.search);
+    return queryParams.get("fit") === "thumb"
+      ? { resize: { fit: ImageFitTypes.COVER } }
+      : SemanticMapper.EMPTY_IMAGE_EDITS;
   }
 
   /**
@@ -101,6 +90,8 @@ export class SemanticMapper {
   private isObject(obj: unknown): boolean {
     return obj && typeof obj === "object" && !Array.isArray(obj);
   }
+
+  private getUrlObject = (path: string) => { return new URL(path, 'http://dummy.net'); }
 
   private extractFileFormat(path: string): ImageFormatTypes {
     const matchResult = path.match(/\.([a-z0-9]+)(\?|$)/i);

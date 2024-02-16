@@ -6,7 +6,7 @@ import { SemanticMapper } from "../../semantic-mapper";
 describe("resize", () => {
   it("Should pass if the proper edit translations are applied and in the correct order", () => {
     // Arrange
-    const path = "/test-image-001.jpg?w=400&h=300&fit-in";
+    const path = "/test-image-001.jpg?w=400&h=300";
 
     // Act
     const customMapper = new SemanticMapper();
@@ -14,23 +14,11 @@ describe("resize", () => {
 
     // Assert
     const expectedResult = {
-      edits: { resize: { width: 400, height: 300, fit: "inside" } },
+      edits: { resize: { width: 400, height: 300 } },
     };
     expect(edits).toEqual(expectedResult.edits);
   });
 
-  it("Should pass if the proper edit translations are applied and in the correct order", () => {
-    // Arrange
-    const path = "/test-image-001.jpg?fit-in";
-
-    // Act
-    const customMapper = new SemanticMapper();
-    const edits = customMapper.mapPathToEdits(path);
-
-    // Assert
-    const expectedResult = { edits: { resize: { fit: "inside" } } };
-    expect(edits).toEqual(expectedResult.edits);
-  });
 
   it("Should pass if the proper edit translations are applied and in the correct order", () => {
     // Arrange
