@@ -221,7 +221,11 @@ export class ImageRequest {
         const sourceBuckets = this.getAllowedSourceBuckets();
         return sourceBuckets[0];
       }
-    } else if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM || requestType === RequestTypes.SEMANTIC) {
+    } else if (
+      requestType === RequestTypes.THUMBOR ||
+      requestType === RequestTypes.CUSTOM ||
+      requestType === RequestTypes.SEMANTIC
+    ) {
       // Use the default image source bucket env var
       const sourceBuckets = this.getAllowedSourceBuckets();
       return sourceBuckets[0];
@@ -276,6 +280,22 @@ export class ImageRequest {
       return key;
     }
 
+    if (requestType === RequestTypes.SEMANTIC) {
+      let { path } = event;
+
+      const regex = /^\/(.*?)(\?.*)?$/;
+      const match = path.match(regex);
+
+      if (match) {
+        return match[1];
+      } else
+        throw new ImageHandlerError(
+          StatusCodes.NOT_FOUND,
+          "ImageEdits::CannotFindImage::SemanticURL",
+          "The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists."
+        );
+    }
+
     if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
       let { path } = event;
 
@@ -326,7 +346,7 @@ export class ImageRequest {
     const matchThumbor1 = /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?)/i;
     const matchThumbor2 = /((.(?!(\.[^.\\/]+$)))*$)/i; // NOSONAR
     const matchThumbor3 = /.*(\.jpg$|\.jpeg$|.\.png$|\.webp$|\.tiff$|\.tif$|\.svg$|\.gif$)/i; // NOSONAR
-    const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION, USE_SEMANTIC_URL} = process.env;
+    const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION, USE_SEMANTIC_URL } = process.env;
     const definedEnvironmentVariables =
       REWRITE_MATCH_PATTERN !== "" &&
       REWRITE_SUBSTITUTION !== "" &&

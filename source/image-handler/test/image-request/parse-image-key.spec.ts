@@ -291,4 +291,49 @@ describe("parseImageKey", () => {
     const expectedResult = "image.jpg";
     expect(result).toEqual(expectedResult);
   });
+
+  it("Should pass if an image key value is provided in the semantic request and the path has resize filter without folder", () => {
+    // Arrange
+    const event = {
+      path: "/semantic-image (1) suffix.jpg?w=100&h=100",
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseImageKey(event, RequestTypes.SEMANTIC);
+
+    // Assert
+    const expectedResult = "semantic-image (1) suffix.jpg";
+    expect(result).toEqual(expectedResult);
+  });
+
+  it("Should pass if an image key value is provided in the semantic request and the path has resize filter with folder", () => {
+    // Arrange
+    const event = {
+      path: "/folder/semantic-image (1) suffix.jpg?w=100&h=100",
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseImageKey(event, RequestTypes.SEMANTIC);
+
+    // Assert
+    const expectedResult = "folder/semantic-image (1) suffix.jpg";
+    expect(result).toEqual(expectedResult);
+  });
+
+  it("Should pass if an image key value is provided in the semantic request and the path has only folder", () => {
+    // Arrange
+    const event = {
+      path: "/folder/semantic-image (1) suffix.jpg",
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseImageKey(event, RequestTypes.SEMANTIC);
+
+    // Assert
+    const expectedResult = "folder/semantic-image (1) suffix.jpg";
+    expect(result).toEqual(expectedResult);
+  });
 });

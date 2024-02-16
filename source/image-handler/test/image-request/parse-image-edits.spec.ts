@@ -79,7 +79,7 @@ describe("parseImageEdits", () => {
     };
 
     process.env = {
-      USE_SEMANTIC_URL: "Yes"
+      USE_SEMANTIC_URL: "Yes",
     };
 
     // Act
