@@ -221,7 +221,7 @@ export class ImageRequest {
         const sourceBuckets = this.getAllowedSourceBuckets();
         return sourceBuckets[0];
       }
-    } else if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
+    } else if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM || requestType === RequestTypes.SEMANTIC) {
       // Use the default image source bucket env var
       const sourceBuckets = this.getAllowedSourceBuckets();
       return sourceBuckets[0];
