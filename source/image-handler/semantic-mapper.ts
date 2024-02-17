@@ -91,7 +91,13 @@ export class SemanticMapper {
     return obj && typeof obj === "object" && !Array.isArray(obj);
   }
 
-  private getUrlObject = (path: string) => { return new URL(path, 'http://dummy.net'); }
+  private getUrlObject = (path: string) => {
+    if (path.startsWith("http")) {
+      return new URL(path);
+    } else {
+      return new URL(path, "https://dummy.net");
+    }
+  };
 
   private extractFileFormat(path: string): ImageFormatTypes {
     const matchResult = path.match(/\.([a-z0-9]+)(\?|$)/i);
