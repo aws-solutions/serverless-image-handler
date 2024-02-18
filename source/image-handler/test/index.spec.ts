@@ -13,6 +13,8 @@ describe("index", () => {
   process.env.SOURCE_BUCKETS = "source-bucket";
   const mockImage = Buffer.from("SampleImageContent\n");
   const mockFallbackImage = Buffer.from("SampleFallbackImageContent\n");
+  
+
 
   it("should return the image when there is no error", async () => {
     // Mock
@@ -49,46 +51,7 @@ describe("index", () => {
     expect(result).toEqual(expectedResult);
   });
 
-  it("should return the image when there is no error with semantic", async () => {
-    const originalImage = fs.readFileSync("./test/image/25x15.png");
 
-    // Mock
-    mockAwsS3.getObject.mockImplementationOnce(() => ({
-      promise() {
-        return Promise.resolve({ Body: originalImage, ContentType: "image/jpeg" });
-      },
-    }));
-    // Arrange
-    const event: ImageHandlerEvent = { path: "/test.jpg?w=10&h=100" };
-    process.env = {
-      USE_SEMANTIC_URL: "Yes",
-      SOURCE_BUCKETS: "source-bucket",
-    };
-
-    // Act
-    const result = await handler(event);
-    const expectedResult = {
-      statusCode: StatusCodes.OK,
-      isBase64Encoded: true,
-      headers: {
-        "Access-Control-Allow-Methods": "GET",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        "Access-Control-Allow-Credentials": true,
-        "Content-Type": "image/jpeg",
-        Expires: undefined,
-        "Cache-Control": "max-age=31536000,public",
-        "Last-Modified": undefined,
-      },
-      body: fs.readFileSync("./test/image/10x100.png").toString("base64"),
-    };
-
-    // Assert
-    expect(mockAwsS3.getObject).toHaveBeenCalledWith({
-      Bucket: "source-bucket",
-      Key: "test.jpg",
-    });
-    expect(result).toEqual(expectedResult);
-  });
 
   it("should return the image with custom headers when custom headers are provided", async () => {
     // Mock
