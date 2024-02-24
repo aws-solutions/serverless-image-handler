@@ -34,19 +34,29 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
     const imageRequestInfo = await imageRequest.setup(event);
     console.info(imageRequestInfo);
 
-    const processedRequest = await imageHandler.process(imageRequestInfo);
-
     let headers = getResponseHeaders(false, isAlb);
     headers["Content-Type"] = imageRequestInfo.contentType;
     // eslint-disable-next-line dot-notation
     headers["Expires"] = imageRequestInfo.expires;
     headers["Last-Modified"] = imageRequestInfo.lastModified;
     headers["Cache-Control"] = imageRequestInfo.cacheControl;
+    headers["ETag"] = imageRequestInfo.eTag;
 
     // Apply the custom headers overwriting any that may need overwriting
     if (imageRequestInfo.headers) {
       headers = { ...headers, ...imageRequestInfo.headers };
     }
+
+    if (isIfNoneMatchHeaderMatching(event.headers, imageRequestInfo.eTag)) {
+      return {
+        statusCode: StatusCodes.NOT_MODIFIED,
+        isBase64Encoded: false,
+        headers,
+        body: null,
+      };
+    }
+
+    const processedRequest = await imageHandler.process(imageRequestInfo);
 
     return {
       statusCode: StatusCodes.OK,
@@ -88,7 +98,7 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
       }
     }
 
-    const { statusCode, body } = getErrorResponse(error);
+    const {statusCode, body} = getErrorResponse(error);
     return {
       statusCode,
       isBase64Encoded: false,
@@ -96,6 +106,27 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
       body,
     };
   }
+}
+
+/**
+ * Checks if the If-None-Match header matches the original ETag value.
+ *
+ * @param headers - The headers object containing the If-None-Match header. Can be nullable.
+ * @param originalETag - The original ETag value to compare against. Can be nullable.
+ * @returns `true` if the If-None-Match header matches the original ETag value, otherwise `false`.
+ */
+function isIfNoneMatchHeaderMatching(headers?: Headers, originalETag?: string): boolean {
+  // Use optional chaining to check if headers is not null or undefined
+  const ifNoneMatchValue = headers?.['If-None-Match'];
+
+  // Check if both If-None-Match and originalETag are present and not empty
+  return (
+    ifNoneMatchValue !== undefined &&
+    ifNoneMatchValue !== '' &&
+    originalETag !== undefined &&
+    originalETag !== '' &&
+    ifNoneMatchValue === originalETag
+  );
 }
 
 /**

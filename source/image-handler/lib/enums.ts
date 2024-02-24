@@ -3,6 +3,7 @@
 
 export enum StatusCodes {
   OK = 200,
+  NOT_MODIFIED = 304,
   BAD_REQUEST = 400,
   FORBIDDEN = 403,
   NOT_FOUND = 404,
