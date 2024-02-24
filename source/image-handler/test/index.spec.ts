@@ -49,6 +49,91 @@ describe("index", () => {
     expect(result).toEqual(expectedResult);
   });
 
+  it("should return 304 Not Modified if original ETag value matches the If-None-Match header", async () => {
+    // Mock
+    const eTagValue: string = "be7f613c70fe15d7a01c8c07c08c9bc7"
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({ Body: mockImage, ContentType: "image/jpeg", ETag: eTagValue });
+      },
+    }));
+    // Arrange
+    const event: ImageHandlerEvent = {
+      path: "/test.jpg",
+      headers: {
+        'If-None-Match': eTagValue
+      }
+    };
+
+    // Act
+    const result = await handler(event);
+    const expectedResult = {
+      statusCode: StatusCodes.NOT_MODIFIED,
+      isBase64Encoded: false,
+      headers: {
+        "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Credentials": true,
+        "Content-Type": "image/jpeg",
+        Expires: undefined,
+        "Cache-Control": "max-age=31536000,public",
+        "Last-Modified": undefined,
+        "ETag": eTagValue
+      },
+      body: null,
+    };
+
+    // Assert
+    expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+      Bucket: "source-bucket",
+      Key: "test.jpg",
+    });
+    expect(result).toEqual(expectedResult);
+  });
+
+  it("should not return 304 Not Modified if original ETag value doesn't match the If-None-Match header", async () => {
+    // Mock
+    const eTagValue: string = "be7f613c70fe15d7a01c8c07c08c9bc7"
+    const ifNoneMatchValue: string = "e9534f40d6a8812f644053d8a6ef568e"
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({ Body: mockImage, ContentType: "image/jpeg", ETag: eTagValue });
+      },
+    }));
+    // Arrange
+    const event: ImageHandlerEvent = {
+      path: "/test.jpg",
+      headers: {
+        'If-None-Match': ifNoneMatchValue
+      }
+    };
+
+    // Act
+    const result = await handler(event);
+    const expectedResult = {
+      statusCode: StatusCodes.OK,
+      isBase64Encoded: true,
+      headers: {
+        "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Credentials": true,
+        "Content-Type": "image/jpeg",
+        Expires: undefined,
+        "Cache-Control": "max-age=31536000,public",
+        "Last-Modified": undefined,
+        "ETag": eTagValue
+      },
+      body: mockImage.toString("base64"),
+    };
+
+    // Assert
+    expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+      Bucket: "source-bucket",
+      Key: "test.jpg",
+    });
+    expect(result).toEqual(expectedResult);
+  });
+
   it("should return the image with custom headers when custom headers are provided", async () => {
     // Mock
     mockAwsS3.getObject.mockImplementationOnce(() => ({
