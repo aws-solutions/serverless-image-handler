@@ -15,6 +15,16 @@ export class SemanticMapper {
    */
   public mapPathToEdits(event: ImageHandlerEvent): ImageEdits {
 
+    if([event.multiValueQueryStringParameters?.h,
+      event.multiValueQueryStringParameters?.w,
+      event.multiValueQueryStringParameters?.fit,
+      event.multiValueQueryStringParameters?.fm,
+      event.multiValueQueryStringParameters?.q]
+    .some((p) => { p.length > 1; }))
+    {
+      throw new Error("Multiple values for the same parameter are not allowed.");
+    }
+
     let edits: ImageEdits = this.mergeEdits(
       this.mapFormat(event.path, event.queryStringParameters?.fm, event.queryStringParameters?.q),
       this.mapResize(event.queryStringParameters), 
@@ -32,8 +42,11 @@ export class SemanticMapper {
     h?: string | number, 
     w?: string | number}): ImageEdits {
 
-    const width = queryParams?.w ? Number(queryParams.w) : 0;
-    const height = queryParams?.h ? Number(queryParams.h) : 0;
+    const [width, height] = [queryParams?.w, queryParams?.h].map((dim) => 
+    {
+      const intDim = parseInt(dim as string);
+      return isNaN(intDim) ? 0 : intDim;
+    });
 
     const resizeEdit: ImageEdits = { resize: {} };
 
@@ -111,7 +124,8 @@ export class SemanticMapper {
       const jpgFormats = [ImageFormatTypes.JPG, ImageFormatTypes.JPEG];
 
       if (jpgFormats.includes(format) && !jpgFormats.includes(originalFormat)) {
-        return { [format] : { quality: quality ? Number(quality) : 60 } };
+        const qualityValue = quality ? Number(quality) : Number.NaN;
+        return { [format] : { quality: isNaN(qualityValue) ? 60 : qualityValue } };
       }
 
       if (

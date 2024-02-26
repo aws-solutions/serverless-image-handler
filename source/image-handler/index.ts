@@ -24,8 +24,7 @@ const secretProvider = new SecretProvider(secretsManagerClient);
  * @returns Processed request response.
  */
 export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExecutionResult> {
-  const source = JSON.stringify(event, null, 2);
-  console.info("Received event:", source);
+  console.info("Received event:", JSON.stringify(event, null, 2));
 
   const imageRequest = new ImageRequest(s3Client, secretProvider);
   const imageHandler = new ImageHandler(s3Client, rekognitionClient);
@@ -43,11 +42,6 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
     headers["Expires"] = imageRequestInfo.expires;
     headers["Last-Modified"] = imageRequestInfo.lastModified;
     headers["Cache-Control"] = imageRequestInfo.cacheControl;
-    headers["SourceBody"] = JSON.stringify({ 
-      path: event.path,
-      queryStringParameters: event.queryStringParameters,
-      multiValueQueryStringParameters: event.multiValueQueryStringParameters,
-    }, null, 2);
 
     // Apply the custom headers overwriting any that may need overwriting
     if (imageRequestInfo.headers) {
@@ -82,7 +76,6 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
         headers["Content-Type"] = defaultFallbackImage.ContentType;
         headers["Last-Modified"] = defaultFallbackImage.LastModified;
         headers["Cache-Control"] = "max-age=31536000,public";
-        headers["SourceBody"] = source;
 
         return {
           statusCode: error.status ? error.status : StatusCodes.INTERNAL_SERVER_ERROR,
