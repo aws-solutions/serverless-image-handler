@@ -10,6 +10,13 @@ export interface ImageHandlerEvent {
   path?: string;
   queryStringParameters?: {
     signature: string;
+    h?: string | number;
+    w?: string | number;
+    fit?: string;
+    fm?: string;
+  };
+  multiValueQueryStringParameters: {
+    [x: string]: string[];
   };
   requestContext?: {
     elb?: unknown;
