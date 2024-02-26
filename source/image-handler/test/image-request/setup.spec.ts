@@ -316,12 +316,10 @@ describe("setup", () => {
       }
     };
 
-    process.env =
-      {
+    process.env = {
         SOURCE_BUCKETS: "allowedBucket001, allowedBucket002",
         USE_SEMANTIC_URL: "Yes",
       };
-    
 
     // Mock
     mockAwsS3.getObject.mockImplementationOnce(() => ({
@@ -343,7 +341,7 @@ describe("setup", () => {
       originalImage: Buffer.from("SampleImageContent\n"),
       cacheControl: "max-age=31536000,public",
       contentType: "image",
-      headers: undefined
+      headers: undefined,
     };
 
     // Assert

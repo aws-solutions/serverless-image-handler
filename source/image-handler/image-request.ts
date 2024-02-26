@@ -287,7 +287,7 @@ export class ImageRequest {
       const match = path.match(regex);
 
       if (match) {
-        return match[1];
+        return decodeURIComponent(match[1]);
       } else
         throw new ImageHandlerError(
           StatusCodes.NOT_FOUND,

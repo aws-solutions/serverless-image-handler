@@ -144,13 +144,13 @@ export class BackEnd extends Construct {
       maxTtl: Duration.days(365),
       enableAcceptEncodingGzip: false,
       headerBehavior: CacheHeaderBehavior.allowList("origin", "accept"),
-      queryStringBehavior: CacheQueryStringBehavior.allowList("signature"),
+      queryStringBehavior: CacheQueryStringBehavior.allowList("signature", "h", "w", "fit", "fm", "q"),
     });
 
     const originRequestPolicy = new OriginRequestPolicy(this, "OriginRequestPolicy", {
       originRequestPolicyName: `ServerlessImageHandler-${props.uuid}`,
       headerBehavior: CacheHeaderBehavior.allowList("origin", "accept"),
-      queryStringBehavior: CacheQueryStringBehavior.allowList("signature"),
+      queryStringBehavior: CacheQueryStringBehavior.allowList("signature", "h", "w", "fit", "fm", "q"),
     });
 
     const apiGatewayRestApi = RestApi.fromRestApiId(
