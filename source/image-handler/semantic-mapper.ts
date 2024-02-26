@@ -20,7 +20,7 @@ export class SemanticMapper {
       event.multiValueQueryStringParameters?.fit,
       event.multiValueQueryStringParameters?.fm,
       event.multiValueQueryStringParameters?.q]
-    .some((p) => { p.length > 1; }))
+    .some((p) => { p?.length > 1; }))
     {
       throw new Error("Multiple values for the same parameter are not allowed.");
     }
