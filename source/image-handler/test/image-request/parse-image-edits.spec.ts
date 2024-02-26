@@ -75,7 +75,12 @@ describe("parseImageEdits", () => {
   it("Should pass if the proper result is returned for a sample semantic-type image request", () => {
     // Arrange
     const event = {
-      path: "/thumbor-image.jpg?w=234&h=345",
+      path: "/thumbor-image.jpg",
+      queryStringParameters: {
+        signature: "dummySig",
+        w: "234",
+        h: "345",
+      },
     };
 
     process.env = {

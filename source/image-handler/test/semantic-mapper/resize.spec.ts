@@ -6,11 +6,18 @@ import { SemanticMapper } from "../../semantic-mapper";
 describe("resize", () => {
   it("Should pass if the proper edit translations are applied and in the correct order", () => {
     // Arrange
-    const path = "/test-image-001.jpg?w=400&h=300";
+    const event = {
+      path:"/test-image-001.jpg",
+      queryStringParameters: {
+        signature: "dummySig",
+        w: 400,
+        h: 300,
+      },
+    };
 
     // Act
     const customMapper = new SemanticMapper();
-    const edits = customMapper.mapPathToEdits(path);
+    const edits = customMapper.mapPathToEdits(event);
 
     // Assert
     const expectedResult = {
@@ -21,11 +28,17 @@ describe("resize", () => {
 
   it("Should pass if the proper edit translations are applied and in the correct order", () => {
     // Arrange
-    const path = "/test-image-001.jpg?h=300";
+    const event = {
+      path:"/test-image-001.jpg",
+      queryStringParameters: {
+        signature: "dummySig",
+        h: 300,
+      },
+    };
 
     // Act
     const customMapper = new SemanticMapper();
-    const edits = customMapper.mapPathToEdits(path);
+    const edits = customMapper.mapPathToEdits(event);
 
     // Assert
     const expectedResult = {
@@ -36,11 +49,17 @@ describe("resize", () => {
 
   it("Should pass if the proper edit translations are applied and in the correct order", () => {
     // Arrange
-    const path = "/test-image-001.jpg?w=400";
+    const event = {
+      path:"/test-image-001.jpg",
+      queryStringParameters: {
+        signature: "dummySig",
+        w: 400,
+      },
+    };
 
     // Act
     const customMapper = new SemanticMapper();
-    const edits = customMapper.mapPathToEdits(path);
+    const edits = customMapper.mapPathToEdits(event);
 
     // Assert
     const expectedResult = {
@@ -51,11 +70,18 @@ describe("resize", () => {
 
   it("Should pass if the proper edit translations are applied and in the correct order", () => {
     // Arrange
-    const path = "/test-image-001.jpg?w=0&h=0";
+    const event = {
+      path:"/test-image-001.jpg",
+      queryStringParameters: {
+        signature: "dummySig",
+        w: 0,
+        h: 0
+      },
+    };
 
     // Act
     const customMapper = new SemanticMapper();
-    const edits = customMapper.mapPathToEdits(path);
+    const edits = customMapper.mapPathToEdits(event);
 
     // Assert
     const expectedResult = {
@@ -66,11 +92,13 @@ describe("resize", () => {
 
   it("Tests error on deployment, no parameters produces these edits", () => {
     // Arrange
-    const path = "/test-image-001.jpg";
+    const event = {
+      path:"/test-image-001.jpg",
+    }
 
     // Act
     const customMapper = new SemanticMapper();
-    const edits = customMapper.mapPathToEdits(path);
+    const edits = customMapper.mapPathToEdits(event);
 
     // Assert
     const expectedResult = {

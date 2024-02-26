@@ -47,7 +47,7 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
       path: event.path,
       queryStringParameters: event.queryStringParameters,
       multiValueQueryStringParameters: event.multiValueQueryStringParameters,
-    }, null, 2);;
+    }, null, 2);
 
     // Apply the custom headers overwriting any that may need overwriting
     if (imageRequestInfo.headers) {

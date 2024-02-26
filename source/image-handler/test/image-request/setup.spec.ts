@@ -308,7 +308,12 @@ describe("setup", () => {
   it("Should pass when a semantic image request is provided and populate the ImageRequest object with the proper values", async () => {
     // Arrange
     const event = {
-      path: "/test-image-001.jpg?w=100&h=100",
+      path: "/test-image-001.jpg",
+      queryStringParameters: {
+        signature: "dummySig",
+        w: "100",
+        h: "100",
+      }
     };
 
     process.env =

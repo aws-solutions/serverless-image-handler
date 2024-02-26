@@ -253,8 +253,7 @@ export class ImageRequest {
       return thumborMapping.mapPathToEdits(event.path);
     } else if (requestType === RequestTypes.SEMANTIC) {
       const semanticMapping = new SemanticMapper();
-      const queryString = event.queryStringParameters ? Object.entries(event.queryStringParameters).map(([key, value]) => value ? `${key}=${value}` : `${key}`) : null;
-      return semanticMapping.mapPathToEdits(queryString ? `${event.path}?${queryString}` : event.path);
+      return semanticMapping.mapPathToEdits(event);
     } else if (requestType === RequestTypes.CUSTOM) {
       const thumborMapping = new ThumborMapper();
       const parsedPath = thumborMapping.parseCustomPath(event.path);

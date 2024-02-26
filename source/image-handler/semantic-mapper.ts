@@ -2,7 +2,7 @@
 // Based on Thumbor mapper
 // SPDX-License-Identifier: Apache-2.0
 
-import { ImageEdits, ImageFitTypes, ImageFormatTypes } from "./lib";
+import { ImageEdits, ImageFitTypes, ImageFormatTypes, ImageHandlerEvent } from "./lib";
 
 export class SemanticMapper {
   private static readonly EMPTY_IMAGE_EDITS: ImageEdits = {};
@@ -13,26 +13,27 @@ export class SemanticMapper {
    * @param path The request path.
    * @returns Image edits based on the request path.
    */
-  public mapPathToEdits(path: string): ImageEdits {
-    const fileFormat = this.extractFileFormat(path);
+  public mapPathToEdits(event: ImageHandlerEvent): ImageEdits {
 
-    let edits: ImageEdits = this.mergeEdits(this.mapResize(path), this.mapFitIn(path));
+    let edits: ImageEdits = this.mergeEdits(
+      this.mapFormat(event.path, event.queryStringParameters?.fm, event.queryStringParameters?.q),
+      this.mapResize(event.queryStringParameters), 
+      this.mapFitIn(event.queryStringParameters?.fit));
 
     return edits;
   }
 
   /**
    * Maps the image path to resize image edit.
-   * @param path An image path.
+   * @param queryParams Querry params optionally containing w for width and h for height.
    * @returns Image edits associated with resize.
    */
-  private mapResize(path: string): ImageEdits {
-    const url = this.getUrlObject(path);
+  private mapResize(queryParams: { 
+    h?: string | number, 
+    w?: string | number}): ImageEdits {
 
-    // Extract query parameters (w and h)
-    const queryParams = new URLSearchParams(url.search);
-    const width = Number(queryParams.get("w"));
-    const height = Number(queryParams.get("h"));
+    const width = queryParams?.w ? Number(queryParams.w) : 0;
+    const height = queryParams?.h ? Number(queryParams.h) : 0;
 
     const resizeEdit: ImageEdits = { resize: {} };
 
@@ -51,14 +52,18 @@ export class SemanticMapper {
    * @param path An image path.
    * @returns Image edits associated with fit-in filter.
    */
-  private mapFitIn(path: string): ImageEdits {
-    const url = this.getUrlObject(path);
+  private mapFitIn(fit: ImageFitTypes): ImageEdits {
+    
+    // Allow for thumb to be used as synonym for cover
+    if((fit as any) === "thumb") {
+      return { resize: { fit: ImageFitTypes.COVER } };
+    }
 
-    // Extract query parameters (w and h)
-    const queryParams = new URLSearchParams(url.search);
-    return queryParams.get("fit") === "thumb"
-      ? { resize: { fit: ImageFitTypes.COVER } }
-      : SemanticMapper.EMPTY_IMAGE_EDITS;
+    if(Object.values(ImageFitTypes).includes(fit)) {
+      return { resize: { fit } };
+    }
+
+    return SemanticMapper.EMPTY_IMAGE_EDITS;
   }
 
   /**
@@ -99,13 +104,29 @@ export class SemanticMapper {
     }
   };
 
-  private extractFileFormat(path: string): ImageFormatTypes {
-    const matchResult = path.match(/\.([a-z0-9]+)(\?|$)/i);
-    if (matchResult) {
-      const format = matchResult[1].toUpperCase();
-      if (format in ImageFormatTypes) {
-        return ImageFormatTypes[format as keyof typeof ImageFormatTypes];
+  private mapFormat(path: string, format?: ImageFormatTypes, quality?: string | number): Record<string, any> {
+
+    if (Object.values(ImageFormatTypes).includes(format)) {
+      const originalFormat = path.substring(path.lastIndexOf(".") + 1) as ImageFormatTypes;
+      const jpgFormats = [ImageFormatTypes.JPG, ImageFormatTypes.JPEG];
+
+      if (jpgFormats.includes(format) && !jpgFormats.includes(originalFormat)) {
+        return { [format] : { quality: quality ? Number(quality) : 60 } };
+      }
+
+      if (
+        [
+          ImageFormatTypes.PNG,
+          ImageFormatTypes.WEBP,
+          ImageFormatTypes.TIFF,
+          ImageFormatTypes.HEIF,
+          ImageFormatTypes.GIF,
+        ].includes(format)
+      ) {
+        return { [format] : {} };
       }
     }
+
+    return {}; 
   }
 }
