@@ -43,7 +43,11 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
     headers["Expires"] = imageRequestInfo.expires;
     headers["Last-Modified"] = imageRequestInfo.lastModified;
     headers["Cache-Control"] = imageRequestInfo.cacheControl;
-    headers["SourceBody"] = source;
+    headers["SourceBody"] = JSON.stringify({ 
+      path: event.path,
+      queryStringParameters: event.queryStringParameters,
+      multiValueQueryStringParameters: event.multiValueQueryStringParameters,
+    }, null, 2);;
 
     // Apply the custom headers overwriting any that may need overwriting
     if (imageRequestInfo.headers) {
