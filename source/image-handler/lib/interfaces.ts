@@ -3,13 +3,21 @@
 
 import sharp from "sharp";
 
-import { ImageFormatTypes, RequestTypes, StatusCodes } from "./enums";
+import { ImageFitTypes, ImageFormatTypes, RequestTypes, StatusCodes } from "./enums";
 import { Headers, ImageEdits } from "./types";
 
 export interface ImageHandlerEvent {
   path?: string;
   queryStringParameters?: {
     signature: string;
+    h?: string | number; // Height
+    w?: string | number; // Width
+    fit?: ImageFitTypes; // Fit
+    fm?: ImageFormatTypes; // Format
+    q?: string | number; // Quality
+  };
+  multiValueQueryStringParameters?: {
+    [x: string]: string[];
   };
   requestContext?: {
     elb?: unknown;

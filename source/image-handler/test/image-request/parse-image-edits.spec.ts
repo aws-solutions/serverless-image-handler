@@ -72,6 +72,30 @@ describe("parseImageEdits", () => {
     expect(result).toEqual(expectedResult);
   });
 
+  it("Should pass if the proper result is returned for a sample semantic-type image request", () => {
+    // Arrange
+    const event = {
+      path: "/thumbor-image.jpg",
+      queryStringParameters: {
+        signature: "dummySig",
+        w: "234",
+        h: "345",
+      },
+    };
+
+    process.env = {
+      USE_SEMANTIC_URL: "Yes",
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseImageEdits(event, RequestTypes.SEMANTIC);
+
+    // Assert
+    const expectedResult = { resize: { width: 234, height: 345 } };
+    expect(result).toEqual(expectedResult);
+  });
+
   it("Should throw an error if a requestType is not specified and/or the image edits cannot be parsed", () => {
     // Arrange
     const event = {

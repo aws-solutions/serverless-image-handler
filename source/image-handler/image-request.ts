@@ -18,6 +18,7 @@ import {
 } from "./lib";
 import { SecretProvider } from "./secret-provider";
 import { ThumborMapper } from "./thumbor-mapper";
+import { SemanticMapper } from "./semantic-mapper";
 
 type OriginalImageInfo = Partial<{
   contentType: string;
@@ -30,7 +31,7 @@ type OriginalImageInfo = Partial<{
 export class ImageRequest {
   private static readonly DEFAULT_EFFORT = 4;
 
-  constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) { }
+  constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) {}
 
   /**
    * Determines the output format of an image
@@ -220,7 +221,11 @@ export class ImageRequest {
         const sourceBuckets = this.getAllowedSourceBuckets();
         return sourceBuckets[0];
       }
-    } else if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
+    } else if (
+      requestType === RequestTypes.THUMBOR ||
+      requestType === RequestTypes.CUSTOM ||
+      requestType === RequestTypes.SEMANTIC
+    ) {
       // Use the default image source bucket env var
       const sourceBuckets = this.getAllowedSourceBuckets();
       return sourceBuckets[0];
@@ -246,6 +251,9 @@ export class ImageRequest {
     } else if (requestType === RequestTypes.THUMBOR) {
       const thumborMapping = new ThumborMapper();
       return thumborMapping.mapPathToEdits(event.path);
+    } else if (requestType === RequestTypes.SEMANTIC) {
+      const semanticMapping = new SemanticMapper();
+      return semanticMapping.mapPathToEdits(event);
     } else if (requestType === RequestTypes.CUSTOM) {
       const thumborMapping = new ThumborMapper();
       const parsedPath = thumborMapping.parseCustomPath(event.path);
@@ -270,6 +278,22 @@ export class ImageRequest {
       // Decode the image request and return the image key
       const { key } = this.decodeRequest(event);
       return key;
+    }
+
+    if (requestType === RequestTypes.SEMANTIC) {
+      let { path } = event;
+
+      const regex = /^\/(.*?)(\?.*)?$/;
+      const match = path.match(regex);
+
+      if (match) {
+        return decodeURIComponent(match[1]);
+      } else
+        throw new ImageHandlerError(
+          StatusCodes.NOT_FOUND,
+          "ImageEdits::CannotFindImage::SemanticURL",
+          "The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists."
+        );
     }
 
     if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
@@ -322,12 +346,14 @@ export class ImageRequest {
     const matchThumbor1 = /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?)/i;
     const matchThumbor2 = /((.(?!(\.[^.\\/]+$)))*$)/i; // NOSONAR
     const matchThumbor3 = /.*(\.jpg$|\.jpeg$|.\.png$|\.webp$|\.tiff$|\.tif$|\.svg$|\.gif$)/i; // NOSONAR
-    const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION } = process.env;
+    const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION, USE_SEMANTIC_URL } = process.env;
     const definedEnvironmentVariables =
       REWRITE_MATCH_PATTERN !== "" &&
       REWRITE_SUBSTITUTION !== "" &&
       REWRITE_MATCH_PATTERN !== undefined &&
       REWRITE_SUBSTITUTION !== undefined;
+
+    const isSemantic = USE_SEMANTIC_URL === "Yes";
 
     // Check if path is base 64 encoded
     let isBase64Encoded = true;
@@ -341,6 +367,9 @@ export class ImageRequest {
     if (matchDefault.test(path) && isBase64Encoded) {
       // use sharp
       return RequestTypes.DEFAULT;
+    } else if (isSemantic) {
+      // use rewrite function then thumbor mappings
+      return RequestTypes.SEMANTIC;
     } else if (definedEnvironmentVariables) {
       // use rewrite function then thumbor mappings
       return RequestTypes.CUSTOM;
