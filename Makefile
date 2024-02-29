@@ -1,7 +1,8 @@
-REGION 				?= eu-west-1
+REGION 					?= eu-west-1
 APP_SUFFIX 			?=
-MODE 				?= plan
-DO_TF_UPGRADE 		?= false
+MODE 						?= plan
+DO_TF_UPGRADE 	?= false
+FUNC						?= image-handler
 
 ACCOUNT_ID 			= $(eval ACCOUNT_ID := $(shell aws --output text sts get-caller-identity --query "Account"))$(ACCOUNT_ID)
 VERSION 			= $(eval VERSION := $$(shell git rev-parse --short HEAD))$(VERSION)
