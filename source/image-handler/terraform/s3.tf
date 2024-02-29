@@ -173,11 +173,12 @@ resource "aws_s3_object" "robots_txt" {
   count         = var.app_suffix == "" ? 1 : 0
   bucket        = aws_s3_bucket.images[count.index].bucket
   key           = "robots.txt"
-  cache_control = "max-age=60" # todo ~> increase this
+  cache_control = "max-age=3600"
 
   content_type = "text/plain"
   content      = <<EOF
 User-agent: *
 Disallow: /authors/
+Disallow: /newbiz-product-images/
 EOF
 }
