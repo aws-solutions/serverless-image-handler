@@ -5,7 +5,7 @@
 import { ImageEdits, ImageFitTypes, ImageFormatTypes, ImageHandlerEvent } from "./lib";
 
 export class SemanticMapper {
-  private static readonly EMPTY_IMAGE_EDITS: ImageEdits = {};
+  private  readonly EMPTY_IMAGE_EDITS: ImageEdits = {};
 
   /**
    * Initializer function for creating a new Custom mapping, used by the image
@@ -25,7 +25,7 @@ export class SemanticMapper {
     }
 
     let edits: ImageEdits = this.mergeEdits(
-      this.mapFormat(event.path, event.queryStringParameters?.fm, event.queryStringParameters?.q),
+      this.mapFormat(event),
       this.mapResize(event.queryStringParameters),
       this.mapFitIn(event.queryStringParameters?.fit));
 
@@ -75,7 +75,7 @@ export class SemanticMapper {
       return { resize: { fit } };
     }
 
-    return SemanticMapper.EMPTY_IMAGE_EDITS;
+    return this.EMPTY_IMAGE_EDITS;
   }
 
   /**
@@ -109,30 +109,24 @@ export class SemanticMapper {
   }
 
 
-  private mapFormat(path: string, format?: ImageFormatTypes, quality?: string | number): ImageEdits {
-
-    if (Object.values(ImageFormatTypes).includes(format)) {
-      const originalFormat = path.substring(path.lastIndexOf(".") + 1) as ImageFormatTypes;
-      const jpgFormats = [ImageFormatTypes.JPG, ImageFormatTypes.JPEG];
-
-      if (jpgFormats.includes(format) && !jpgFormats.includes(originalFormat)) {
-        const qualityValue = quality ? Number(quality) : Number.NaN;
-        return { format: { quality: isNaN(qualityValue) ? 60 : qualityValue } };
-      }
-
-      if (
-        [
-          ImageFormatTypes.PNG,
-          ImageFormatTypes.WEBP,
-          ImageFormatTypes.TIFF,
-          ImageFormatTypes.HEIF,
-          ImageFormatTypes.GIF,
-        ].includes(format)
-      ) {
-        return { toFormat: format };
-      }
-    }
-
-    return SemanticMapper.EMPTY_IMAGE_EDITS;
+  /**
+   * Maps the image path to format image edit.
+   * @param path An image path.
+   * @returns Image edits associated with format.
+   */
+  private mapFormat(event: ImageHandlerEvent): ImageEdits {
+    const { fm: targetFormat, q: qualityParam } = event.queryStringParameters || {};
+    const originalFormat = event.path.substring(event.path.lastIndexOf(".") + 1) as ImageFormatTypes;
+    const format = targetFormat || originalFormat;
+    const isJpeg = ['jpg', 'jpeg'].includes(targetFormat);
+    const quality = parseInt(qualityParam as string, 10);
+  
+    const edits: ImageEdits = {
+      ...(targetFormat && { toFormat: targetFormat }),
+      ...(qualityParam && !isNaN(quality) && { [format]: { quality } }),
+      ...(isJpeg && !qualityParam && { jpeg: { quality: 60 } }),
+    };
+  
+    return edits;
   }
 }
