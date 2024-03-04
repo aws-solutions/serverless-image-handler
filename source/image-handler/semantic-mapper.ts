@@ -15,19 +15,18 @@ export class SemanticMapper {
    */
   public mapPathToEdits(event: ImageHandlerEvent): ImageEdits {
 
-    if([event.multiValueQueryStringParameters?.h,
-      event.multiValueQueryStringParameters?.w,
-      event.multiValueQueryStringParameters?.fit,
-      event.multiValueQueryStringParameters?.fm,
-      event.multiValueQueryStringParameters?.q]
-    .some((p) => { p?.length > 1; }))
-    {
+    if ([event.multiValueQueryStringParameters?.h,
+    event.multiValueQueryStringParameters?.w,
+    event.multiValueQueryStringParameters?.fit,
+    event.multiValueQueryStringParameters?.fm,
+    event.multiValueQueryStringParameters?.q]
+      .some((p) => { p?.length > 1; })) {
       throw new Error("Multiple values for the same parameter are not allowed.");
     }
 
     let edits: ImageEdits = this.mergeEdits(
       this.mapFormat(event.path, event.queryStringParameters?.fm, event.queryStringParameters?.q),
-      this.mapResize(event.queryStringParameters), 
+      this.mapResize(event.queryStringParameters),
       this.mapFitIn(event.queryStringParameters?.fit));
 
     return edits;
@@ -38,12 +37,12 @@ export class SemanticMapper {
    * @param queryParams Querry params optionally containing w for width and h for height.
    * @returns Image edits associated with resize.
    */
-  private mapResize(queryParams: { 
-    h?: string | number, 
-    w?: string | number}): ImageEdits {
+  private mapResize(queryParams: {
+    h?: string | number,
+    w?: string | number
+  }): ImageEdits {
 
-    const [width, height] = [queryParams?.w, queryParams?.h].map((dim) => 
-    {
+    const [width, height] = [queryParams?.w, queryParams?.h].map((dim) => {
       const intDim = parseInt(dim as string);
       return isNaN(intDim) ? 0 : intDim;
     });
@@ -66,13 +65,13 @@ export class SemanticMapper {
    * @returns Image edits associated with fit-in filter.
    */
   private mapFitIn(fit: ImageFitTypes): ImageEdits {
-    
+
     // Allow for thumb to be used as synonym for cover
-    if((fit as any) === "thumb") {
+    if ((fit as any) === "thumb") {
       return { resize: { fit: ImageFitTypes.COVER } };
     }
 
-    if(Object.values(ImageFitTypes).includes(fit)) {
+    if (Object.values(ImageFitTypes).includes(fit)) {
       return { resize: { fit } };
     }
 
@@ -109,15 +108,8 @@ export class SemanticMapper {
     return obj && typeof obj === "object" && !Array.isArray(obj);
   }
 
-  private getUrlObject = (path: string) => {
-    if (path.startsWith("http")) {
-      return new URL(path);
-    } else {
-      return new URL(path, "https://dummy.net");
-    }
-  };
 
-  private mapFormat(path: string, format?: ImageFormatTypes, quality?: string | number): Record<string, any> {
+  private mapFormat(path: string, format?: ImageFormatTypes, quality?: string | number): ImageEdits {
 
     if (Object.values(ImageFormatTypes).includes(format)) {
       const originalFormat = path.substring(path.lastIndexOf(".") + 1) as ImageFormatTypes;
@@ -125,7 +117,7 @@ export class SemanticMapper {
 
       if (jpgFormats.includes(format) && !jpgFormats.includes(originalFormat)) {
         const qualityValue = quality ? Number(quality) : Number.NaN;
-        return { [format] : { quality: isNaN(qualityValue) ? 60 : qualityValue } };
+        return { format: { quality: isNaN(qualityValue) ? 60 : qualityValue } };
       }
 
       if (
@@ -137,10 +129,10 @@ export class SemanticMapper {
           ImageFormatTypes.GIF,
         ].includes(format)
       ) {
-        return { [format] : {} };
+        return { toFormat: format };
       }
     }
 
-    return {}; 
+    return SemanticMapper.EMPTY_IMAGE_EDITS;
   }
 }
