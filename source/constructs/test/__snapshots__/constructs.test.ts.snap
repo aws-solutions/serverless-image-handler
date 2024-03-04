@@ -1315,7 +1315,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
     "CommonResourcesCustomResourcesCustomResourceAnonymousMetric51363F57": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "AnonymousData": "Yes",
+        "AnonymousData": "No",
         "AutoWebP": {
           "Ref": "AutoWebPParameter",
         },
