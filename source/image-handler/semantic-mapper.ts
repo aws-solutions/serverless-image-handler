@@ -56,8 +56,8 @@ export class SemanticMapper {
     if (width === null || height === null) {
       resizeEdit.resize.fit = ImageFitTypes.INSIDE;
     }
-    resizeEdit.resize.width = width;
-    resizeEdit.resize.height = height;
+    resizeEdit.resize.width = width === 0 ? null : width;
+    resizeEdit.resize.height = height === 0 ? null : height;
 
     return resizeEdit;
   }
