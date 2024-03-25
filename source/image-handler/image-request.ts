@@ -245,20 +245,20 @@ export class ImageRequest {
    * @returns The edits to be made to the original image.
    */
   public parseImageEdits(event: ImageHandlerEvent, requestType: RequestTypes): ImageEdits {
-    const thumborMapping = new ThumborMapper();
-    const semanticMapping = new SemanticMapper();
-
     switch (requestType) {
       case RequestTypes.DEFAULT:
         const decoded = this.decodeRequest(event);
         return decoded.edits;
       case RequestTypes.THUMBOR:
+        const thumborMapping = new ThumborMapper();
         return thumborMapping.mapPathToEdits(event.path);
       case RequestTypes.SEMANTIC:
+        const semanticMapping = new SemanticMapper();
         return semanticMapping.mapPathToEdits(event);
       case RequestTypes.CUSTOM:
-        const parsedPath = thumborMapping.parseCustomPath(event.path);
-        return thumborMapping.mapPathToEdits(parsedPath);
+        const customMapping = new ThumborMapper();
+        const parsedPath = customMapping.parseCustomPath(event.path);
+        return customMapping.mapPathToEdits(parsedPath);
       default:
         throw new ImageHandlerError(
           StatusCodes.BAD_REQUEST,

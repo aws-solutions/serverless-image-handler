@@ -7,6 +7,7 @@ import { ImageEdits, ImageFitTypes, ImageFormatTypes, ImageHandlerEvent } from "
 export class SemanticMapper {
   private readonly EMPTY_IMAGE_EDITS: ImageEdits = {};
   private originalFormat: string;
+  private isSvg: boolean;
 
   /**
    * Initializer function for creating a new Custom mapping, used by the image
@@ -15,11 +16,7 @@ export class SemanticMapper {
    * @returns Image edits based on the request path.
    */
   public mapPathToEdits(event: ImageHandlerEvent): ImageEdits {
-    this.originalFormat = event.path.substring(event.path.lastIndexOf(".") + 1);
-
-    if (this.originalFormat.toLocaleLowerCase() === "svg") {
-      return this.EMPTY_IMAGE_EDITS;
-    }
+    this.setOriginalFormat(event.path);
 
     const { h, w, fit, fm, q } = event.multiValueQueryStringParameters || {};
 
@@ -45,23 +42,22 @@ export class SemanticMapper {
     w?: string | number
   }): ImageEdits {
 
-    const [width, height] = [queryParams?.w, queryParams?.h].map((dim) => {
-      const intDim = parseInt(dim as string);
-      return isNaN(intDim) ? 0 : intDim;
-    });
-
-    if (width === 0 && height === 0) {
+    if (this.isSvg || (!queryParams?.w && !queryParams?.h)) {
       return this.EMPTY_IMAGE_EDITS;
     }
 
-    const resizeEdit: ImageEdits = { resize: {} };
+    const [width, height] = [queryParams.w, queryParams.h].map((dim) => {
+      const intDim = parseInt(dim as string);
+      return isNaN(intDim) ? null : intDim;
+    });
 
-    // If width or height is 0 or missing, fit would be inside.
-    if (width === 0 || height === 0) {
+    const resizeEdit: ImageEdits = { resize: {} };
+    // If width or height is null or missing, fit would be inside.
+    if (width === null || height === null) {
       resizeEdit.resize.fit = ImageFitTypes.INSIDE;
     }
-    resizeEdit.resize.width = width === 0 ? null : width;
-    resizeEdit.resize.height = height === 0 ? null : height;
+    resizeEdit.resize.width = width;
+    resizeEdit.resize.height = height;
 
     return resizeEdit;
   }
@@ -115,6 +111,10 @@ export class SemanticMapper {
     return obj && typeof obj === "object" && !Array.isArray(obj);
   }
 
+  private setOriginalFormat(path: string) {
+    this.originalFormat = path.substring(path.lastIndexOf(".") + 1).toLocaleLowerCase();
+    this.isSvg = this.originalFormat === "svg";
+  }
 
   /**
    * Maps the image path to format image edit.
