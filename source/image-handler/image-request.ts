@@ -31,7 +31,7 @@ type OriginalImageInfo = Partial<{
 export class ImageRequest {
   private static readonly DEFAULT_EFFORT = 4;
 
-  constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) {}
+  constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) { }
 
   /**
    * Determines the output format of an image
@@ -245,25 +245,26 @@ export class ImageRequest {
    * @returns The edits to be made to the original image.
    */
   public parseImageEdits(event: ImageHandlerEvent, requestType: RequestTypes): ImageEdits {
-    if (requestType === RequestTypes.DEFAULT) {
-      const decoded = this.decodeRequest(event);
-      return decoded.edits;
-    } else if (requestType === RequestTypes.THUMBOR) {
-      const thumborMapping = new ThumborMapper();
-      return thumborMapping.mapPathToEdits(event.path);
-    } else if (requestType === RequestTypes.SEMANTIC) {
-      const semanticMapping = new SemanticMapper();
-      return semanticMapping.mapPathToEdits(event);
-    } else if (requestType === RequestTypes.CUSTOM) {
-      const thumborMapping = new ThumborMapper();
-      const parsedPath = thumborMapping.parseCustomPath(event.path);
-      return thumborMapping.mapPathToEdits(parsedPath);
-    } else {
-      throw new ImageHandlerError(
-        StatusCodes.BAD_REQUEST,
-        "ImageEdits::CannotParseEdits",
-        "The edits you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance."
-      );
+    const thumborMapping = new ThumborMapper();
+    const semanticMapping = new SemanticMapper();
+
+    switch (requestType) {
+      case RequestTypes.DEFAULT:
+        const decoded = this.decodeRequest(event);
+        return decoded.edits;
+      case RequestTypes.THUMBOR:
+        return thumborMapping.mapPathToEdits(event.path);
+      case RequestTypes.SEMANTIC:
+        return semanticMapping.mapPathToEdits(event);
+      case RequestTypes.CUSTOM:
+        const parsedPath = thumborMapping.parseCustomPath(event.path);
+        return thumborMapping.mapPathToEdits(parsedPath);
+      default:
+        throw new ImageHandlerError(
+          StatusCodes.BAD_REQUEST,
+          "ImageEdits::CannotParseEdits",
+          "The edits you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance."
+        );
     }
   }
 
