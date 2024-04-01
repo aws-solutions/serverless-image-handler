@@ -4,7 +4,7 @@
 import { ImageFormatTypes } from "../../lib";
 import { SemanticMapper } from "../../semantic-mapper";
 
-describe.only("format semantic", () => {
+describe("format semantic", () => {
   it("format conversion jpg -> png", () => {
     // Arrange
     const event = {
@@ -21,7 +21,7 @@ describe.only("format semantic", () => {
 
     // Assert
     const expectedResult = {
-      edits: { resize: { fit: "inside", height: null, width: null }, toFormat: "png" },
+      edits: { toFormat: "png" },
     };
     expect(edits).toEqual(expectedResult.edits);
   });
@@ -60,7 +60,7 @@ describe.only("format semantic", () => {
 
     // Assert
     const expectedResult = {
-      edits: { resize: { fit: "inside", height: null, width: null }, toFormat: "jpeg", jpeg: { quality: 60 } },
+      edits: {  toFormat: "jpeg", jpeg: { quality: 60 } },
     };
     expect(edits).toEqual(expectedResult.edits);
   });
@@ -82,7 +82,7 @@ describe.only("format semantic", () => {
 
     // Assert
     const expectedResult = {
-      edits: { resize: { fit: "inside", height: null, width: null }, toFormat: "jpeg", jpeg: { quality: 90 } },
+      edits: {  toFormat: "jpeg", jpeg: { quality: 90 } },
     };
     expect(edits).toEqual(expectedResult.edits);
   });
@@ -104,7 +104,7 @@ describe.only("format semantic", () => {
 
     // Assert
     const expectedResult = {
-      edits: { resize: { fit: "inside", height: null, width: null }, toFormat: "webp", webp: { quality: 90 } },
+      edits: {  toFormat: "webp", webp: { quality: 90 } },
     };
     expect(edits).toEqual(expectedResult.edits);
   });

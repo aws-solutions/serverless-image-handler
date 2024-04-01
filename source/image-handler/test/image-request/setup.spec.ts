@@ -640,6 +640,7 @@ describe("setup", () => {
       }));
 
       // Act
+      debugger;
       const imageRequest = new ImageRequest(s3Client, secretProvider);
       const imageRequestInfo = await imageRequest.setup(event);
       const expectedResult = {
@@ -660,6 +661,51 @@ describe("setup", () => {
       });
       expect(imageRequestInfo).toEqual(expectedResult);
     });
+  });
+
+  it("Should return SVG image when no edit is provided for the SVG image - Semantic", async () => {
+    // Arrange
+    process.env = {
+      SOURCE_BUCKETS: "validBucket",
+      USE_SEMANTIC_URL: "Yes",
+    };
+    const event = {
+      path: "/image.svg",
+      queryStringParameters: {
+        signature: "dummySig",
+      },
+    };
+
+    // Mock
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({
+          ContentType: "image/svg+xml",
+          Body: Buffer.from("SampleImageContent\n"),
+        });
+      },
+    }));
+
+    // Act
+    debugger;
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const imageRequestInfo = await imageRequest.setup(event);
+    const expectedResult = {
+      requestType: "Semantic",
+      bucket: "validBucket",
+      key: "image.svg",
+      edits: { },
+      originalImage: Buffer.from("SampleImageContent\n"),
+      cacheControl: "max-age=31536000,public",
+      contentType: "image/svg+xml",
+    };
+
+    // Assert
+    expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+      Bucket: "validBucket",
+      Key: "image.svg",
+    });
+    expect(imageRequestInfo).toEqual(expectedResult);
   });
 
   it("Should pass and return the customer headers if custom headers are provided", async () => {

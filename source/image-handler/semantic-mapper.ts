@@ -5,7 +5,9 @@
 import { ImageEdits, ImageFitTypes, ImageFormatTypes, ImageHandlerEvent } from "./lib";
 
 export class SemanticMapper {
-  private  readonly EMPTY_IMAGE_EDITS: ImageEdits = {};
+  private readonly EMPTY_IMAGE_EDITS: ImageEdits = {};
+  private originalFormat: string;
+  private isSvg: boolean;
 
   /**
    * Initializer function for creating a new Custom mapping, used by the image
@@ -14,13 +16,11 @@ export class SemanticMapper {
    * @returns Image edits based on the request path.
    */
   public mapPathToEdits(event: ImageHandlerEvent): ImageEdits {
+    this.setOriginalFormat(event.path);
 
-    if ([event.multiValueQueryStringParameters?.h,
-    event.multiValueQueryStringParameters?.w,
-    event.multiValueQueryStringParameters?.fit,
-    event.multiValueQueryStringParameters?.fm,
-    event.multiValueQueryStringParameters?.q]
-      .some((p) => { p?.length > 1; })) {
+    const { h, w, fit, fm, q } = event.multiValueQueryStringParameters || {};
+
+    if ([h, w, fit, fm, q].some(p => p?.length > 1)) {
       throw new Error("Multiple values for the same parameter are not allowed.");
     }
 
@@ -42,15 +42,18 @@ export class SemanticMapper {
     w?: string | number
   }): ImageEdits {
 
-    const [width, height] = [queryParams?.w, queryParams?.h].map((dim) => {
+    if (this.isSvg || (!queryParams?.w && !queryParams?.h)) {
+      return this.EMPTY_IMAGE_EDITS;
+    }
+
+    const [width, height] = [queryParams.w, queryParams.h].map((dim) => {
       const intDim = parseInt(dim as string);
-      return isNaN(intDim) ? 0 : intDim;
+      return isNaN(intDim) ? null : intDim;
     });
 
     const resizeEdit: ImageEdits = { resize: {} };
-
-    // If width or height is 0 or missing, fit would be inside.
-    if (width === 0 || height === 0) {
+    // If width or height is null or missing, fit would be inside.
+    if (width === null || height === null) {
       resizeEdit.resize.fit = ImageFitTypes.INSIDE;
     }
     resizeEdit.resize.width = width === 0 ? null : width;
@@ -108,6 +111,10 @@ export class SemanticMapper {
     return obj && typeof obj === "object" && !Array.isArray(obj);
   }
 
+  private setOriginalFormat(path: string) {
+    this.originalFormat = path.substring(path.lastIndexOf(".") + 1).toLocaleLowerCase();
+    this.isSvg = this.originalFormat === "svg";
+  }
 
   /**
    * Maps the image path to format image edit.
@@ -116,17 +123,17 @@ export class SemanticMapper {
    */
   private mapFormat(event: ImageHandlerEvent): ImageEdits {
     const { fm: targetFormat, q: qualityParam } = event.queryStringParameters || {};
-    const originalFormat = event.path.substring(event.path.lastIndexOf(".") + 1) as ImageFormatTypes;
+    const originalFormat = this.originalFormat as ImageFormatTypes;
     const format = targetFormat || originalFormat;
     const isJpeg = ['jpg', 'jpeg'].includes(targetFormat);
     const quality = parseInt(qualityParam as string, 10);
-  
+
     const edits: ImageEdits = {
       ...(targetFormat && { toFormat: targetFormat }),
       ...(qualityParam && !isNaN(quality) && { [format]: { quality } }),
       ...(isJpeg && !qualityParam && { jpeg: { quality: 60 } }),
     };
-  
+
     return edits;
   }
 }

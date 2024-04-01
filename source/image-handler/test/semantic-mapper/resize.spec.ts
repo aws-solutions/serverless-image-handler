@@ -4,10 +4,10 @@
 import { SemanticMapper } from "../../semantic-mapper";
 
 describe("resize", () => {
-  it("Should pass if the proper edit translations are applied and in the correct order", () => {
+  it("Should pass if the proper edit translations are applied and in the correct order, w, h", () => {
     // Arrange
     const event = {
-      path:"/test-image-001.jpg",
+      path: "/test-image-001.jpg",
       queryStringParameters: {
         signature: "dummySig",
         w: 400,
@@ -26,10 +26,10 @@ describe("resize", () => {
     expect(edits).toEqual(expectedResult.edits);
   });
 
-  it("Should pass if the proper edit translations are applied and in the correct order", () => {
+  it("Should pass if the proper edit translations are applied and in the correct order, h", () => {
     // Arrange
     const event = {
-      path:"/test-image-001.jpg",
+      path: "/test-image-001.jpg",
       queryStringParameters: {
         signature: "dummySig",
         h: 300,
@@ -47,10 +47,10 @@ describe("resize", () => {
     expect(edits).toEqual(expectedResult.edits);
   });
 
-  it("Should pass if the proper edit translations are applied and in the correct order", () => {
+  it("Should pass if the proper edit translations are applied and in the correct order, w", () => {
     // Arrange
     const event = {
-      path:"/test-image-001.jpg",
+      path: "/test-image-001.jpg",
       queryStringParameters: {
         signature: "dummySig",
         w: 400,
@@ -68,10 +68,10 @@ describe("resize", () => {
     expect(edits).toEqual(expectedResult.edits);
   });
 
-  it("Should pass if the proper edit translations are applied and in the correct order", () => {
+  it("Should pass if the proper edit translations are applied and in the correct order, !w !h", () => {
     // Arrange
     const event = {
-      path:"/test-image-001.jpg",
+      path: "/test-image-001.jpg",
       queryStringParameters: {
         signature: "dummySig",
         w: 0,
@@ -85,7 +85,7 @@ describe("resize", () => {
 
     // Assert
     const expectedResult = {
-      edits: { resize: { width: null, height: null, fit: "inside" } },
+      edits: {},
     };
     expect(edits).toEqual(expectedResult.edits);
   });
@@ -93,7 +93,7 @@ describe("resize", () => {
   it("Tests error on deployment, no parameters produces these edits", () => {
     // Arrange
     const event = {
-      path:"/test-image-001.jpg",
+      path: "/test-image-001.jpg",
     }
 
     // Act
@@ -102,7 +102,7 @@ describe("resize", () => {
 
     // Assert
     const expectedResult = {
-      edits: { resize: { width: null, height: null, fit: "inside" } },
+      edits: {},
     };
     expect(edits).toEqual(expectedResult.edits);
   });
