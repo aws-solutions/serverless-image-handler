@@ -7,7 +7,9 @@ export const mockAwsEc2 = {
   describeRegions: jest.fn(),
 };
 
-jest.mock("aws-sdk/clients/ec2", () => jest.fn(() => ({ ...mockAwsEc2 })));
+jest.mock("@aws-sdk/client-ec2", () => ({
+  EC2: jest.fn(() => ({ ...mockAwsEc2 }))
+}));
 
 export const mockAwsS3 = {
   headObject: jest.fn(),
@@ -20,13 +22,17 @@ export const mockAwsS3 = {
   putBucketPolicy: jest.fn(),
 };
 
-jest.mock("aws-sdk/clients/s3", () => jest.fn(() => ({ ...mockAwsS3 })));
+jest.mock("@aws-sdk/client-s3", () => ({
+  S3: jest.fn(() => ({ ...mockAwsS3 }))
+}));
 
 export const mockAwsSecretManager = {
   getSecretValue: jest.fn(),
 };
 
-jest.mock("aws-sdk/clients/secretsmanager", () => jest.fn(() => ({ ...mockAwsSecretManager })));
+jest.mock("@aws-sdk/client-secrets-manager", () => ({
+  SecretsManager: jest.fn(() => ({ ...mockAwsSecretManager }))
+}));
 
 export const mockAxios = {
   put: jest.fn(),
