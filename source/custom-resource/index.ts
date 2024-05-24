@@ -1,9 +1,14 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import EC2, { DescribeRegionsRequest } from "aws-sdk/clients/ec2";
-import S3, { CreateBucketRequest, PutBucketEncryptionRequest, PutBucketPolicyRequest } from "aws-sdk/clients/s3";
-import SecretsManager from "aws-sdk/clients/secretsmanager";
+import { DescribeRegionsCommandInput, EC2 } from "@aws-sdk/client-ec2";
+import {
+  CreateBucketCommandInput,
+  PutBucketEncryptionCommandInput,
+  PutBucketPolicyCommandInput,
+  S3,
+} from "@aws-sdk/client-s3";
+import { SecretsManager } from "@aws-sdk/client-secrets-manager";
 import axios, { RawAxiosRequestConfig, AxiosResponse } from "axios";
 import { createHash } from "crypto";
 import moment from "moment";
@@ -345,12 +350,12 @@ async function putConfigFile(
     try {
       console.info(`Putting ${DestS3key}... Try count: ${retry}`);
 
-      await s3Client.putObject(params).promise();
+      await s3Client.putObject(params);
 
       console.info(`Putting ${DestS3key} completed.`);
       break;
     } catch (error) {
-      if (retry === RETRY_COUNT || error.code !== ErrorCodes.ACCESS_DENIED) {
+      if (retry === RETRY_COUNT || error.name !== ErrorCodes.ACCESS_DENIED) {
         console.info(`Error occurred while putting ${DestS3key} into ${DestS3Bucket} bucket.`, error);
         throw new CustomResourceError(
           "ConfigFileCreationFailure",
@@ -392,12 +397,12 @@ async function copyS3Assets(
         Bucket: SourceS3Bucket,
         Key: ManifestKey,
       };
-      const response = await s3Client.getObject(getParams).promise();
+      const response = await s3Client.getObject(getParams);
       manifest = JSON.parse(response.Body.toString());
 
       break;
     } catch (error) {
-      if (retry === RETRY_COUNT || error.code !== ErrorCodes.ACCESS_DENIED) {
+      if (retry === RETRY_COUNT || error.name !== ErrorCodes.ACCESS_DENIED) {
         console.error("Error occurred while getting manifest file.");
         console.error(error);
 
@@ -422,7 +427,7 @@ async function copyS3Assets(
         };
 
         console.debug(`Copying ${fileName} to ${DestS3Bucket}`);
-        return s3Client.copyObject(copyObjectParams).promise();
+        return s3Client.copyObject(copyObjectParams);
       })
     );
 
@@ -463,7 +468,7 @@ async function validateBuckets(requestProperties: CheckSourceBucketsRequestPrope
   for (const bucket of checkBuckets) {
     const params = { Bucket: bucket };
     try {
-      await s3Client.headBucket(params).promise();
+      await s3Client.headBucket(params);
 
       console.info(`Found bucket: ${bucket}`);
     } catch (error) {
@@ -507,7 +512,7 @@ async function checkSecretsManager(
 
   for (let retry = 1; retry <= RETRY_COUNT; retry++) {
     try {
-      const response = await secretsManager.getSecretValue({ SecretId: SecretsManagerName }).promise();
+      const response = await secretsManager.getSecretValue({ SecretId: SecretsManagerName });
       const secretString = JSON.parse(response.SecretString);
 
       if (!Object.prototype.hasOwnProperty.call(secretString, SecretsManagerKey)) {
@@ -562,10 +567,10 @@ async function checkFallbackImage(
 
   for (let retry = 1; retry <= RETRY_COUNT; retry++) {
     try {
-      data = await s3Client.headObject({ Bucket: FallbackImageS3Bucket, Key: FallbackImageS3Key }).promise();
+      data = await s3Client.headObject({ Bucket: FallbackImageS3Bucket, Key: FallbackImageS3Key });
       break;
     } catch (error) {
-      if (retry === RETRY_COUNT || ![ErrorCodes.ACCESS_DENIED, ErrorCodes.FORBIDDEN].includes(error.code)) {
+      if (retry === RETRY_COUNT || ![ErrorCodes.ACCESS_DENIED, ErrorCodes.FORBIDDEN].includes(error.name)) {
         console.error(
           `Either the object does not exist or you don't have permission to access the object: ${FallbackImageS3Bucket}/${FallbackImageS3Key}`
         );
@@ -611,16 +616,16 @@ async function createCloudFrontLoggingBucket(requestProperties: CreateLoggingBuc
   try {
     const s3Client = new S3({
       ...awsSdkOptions,
-      apiVersion: "2006-03-01",
       region: targetRegion,
     });
 
-    const createBucketRequestParams: CreateBucketRequest = {
+    const createBucketRequestParams: CreateBucketCommandInput = {
       Bucket: bucketName,
+      // @ts-ignore
       ACL: "log-delivery-write",
       ObjectOwnership: "ObjectWriter",
     };
-    await s3Client.createBucket(createBucketRequestParams).promise();
+    await s3Client.createBucket(createBucketRequestParams);
 
     console.info(`Successfully created bucket '${bucketName}' in '${targetRegion}' region`);
   } catch (error) {
@@ -633,14 +638,14 @@ async function createCloudFrontLoggingBucket(requestProperties: CreateLoggingBuc
   // add encryption to bucket
   console.info("Adding Encryption...");
   try {
-    const putBucketEncryptionRequestParams: PutBucketEncryptionRequest = {
+    const putBucketEncryptionRequestParams: PutBucketEncryptionCommandInput = {
       Bucket: bucketName,
       ServerSideEncryptionConfiguration: {
         Rules: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: "AES256" } }],
       },
     };
 
-    await s3Client.putBucketEncryption(putBucketEncryptionRequestParams).promise();
+    await s3Client.putBucketEncryption(putBucketEncryptionRequestParams);
 
     console.info(`Successfully enabled encryption on bucket '${bucketName}'`);
   } catch (error) {
@@ -666,12 +671,12 @@ async function createCloudFrontLoggingBucket(requestProperties: CreateLoggingBuc
       Version: "2012-10-17",
       Statement: [bucketPolicyStatement],
     };
-    const putBucketPolicyRequestParams: PutBucketPolicyRequest = {
+    const putBucketPolicyRequestParams: PutBucketPolicyCommandInput = {
       Bucket: bucketName,
       Policy: JSON.stringify(bucketPolicy),
     };
 
-    await s3Client.putBucketPolicy(putBucketPolicyRequestParams).promise();
+    await s3Client.putBucketPolicy(putBucketPolicyRequestParams);
 
     console.info(`Successfully added policy added to bucket '${bucketName}'`);
   } catch (error) {
@@ -690,11 +695,11 @@ async function createCloudFrontLoggingBucket(requestProperties: CreateLoggingBuc
  * @returns The result of check.
  */
 async function checkRegionOptInStatus(region: string): Promise<boolean> {
-  const describeRegionsRequestParams: DescribeRegionsRequest = {
+  const describeRegionsRequestParams: DescribeRegionsCommandInput = {
     RegionNames: [region],
     Filters: [{ Name: "opt-in-status", Values: ["opted-in"] }],
   };
-  const describeRegionsResponse = await ec2Client.describeRegions(describeRegionsRequestParams).promise();
+  const describeRegionsResponse = await ec2Client.describeRegions(describeRegionsRequestParams);
 
   return describeRegionsResponse.Regions.length > 0;
 }
