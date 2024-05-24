@@ -45,11 +45,7 @@ describe("CHECK_FALLBACK_IMAGE", () => {
   });
 
   it("Should return success when the default fallback image exists", async () => {
-    mockAwsS3.headObject.mockImplementation(() => ({
-      promise() {
-        return Promise.resolve(head);
-      },
-    }));
+    mockAwsS3.headObject.mockImplementation(() => Promise.resolve(head));
 
     const result = await handler(event, mockContext);
 
@@ -107,11 +103,7 @@ describe("CHECK_FALLBACK_IMAGE", () => {
   });
 
   it("Should return failed when the default fallback image does not exist", async () => {
-    mockAwsS3.headObject.mockImplementation(() => ({
-      promise() {
-        return Promise.reject(new CustomResourceError("NotFound", null));
-      },
-    }));
+    mockAwsS3.headObject.mockImplementation(() => Promise.reject(new CustomResourceError("NotFound", null)));
     (event.ResourceProperties as CheckFallbackImageRequestProperties).FallbackImageS3Key = "fallback-image.jpg";
 
     const result = await handler(event, mockContext);
@@ -134,21 +126,17 @@ describe("CHECK_FALLBACK_IMAGE", () => {
   });
 
   it("Should retry and return success when IAM policy is not ready so S3 API returns AccessDenied or Forbidden", async () => {
-    mockAwsS3.headObject.mockImplementationOnce(() => ({
-      promise() {
-        return Promise.reject(new CustomResourceError(ErrorCodes.ACCESS_DENIED, null));
-      },
-    }));
-    mockAwsS3.headObject.mockImplementationOnce(() => ({
-      promise() {
-        return Promise.reject(new CustomResourceError(ErrorCodes.FORBIDDEN, null));
-      },
-    }));
-    mockAwsS3.headObject.mockImplementationOnce(() => ({
-      promise() {
-        return Promise.resolve(head);
-      },
-    }));
+    mockAwsS3.headObject.mockImplementationOnce(() => {
+      const error = new Error(ErrorCodes.ACCESS_DENIED);
+      error.name = ErrorCodes.ACCESS_DENIED;
+      return Promise.reject(error);
+    });
+    mockAwsS3.headObject.mockImplementationOnce(() => {
+      const error = new Error(ErrorCodes.FORBIDDEN);
+      error.name = ErrorCodes.FORBIDDEN;
+      return Promise.reject(error);
+    });
+    mockAwsS3.headObject.mockImplementationOnce(() => Promise.resolve(head));
 
     const result = await handler(event, mockContext);
 
