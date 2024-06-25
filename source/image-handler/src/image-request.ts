@@ -1,22 +1,19 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-
-import {Logger} from '@aws-lambda-powertools/logger'
-import {LogStashFormatter} from "./lib/logging/LogStashFormatter";
-import {ThumborMapping} from "./thumbor-mapping";
-import {GetObjectCommandOutput, S3} from "@aws-sdk/client-s3";
-import {APIGatewayProxyEventV2} from "aws-lambda";
-import sharp from "sharp";
+import { Logger } from '@aws-lambda-powertools/logger';
+import { LogStashFormatter } from './lib/logging/LogStashFormatter';
+import { ThumborMapping } from './thumbor-mapping';
+import { GetObjectCommandOutput, S3 } from '@aws-sdk/client-s3';
+import { APIGatewayProxyEventV2 } from 'aws-lambda';
+import sharp from 'sharp';
 
 const logger = new Logger({
   serviceName: process.env.AWS_LAMBDA_FUNCTION_NAME ?? '',
   logFormatter: new LogStashFormatter(),
-})
-
+});
 
 export class ImageRequest {
-
   requestType: any;
   bucket: any;
   key: any;
@@ -29,10 +26,11 @@ export class ImageRequest {
   LastModified: any;
   CacheControl: any;
   ETag: any;
+  headers: any;
   private s3: any;
 
   constructor(s3: S3) {
-    this.s3 = s3
+    this.s3 = s3;
   }
 
   /**
@@ -41,8 +39,6 @@ export class ImageRequest {
    * @param {object} event - Lambda request body.
    */
   async setup(event: APIGatewayProxyEventV2): Promise<ImageRequest> {
-
-
     this.requestType = this.parseRequestType(event);
     this.bucket = this.parseImageBucket(event, this.requestType);
     this.key = this.parseImageKey(event, this.requestType);
@@ -51,11 +47,13 @@ export class ImageRequest {
     this.originalImage = await this.getOriginalImage(this.bucket, this.key);
 
     // If the original image is SVG file and it has any edits but no output format, change the format to WebP.
-    if (this.ContentType === "image/svg+xml" &&
+    if (
+      this.ContentType === 'image/svg+xml' &&
       this.edits &&
       Object.keys(this.edits).length > 0 &&
-      !this.edits.toFormat) {
-      this.outputFormat = "png";
+      !this.edits.toFormat
+    ) {
+      this.outputFormat = 'png';
     }
 
     /* Decide the output format of the image.
@@ -75,17 +73,12 @@ export class ImageRequest {
 
     // Fix quality for Thumbor and Custom request type if outputFormat is different from quality type.
     if (this.outputFormat) {
-      const requestType = ["Custom", "Thumbor"];
-      const acceptedValues = ["jpeg", "png", "webp", "tiff", "heif", "avif"];
+      const requestType = ['Custom', 'Thumbor'];
+      const acceptedValues = ['jpeg', 'png', 'webp', 'tiff', 'heif', 'avif'];
 
       this.ContentType = `image/${this.outputFormat}`;
-      if (
-        requestType.includes(this.requestType) &&
-        acceptedValues.includes(this.outputFormat)
-      ) {
-        let qualityKey = Object.keys(this.edits).filter((key) =>
-          acceptedValues.includes(key)
-        )[0];
+      if (requestType.includes(this.requestType) && acceptedValues.includes(this.outputFormat)) {
+        let qualityKey = Object.keys(this.edits).filter(key => acceptedValues.includes(key))[0];
         if (qualityKey && qualityKey !== this.outputFormat) {
           const qualityValue = this.edits[qualityKey];
           this.edits[this.outputFormat] = qualityValue;
@@ -106,11 +99,11 @@ export class ImageRequest {
    * @return {Promise} - The original image or an error.
    */
   async getOriginalImage(bucket: string, key: string): Promise<any> {
-    const imageLocation = {Bucket: bucket, Key: key};
+    const imageLocation = { Bucket: bucket, Key: key };
     try {
       const originalImage: GetObjectCommandOutput = await this.s3.getObject(imageLocation);
       const metaData = originalImage['Metadata'];
-      const isGone = metaData && metaData['buzz-status-code'] && metaData['buzz-status-code'] === '410'
+      const isGone = metaData && metaData['buzz-status-code'] && metaData['buzz-status-code'] === '410';
 
       const imageBuffer = Buffer.from(await originalImage.Body?.transformToByteArray()!);
 
@@ -122,13 +115,13 @@ export class ImageRequest {
           this.ContentType = originalImage.ContentType;
         }
       } else {
-        this.ContentType = "image";
+        this.ContentType = 'image';
       }
 
       if (originalImage.Expires) {
         this.Expires = new Date(originalImage.Expires);
       } else if (isGone) {
-        logger.warn(`Content ${imageLocation} is gone`)
+        logger.warn(`Content ${imageLocation} is gone`);
         this.Expires = new Date(0);
       }
 
@@ -136,10 +129,10 @@ export class ImageRequest {
         this.LastModified = new Date(originalImage.LastModified);
       }
 
-      if (originalImage.CacheControl && !originalImage.CacheControl.includes("31536000")) {
+      if (originalImage.CacheControl && !originalImage.CacheControl.includes('31536000')) {
         this.CacheControl = originalImage.CacheControl;
       } else {
-        this.CacheControl = "max-age=31536000, immutable";
+        this.CacheControl = 'max-age=31536000, immutable';
       }
 
       if (originalImage.ETag) {
@@ -149,9 +142,9 @@ export class ImageRequest {
       return imageBuffer;
     } catch (err: any) {
       throw {
-        status: "NoSuchKey" === (err?.code || err?.Code || err).toString() ? 404 : 500,
+        status: 'NoSuchKey' === (err?.code || err?.Code || err).toString() ? 404 : 500,
         code: (err?.code || err?.Code || err).toString(),
-        message: err.message
+        message: err.message,
       };
     }
   }
@@ -163,16 +156,16 @@ export class ImageRequest {
    * @param {string} requestType - Image handler request type.
    */
   parseImageBucket(event: APIGatewayProxyEventV2, requestType: string) {
-    if (requestType === "Thumbor" || requestType === "Custom") {
+    if (requestType === 'Thumbor' || requestType === 'Custom') {
       // Use the default image source bucket env var
       const sourceBuckets = this.getAllowedSourceBuckets();
       return sourceBuckets[0];
     } else {
       throw {
         status: 404,
-        code: "ImageBucket::CannotFindBucket",
+        code: 'ImageBucket::CannotFindBucket',
         message:
-          "The bucket you specified could not be found. Please check the spelling of the bucket name in your request."
+          'The bucket you specified could not be found. Please check the spelling of the bucket name in your request.',
       };
     }
   }
@@ -183,31 +176,31 @@ export class ImageRequest {
    * @param {string} requestType - Image handler request type.
    */
   parseImageEdits(event: APIGatewayProxyEventV2, requestType: string) {
-    if (requestType === "Thumbor") {
+    if (requestType === 'Thumbor') {
       const thumborMapping = new ThumborMapping();
       thumborMapping.process(event);
       return thumborMapping.edits;
     } else {
       throw {
         status: 400,
-        code: "ImageEdits::CannotParseEdits",
+        code: 'ImageEdits::CannotParseEdits',
         message:
-          "The edits you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance."
+          'The edits you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance.',
       };
     }
   }
 
   parseCropping(event: APIGatewayProxyEventV2, requestType: string) {
-    if (requestType === "Thumbor") {
+    if (requestType === 'Thumbor') {
       const thumborMapping = new ThumborMapping();
       thumborMapping.process(event);
       return thumborMapping.cropping;
     } else {
       throw {
         status: 400,
-        code: "Cropping::CannotParseCropping",
+        code: 'Cropping::CannotParseCropping',
         message:
-          "The cropping you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance."
+          'The cropping you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance.',
       };
     }
   }
@@ -219,37 +212,37 @@ export class ImageRequest {
    * @param {String} requestType - Type, either "Default", "Thumbor", or "Custom".
    */
   parseImageKey(event: APIGatewayProxyEventV2, requestType: string) {
-    if (requestType === "Thumbor" || requestType === "Custom") {
+    if (requestType === 'Thumbor' || requestType === 'Custom') {
       let path = event.rawPath;
 
-      if (requestType === "Custom") {
+      if (requestType === 'Custom') {
         const matchPattern = process.env.REWRITE_MATCH_PATTERN;
         const substitution = process.env.REWRITE_SUBSTITUTION;
 
         if (matchPattern) {
-          const patternStrings = matchPattern.split("/");
+          const patternStrings = matchPattern.split('/');
           const flags = patternStrings.pop();
           const parsedPatternString = matchPattern.slice(1, matchPattern.length - 1 - flags!.length);
           const regExp = new RegExp(parsedPatternString, flags);
-          path = path.replace(regExp, substitution ?? "");
+          path = path.replace(regExp, substitution ?? '');
         } else {
-          path = path.replace(matchPattern || "", substitution || "");
+          path = path.replace(matchPattern || '', substitution || '');
         }
       }
       path = path
         .replace(/^(\/)?authors\//, '$1')
-        .replace(/\/\d+x\d+:\d+x\d+\//g, "/")
-        .replace(/\/(\d+|__WIDTH__)x\d+\//g, "/")
-        .replace(/\/filters:[^\/]+/g, "/")
-        .replace(/\/fit-in\//g, "/")
-        .replace(/^\/+/, "")
-        .replace(/\/+/g, "/");
+        .replace(/\/\d+x\d+:\d+x\d+\//g, '/')
+        .replace(/\/(\d+|__WIDTH__)x\d+\//g, '/')
+        .replace(/\/filters:[^\/]+/g, '/')
+        .replace(/\/fit-in\//g, '/')
+        .replace(/^\/+/, '')
+        .replace(/\/+/g, '/');
 
       if (path.match(/^\d{4}\/\d{2}\/.*\/[\w-]+\.\w+$/)) {
-        path = path.replace(/(.*)\/[\w-]+(\.\w+)$/, "$1/image$2");
+        path = path.replace(/(.*)\/[\w-]+(\.\w+)$/, '$1/image$2');
       }
-      if (path.endsWith("/")) {
-        path = path + "image.jpg"
+      if (path.endsWith('/')) {
+        path = path + 'image.jpg';
       }
       return decodeURIComponent(path);
     }
@@ -257,9 +250,9 @@ export class ImageRequest {
     // Return an error for all other conditions
     throw {
       status: 404,
-      code: "ImageEdits::CannotFindImage",
+      code: 'ImageEdits::CannotFindImage',
       message:
-        "The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists."
+        'The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists.',
     };
   }
 
@@ -272,17 +265,19 @@ export class ImageRequest {
    */
   parseRequestType(event: APIGatewayProxyEventV2) {
     const path = event.rawPath;
-    const matchThumbor = new RegExp(/^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(\.+jpg|\.+png|\.+webp|\.tiff|\.jpeg|\.svg|\.gif|\.avif)$/i);
+    const matchThumbor = new RegExp(
+      /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(\.+jpg|\.+png|\.+webp|\.tiff|\.jpeg|\.svg|\.gif|\.avif)$/i,
+    );
 
-    if (matchThumbor.test(path) || path.endsWith("/")) {
+    if (matchThumbor.test(path) || path.endsWith('/')) {
       // use thumbor mappings
-      return "Thumbor";
+      return 'Thumbor';
     } else {
       throw {
         status: 400,
-        code: "RequestTypeError",
+        code: 'RequestTypeError',
         message:
-          "The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg, gif, avif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests."
+          'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg, gif, avif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.',
       };
     }
   }
@@ -297,13 +292,13 @@ export class ImageRequest {
     if (sourceBuckets === undefined) {
       throw {
         status: 400,
-        code: "GetAllowedSourceBuckets::NoSourceBuckets",
+        code: 'GetAllowedSourceBuckets::NoSourceBuckets',
         message:
-          "The SOURCE_BUCKETS variable could not be read. Please check that it is not empty and contains at least one source bucket, or multiple buckets separated by commas. Spaces can be provided between commas and bucket names, these will be automatically parsed out when decoding."
+          'The SOURCE_BUCKETS variable could not be read. Please check that it is not empty and contains at least one source bucket, or multiple buckets separated by commas. Spaces can be provided between commas and bucket names, these will be automatically parsed out when decoding.',
       };
     } else {
-      const formatted = sourceBuckets.replace(/\s+/g, "");
-      return formatted.split(",");
+      const formatted = sourceBuckets.replace(/\s+/g, '');
+      return formatted.split(',');
     }
   }
 
@@ -315,11 +310,11 @@ export class ImageRequest {
   getOutputFormat(event: APIGatewayProxyEventV2): keyof sharp.FormatEnum | null {
     const autoWebP = process.env.AUTO_WEBP;
     const autoAvif = process.env.AUTO_AVIF;
-    let accept = (event.headers?.Accept || event.headers?.accept) ?? "";
-    if (autoAvif === "Yes" && accept && accept.includes("image/avif")) {
-      return "avif";
-    } else if (autoWebP === "Yes" && accept && accept.includes("image/webp")) {
-      return "webp";
+    let accept = (event.headers?.Accept || event.headers?.accept) ?? '';
+    if (autoAvif === 'Yes' && accept && accept.includes('image/avif')) {
+      return 'avif';
+    } else if (autoWebP === 'Yes' && accept && accept.includes('image/webp')) {
+      return 'webp';
     }
     return null;
   }
@@ -329,29 +324,29 @@ export class ImageRequest {
    * @param {Buffer} imageBuffer - Image buffer.
    */
   inferImageType(imageBuffer: Buffer) {
-    switch (imageBuffer.toString("hex").substring(0, 8).toUpperCase()) {
-      case "89504E47":
-        return "image/png";
-      case "FFD8FFDB":
-        return "image/jpeg";
-      case "FFD8FFE0":
-        return "image/jpeg";
-      case "FFD8FFEE":
-        return "image/jpeg";
-      case "FFD8FFE1":
-        return "image/jpeg";
-      case "52494646":
-        return "image/webp";
-      case "49492A00":
-        return "image/tiff";
-      case "4D4D002A":
-        return "image/tiff";
+    switch (imageBuffer.toString('hex').substring(0, 8).toUpperCase()) {
+      case '89504E47':
+        return 'image/png';
+      case 'FFD8FFDB':
+        return 'image/jpeg';
+      case 'FFD8FFE0':
+        return 'image/jpeg';
+      case 'FFD8FFEE':
+        return 'image/jpeg';
+      case 'FFD8FFE1':
+        return 'image/jpeg';
+      case '52494646':
+        return 'image/webp';
+      case '49492A00':
+        return 'image/tiff';
+      case '4D4D002A':
+        return 'image/tiff';
       default:
         throw {
           status: 500,
-          code: "RequestTypeError",
+          code: 'RequestTypeError',
           message:
-            "The file does not have an extension and the file type could not be inferred. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg, avif). Refer to the documentation for additional guidance on forming image requests.",
+            'The file does not have an extension and the file type could not be inferred. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg, avif). Refer to the documentation for additional guidance on forming image requests.',
         };
     }
   }

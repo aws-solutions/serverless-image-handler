@@ -1,11 +1,10 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import Color from "color";
-import ColorName from "color-name";
+import Color from 'color';
+import ColorName from 'color-name';
 
 export class ThumborMapping {
-
   // Constructor
   private path: any;
   cropping: any;
@@ -13,7 +12,7 @@ export class ThumborMapping {
 
   constructor() {
     this.edits = {};
-    this.cropping = {}
+    this.cropping = {};
   }
 
   /**
@@ -24,9 +23,7 @@ export class ThumborMapping {
   process(event: any) {
     // Setup
     this.path = event['path'] || event['rawPath'];
-    this.path = this.path.replace('__WIDTH__', '1800')
-      .replace('%28', '(')
-      .replace('%29', ')');
+    this.path = this.path.replace('__WIDTH__', '1800').replace('%28', '(').replace('%29', ')');
 
     // Process the Dimensions
     const dimPath = this.path.match(/\/(\d+)x(\d+)\//);
@@ -59,17 +56,17 @@ export class ThumborMapping {
     // Parse cropping
     const cropping = this.path.match(/\/(\d+)x(\d+):(\d+)x(\d+)\//);
     if (cropping) {
-      const left = Number(cropping[1])
-      const top = Number(cropping[2])
-      const width = Number(cropping[3])
-      const height = Number(cropping[4])
+      const left = Number(cropping[1]);
+      const top = Number(cropping[2]);
+      const width = Number(cropping[3]);
+      const height = Number(cropping[4]);
 
       if (!isNaN(left) && !isNaN(top) && !isNaN(width) && !isNaN(height)) {
         this.cropping = {
           left: left,
           top: top,
           width: width,
-          height: height
+          height: height,
         };
       }
     }
@@ -84,7 +81,7 @@ export class ThumborMapping {
     if (!edits) {
       edits = [];
     }
-    const filetype = (this.path.split('.'))[(this.path.split('.')).length - 1];
+    const filetype = this.path.split('.')[this.path.split('.').length - 1];
     for (let i = 0; i < edits.length; i++) {
       const edit = `${edits[i]})`;
       this.mapFilter(edit, filetype);
@@ -92,7 +89,6 @@ export class ThumborMapping {
 
     return this;
   }
-
 
   /**
    * Scanner function for matching supported Thumbor filters and converting their
@@ -106,20 +102,20 @@ export class ThumborMapping {
     const editKey = matched[1];
     let value = matched[2];
     // Find the proper filter
-    if (editKey === ('autojpg')) {
+    if (editKey === 'autojpg') {
       this.edits.toFormat = 'jpeg';
-    } else if (editKey === ('background_color')) {
+    } else if (editKey === 'background_color') {
       // @ts-ignore
       if (!ColorName[value]) {
-        value = `#${value}`
+        value = `#${value}`;
       }
-      this.edits.flatten = {background: Color(value).object()};
-    } else if (editKey === ('blur')) {
+      this.edits.flatten = { background: Color(value).object() };
+    } else if (editKey === 'blur') {
       const val = value.split(',');
-      this.edits.blur = (val.length > 1) ? Number(val[1]) : Number(val[0]) / 2;
-    } else if (editKey === ('convolution')) {
+      this.edits.blur = val.length > 1 ? Number(val[1]) : Number(val[0]) / 2;
+    } else if (editKey === 'convolution') {
       const arr = value.split(',');
-      const strMatrix = (arr[0]).split(';');
+      const strMatrix = arr[0].split(';');
       let matrix: any[] = [];
       strMatrix.forEach(function (str) {
         matrix.push(Number(str));
@@ -128,7 +124,7 @@ export class ThumborMapping {
       let matrixHeight = 0;
       let counter = 0;
       for (let i = 0; i < matrix.length; i++) {
-        if (counter === (matrixWidth - 1)) {
+        if (counter === matrixWidth - 1) {
           matrixHeight++;
           counter = 0;
         } else {
@@ -138,67 +134,67 @@ export class ThumborMapping {
       this.edits.convolve = {
         width: Number(matrixWidth),
         height: Number(matrixHeight),
-        kernel: matrix
-      }
-    } else if (editKey === ('equalize')) {
-      this.edits.normalize = "true";
-    } else if (editKey === ('fill')) {
+        kernel: matrix,
+      };
+    } else if (editKey === 'equalize') {
+      this.edits.normalize = 'true';
+    } else if (editKey === 'fill') {
       if (this.edits.resize === undefined) {
         this.edits.resize = {};
       }
       // @ts-ignore
       if (!ColorName[value]) {
-        value = `#${value}`
+        value = `#${value}`;
       }
       this.edits.resize.fit = 'contain';
       this.edits.resize.background = Color(value).object();
-    } else if (editKey === ('format')) {
+    } else if (editKey === 'format') {
       const formattedValue = value.replace(/[^0-9a-z]/gi, '').replace(/jpg/i, 'jpeg');
       const acceptedValues = ['heic', 'heif', 'jpeg', 'png', 'raw', 'tiff', 'webp', 'avif'];
       if (acceptedValues.includes(formattedValue)) {
         this.edits.toFormat = formattedValue;
       }
-    } else if (editKey === ('grayscale')) {
+    } else if (editKey === 'grayscale') {
       this.edits.grayscale = true;
-    } else if (editKey === ('no_upscale')) {
+    } else if (editKey === 'no_upscale') {
       if (this.edits.resize === undefined) {
         this.edits.resize = {};
       }
       this.edits.resize.withoutEnlargement = true;
-    } else if (editKey === ('proportion')) {
+    } else if (editKey === 'proportion') {
       if (this.edits.resize === undefined) {
         this.edits.resize = {};
       }
       const prop = Number(value);
       this.edits.resize.width = Number(this.edits.resize.width * prop);
       this.edits.resize.height = Number(this.edits.resize.height * prop);
-    } else if (editKey === ('quality')) {
+    } else if (editKey === 'quality') {
       if (['jpg', 'jpeg'].includes(filetype)) {
-        this.edits.jpeg = {quality: Number(value)}
+        this.edits.jpeg = { quality: Number(value) };
       } else if (filetype === 'png') {
-        this.edits.png = {quality: Number(value)}
+        this.edits.png = { quality: Number(value) };
       } else if (filetype === 'webp') {
-        this.edits.webp = {quality: Number(value)}
+        this.edits.webp = { quality: Number(value) };
       } else if (filetype === 'tiff') {
-        this.edits.tiff = {quality: Number(value)}
+        this.edits.tiff = { quality: Number(value) };
       } else if (filetype === 'heif') {
-        this.edits.heif = {quality: Number(value)}
+        this.edits.heif = { quality: Number(value) };
       }
-    } else if (editKey === ('rgb')) {
+    } else if (editKey === 'rgb') {
       const percentages = value.split(',');
       const values: any[] = [];
       percentages.forEach(function (percentage) {
         const parsedPercentage = Number(percentage);
         const val = 255 * (parsedPercentage / 100);
         values.push(val);
-      })
-      this.edits.tint = {r: values[0], g: values[1], b: values[2]};
-    } else if (editKey === ('rotate')) {
+      });
+      this.edits.tint = { r: values[0], g: values[1], b: values[2] };
+    } else if (editKey === 'rotate') {
       this.edits.rotate = Number(value);
-    } else if (editKey === ('sharpen')) {
+    } else if (editKey === 'sharpen') {
       const sh = value.split(',');
       this.edits.sharpen = 1 + Number(sh[1]) / 2;
-    } else if (editKey === ('stretch')) {
+    } else if (editKey === 'stretch') {
       if (this.edits.resize === undefined) {
         this.edits.resize = {};
       }
@@ -207,13 +203,13 @@ export class ThumborMapping {
       if (this.edits.resize.fit !== 'inside') {
         this.edits.resize.fit = 'fill';
       }
-    } else if (editKey === ('strip_exif') || editKey === ('strip_icc')) {
+    } else if (editKey === 'strip_exif' || editKey === 'strip_icc') {
       this.edits.rotate = null;
     } else if (editKey === 'upscale') {
       if (this.edits.resize === undefined) {
         this.edits.resize = {};
       }
-      this.edits.resize.fit = "inside"
+      this.edits.resize.fit = 'inside';
     } else if (editKey === 'watermark') {
       const options = value.replace(/\s+/g, '').split(',');
       const bucket = options[0];
@@ -230,8 +226,8 @@ export class ThumborMapping {
         alpha,
         wRatio,
         hRatio,
-        options: {}
-      }
+        options: {},
+      };
       const allowedPosPattern = /^(100|[1-9]?[0-9]|-(100|[1-9][0-9]?))p$/;
       if (allowedPosPattern.test(xPos) || !isNaN(xPos)) {
         this.edits.overlayWith.options['left'] = xPos;
@@ -243,10 +239,10 @@ export class ThumborMapping {
       // Rounded crops, with optional coordinates
       const roundedImages = value.match(/(\d+)x(\d+)(:(\d+)x(\d+))?/);
       if (roundedImages) {
-        const left = Number(roundedImages[1])
-        const top = Number(roundedImages[2])
-        const r_x = Number(roundedImages[4])
-        const r_y = Number(roundedImages[5])
+        const left = Number(roundedImages[1]);
+        const top = Number(roundedImages[2]);
+        const r_x = Number(roundedImages[4]);
+        const r_y = Number(roundedImages[5]);
 
         this.edits.roundCrop = {};
         if (!isNaN(left)) this.edits.roundCrop.left = left;

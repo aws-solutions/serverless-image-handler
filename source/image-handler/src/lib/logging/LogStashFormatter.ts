@@ -1,7 +1,7 @@
-import {LogFormatter} from '@aws-lambda-powertools/logger'
-import {LogAttributes, UnformattedAttributes,} from '@aws-lambda-powertools/logger/lib/types'
+import { LogFormatter } from '@aws-lambda-powertools/logger';
+import { LogAttributes, UnformattedAttributes } from '@aws-lambda-powertools/logger/lib/types';
 
-type LogStashLog = LogAttributes
+type LogStashLog = LogAttributes;
 
 class LogStashFormatter extends LogFormatter {
   public formatAttributes(attributes: UnformattedAttributes): LogStashLog {
@@ -24,8 +24,8 @@ class LogStashFormatter extends LogFormatter {
         version: attributes.lambdaContext?.functionVersion,
         coldStart: attributes.lambdaContext?.coldStart,
       },
-    }
+    };
   }
 }
 
-export {LogStashFormatter}
+export { LogStashFormatter };
