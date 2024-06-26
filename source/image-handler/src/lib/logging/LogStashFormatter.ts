@@ -13,10 +13,6 @@ class LogStashFormatter extends LogFormatter {
       service: attributes.serviceName,
       environment: attributes.environment,
       awsRegion: attributes.awsRegion,
-      correlationIds: {
-        awsRequestId: attributes.lambdaContext?.awsRequestId,
-        xRayTraceId: attributes.xRayTraceId,
-      },
       lambdaFunction: {
         name: attributes.lambdaContext?.functionName,
         arn: attributes.lambdaContext?.invokedFunctionArn,

@@ -25,7 +25,8 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
 
   try {
     const request: ImageRequest = await imageRequest.setup(event);
-    logger.info('Image manipulation request', { ...request, originalImage: undefined });
+    logger.appendKeys({ ...request, originalImage: undefined });
+    logger.info('Image manipulation request');
 
     let now = Date.now();
     if (request.Expires && request.Expires.getTime() < now) {

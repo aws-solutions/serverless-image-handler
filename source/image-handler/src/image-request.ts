@@ -27,7 +27,9 @@ export class ImageRequest {
   CacheControl: any;
   ETag: any;
   headers: any;
-  private s3: any;
+  request_id: any;
+  accept: any;
+  private s3?: S3;
 
   constructor(s3: S3) {
     this.s3 = s3;
@@ -87,6 +89,9 @@ export class ImageRequest {
       }
     }
 
+    this.request_id = event.headers['X-Amz-Cf-Id'];
+    this.accept = event.headers.Accept || event.headers.accept;
+
     delete this.s3;
 
     return this;
@@ -101,7 +106,7 @@ export class ImageRequest {
   async getOriginalImage(bucket: string, key: string): Promise<any> {
     const imageLocation = { Bucket: bucket, Key: key };
     try {
-      const originalImage: GetObjectCommandOutput = await this.s3.getObject(imageLocation);
+      const originalImage: GetObjectCommandOutput = await this.s3!.getObject(imageLocation);
       const metaData = originalImage['Metadata'];
       const isGone = metaData && metaData['buzz-status-code'] && metaData['buzz-status-code'] === '410';
 
@@ -310,7 +315,7 @@ export class ImageRequest {
   getOutputFormat(event: APIGatewayProxyEventV2): keyof sharp.FormatEnum | null {
     const autoWebP = process.env.AUTO_WEBP;
     const autoAvif = process.env.AUTO_AVIF;
-    let accept = (event.headers?.Accept || event.headers?.accept) ?? '';
+    let accept = event.headers?.Accept || event.headers?.accept;
     if (autoAvif === 'Yes' && accept && accept.includes('image/avif')) {
       return 'avif';
     } else if (autoWebP === 'Yes' && accept && accept.includes('image/webp')) {
