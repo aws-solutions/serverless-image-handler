@@ -89,8 +89,8 @@ export class ImageRequest {
       }
     }
 
-    this.request_id = event.headers['X-Amz-Cf-Id'];
-    this.accept = event.headers.Accept || event.headers.accept;
+    this.request_id = event.headers['x-amz-cf-id'];
+    this.accept = event.headers.accept;
 
     delete this.s3;
 
