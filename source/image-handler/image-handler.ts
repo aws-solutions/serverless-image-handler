@@ -21,7 +21,7 @@ import {
 export class ImageHandler {
   private readonly LAMBDA_PAYLOAD_LIMIT = 6 * 1024 * 1024;
 
-  constructor(private readonly s3Client: S3, private readonly rekognitionClient: Rekognition) { }
+  constructor(private readonly s3Client: S3, private readonly rekognitionClient: Rekognition) {}
 
   /**
    * Creates a Sharp object from Buffer
@@ -81,9 +81,10 @@ export class ImageHandler {
     // Apply edits if specified
     if (edits && Object.keys(edits).length) {
       // convert image to Sharp object
+      options.animated = (typeof edits.animated !== 'undefined') ? edits.animated : (imageRequestInfo.contentType === ContentTypes.GIF)
       let image = await this.instantiateSharpImage(originalImage, edits, options);
 
-      // default to non animated if image is a GIF without multiple pages
+      // default to non animated if image does not have multiple pages
       if (options.animated) {
         const metadata = await image.metadata();
         if (!metadata.pages || metadata.pages <= 1) {
@@ -129,7 +130,7 @@ export class ImageHandler {
    * Applies image modifications to the original image based on edits.
    * @param originalImage The original sharp image.
    * @param edits The edits to be made to the original image.
-   * @param isAnimation a flag whether the edit applies to `gif` file or not.
+   * @param isAnimation a flag whether the edit applies to animated files or not.
    * @returns A modifications to the original image.
    */
   public async applyEdits(originalImage: sharp.Sharp, edits: ImageEdits, isAnimation: boolean): Promise<sharp.Sharp> {
@@ -160,6 +161,9 @@ export class ImageHandler {
           this.applyCrop(originalImage, edits);
           break;
         }
+        case "animated": {
+          break;
+        }
         default: {
           if (edit in originalImage) {
             originalImage[edit](edits[edit]);
@@ -180,24 +184,36 @@ export class ImageHandler {
     if (edits.resize === undefined) {
       edits.resize = {};
       edits.resize.fit = ImageFitTypes.INSIDE;
-    } else {
-      if (edits.resize.width) edits.resize.width = Math.round(Number(edits.resize.width));
-      if (edits.resize.height) edits.resize.height = Math.round(Number(edits.resize.height));
-
-      if (edits.resize.ratio) {
-        const ratio = edits.resize.ratio;
-
-        const { width, height } =
-          edits.resize.width && edits.resize.height ? edits.resize : await originalImage.metadata();
-
-        edits.resize.width = Math.round(width * ratio);
-        edits.resize.height = Math.round(height * ratio);
-        // Sharp doesn't have such parameter for resize(), we got it from Thumbor mapper.  We don't need to keep this field in the `resize` object
-        delete edits.resize.ratio;
-
-        if (!edits.resize.fit) edits.resize.fit = ImageFitTypes.INSIDE;
-      }
+      return;
     }
+    const resize = this.validateResizeInputs(edits.resize);
+
+    if (resize.ratio) {
+      const ratio = resize.ratio;
+
+      const { width, height } = resize.width && resize.height ? resize : await originalImage.metadata();
+
+      resize.width = Math.round(width * ratio);
+      resize.height = Math.round(height * ratio);
+      // Sharp doesn't have such parameter for resize(), we got it from Thumbor mapper.  We don't need to keep this field in the `resize` object
+      delete resize.ratio;
+
+      if (!resize.fit) resize.fit = ImageFitTypes.INSIDE;
+    }
+  }
+
+  /**
+   * Validates resize edit parameters.
+   * @param resize The resize parameters.
+   */
+  private validateResizeInputs(resize: any) {
+    if (resize.width) resize.width = Math.round(Number(resize.width));
+    if (resize.height) resize.height = Math.round(Number(resize.height));
+
+    if ((resize.width != null && resize.width <= 0) || (resize.height != null && resize.height <= 0)) {
+      throw new ImageHandlerError(StatusCodes.BAD_REQUEST, "InvalidResizeException", "The image size is invalid.");
+    }
+    return resize;
   }
 
   /**
@@ -273,9 +289,9 @@ export class ImageHandler {
         typeof edits.smartCrop === "object"
           ? edits.smartCrop
           : {
-            faceIndex: undefined,
-            padding: undefined,
-          };
+              faceIndex: undefined,
+              padding: undefined,
+            };
       const { imageBuffer, format } = await this.getRekognitionCompatibleImage(originalImage);
       const boundingBox = await this.getBoundingBox(imageBuffer.data, faceIndex ?? 0);
       const cropArea = this.getCropArea(boundingBox, padding ?? 0, imageBuffer.info);
@@ -324,11 +340,11 @@ export class ImageHandler {
         typeof edits.roundCrop === "object"
           ? edits.roundCrop
           : {
-            top: undefined,
-            left: undefined,
-            rx: undefined,
-            ry: undefined,
-          };
+              top: undefined,
+              left: undefined,
+              rx: undefined,
+              ry: undefined,
+            };
       const imageBuffer = await originalImage.toBuffer({ resolveWithObject: true });
       const width = imageBuffer.info.width;
       const height = imageBuffer.info.height;
@@ -393,10 +409,10 @@ export class ImageHandler {
         typeof edits.contentModeration === "object"
           ? edits.contentModeration
           : {
-            minConfidence: undefined,
-            blur: undefined,
-            moderationLabels: undefined,
-          };
+              minConfidence: undefined,
+              blur: undefined,
+              moderationLabels: undefined,
+            };
       const { imageBuffer, format } = await this.getRekognitionCompatibleImage(originalImage);
       const inappropriateContent = await this.detectInappropriateContent(imageBuffer.data, minConfidence);
 
@@ -653,6 +669,8 @@ export class ImageHandler {
         return "raw";
       case ImageFormatTypes.GIF:
         return "gif";
+      case ImageFormatTypes.AVIF:
+        return "avif";
       default:
         throw new ImageHandlerError(
           StatusCodes.INTERNAL_SERVER_ERROR,

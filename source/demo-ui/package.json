@@ -1,0 +1,22 @@
+{
+    "name": "demo-ui",
+    "version": "6.2.6",
+    "private": true,
+    "description": "Serverless Image Handler demo ui",
+    "license": "Apache-2.0",
+    "author": {
+        "name": "Amazon Web Services",
+        "url": "https://aws.amazon.com/solutions"
+    },
+    "main": "index.js",
+    "scripts": {
+        "clean": "rm -rf node_modules/ dist/ coverage/ modules/",
+        "bump-version": "npm version $(cat ../../VERSION.txt) --allow-same-version",
+        "postinstall": "mkdir -p modules && cp -f node_modules/jquery/dist/jquery.slim.min.js node_modules/@popperjs/core/dist/umd/popper.min.js node_modules/bootstrap/dist/js/bootstrap.min.js node_modules/bootstrap/dist/css/bootstrap.min.css modules/"
+    },
+    "dependencies": {
+        "@popperjs/core": "^2.11.8",
+        "bootstrap": "^5.3.3",
+        "jquery": "^3.7.1"
+    }
+}

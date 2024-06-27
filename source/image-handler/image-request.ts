@@ -30,7 +30,7 @@ type OriginalImageInfo = Partial<{
 export class ImageRequest {
   private static readonly DEFAULT_EFFORT = 4;
 
-  constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) { }
+  constructor(private readonly s3Client: S3, private readonly secretProvider: SecretProvider) {}
 
   /**
    * Determines the output format of an image
@@ -69,6 +69,7 @@ export class ImageRequest {
         ImageFormatTypes.TIFF,
         ImageFormatTypes.HEIF,
         ImageFormatTypes.GIF,
+        ImageFormatTypes.AVIF,
       ];
 
       imageRequestInfo.contentType = `image/${imageRequestInfo.outputFormat}`;
@@ -101,7 +102,7 @@ export class ImageRequest {
 
       imageRequestInfo.requestType = this.parseRequestType(event);
       imageRequestInfo.bucket = this.parseImageBucket(event, imageRequestInfo.requestType);
-      imageRequestInfo.key = this.parseImageKey(event, imageRequestInfo.requestType);
+      imageRequestInfo.key = this.parseImageKey(event, imageRequestInfo.requestType, imageRequestInfo.bucket);
       imageRequestInfo.edits = this.parseImageEdits(event, imageRequestInfo.requestType);
 
       const originalImage = await this.getOriginalImage(imageRequestInfo.bucket, imageRequestInfo.key);
@@ -154,7 +155,18 @@ export class ImageRequest {
       const result: OriginalImageInfo = {};
 
       const imageLocation = { Bucket: bucket, Key: key };
-      const originalImage = await this.s3Client.getObject(imageLocation).promise();
+      let originalImage;
+      try {
+        console.info("Getting image from S3:", imageLocation);
+        originalImage = await this.s3Client.getObject(imageLocation).promise();
+      } catch (error) {
+        console.error(error);
+        throw new ImageHandlerError(
+          StatusCodes.NOT_FOUND,
+          "NoSuchKey",
+          `The image ${key} does not exist or the request may not be base64 encoded properly.`
+        );
+      }
       const imageBuffer = Buffer.from(originalImage.Body as Uint8Array);
 
       if (originalImage.ContentType) {
@@ -181,6 +193,7 @@ export class ImageRequest {
 
       return result;
     } catch (error) {
+      console.error(error);
       let status = StatusCodes.INTERNAL_SERVER_ERROR;
       let message = error.message;
       if (error.code === "NoSuchKey") {
@@ -206,7 +219,7 @@ export class ImageRequest {
         // Check the provided bucket against the allowed list
         const sourceBuckets = this.getAllowedSourceBuckets();
 
-        if (sourceBuckets.includes(request.bucket) || new RegExp("^" + sourceBuckets[0] + "$").exec(request.bucket)) {
+        if (sourceBuckets.includes(request.bucket)) {
           return request.bucket;
         } else {
           throw new ImageHandlerError(
@@ -223,6 +236,18 @@ export class ImageRequest {
     } else if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
       // Use the default image source bucket env var
       const sourceBuckets = this.getAllowedSourceBuckets();
+      // Take the path and split it at "/" to get each "word" in the url as array
+      let potentialBucket = event.path
+        .split("/")
+        .filter((e) => e.startsWith("s3:"))
+        .map((e) => e.replace("s3:", ""));
+      // filter out all parts that are not a bucket-url
+      potentialBucket = potentialBucket.filter((e) => sourceBuckets.includes(e));
+      // return the first match
+      if (potentialBucket.length > 0) {
+        console.info("Bucket override - chosen bucket: ", potentialBucket[0]);
+        return potentialBucket[0];
+      }
       return sourceBuckets[0];
     } else {
       throw new ImageHandlerError(
@@ -263,9 +288,10 @@ export class ImageRequest {
    * Parses the name of the appropriate Amazon S3 key corresponding to the original image.
    * @param event Lambda request body.
    * @param requestType Type of the request.
+   * @param bucket
    * @returns The name of the appropriate Amazon S3 key.
    */
-  public parseImageKey(event: ImageHandlerEvent, requestType: RequestTypes): string {
+  public parseImageKey(event: ImageHandlerEvent, requestType: RequestTypes, bucket: string = null): string {
     if (requestType === RequestTypes.DEFAULT) {
       // Decode the image request and return the image key
       const { key } = this.decodeRequest(event);
@@ -297,6 +323,7 @@ export class ImageRequest {
           .replace(/filters:watermark\(.*\)/u, "")
           .replace(/filters:[^/]+/g, "")
           .replace(/\/fit-in(?=\/)/g, "")
+          .replace(new RegExp("s3:" + bucket + "/"), "")
           .replace(/^\/+/g, "")
           .replace(/^\/+/, "")
       );
@@ -320,8 +347,8 @@ export class ImageRequest {
     const { path } = event;
     const matchDefault = /^(\/?)([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
     const matchThumbor1 = /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?)/i;
-    const matchThumbor2 = /((.(?!(\.[^.\\/]+$)))*$)/i; // NOSONAR
-    const matchThumbor3 = /.*(\.jpg$|\.jpeg$|.\.png$|\.webp$|\.tiff$|\.tif$|\.svg$|\.gif$)/i; // NOSONAR
+    const matchThumbor2 = /^((.(?!(\.[^.\\/]+$)))*$)/i; // NOSONAR
+    const matchThumbor3 = /.*(\.jpg$|\.jpeg$|.\.png$|\.webp$|\.tiff$|\.tif$|\.svg$|\.gif$|\.avif$)/i; // NOSONAR
     const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION } = process.env;
     const definedEnvironmentVariables =
       REWRITE_MATCH_PATTERN !== "" &&
@@ -351,7 +378,7 @@ export class ImageRequest {
       throw new ImageHandlerError(
         StatusCodes.BAD_REQUEST,
         "RequestTypeError",
-        "The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg, gif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests."
+        "The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg/jpeg, png, tiff/tif, webp, svg, gif, avif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests."
       );
     }
   }
@@ -448,31 +475,30 @@ export class ImageRequest {
    * @returns The output format.
    */
   public inferImageType(imageBuffer: Buffer): string {
+    const imageSignatures: { [key: string]: string } = {
+      "89504E47": ContentTypes.PNG,
+      "52494646": ContentTypes.WEBP,
+      "49492A00": ContentTypes.TIFF,
+      "4D4D002A": ContentTypes.TIFF,
+      "47494638": ContentTypes.GIF,
+    };
     const imageSignature = imageBuffer.subarray(0, 4).toString("hex").toUpperCase();
-    switch (imageSignature) {
-      case "89504E47":
-        return ContentTypes.PNG;
-      case "FFD8FFDB":
-      case "FFD8FFE0":
-      case "FFD8FFED":
-      case "FFD8FFEE":
-      case "FFD8FFE1":
-      case "FFD8FFE2":
-        return ContentTypes.JPEG;
-      case "52494646":
-        return ContentTypes.WEBP;
-      case "49492A00":
-      case "4D4D002A":
-        return ContentTypes.TIFF;
-      case "47494638":
-        return ContentTypes.GIF;
-      default:
-        throw new ImageHandlerError(
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          "RequestTypeError",
-          "The file does not have an extension and the file type could not be inferred. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg). Refer to the documentation for additional guidance on forming image requests."
-        );
+    if (imageSignatures[imageSignature]) {
+      return imageSignatures[imageSignature];
     }
+    if (imageBuffer.subarray(0, 2).toString("hex").toUpperCase() === "FFD8") {
+      return ContentTypes.JPEG;
+    }
+    if (imageBuffer.subarray(4, 12).toString("hex").toUpperCase() === "6674797061766966") {
+      // FTYPAVIF (File Type AVIF)
+      return ContentTypes.AVIF;
+    }
+    // SVG does not have an imageSignature we can use here, would require parsing the XML to some degree
+    throw new ImageHandlerError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "RequestTypeError",
+      "The file does not have an extension and the file type could not be inferred. Please ensure that your original image is of a supported file type (jpg/jpeg, png, tiff, webp, gif, avif). Inferring the image type from hex headers is not available for SVG images. Refer to the documentation for additional guidance on forming image requests."
+    );
   }
 
   /**

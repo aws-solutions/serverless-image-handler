@@ -56,19 +56,41 @@ describe("parseRequestType", () => {
     expect(result).toEqual(RequestTypes.THUMBOR);
   });
 
-  it("Should pass if get a request with supported image extension", () => {
+  it("Should pass for a thumbor request with no extension", () => {
     // Arrange
-    const events = [".jpg", ".jpeg", ".png", ".webp", ".tiff", ".tif", ".svg"].map((extension) => ({
-      path: `image${extension}`,
-    }));
+    const event = {
+      path: "/unsafe/filters:brightness(10):contrast(30)/image",
+    };
     process.env = {};
 
     // Act
     const imageRequest = new ImageRequest(s3Client, secretProvider);
-    const results = events.map((event) => imageRequest.parseRequestType(event));
+    const result = imageRequest.parseRequestType(event);
 
     // Assert
-    expect(results).toEqual(new Array(events.length).fill(RequestTypes.THUMBOR));
+    expect(consoleInfoSpy).toHaveBeenCalledWith("Path is not base64 encoded.");
+    expect(result).toEqual(RequestTypes.THUMBOR);
+  });
+
+  test.each([
+    { value: ".jpg" },
+    { value: ".jpeg" },
+    { value: ".png" },
+    { value: ".webp" },
+    { value: ".tiff" },
+    { value: ".tif" },
+    { value: ".svg" },
+    { value: ".gif" },
+    { value: ".avif" },
+  ])("Should pass if get a request with supported image extension: $value", ({ value }) => {
+    process.env = {};
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseRequestType({ path: `image${value}` });
+
+    // Assert
+    expect(result).toEqual(RequestTypes.THUMBOR);
   });
 
   it("Should pass if the method detects a custom request", () => {
@@ -97,17 +119,43 @@ describe("parseRequestType", () => {
     // Act
     const imageRequest = new ImageRequest(s3Client, secretProvider);
 
+    let parseError;
     // Assert
     try {
       imageRequest.parseRequestType(event);
     } catch (error) {
-      expect(error).toMatchObject({
-        status: StatusCodes.BAD_REQUEST,
-        code: "RequestTypeError",
-        message:
-          "The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg, gif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.",
-      });
+      parseError = error;
     }
+    expect(parseError).toMatchObject({
+      status: StatusCodes.BAD_REQUEST,
+      code: "RequestTypeError",
+      message:
+        "The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg/jpeg, png, tiff/tif, webp, svg, gif, avif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.",
+    });
+  });
+
+  it("Should throw an error for a thumbor request with invalid extension", () => {
+    // Arrange
+    const event = {
+      path: "/testImage.abc",
+    };
+    process.env = {};
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    let parseError;
+    // Assert
+    try {
+      imageRequest.parseRequestType(event);
+    } catch (error) {
+      parseError = error;
+    }
+    expect(parseError).toMatchObject({
+      status: StatusCodes.BAD_REQUEST,
+      code: "RequestTypeError",
+      message:
+        "The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg/jpeg, png, tiff/tif, webp, svg, gif, avif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.",
+    });
   });
 
   it("Should pass if a path is provided without an extension", () => {

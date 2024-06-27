@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "adm-zip": "^0.5.10",
-    "aws-cdk-lib": "^2.118.0"
+    "aws-cdk-lib": "^2.124.0"
   },
   "overrides": {
     "semver": "7.5.4"

@@ -230,7 +230,7 @@ describe("index", () => {
     // Act
     const result = await handler(event);
     const expectedResult = {
-      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      statusCode: StatusCodes.NOT_FOUND,
       isBase64Encoded: true,
       headers: {
         "Access-Control-Allow-Methods": "GET",

@@ -22,6 +22,11 @@ describe("CREATE_LOGGING_BUCKET", () => {
     },
   };
 
+  beforeEach(() => {
+    consoleInfoSpy.mockReset()
+    consoleErrorSpy.mockReset()
+  });
+
   it("Should return success and bucket name", async () => {
     mockAwsEc2.describeRegions.mockImplementationOnce(() => ({
       promise() {
@@ -43,10 +48,15 @@ describe("CREATE_LOGGING_BUCKET", () => {
         return Promise.resolve();
       },
     }));
+    mockAwsS3.putBucketTagging.mockImplementation(() => ({
+      promise() {
+        return Promise.resolve();
+      },
+    }));
 
     await handler(event, mockContext);
 
-    expect.assertions(4);
+    expect.assertions(5);
 
     expect(consoleInfoSpy).toHaveBeenCalledWith(
       expect.stringContaining("The opt-in status of the 'mock-region-1' region is 'opted-in'")
@@ -60,7 +70,10 @@ describe("CREATE_LOGGING_BUCKET", () => {
       expect.stringMatching(/^Successfully enabled encryption on bucket 'serverless-image-handler-logs-[a-z0-9]{8}'/)
     );
     expect(consoleInfoSpy).toHaveBeenCalledWith(
-      expect.stringMatching(/^Successfully added policy added to bucket 'serverless-image-handler-logs-[a-z0-9]{8}'/)
+      expect.stringMatching(/^Successfully added policy to bucket 'serverless-image-handler-logs-[a-z0-9]{8}'/)
+    );
+    expect(consoleInfoSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/^Successfully added tag to bucket 'serverless-image-handler-logs-[a-z0-9]{8}'/)
     );
   });
 
@@ -136,7 +149,7 @@ describe("CREATE_LOGGING_BUCKET", () => {
 
     expect(consoleInfoSpy).toHaveBeenCalledWith(
       expect.stringMatching(
-        /^Successfully created bucket 'serverless-image-handler-logs-[a-z0-9]{8}' in 'us-east-1' region/
+        /^Successfully created bucket 'serverless-image-handler-logs-[a-z0-9]{8}' in 'mock-region-1' region/
       )
     );
     expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -181,7 +194,7 @@ describe("CREATE_LOGGING_BUCKET", () => {
 
     expect(consoleInfoSpy).toHaveBeenCalledWith(
       expect.stringMatching(
-        /^Successfully created bucket 'serverless-image-handler-logs-[a-z0-9]{8}' in 'us-east-1' region/
+        /^Successfully created bucket 'serverless-image-handler-logs-[a-z0-9]{8}' in 'mock-region-1' region/
       )
     );
     expect(consoleInfoSpy).toHaveBeenCalledWith(
@@ -199,5 +212,46 @@ describe("CREATE_LOGGING_BUCKET", () => {
         },
       },
     });
+  });
+
+  it("Should log a failure when there is an error adding a tag to the created bucket", async () => {
+    mockAwsEc2.describeRegions.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({ Regions: [{ RegionName: "mock-region-1" }] });
+      },
+    }));
+    mockAwsS3.createBucket.mockImplementation(() => ({
+      promise() {
+        return Promise.resolve();
+      },
+    }));
+    mockAwsS3.putBucketEncryption.mockImplementation(() => ({
+      promise() {
+        return Promise.resolve();
+      },
+    }));
+    mockAwsS3.putBucketPolicy.mockImplementation(() => ({
+      promise() {
+        return Promise.resolve();
+      },
+    }));
+    mockAwsS3.putBucketTagging.mockImplementation(() => ({
+      promise() {
+        return Promise.reject(new CustomResourceError(null, "putBucketTagging failed"));
+      },
+    }));
+
+    await handler(event, mockContext);
+
+    expect.assertions(2);
+
+    expect(consoleInfoSpy).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /^Successfully created bucket 'serverless-image-handler-logs-[a-z0-9]{8}' in 'us-east-1' region/
+      )
+    );
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/^Failed to add tag to bucket 'serverless-image-handler-logs-[a-z0-9]{8}'/)
+    );
   });
 });
