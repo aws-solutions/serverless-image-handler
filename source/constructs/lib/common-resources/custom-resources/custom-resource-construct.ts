@@ -7,9 +7,9 @@ import { Function as LambdaFunction, Runtime } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Bucket, IBucket } from "aws-cdk-lib/aws-s3";
 import { BucketDeployment, Source as S3Source } from "aws-cdk-lib/aws-s3-deployment";
-import { ArnFormat, Aspects, Aws, CfnCondition, CfnResource, CustomResource, Duration, Lazy, Stack } from "aws-cdk-lib";
+import { ArnFormat, Aspects, Aws, CfnCondition, CfnResource, CustomResource, Duration, Fn, Lazy, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { addCfnSuppressRules } from "../../../utils/utils";
+import { addCfnCondition, addCfnSuppressRules } from "../../../utils/utils";
 
 import { SolutionConstructProps } from "../../types";
 import { CommonResourcesProps, Conditions } from "../common-resources-construct";
@@ -45,7 +45,6 @@ export interface SetupValidateSecretsManagerProps {
 }
 
 export class CustomResourcesConstruct extends Construct {
-  private readonly solutionVersion: string;
   private readonly conditions: Conditions;
   private readonly customResourceRole: Role;
   private readonly customResourceLambda: LambdaFunction;
@@ -54,7 +53,6 @@ export class CustomResourcesConstruct extends Construct {
   constructor(scope: Construct, id: string, props: CustomResourcesConstructProps) {
     super(scope, id);
 
-    this.solutionVersion = props.solutionVersion;
     this.conditions = props.conditions;
 
     this.customResourceRole = new Role(this, "CustomResourceRole", {
@@ -76,15 +74,25 @@ export class CustomResourcesConstruct extends Construct {
               ],
             }),
             new PolicyStatement({
+              actions: ['s3:ListBucket'],
+              resources: this.createSourceBucketsResource()
+            }),
+            new PolicyStatement({
+              actions: [
+                "s3:GetObject",
+              ],
+              resources: [
+                `arn:aws:s3:::${props.fallbackImageS3Bucket}/${props.fallbackImageS3KeyBucket}`,
+              ],
+            }),
+            new PolicyStatement({
               actions: [
                 "s3:putBucketAcl",
                 "s3:putEncryptionConfiguration",
                 "s3:putBucketPolicy",
                 "s3:CreateBucket",
-                "s3:GetObject",
-                "s3:PutObject",
-                "s3:ListBucket",
                 "s3:PutBucketOwnershipControls",
+                "s3:PutBucketTagging"
               ],
               resources: [
                 Stack.of(this).formatArn({
@@ -142,6 +150,21 @@ export class CustomResourcesConstruct extends Construct {
     this.uuid = customResourceUuid.getAttString("UUID");
   }
 
+  public setupWebsiteHostingBucketPolicy(websiteHostingBucket: IBucket) {
+    const websiteHostingBucketPolicy = new Policy(this, "WebsiteHostingBucketPolicy", {
+      document: new PolicyDocument({
+        statements: [
+          new PolicyStatement({
+            actions: ["s3:GetObject", "s3:PutObject",],
+            resources: [websiteHostingBucket.bucketArn + "/*"],
+          }),
+        ],
+      }),
+      roles: [this.customResourceRole],
+    })
+    addCfnCondition(websiteHostingBucketPolicy, this.conditions.deployUICondition);
+  };
+
   public setupAnonymousMetric(props: AnonymousMetricCustomResourceProps) {
     this.createCustomResource("CustomResourceAnonymousMetric", this.customResourceLambda, {
       CustomAction: "sendMetric",
@@ -181,7 +204,9 @@ export class CustomResourcesConstruct extends Construct {
     // Stage static assets for the front-end from the local
     /* eslint-disable no-new */
     const bucketDeployment = new BucketDeployment(this, "DeployWebsite", {
-      sources: [S3Source.asset(path.join(__dirname, "../../../../demo-ui"))],
+      sources: [
+        S3Source.asset(path.join(__dirname, "../../../../demo-ui"), { exclude: ["node_modules/*"] }),
+      ],
       destinationBucket: props.hostingBucket,
       exclude: ["demo-ui-config.js"],
     });
@@ -233,6 +258,22 @@ export class CustomResourcesConstruct extends Construct {
     });
 
     return optInRegionAccessLogBucket;
+  }
+
+  public createSourceBucketsResource(resourceName: string = "") {
+    return Fn.split(
+      ',',
+      Fn.sub(
+        `arn:aws:s3:::\${rest}${resourceName}`,
+
+        {
+          rest: Fn.join(
+            `${resourceName},arn:aws:s3:::`,
+            Fn.split(",", Fn.join("", Fn.split(" ", Fn.ref('SourceBucketsParameter'))))
+          ),
+        },
+      ),
+    )
   }
 
   private createCustomResource(

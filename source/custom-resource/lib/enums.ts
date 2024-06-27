@@ -4,7 +4,6 @@
 export enum CustomResourceActions {
   SEND_ANONYMOUS_METRIC = "sendMetric",
   PUT_CONFIG_FILE = "putConfigFile",
-  COPY_S3_ASSETS = "copyS3assets",
   CREATE_UUID = "createUuid",
   CHECK_SOURCE_BUCKETS = "checkSourceBuckets",
   CHECK_SECRETS_MANAGER = "checkSecretsManager",

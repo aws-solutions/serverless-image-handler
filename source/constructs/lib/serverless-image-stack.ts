@@ -36,7 +36,7 @@ export class ServerlessImageHandlerStack extends Stack {
     const sourceBucketsParameter = new CfnParameter(this, "SourceBucketsParameter", {
       type: "String",
       description:
-        "(Required) List the buckets (comma-separated) within your account that contain original image files. If you plan to use Thumbor or Custom image requests with this solution, the source bucket for those requests will be the first bucket listed in this field.",
+        "(Required) List the buckets (comma-separated) within your account that contain original image files. If you plan to use Thumbor or Custom image requests with this solution, the source bucket for those requests will default to the first bucket listed in this field.",
       allowedPattern: ".+",
       default: "defaultBucket, bucketNo2, bucketNo3, ...",
     });
@@ -172,13 +172,17 @@ export class ServerlessImageHandlerStack extends Stack {
 
     const backEnd = new BackEnd(this, "BackEnd", {
       solutionVersion: props.solutionVersion,
+      solutionId: props.solutionId,
       solutionName: props.solutionName,
       secretsManagerPolicy: commonResources.secretsManagerPolicy,
       logsBucket: commonResources.logsBucket,
       uuid: commonResources.customResources.uuid,
       cloudFrontPriceClass: cloudFrontPriceClassParameter.valueAsString,
+      createSourceBucketsResource: commonResources.customResources.createSourceBucketsResource,
       ...solutionConstructProps,
     });
+
+    commonResources.customResources.setupWebsiteHostingBucketPolicy(frontEnd.websiteHostingBucket);
 
     commonResources.customResources.setupAnonymousMetric({
       anonymousData: anonymousUsage,
@@ -319,6 +323,10 @@ export class ServerlessImageHandlerStack extends Stack {
       value: logRetentionPeriodParameter.valueAsString,
       description: "Number of days for event logs from Lambda to be retained in CloudWatch.",
     });
+    new CfnOutput(this, "CloudFrontLoggingBucket", {
+      value: commonResources.logsBucket.bucketName,
+      description: "Amazon S3 bucket for storing CloudFront access logs.",
+    })
 
     Aspects.of(this).add(new SuppressLambdaFunctionCfnRulesAspect());
     Tags.of(this).add("SolutionId", props.solutionId);

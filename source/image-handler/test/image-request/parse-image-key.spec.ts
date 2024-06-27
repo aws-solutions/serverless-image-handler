@@ -82,6 +82,36 @@ describe("parseImageKey", () => {
     expect(result).toEqual(expectedResult);
   });
 
+  it("Should not include s3:bucket tag if a thumbor request includes an s3:bucket tag that is equal to the overridden bucket", () => {
+    // Arrange
+    const event = {
+      path: "/filters:rotate(90)/s3:some-test-bucket/filters:grayscale()/thumbor-image (1).jpg",
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseImageKey(event, RequestTypes.THUMBOR, "some-test-bucket");
+
+    // Assert
+    const expectedResult = "thumbor-image (1).jpg";
+    expect(result).toEqual(expectedResult);
+  });
+
+  it("Should include s3:bucket tag if a thumbor request includes an s3:bucket tag that is not equal to the overridden bucket", () => {
+    // Arrange
+    const event = {
+      path: "/filters:rotate(90)/filters:grayscale()/s3:some-test-bucket/thumbor-image (1).jpg",
+    };
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseImageKey(event, RequestTypes.THUMBOR, "some-other-bucket");
+
+    // Assert
+    const expectedResult = "s3:some-test-bucket/thumbor-image (1).jpg";
+    expect(result).toEqual(expectedResult);
+  });
+
   it("Should pass if an image key value is provided in the thumbor request format having open parentheses", () => {
     // Arrange
     const event = {

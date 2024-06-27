@@ -288,6 +288,20 @@ describe("filter", () => {
     expect(edits).toEqual(expectedResult);
   });
 
+  it("Should pass if the filter is successfully translated from Thumbor:quality()", () => {
+    // Arrange
+    const edit = "filters:quality(50)";
+    const filetype = ImageFormatTypes.AVIF;
+
+    // Act
+    const thumborMapper = new ThumborMapper();
+    const edits = thumborMapper.mapFilter(edit, filetype);
+
+    // Assert
+    const expectedResult = { avif: { quality: 50 } };
+    expect(edits).toEqual(expectedResult);
+  });
+
   it("Should return undefined if an unsupported file type is provided", () => {
     // Arrange
     const edit = "filters:quality(50)";
@@ -698,6 +712,57 @@ describe("filter", () => {
             top: "0",
           },
         },
+      },
+    };
+    expect(edits).toEqual(expectedResult.edits);
+  });
+
+  it("Should pass if false is interpreted as non-animated", () => {
+    // Arrange
+    const path = "/filters:animated(fAlSe)/test-image-001.jpg";
+
+    // Act
+    const thumborMapper = new ThumborMapper();
+    const edits = thumborMapper.mapPathToEdits(path);
+
+    // Assert
+    const expectedResult = {
+      edits: {
+        animated: false,
+      },
+    };
+    expect(edits).toEqual(expectedResult.edits);
+  });
+
+  it("Should pass if empty value is interpreted as animated", () => {
+    // Arrange
+    const path = "/filters:animated()/test-image-001.jpg";
+
+    // Act
+    const thumborMapper = new ThumborMapper();
+    const edits = thumborMapper.mapPathToEdits(path);
+
+    // Assert
+    const expectedResult = {
+      edits: {
+        animated: true,
+      },
+    };
+    expect(edits).toEqual(expectedResult.edits);
+  });
+
+  it("Should pass if non-false value is interpreted as animated", () => {
+    // Arrange
+    const path = "/filters:animated(ABCDEF)/test-image-001.jpg";
+
+    // Act
+    const thumborMapper = new ThumborMapper();
+    const edits = thumborMapper.mapPathToEdits(path);
+
+    // Assert
+    const expectedResult = {
+      edits: {
+        animated: true,
       },
     };
     expect(edits).toEqual(expectedResult.edits);

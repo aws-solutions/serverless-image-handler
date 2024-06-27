@@ -126,4 +126,69 @@ describe("parseImageBucket", () => {
       });
     }
   });
+
+  it("should parse bucket-name from first part in thumbor request but fail since it's not allowed", () => {
+    // Arrange
+    const event = { path: "/filters:grayscale()/s3:test-bucket/test-image-001.jpg" };
+    process.env.SOURCE_BUCKETS = "allowedBucket001, allowedBucket002";
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+
+    const bucket = imageRequest.parseImageBucket(event, RequestTypes.THUMBOR);
+    // Assert
+    expect(bucket).toEqual("allowedBucket001")
+  })
+
+  it("should parse bucket-name from any section in the url", () => {
+    // Arrange
+    const event = { path: "/s3:test-bucket/filters:grayscale()/test-image-001.jpg" };
+    process.env.SOURCE_BUCKETS = "allowedBucket001, test-bucket";
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+
+    const bucket = imageRequest.parseImageBucket(event, RequestTypes.THUMBOR);
+    // Assert
+    expect(bucket).toEqual("test-bucket")
+  })
+
+  it("should only parse bucket-names in source_buckets", () => {
+    // Arrange
+    const event = { path: "/s3:non-test-bucket/s3:test-bucket/test-image-001.jpg" };
+    process.env.SOURCE_BUCKETS = "allowedBucket001, test-bucket";
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+
+    const bucket = imageRequest.parseImageBucket(event, RequestTypes.THUMBOR);
+    // Assert
+    expect(bucket).toEqual("test-bucket")
+  })
+
+  it("should parse bucket-name from first part in thumbor request and return it", () => {
+    // Arrange
+    const event = { path: "/filters:grayscale()/s3:test-bucket/test-image-001.jpg" };
+    process.env.SOURCE_BUCKETS = "allowedBucket001, test-bucket";
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+
+    const bucket = imageRequest.parseImageBucket(event, RequestTypes.THUMBOR);
+    // Assert
+    expect(bucket).toEqual("test-bucket")
+  })
+
+  it("should take bucket-name from env-variable if not present in the URL", () => {
+    // Arrange
+    const event = { path: "/filters:grayscale()/test-image-001.jpg" };
+    process.env.SOURCE_BUCKETS = "allowedBucket001, test-bucket";
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+
+    const bucket = imageRequest.parseImageBucket(event, RequestTypes.THUMBOR);
+    // Assert
+    expect(bucket).toEqual("allowedBucket001")
+  })
 });

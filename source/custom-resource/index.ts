@@ -16,7 +16,6 @@ import {
   CheckSecretManagerRequestProperties,
   CheckSourceBucketsRequestProperties,
   CompletionStatus,
-  CopyS3AssetsRequestProperties,
   CreateLoggingBucketRequestProperties,
   CustomResourceActions,
   CustomResourceError,
@@ -75,17 +74,6 @@ export async function handler(event: CustomResourceRequest, context: LambdaConte
         );
         break;
       }
-      case CustomResourceActions.COPY_S3_ASSETS: {
-        const allowedRequestTypes = [CustomResourceRequestTypes.CREATE, CustomResourceRequestTypes.UPDATE];
-        await performRequest(
-          copyS3Assets,
-          RequestType,
-          allowedRequestTypes,
-          response,
-          ResourceProperties as CopyS3AssetsRequestProperties
-        );
-        break;
-      }
       case CustomResourceActions.CREATE_UUID: {
         const allowedRequestTypes = [CustomResourceRequestTypes.CREATE];
         await performRequest(generateUUID, RequestType, allowedRequestTypes, response);
@@ -131,7 +119,7 @@ export async function handler(event: CustomResourceRequest, context: LambdaConte
           RequestType,
           allowedRequestTypes,
           response,
-          ResourceProperties as CreateLoggingBucketRequestProperties
+          { ...ResourceProperties, StackId: event.StackId } as CreateLoggingBucketRequestProperties
         );
         break;
       }
@@ -370,75 +358,6 @@ async function putConfigFile(
 }
 
 /**
- * Copies assets from the source S3 bucket to the destination S3 bucket.
- * @param requestProperties The request properties.
- * @returns The result of copying assets.
- */
-async function copyS3Assets(
-  requestProperties: CopyS3AssetsRequestProperties
-): Promise<{ Message: string; Manifest: { Files: string[] } }> {
-  const { ManifestKey, SourceS3Bucket, SourceS3key, DestS3Bucket } = requestProperties;
-
-  console.info(`Source bucket: ${SourceS3Bucket}`);
-  console.info(`Source prefix: ${SourceS3key}`);
-  console.info(`Destination bucket: ${DestS3Bucket}`);
-
-  let manifest: { files: string[] };
-
-  // Download manifest
-  for (let retry = 1; retry <= RETRY_COUNT; retry++) {
-    try {
-      const getParams = {
-        Bucket: SourceS3Bucket,
-        Key: ManifestKey,
-      };
-      const response = await s3Client.getObject(getParams).promise();
-      manifest = JSON.parse(response.Body.toString());
-
-      break;
-    } catch (error) {
-      if (retry === RETRY_COUNT || error.code !== ErrorCodes.ACCESS_DENIED) {
-        console.error("Error occurred while getting manifest file.");
-        console.error(error);
-
-        throw new CustomResourceError("GetManifestFailure", "Copy of website assets failed.");
-      } else {
-        console.info("Waiting for retry...");
-
-        await sleep(getRetryTimeout(retry));
-      }
-    }
-  }
-
-  // Copy asset files
-  try {
-    await Promise.all(
-      manifest.files.map(async (fileName: string) => {
-        const copyObjectParams = {
-          Bucket: DestS3Bucket,
-          CopySource: `${SourceS3Bucket}/${SourceS3key}/${fileName}`,
-          Key: fileName,
-          ContentType: getContentType(fileName),
-        };
-
-        console.debug(`Copying ${fileName} to ${DestS3Bucket}`);
-        return s3Client.copyObject(copyObjectParams).promise();
-      })
-    );
-
-    return {
-      Message: "Copy assets completed.",
-      Manifest: { Files: manifest.files },
-    };
-  } catch (error) {
-    console.error("Error occurred while copying assets.");
-    console.error(error);
-
-    throw new CustomResourceError("CopyAssetsFailure", "Copy of website assets failed.");
-  }
-}
-
-/**
  * Generates UUID.
  * @returns Generated UUID.
  */
@@ -673,12 +592,35 @@ async function createCloudFrontLoggingBucket(requestProperties: CreateLoggingBuc
 
     await s3Client.putBucketPolicy(putBucketPolicyRequestParams).promise();
 
-    console.info(`Successfully added policy added to bucket '${bucketName}'`);
+    console.info(`Successfully added policy to bucket '${bucketName}'`);
   } catch (error) {
     console.error(`Failed to add policy to bucket '${bucketName}'`);
     console.error(error);
 
     throw error;
+  }
+
+  // Add Stack tag
+  try {
+    console.info("Adding tag...");
+
+    const taggingParams = {
+      Bucket: bucketName,
+      Tagging: {
+        TagSet: [
+          {
+            Key: "stack-id",
+            Value: requestProperties.StackId
+          }]
+      }
+    };
+    await s3Client.putBucketTagging(taggingParams).promise();
+
+    console.info(`Successfully added tag to bucket '${bucketName}'`);
+  } catch (error) {
+    console.error(`Failed to add tag to bucket '${bucketName}'`);
+    console.error(error);
+    // Continue, failure here shouldn't block
   }
 
   return { BucketName: bucketName, Region: targetRegion };

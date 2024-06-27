@@ -18,6 +18,7 @@ export const mockAwsS3 = {
   createBucket: jest.fn(),
   putBucketEncryption: jest.fn(),
   putBucketPolicy: jest.fn(),
+  putBucketTagging: jest.fn(),
 };
 
 jest.mock("aws-sdk/clients/s3", () => jest.fn(() => ({ ...mockAwsS3 })));

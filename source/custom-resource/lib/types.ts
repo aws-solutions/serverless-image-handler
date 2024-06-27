@@ -5,7 +5,6 @@ import {
   CheckFallbackImageRequestProperties,
   CheckSecretManagerRequestProperties,
   CheckSourceBucketsRequestProperties,
-  CopyS3AssetsRequestProperties,
   CreateLoggingBucketRequestProperties,
   CustomResourceRequestPropertiesBase,
   PutConfigRequestProperties,
@@ -16,7 +15,6 @@ export type ResourcePropertyTypes =
   | CustomResourceRequestPropertiesBase
   | SendMetricsRequestProperties
   | PutConfigRequestProperties
-  | CopyS3AssetsRequestProperties
   | CheckSourceBucketsRequestProperties
   | CheckSecretManagerRequestProperties
   | CheckFallbackImageRequestProperties

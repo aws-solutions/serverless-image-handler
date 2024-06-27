@@ -794,4 +794,39 @@ describe("setup", () => {
     });
     expect(imageRequestInfo).toEqual(expectedResult);
   });
+
+  it('Should pass when a default image request is provided and populate the ImageRequest object with the proper values and a utf-8 key', async function () {
+    // Arrange
+    const event = {
+      path: 'eyJidWNrZXQiOiJ0ZXN0Iiwia2V5Ijoi5Lit5paHIiwiZWRpdHMiOnsiZ3JheXNjYWxlIjp0cnVlfSwib3V0cHV0Rm9ybWF0IjoianBlZyJ9'
+    }
+    process.env = {
+      SOURCE_BUCKETS: "test, test2"
+    }
+    // Mock
+    mockAwsS3.getObject.mockImplementationOnce(() => {
+      return {
+        promise() {
+          return Promise.resolve({ Body: Buffer.from('SampleImageContent\n') });
+        }
+      };
+    });
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const imageRequestInfo = await imageRequest.setup(event);
+    const expectedResult = {
+      requestType: 'Default',
+      bucket: 'test',
+      key: '中文',
+      edits: { grayscale: true },
+      headers: undefined,
+      outputFormat: 'jpeg',
+      originalImage: Buffer.from('SampleImageContent\n'),
+      cacheControl: 'max-age=31536000,public',
+      contentType: 'image/jpeg'
+    };
+    // Assert
+    expect(mockAwsS3.getObject).toHaveBeenCalledWith({ Bucket: 'test', Key: '中文' });
+    expect(imageRequestInfo).toEqual(expectedResult);
+  });
 });

@@ -32,6 +32,9 @@ mkdir -p "$template_dist_dir"
 rm -rf "$build_dist_dir"
 mkdir -p "$build_dist_dir"
 
+headline "[Init] Ensure package versions are updated"
+npm --prefix "$source_dir" run bump-version
+
 headline "[Build] Synthesize cdk template and assets"
 cd "$cdk_source_dir"
 npm run clean:install
