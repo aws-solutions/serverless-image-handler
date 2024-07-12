@@ -2,6 +2,9 @@ resource "aws_s3_bucket" "images" {
   count         = var.app_suffix == "" ? 1 : 0
   bucket        = "master-images-${var.account_id}-${var.region}"
   force_destroy = false
+  tags = {
+    backup = "true"
+  }
 }
 
 resource "aws_s3_bucket_versioning" "images" {
