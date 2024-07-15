@@ -1,358 +1,414 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from '@aws-lambda-powertools/logger';
-import { LogStashFormatter } from './lib/logging/LogStashFormatter';
-import { ThumborMapping } from './thumbor-mapping';
-import { GetObjectCommandOutput, S3 } from '@aws-sdk/client-s3';
+import {
+  ContentTypes,
+  DefaultImageRequest,
+  Headers,
+  ImageEdits,
+  ImageFormatTypes,
+  ImageHandlerError,
+  ImageRequestInfo,
+  RequestTypes,
+  StatusCodes,
+} from './lib';
+import { ThumborMapper } from './thumbor-mapper';
+import { GetObjectCommand, GetObjectCommandInput, GetObjectCommandOutput, S3 } from '@aws-sdk/client-s3';
 import { APIGatewayProxyEventV2 } from 'aws-lambda';
-import sharp from 'sharp';
+import { logger } from './index';
 
-const logger = new Logger({
-  serviceName: process.env.AWS_LAMBDA_FUNCTION_NAME ?? '',
-  logFormatter: new LogStashFormatter(),
-});
+type OriginalImageInfo = Partial<{
+  contentType: string;
+  expires: Date;
+  lastModified: Date;
+  cacheControl: string;
+  originalImage: Buffer;
+}>;
 
 export class ImageRequest {
-  requestType: any;
-  bucket: any;
-  key: any;
-  edits: any;
-  cropping: any;
-  originalImage: any;
-  ContentType: any;
-  outputFormat: any;
-  Expires: any;
-  LastModified: any;
-  CacheControl: any;
-  ETag: any;
-  headers: any;
-  request_id: any;
-  accept: any;
-  private s3?: S3;
+  constructor(private readonly s3Client: S3) {}
 
-  constructor(s3: S3) {
-    this.s3 = s3;
+  /**
+   * Determines the output format of an image
+   * @param imageRequestInfo Initialized image request information
+   * @param event Lambda requrest body
+   */
+  private determineOutputFormat(imageRequestInfo: ImageRequestInfo, event: APIGatewayProxyEventV2): void {
+    const outputFormat = this.getOutputFormat(event, imageRequestInfo.requestType);
+    // if webp check reduction effort, if invalid value, use 4 (default in sharp)
+    if (outputFormat === ImageFormatTypes.WEBP && imageRequestInfo.requestType === RequestTypes.DEFAULT) {
+      const decoded = this.decodeRequest(event);
+      if (typeof decoded.effort !== 'undefined') {
+        const effort = Math.trunc(decoded.effort);
+        const isValid = !isNaN(effort) && effort >= 0 && effort <= 6;
+        imageRequestInfo.effort = isValid ? effort : 4;
+      }
+    }
+    if (imageRequestInfo.edits?.toFormat) {
+      imageRequestInfo.outputFormat = imageRequestInfo.edits.toFormat;
+    } else if (outputFormat) {
+      imageRequestInfo.outputFormat = outputFormat;
+    }
   }
 
   /**
-   * Initializer function for creating a new image request, used by the image
-   * handler to perform image modifications.
-   * @param {object} event - Lambda request body.
+   * Fix quality for Thumbor and Custom request type if outputFormat is different from quality type.
+   * @param imageRequestInfo Initialized image request information
    */
-  async setup(event: APIGatewayProxyEventV2): Promise<ImageRequest> {
-    this.requestType = this.parseRequestType(event);
-    this.bucket = this.parseImageBucket(event, this.requestType);
-    this.key = this.parseImageKey(event, this.requestType);
-    this.edits = this.parseImageEdits(event, this.requestType);
-    this.cropping = this.parseCropping(event, this.requestType);
-    this.originalImage = await this.getOriginalImage(this.bucket, this.key);
+  private fixQuality(imageRequestInfo: ImageRequestInfo): void {
+    if (imageRequestInfo.outputFormat) {
+      const requestType = [RequestTypes.CUSTOM, RequestTypes.THUMBOR];
+      const acceptedValues = [
+        ImageFormatTypes.JPEG,
+        ImageFormatTypes.PNG,
+        ImageFormatTypes.WEBP,
+        ImageFormatTypes.TIFF,
+        ImageFormatTypes.HEIF,
+        ImageFormatTypes.GIF,
+        ImageFormatTypes.AVIF,
+      ];
 
-    // If the original image is SVG file and it has any edits but no output format, change the format to WebP.
-    if (
-      this.ContentType === 'image/svg+xml' &&
-      this.edits &&
-      Object.keys(this.edits).length > 0 &&
-      !this.edits.toFormat
-    ) {
-      this.outputFormat = 'png';
-    }
+      imageRequestInfo.contentType = `image/${imageRequestInfo.outputFormat}`;
+      if (
+        requestType.includes(imageRequestInfo.requestType) &&
+        acceptedValues.includes(imageRequestInfo.outputFormat)
+      ) {
+        const qualityKey = Object.keys(imageRequestInfo.edits).filter(key =>
+          acceptedValues.includes(key as ImageFormatTypes),
+        )[0];
 
-    /* Decide the output format of the image.
-     * 1) If the format is provided, the output format is the provided format.
-     * 2) If headers contain "Accept: image/webp", the output format is webp.
-     * 3) If headers contain "Accept: image/avif", the output format is webp.
-     * 4) Use the default image format for the rest of cases.
-     */
-    if (this.ContentType !== 'image/svg+xml' || this.edits.toFormat || this.outputFormat) {
-      let outputFormat = this.getOutputFormat(event);
-      if (this.edits && this.edits.toFormat) {
-        this.outputFormat = this.edits.toFormat;
-      } else if (outputFormat) {
-        this.outputFormat = outputFormat;
-      }
-    }
-
-    // Fix quality for Thumbor and Custom request type if outputFormat is different from quality type.
-    if (this.outputFormat) {
-      const requestType = ['Custom', 'Thumbor'];
-      const acceptedValues = ['jpeg', 'png', 'webp', 'tiff', 'heif', 'avif'];
-
-      this.ContentType = `image/${this.outputFormat}`;
-      if (requestType.includes(this.requestType) && acceptedValues.includes(this.outputFormat)) {
-        let qualityKey = Object.keys(this.edits).filter(key => acceptedValues.includes(key))[0];
-        if (qualityKey && qualityKey !== this.outputFormat) {
-          const qualityValue = this.edits[qualityKey];
-          this.edits[this.outputFormat] = qualityValue;
-          delete this.edits[qualityKey];
+        if (qualityKey && qualityKey !== imageRequestInfo.outputFormat) {
+          imageRequestInfo.edits[imageRequestInfo.outputFormat] = imageRequestInfo.edits[qualityKey];
+          delete imageRequestInfo.edits[qualityKey];
         }
       }
     }
+  }
 
-    this.request_id = event.headers['x-amz-cf-id'];
-    this.accept = event.headers.accept;
+  /**
+   * Initializer function for creating a new image request, used by the image handler to perform image modifications.
+   * @param event Lambda request body.
+   * @returns Initialized image request information.
+   */
+  public async setup(event: APIGatewayProxyEventV2): Promise<ImageRequestInfo> {
+    try {
+      let imageRequestInfo: ImageRequestInfo = <ImageRequestInfo>{};
 
-    delete this.s3;
+      imageRequestInfo.requestType = this.parseRequestType(event);
+      imageRequestInfo.bucket = (process.env.SOURCE_BUCKETS ?? '').split(',')[0];
+      imageRequestInfo.key = this.parseImageKey(event, imageRequestInfo.requestType);
+      imageRequestInfo.edits = this.parseImageEdits(event, imageRequestInfo.requestType);
 
-    return this;
+      const originalImage = await this.getOriginalImage(imageRequestInfo.bucket, imageRequestInfo.key);
+      imageRequestInfo = { ...imageRequestInfo, ...originalImage };
+
+      imageRequestInfo.headers = this.parseImageHeaders(event, imageRequestInfo.requestType);
+
+      // If the original image is SVG file and it has any edits but no output format, change the format to PNG.
+      if (
+        imageRequestInfo.contentType === ContentTypes.SVG &&
+        imageRequestInfo.edits &&
+        Object.keys(imageRequestInfo.edits).length > 0 &&
+        !imageRequestInfo.edits.toFormat
+      ) {
+        imageRequestInfo.outputFormat = ImageFormatTypes.PNG;
+      }
+
+      /* Decide the output format of the image.
+       * 1) If the format is provided, the output format is the provided format.
+       * 2) If headers contain "Accept: image/webp", the output format is webp.
+       * 3) Use the default image format for the rest of cases.
+       */
+      if (
+        imageRequestInfo.contentType !== ContentTypes.SVG ||
+        imageRequestInfo.edits.toFormat ||
+        imageRequestInfo.outputFormat
+      ) {
+        this.determineOutputFormat(imageRequestInfo, event);
+      }
+
+      // Fix quality for Thumbor and Custom request type if outputFormat is different from quality type.
+      this.fixQuality(imageRequestInfo);
+
+      return imageRequestInfo;
+    } catch (error) {
+      if (error.code && error.code !== 'NoSuchKey') {
+        logger.warn('Error occurred while setting up the image request. Error: ', error);
+      }
+
+      throw error;
+    }
   }
 
   /**
    * Gets the original image from an Amazon S3 bucket.
-   * @param {string} bucket - The name of the bucket containing the image.
-   * @param {string} key - The key name corresponding to the image.
-   * @return {Promise} - The original image or an error.
+   * @param bucket The name of the bucket containing the image.
+   * @param key The key name corresponding to the image.
+   * @returns The original image or an error.
    */
-  async getOriginalImage(bucket: string, key: string): Promise<any> {
-    const imageLocation = { Bucket: bucket, Key: key };
+  public async getOriginalImage(bucket: string, key: string): Promise<OriginalImageInfo> {
     try {
-      const originalImage: GetObjectCommandOutput = await this.s3!.getObject(imageLocation);
-      const metaData = originalImage['Metadata'];
-      const isGone = metaData && metaData['buzz-status-code'] && metaData['buzz-status-code'] === '410';
+      const result: OriginalImageInfo = {};
 
-      const imageBuffer = Buffer.from(await originalImage.Body?.transformToByteArray()!);
+      let originalImage: GetObjectCommandOutput;
+      try {
+        const getObjectCommand: GetObjectCommandInput = { Bucket: bucket, Key: key };
+        logger.info('Getting image from S3:', { getObjectCommand });
+        originalImage = await this.s3Client.send(new GetObjectCommand(getObjectCommand));
+      } catch (error) {
+        logger.warn('Error occurred while getting the image from S3. Error: ', error);
+        throw new ImageHandlerError(
+          StatusCodes.NOT_FOUND,
+          'NoSuchKey',
+          `The image ${key} does not exist or the request may not be base64 encoded properly.`,
+        );
+      }
+      let bodyBytes = await originalImage.Body?.transformToByteArray();
+      const imageBuffer = Buffer.from(bodyBytes);
 
       if (originalImage.ContentType) {
-        // If using default s3 ContentType infer from hex headers
-        if (originalImage.ContentType === 'binary/octet-stream') {
-          this.ContentType = this.inferImageType(imageBuffer);
+        // If using default S3 ContentType infer from hex headers
+        if (['binary/octet-stream', 'application/octet-stream'].includes(originalImage.ContentType)) {
+          result.contentType = this.inferImageType(imageBuffer);
         } else {
-          this.ContentType = originalImage.ContentType;
+          result.contentType = originalImage.ContentType;
         }
       } else {
-        this.ContentType = 'image';
+        result.contentType = 'image';
       }
 
       if (originalImage.Expires) {
-        this.Expires = new Date(originalImage.Expires);
-      } else if (isGone) {
-        logger.warn(`Content ${imageLocation} is gone`);
-        this.Expires = new Date(0);
+        result.expires = originalImage.Expires;
       }
 
       if (originalImage.LastModified) {
-        this.LastModified = new Date(originalImage.LastModified);
+        result.lastModified = originalImage.LastModified;
       }
 
-      if (originalImage.CacheControl && !originalImage.CacheControl.includes('31536000')) {
-        this.CacheControl = originalImage.CacheControl;
+      result.cacheControl = originalImage.CacheControl ?? 'max-age=31536000';
+      result.originalImage = imageBuffer;
+
+      return result;
+    } catch (error) {
+      let status = StatusCodes.INTERNAL_SERVER_ERROR;
+      let message = error.message;
+      if (error.code === 'NoSuchKey') {
+        status = StatusCodes.NOT_FOUND;
+        message = `The image ${key} does not exist or the request may not be base64 encoded properly.`;
       } else {
-        this.CacheControl = 'max-age=31536000, immutable';
+        logger.warn('Error occurred while getting the original image. Error: ', error);
       }
-
-      if (originalImage.ETag) {
-        this.ETag = originalImage.ETag;
-      }
-
-      return imageBuffer;
-    } catch (err: any) {
-      throw {
-        status: 'NoSuchKey' === (err?.code || err?.Code || err).toString() ? 404 : 500,
-        code: (err?.code || err?.Code || err).toString(),
-        message: err.message,
-      };
-    }
-  }
-
-  /**
-   * Parses the name of the appropriate Amazon S3 bucket to source the
-   * original image from.
-   * @param {string} event - Lambda request body.
-   * @param {string} requestType - Image handler request type.
-   */
-  parseImageBucket(event: APIGatewayProxyEventV2, requestType: string) {
-    if (requestType === 'Thumbor' || requestType === 'Custom') {
-      // Use the default image source bucket env var
-      const sourceBuckets = this.getAllowedSourceBuckets();
-      return sourceBuckets[0];
-    } else {
-      throw {
-        status: 404,
-        code: 'ImageBucket::CannotFindBucket',
-        message:
-          'The bucket you specified could not be found. Please check the spelling of the bucket name in your request.',
-      };
+      throw new ImageHandlerError(status, error.code, message);
     }
   }
 
   /**
    * Parses the edits to be made to the original image.
-   * @param {string} event - Lambda request body.
-   * @param {string} requestType - Image handler request type.
+   * @param event Lambda request body.
+   * @param requestType Image handler request type.
+   * @returns The edits to be made to the original image.
    */
-  parseImageEdits(event: APIGatewayProxyEventV2, requestType: string) {
-    if (requestType === 'Thumbor') {
-      const thumborMapping = new ThumborMapping();
-      thumborMapping.process(event);
-      return thumborMapping.edits;
+  public parseImageEdits(event: APIGatewayProxyEventV2, requestType: RequestTypes): ImageEdits {
+    if (requestType === RequestTypes.DEFAULT) {
+      const decoded = this.decodeRequest(event);
+      return decoded.edits;
+    } else if (requestType === RequestTypes.THUMBOR) {
+      const thumborMapping = new ThumborMapper();
+      return thumborMapping.mapPathToEdits(event.rawPath);
+    } else if (requestType === RequestTypes.CUSTOM) {
+      const thumborMapping = new ThumborMapper();
+      const parsedPath = thumborMapping.parseCustomPath(event.rawPath);
+      return thumborMapping.mapPathToEdits(parsedPath);
     } else {
-      throw {
-        status: 400,
-        code: 'ImageEdits::CannotParseEdits',
-        message:
-          'The edits you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance.',
-      };
-    }
-  }
-
-  parseCropping(event: APIGatewayProxyEventV2, requestType: string) {
-    if (requestType === 'Thumbor') {
-      const thumborMapping = new ThumborMapping();
-      thumborMapping.process(event);
-      return thumborMapping.cropping;
-    } else {
-      throw {
-        status: 400,
-        code: 'Cropping::CannotParseCropping',
-        message:
-          'The cropping you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance.',
-      };
+      throw new ImageHandlerError(
+        StatusCodes.BAD_REQUEST,
+        'ImageEdits::CannotParseEdits',
+        'The edits you provided could not be parsed. Please check the syntax of your request and refer to the documentation for additional guidance.',
+      );
     }
   }
 
   /**
-   * Parses the name of the appropriate Amazon S3 key corresponding to the
-   * original image.
-   * @param {String} event - Lambda request body.
-   * @param {String} requestType - Type, either "Default", "Thumbor", or "Custom".
+   * Parses the name of the appropriate Amazon S3 key corresponding to the original image.
+   * @param event Lambda request body.
+   * @param requestType Type of the request.
+   * @returns The name of the appropriate Amazon S3 key.
    */
-  parseImageKey(event: APIGatewayProxyEventV2, requestType: string) {
-    if (requestType === 'Thumbor' || requestType === 'Custom') {
-      let path = event.rawPath;
+  public parseImageKey(event: APIGatewayProxyEventV2, requestType: RequestTypes): string {
+    if (requestType === RequestTypes.DEFAULT) {
+      // Decode the image request and return the image key
+      const { key } = this.decodeRequest(event);
+      return key;
+    }
 
-      if (requestType === 'Custom') {
-        const matchPattern = process.env.REWRITE_MATCH_PATTERN;
-        const substitution = process.env.REWRITE_SUBSTITUTION;
+    if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
+      let { rawPath } = event;
 
-        if (matchPattern) {
-          const patternStrings = matchPattern.split('/');
-          const flags = patternStrings.pop();
-          const parsedPatternString = matchPattern.slice(1, matchPattern.length - 1 - flags!.length);
-          const regExp = new RegExp(parsedPatternString, flags);
-          path = path.replace(regExp, substitution ?? '');
-        } else {
-          path = path.replace(matchPattern || '', substitution || '');
-        }
-      }
-      path = path
-        .replace(/^(\/)?authors\//, '$1')
-        .replace(/\/\d+x\d+:\d+x\d+\//g, '/')
-        .replace(/\/(\d+|__WIDTH__)x\d+\//g, '/')
-        .replace(/\/filters:[^\/]+/g, '/')
-        .replace(/\/fit-in\//g, '/')
-        .replace(/^\/+/, '')
-        .replace(/\/+/g, '/');
-
-      if (path.match(/^\d{4}\/\d{2}\/.*\/[\w-]+\.\w+$/)) {
-        path = path.replace(/(.*)\/[\w-]+(\.\w+)$/, '$1/image$2');
-      }
-      if (path.endsWith('/')) {
-        path = path + 'image.jpg';
-      }
-      return decodeURIComponent(path);
+      return decodeURIComponent(
+        rawPath
+          .replace(/\/\d+x\d+:\d+x\d+(?=\/)/g, '')
+          .replace(/\/\d+x\d+(?=\/)/g, '')
+          .replace(/filters:watermark\(.*\)/u, '')
+          .replace(/filters:[^/]+/g, '')
+          .replace(/\/fit-in(?=\/)/g, '')
+          .replace(/^\/+/g, '')
+          .replace(/^\/+/, '')
+          .replace(/\/+/g, '/')
+          .replace(/^authors\//, ''),
+      );
     }
 
     // Return an error for all other conditions
-    throw {
-      status: 404,
-      code: 'ImageEdits::CannotFindImage',
-      message:
-        'The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists.',
-    };
-  }
-
-  /**
-   * Determines how to handle the request being made based on the URL path
-   * prefix to the image request. Categorizes a request as either "image"
-   * (uses the Sharp library), "thumbor" (uses Thumbor mapping), or "custom"
-   * (uses the rewrite function).
-   * @param {object} event - Lambda request body.
-   */
-  parseRequestType(event: APIGatewayProxyEventV2) {
-    const path = event.rawPath;
-    const matchThumbor = new RegExp(
-      /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(\.+jpg|\.+png|\.+webp|\.tiff|\.jpeg|\.svg|\.gif|\.avif)$/i,
+    throw new ImageHandlerError(
+      StatusCodes.NOT_FOUND,
+      'ImageEdits::CannotFindImage',
+      'The image you specified could not be found. Please check your request syntax as well as the bucket you specified to ensure it exists.',
     );
+  }
 
-    if (matchThumbor.test(path) || path.endsWith('/')) {
+  /**
+   * Determines how to handle the request being made based on the URL path prefix to the image request.
+   * Categorizes a request as either "image" (uses the Sharp library), "thumbor" (uses Thumbor mapping), or "custom" (uses the rewrite function).
+   * @param event Lambda request body.
+   * @returns The request type.
+   */
+  public parseRequestType(event: APIGatewayProxyEventV2): RequestTypes {
+    const { rawPath } = event;
+    const matchDefault = /^(\/?)([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
+    const matchThumbor1 = /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?)/i;
+    const matchThumbor2 = /^((.(?!(\.[^.\\/]+$)))*$)/i; // NOSONAR
+    const matchThumbor3 = /.*(\.jpg$|\.jpeg$|.\.png$|\.webp$|\.tiff$|\.tif$|\.svg$|\.gif$|\.avif$)/i; // NOSONAR
+    const { REWRITE_MATCH_PATTERN, REWRITE_SUBSTITUTION } = process.env;
+    const definedEnvironmentVariables =
+      REWRITE_MATCH_PATTERN !== '' &&
+      REWRITE_SUBSTITUTION !== '' &&
+      REWRITE_MATCH_PATTERN !== undefined &&
+      REWRITE_SUBSTITUTION !== undefined;
+
+    // Check if path is base 64 encoded
+    let isBase64Encoded = true;
+    try {
+      this.decodeRequest(event);
+    } catch (error) {
+      isBase64Encoded = false;
+    }
+
+    if (matchDefault.test(rawPath) && isBase64Encoded) {
+      // use sharp
+      return RequestTypes.DEFAULT;
+    } else if (definedEnvironmentVariables) {
+      // use rewrite function then thumbor mappings
+      return RequestTypes.CUSTOM;
+    } else if (matchThumbor1.test(rawPath) && (matchThumbor2.test(rawPath) || matchThumbor3.test(rawPath))) {
       // use thumbor mappings
-      return 'Thumbor';
+      return RequestTypes.THUMBOR;
     } else {
-      throw {
-        status: 400,
-        code: 'RequestTypeError',
-        message:
-          'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg, gif, avif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.',
-      };
+      throw new ImageHandlerError(
+        StatusCodes.BAD_REQUEST,
+        'RequestTypeError',
+        'The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg/jpeg, png, tiff/tif, webp, svg, gif, avif) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests.',
+      );
+    }
+  }
+
+  // eslint-disable-next-line jsdoc/require-returns-check
+  /**
+   * Parses the headers to be sent with the response.
+   * @param event Lambda request body.
+   * @param requestType Image handler request type.
+   * @returns (optional) The headers to be sent with the response.
+   */
+  public parseImageHeaders(event: APIGatewayProxyEventV2, requestType: RequestTypes): Headers {
+    if (requestType === RequestTypes.DEFAULT) {
+      const { headers } = this.decodeRequest(event);
+      if (headers) {
+        return headers;
+      }
     }
   }
 
   /**
-   * Returns a formatted image source bucket whitelist as specified in the
-   * SOURCE_BUCKETS environment variable of the image handler Lambda
-   * function. Provides error handling for missing/invalid values.
+   * Decodes the base64-encoded image request path associated with default image requests.
+   * Provides error handling for invalid or undefined path values.
+   * @param event Lambda request body.
+   * @returns The decoded from base-64 image request.
    */
-  getAllowedSourceBuckets() {
-    const sourceBuckets = process.env.SOURCE_BUCKETS;
-    if (sourceBuckets === undefined) {
-      throw {
-        status: 400,
-        code: 'GetAllowedSourceBuckets::NoSourceBuckets',
-        message:
-          'The SOURCE_BUCKETS variable could not be read. Please check that it is not empty and contains at least one source bucket, or multiple buckets separated by commas. Spaces can be provided between commas and bucket names, these will be automatically parsed out when decoding.',
-      };
+  public decodeRequest(event: APIGatewayProxyEventV2): DefaultImageRequest {
+    const { rawPath } = event;
+
+    if (rawPath) {
+      const encoded = rawPath.startsWith('/') ? rawPath.slice(1) : rawPath;
+      const toBuffer = Buffer.from(encoded, 'base64');
+      try {
+        // To support European characters, 'ascii' was removed.
+        return JSON.parse(toBuffer.toString());
+      } catch (error) {
+        throw new ImageHandlerError(
+          StatusCodes.BAD_REQUEST,
+          'DecodeRequest::CannotDecodeRequest',
+          'The image request you provided could not be decoded. Please check that your request is base64 encoded properly and refer to the documentation for additional guidance.',
+        );
+      }
     } else {
-      const formatted = sourceBuckets.replace(/\s+/g, '');
-      return formatted.split(',');
+      throw new ImageHandlerError(
+        StatusCodes.BAD_REQUEST,
+        'DecodeRequest::CannotReadPath',
+        'The URL path you provided could not be read. Please ensure that it is properly formed according to the solution documentation.',
+      );
     }
   }
 
   /**
-   * Return the output format depending on the accepts headers and request type
-   * @param {Object} event - The request body.
-   * @param requestType
+   * Return the output format depending on the accepts headers and request type.
+   * @param event Lambda request body.
+   * @param requestType The request type.
+   * @returns The output format.
    */
-  getOutputFormat(event: APIGatewayProxyEventV2): keyof sharp.FormatEnum | null {
-    const autoWebP = process.env.AUTO_WEBP;
-    const autoAvif = process.env.AUTO_AVIF;
-    let accept = event.headers?.Accept || event.headers?.accept;
-    if (autoAvif === 'Yes' && accept && accept.includes('image/avif')) {
-      return 'avif';
-    } else if (autoWebP === 'Yes' && accept && accept.includes('image/webp')) {
-      return 'webp';
+  public getOutputFormat(event: APIGatewayProxyEventV2, requestType: RequestTypes = undefined): ImageFormatTypes {
+    const { AUTO_WEBP, AUTO_AVIF } = process.env;
+    const accept = event.headers?.accept;
+
+    if (AUTO_AVIF === 'Yes' && accept && accept.includes(ContentTypes.AVIF)) {
+      return ImageFormatTypes.WEBP;
+    } else if (AUTO_WEBP === 'Yes' && accept && accept.includes(ContentTypes.WEBP)) {
+      return ImageFormatTypes.WEBP;
+    } else if (requestType === RequestTypes.DEFAULT) {
+      const decoded = this.decodeRequest(event);
+      return decoded.outputFormat;
     }
+
     return null;
   }
 
   /**
    * Return the output format depending on first four hex values of an image file.
-   * @param {Buffer} imageBuffer - Image buffer.
+   * @param imageBuffer Image buffer.
+   * @returns The output format.
    */
-  inferImageType(imageBuffer: Buffer) {
-    switch (imageBuffer.toString('hex').substring(0, 8).toUpperCase()) {
-      case '89504E47':
-        return 'image/png';
-      case 'FFD8FFDB':
-        return 'image/jpeg';
-      case 'FFD8FFE0':
-        return 'image/jpeg';
-      case 'FFD8FFEE':
-        return 'image/jpeg';
-      case 'FFD8FFE1':
-        return 'image/jpeg';
-      case '52494646':
-        return 'image/webp';
-      case '49492A00':
-        return 'image/tiff';
-      case '4D4D002A':
-        return 'image/tiff';
-      default:
-        throw {
-          status: 500,
-          code: 'RequestTypeError',
-          message:
-            'The file does not have an extension and the file type could not be inferred. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg, avif). Refer to the documentation for additional guidance on forming image requests.',
-        };
+  public inferImageType(imageBuffer: Buffer): string {
+    const imageSignatures: { [key: string]: string } = {
+      '89504E47': ContentTypes.PNG,
+      '52494646': ContentTypes.WEBP,
+      '49492A00': ContentTypes.TIFF,
+      '4D4D002A': ContentTypes.TIFF,
+      '47494638': ContentTypes.GIF,
+    };
+    const imageSignature = imageBuffer.subarray(0, 4).toString('hex').toUpperCase();
+    if (imageSignatures[imageSignature]) {
+      return imageSignatures[imageSignature];
     }
+    if (imageBuffer.subarray(0, 2).toString('hex').toUpperCase() === 'FFD8') {
+      return ContentTypes.JPEG;
+    }
+    if (imageBuffer.subarray(4, 12).toString('hex').toUpperCase() === '6674797061766966') {
+      // FTYPAVIF (File Type AVIF)
+      return ContentTypes.AVIF;
+    }
+    // SVG does not have an imageSignature we can use here, would require parsing the XML to some degree
+    throw new ImageHandlerError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'RequestTypeError',
+      'The file does not have an extension and the file type could not be inferred. Please ensure that your original image is of a supported file type (jpg/jpeg, png, tiff, webp, gif, avif). Inferring the image type from hex headers is not available for SVG images. Refer to the documentation for additional guidance on forming image requests.',
+    );
   }
 }

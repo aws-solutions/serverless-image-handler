@@ -26,3 +26,5 @@ demo-ui-config.js
 **/.vscode
 
 .terraform
+**/*.iml
+**/*.zip

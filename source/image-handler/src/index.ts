@@ -1,177 +1,156 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from '@aws-lambda-powertools/logger';
-import { LogStashFormatter } from './lib/logging/LogStashFormatter';
-import { ImageRequest } from './image-request';
 import { ImageHandler } from './image-handler';
-import { GetObjectCommandOutput, S3 } from '@aws-sdk/client-s3';
+import { ImageRequest } from './image-request';
+import { Headers, ImageHandlerExecutionResult, StatusCodes } from './lib';
+import { S3 } from '@aws-sdk/client-s3';
 import { APIGatewayProxyEventV2 } from 'aws-lambda';
-import { APIGatewayProxyStructuredResultV2 } from 'aws-lambda/trigger/api-gateway-proxy';
+import { Logger } from '@aws-lambda-powertools/logger';
+import { LogStashFormatter } from './lib/LogstashFormatter';
 
-const s3 = new S3({
-  region: process.env.AWS_REGION,
-});
+const s3Client = new S3();
 
-const logger = new Logger({
+export const logger = new Logger({
   serviceName: process.env.AWS_LAMBDA_FUNCTION_NAME ?? '',
   logFormatter: new LogStashFormatter(),
 });
 
-export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
-  const imageRequest = new ImageRequest(s3);
-  const imageHandler = new ImageHandler(s3);
-  const isAlb = event.requestContext && event.requestContext.hasOwnProperty('elb');
+/**
+ * Image handler Lambda handler.
+ * @param event The image handler request event.
+ * @returns Processed request response.
+ */
+export async function handler(event: APIGatewayProxyEventV2): Promise<ImageHandlerExecutionResult> {
+  logger.appendKeys({ ...event, originalImage: undefined });
+  logger.info('Image manipulation request', { headers: event.headers });
+
+  const imageRequest = new ImageRequest(s3Client);
+  const imageHandler = new ImageHandler(s3Client);
 
   try {
-    const request: ImageRequest = await imageRequest.setup(event);
-    logger.appendKeys({ ...request, originalImage: undefined });
-    logger.info('Image manipulation request', { headers: event.headers });
+    const imageRequestInfo = await imageRequest.setup(event);
+    logger.info('image request', { imageRequestInfo });
 
-    let now = Date.now();
-    if (request.Expires && request.Expires.getTime() < now) {
-      logger.warn('Expired content was requested: ' + request.key);
-      let headers = getResponseHeaders(410, isAlb);
+    if (imageRequestInfo.expires && imageRequestInfo.expires.getTime() < Date.now()) {
+      logger.warn('Expired content was requested: ' + imageRequestInfo.key);
       return {
-        statusCode: 410,
+        statusCode: StatusCodes.GONE,
         isBase64Encoded: false,
-        headers: headers,
+        headers: getResponseHeaders(true),
         body: JSON.stringify({
-          message: 'HTTP/410. Content ' + request.key + ' has expired.',
+          message: 'HTTP/410. Content ' + imageRequestInfo.key + ' has expired.',
           code: 'Gone',
           status: 410,
         }),
       };
+    }
+
+    const processedRequest = await imageHandler.process(imageRequestInfo);
+
+    let headers = getResponseHeaders(false);
+    headers['Content-Type'] = imageRequestInfo.contentType;
+
+    if (imageRequestInfo.expires) {
+      // eslint-disable-next-line dot-notation
+      headers['Expires'] = new Date(imageRequestInfo.expires).toUTCString();
+      let seconds_until_expiry = Math.min(
+        31536000,
+        Math.floor((imageRequestInfo.expires.getTime() - Date.now()) / 1000),
+      );
+      headers['Cache-Control'] = 'max-age=' + seconds_until_expiry + ', immutable';
     } else {
-      const processedRequest = await imageHandler.process(request);
-      const headers = getResponseHeaders(200, isAlb);
-      headers['Content-Type'] = request.ContentType;
-      headers['ETag'] = request.ETag;
-      if (request.LastModified) headers['Last-Modified'] = request.LastModified.toUTCString();
-      if (request.Expires) {
-        headers['Expires'] = request.Expires.toUTCString();
-        let seconds_until_expiry = Math.min(31536000, Math.floor((request.Expires.getTime() - now) / 1000));
-        headers['Cache-Control'] = 'max-age=' + seconds_until_expiry + ', immutable';
-      } else {
-        headers['Cache-Control'] = request.CacheControl;
-      }
-
-      if (request.headers) {
-        // Apply the custom headers overwriting any that may need overwriting
-        for (let key in request.headers) {
-          headers[key] = request.headers[key];
-        }
-      }
-
-      logger.info('Image transformation was successful.', {
-        statusCode: 200,
-        isBase64Encoded: true,
-        headers: headers,
-      });
-
-      return {
-        statusCode: 200,
-        isBase64Encoded: true,
-        headers: headers,
-        body: processedRequest,
-      };
+      headers['Cache-Control'] = imageRequestInfo.cacheControl + ', immutable';
     }
-  } catch (err: any) {
-    if (err.status && err.status >= 400 && err.status < 500) {
-      logger.warn(err.message, err);
-    } else {
-      logger.error(err.message, err);
-    }
-    // Default fallback image
-    if (
-      process.env.ENABLE_DEFAULT_FALLBACK_IMAGE === 'Yes' &&
-      process.env.DEFAULT_FALLBACK_IMAGE_BUCKET &&
-      process.env.DEFAULT_FALLBACK_IMAGE_BUCKET.replace(/\s/, '') !== '' &&
-      process.env.DEFAULT_FALLBACK_IMAGE_KEY &&
-      process.env.DEFAULT_FALLBACK_IMAGE_KEY.replace(/\s/, '') !== ''
-    ) {
-      try {
-        const bucket = process.env.DEFAULT_FALLBACK_IMAGE_BUCKET;
-        const objectKey = process.env.DEFAULT_FALLBACK_IMAGE_KEY;
-        const defaultFallbackImage: GetObjectCommandOutput = await s3.getObject({ Bucket: bucket, Key: objectKey });
-        const headers = getResponseHeaders(200, isAlb);
-        headers['Content-Type'] = defaultFallbackImage.ContentType ?? 'image/png';
-        if (defaultFallbackImage.LastModified) {
-          headers['Last-Modified'] = defaultFallbackImage.LastModified.toUTCString();
-        }
-        headers['Cache-Control'] = 'max-age=31536000, immutable';
-
-        return {
-          statusCode: err.status ? err.status : 500,
-          isBase64Encoded: true,
-          headers: headers,
-          body: await defaultFallbackImage.Body!.transformToString('base64'),
-        };
-      } catch (error) {
-        logger.warn('Error occurred while getting the default fallback image.', error as Error);
-      }
+    if (imageRequestInfo.lastModified) {
+      headers['Last-Modified'] = new Date(imageRequestInfo.lastModified).toUTCString();
     }
 
-    if (err.status) {
-      logger.warn('Error occurred during image processing', {
-        statusCode: err.status,
-        isBase64Encoded: false,
-        headers: getResponseHeaders(err.status, isAlb),
-        body: JSON.stringify(err),
-      });
-      return {
-        statusCode: err.status,
-        isBase64Encoded: false,
-        headers: getResponseHeaders(err.status, isAlb),
-        body: JSON.stringify(err),
-      };
-    } else {
-      return {
-        statusCode: 500,
-        isBase64Encoded: false,
-        headers: getResponseHeaders(500, isAlb),
-        body: JSON.stringify({
-          message: 'Internal error. Please contact the system administrator.',
-          code: 'InternalError',
-          status: 500,
-        }),
-      };
+    // Apply the custom headers overwriting any that may need overwriting
+    if (imageRequestInfo.headers) {
+      headers = { ...headers, ...imageRequestInfo.headers };
     }
+
+    return {
+      statusCode: StatusCodes.OK,
+      isBase64Encoded: true,
+      headers,
+      body: processedRequest,
+    };
+  } catch (error) {
+    if (error.code && error.code !== 'NoSuchKey') {
+      logger.warn('Error occurred during image processing', { error });
+    }
+    const { statusCode, body } = getErrorResponse(error);
+    return {
+      statusCode,
+      isBase64Encoded: false,
+      headers: getResponseHeaders(true),
+      body,
+    };
   }
 }
 
-type Headers = { [header: string]: boolean | number | string };
 /**
- * Generates the appropriate set of response headers based on a success
- * or error condition.
- * @param status_code - has an error been thrown?
- * @param isAlb - is the request from ALB?
- * @return Headers object
+ * Generates the appropriate set of response headers based on a success or error condition.
+ * @param isError Has an error been thrown.
+ * @returns Headers.
  */
-const getResponseHeaders = (status_code: number = 200, isAlb: boolean = false): Headers => {
-  const corsEnabled = process.env.CORS_ENABLED === 'Yes';
+function getResponseHeaders(isError: boolean = false): Headers {
+  const { CORS_ENABLED, CORS_ORIGIN } = process.env;
+  const corsEnabled = CORS_ENABLED === 'Yes';
   const headers: Headers = {
     'Access-Control-Allow-Methods': 'GET',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
-  if (200 === status_code) {
-    headers['Vary'] = 'Accept';
-  }
-  if (!isAlb) {
-    headers['Access-Control-Allow-Credentials'] = true;
-  }
+
   if (corsEnabled) {
-    headers['Access-Control-Allow-Origin'] = process.env.CORS_ORIGIN ?? '*';
+    headers['Access-Control-Allow-Origin'] = CORS_ORIGIN;
   }
-  if (200 !== status_code) {
+
+  if (isError) {
     headers['Content-Type'] = 'application/json';
   }
-  if (status_code === 404) {
-    headers['Cache-Control'] = 'max-age=60';
-  } else if (status_code >= 400 && status_code < 500) {
-    headers['Cache-Control'] = 'max-age=600';
-  } else if (status_code >= 500 && status_code < 600) {
-    headers['Cache-Control'] = 'max-age=0, must-revalidate';
-  }
+
   return headers;
-};
+}
+
+/**
+ * Determines the appropriate error response values
+ * @param error The error object from a try/catch block
+ * @returns appropriate status code and body
+ */
+export function getErrorResponse(error) {
+  if (error?.status) {
+    return {
+      statusCode: error.status,
+      body: JSON.stringify(error),
+    };
+  }
+  /**
+   * if an image overlay is attempted and the overlaying image has greater dimensions
+   * that the base image, sharp will throw an exception and return this string
+   */
+  if (error?.message === 'Image to composite must have same dimensions or smaller') {
+    return {
+      statusCode: StatusCodes.BAD_REQUEST,
+      body: JSON.stringify({
+        /**
+         * return a message indicating overlay dimensions is the issue, the caller may not
+         * know that the sharp composite function was used
+         */
+        message: 'Image to overlay must have same dimensions or smaller',
+        code: 'BadRequest',
+        status: StatusCodes.BAD_REQUEST,
+      }),
+    };
+  }
+  return {
+    statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+    body: JSON.stringify({
+      message: 'Internal error. Please contact the system administrator.',
+      code: 'InternalError',
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+    }),
+  };
+}

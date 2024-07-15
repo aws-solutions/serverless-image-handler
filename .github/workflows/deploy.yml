@@ -25,13 +25,13 @@ jobs:
   image-handler:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest-arm64
 
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - uses: actions/cache@v4
         with:
@@ -40,11 +40,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
       - name: install
-        run: make FUNC=image-handler npm/install
+        run: make npm/install
       - name: install
-        run: make FUNC=image-handler npm/test
+        run: make npm/test
       - name: build
-        run: make FUNC=image-handler build
+        run: make build
 
       - name: configure aws credentials
         # 📌 Runs only if:
@@ -62,53 +62,4 @@ jobs:
         # 1. is a 'push to main'
         # 2. did not run in a fork
         if: ${{ github.ref == 'refs/heads/main' && github.repository_owner == 'stroeer' }}
-        run: make FUNC=image-handler deploy
-
-  thumbnail-generator:
-    env:
-      CARGO_TERM_COLOR: always
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: Set up cargo cache
-        uses: actions/cache@v4
-        continue-on-error: false
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-      - name: install cargo lambda
-        run: pip3 install cargo-lambda
-      - name: cargo lambda build
-        run: make build FUNC=thumbs
-
-      - name: configure aws credentials
-        # 📌 Runs only if:
-        # 1. is a 'push to main'
-        # 2. did not run in a fork
-        if: ${{ github.ref == 'refs/heads/main' && github.repository_owner == 'stroeer' }}
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::053041861227:role/github-s3-access-eu-west-1
-          role-session-name: GitHubActions
-          aws-region: eu-west-1
-
-      - name: s3 upload artefact
-        # 📌 Runs only if:
-        # 1. is a 'push to main'
-        # 2. did not run in a fork
-        if: ${{ github.ref == 'refs/heads/main' && github.repository_owner == 'stroeer' }}
-        run: make deploy FUNC=thumbs
+        run: make deploy

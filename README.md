@@ -81,35 +81,8 @@ Deploy the infrastructure using Terraform with the following Make command:
 
 ```make FUNC=image-handler tf```
 
-## Image Thumbs
+## Special interest section
 
-### Overview
+Useful links:
 
-Image-thumbs is an implementation of [thumbhash](https://evanw.github.io/thumbhash/) as a Rust AWS Lambda function URL providing a very compact representation of a placeholder for an image.
-
-### Prerequisites
-
-- [Rust](https://www.rust-lang.org/tools/install)
-
-### Building
-
-To build the package run:
-
-```make FUNC=thumbs build```
-
-### Test / Invoke
-
-See [cargo lambda](https://www.cargo-lambda.info/guide/getting-started.html)
-
-```bash
-# Terminal 1
-cargo lambda watch
-# Terminal 2
-cargo lambda invoke --data-file apigw-request.json
-```
-
-## Infrastructure deployment
-
-To deploy the infrastructure run:
-
-```make FUNC=thumb tf```
+* Image too large with default settings: `2023/02/JPCPt616git7/image.png`

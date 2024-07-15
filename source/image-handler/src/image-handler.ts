@@ -1,283 +1,328 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from '@aws-lambda-powertools/logger';
+import sharp, { FormatEnum, OverlayOptions } from 'sharp';
+
+import {
+  ContentTypes,
+  ImageEdits,
+  ImageFitTypes,
+  ImageFormatTypes,
+  ImageHandlerError,
+  ImageRequestInfo,
+  StatusCodes,
+} from './lib';
 import { S3 } from '@aws-sdk/client-s3';
-import sharp from 'sharp';
-
-import { LogStashFormatter } from './lib/logging/LogStashFormatter';
-import { ImageRequest } from './image-request';
-
-const logger = new Logger({
-  serviceName: process.env.AWS_LAMBDA_FUNCTION_NAME ?? 'image-handler',
-  logFormatter: new LogStashFormatter(),
-});
-
-const ApiGWResponseSizeLimit = 6 * 1024 * 1024;
 
 export class ImageHandler {
-  private s3: any;
+  private readonly LAMBDA_PAYLOAD_LIMIT = 6 * 1024 * 1024;
 
-  constructor(s3: S3) {
-    this.s3 = s3;
-  }
+  constructor(private readonly s3Client: S3) {}
 
   /**
-   * Main method for processing image requests and outputting modified images.
-   * @param request An image request.
-   * @returns Processed and modified image encoded as base64 string.
+   * Creates a Sharp object from Buffer
+   * @param originalImage An image buffer.
+   * @param edits The edits to be applied to an image
+   * @param options Additional sharp options to be applied
+   * @returns A Sharp image object
    */
-  async process(request: ImageRequest) {
-    let returnImage;
-    const originalImage = request.originalImage;
-    const edits = request.edits;
-    const cropping = request.cropping;
-
-    const hasEdits = edits !== undefined && Object.keys(edits).length > 0;
-    const hasCropping = cropping !== undefined && Object.keys(cropping).length > 0;
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  private async instantiateSharpImage(originalImage: Buffer, edits: ImageEdits, options: Object): Promise<sharp.Sharp> {
     let image: sharp.Sharp;
-    if (hasEdits || hasCropping) {
-      const keys = Object.keys(edits);
 
-      if (keys.includes('rotate') && edits.rotate === null) {
-        image = sharp(originalImage, { failOnError: false }).withMetadata();
-      } else {
-        const metadata = await sharp(originalImage, {
-          failOnError: false,
-        }).metadata();
-        if (metadata.orientation) {
-          image = sharp(originalImage, { failOnError: false }).withMetadata({
-            orientation: metadata.orientation,
-          });
-        } else {
-          image = sharp(originalImage, { failOnError: false }).withMetadata();
-        }
-      }
-
-      if (hasCropping) {
-        const image_metadata = await image.metadata();
-        const width: any = image_metadata.width;
-        const height: any = image_metadata.height;
-        if (cropping.left + cropping.width > width || cropping.top + cropping.height > height) {
-          throw {
-            status: 400,
-            code: 'CropOutOfBounds',
-            message: `The cropping ${cropping.left},${cropping.top}x${cropping.width}:${cropping.height} is outside the image boundary of ${width}x${height}`,
-          };
-        }
-        if (cropping.width === 0 || cropping.height === 0) {
-          throw {
-            status: 400,
-            code: 'CropHasZeroDimension',
-            message: `The cropping with dimension ${cropping.width}x${cropping.height} is invalid`,
-          };
-        }
-        image = image.extract(cropping);
-      }
-      if (hasEdits) {
-        image = await this.applyEdits(image, edits);
-      }
+    if (edits && edits.rotate !== undefined && edits.rotate === null) {
+      image = sharp(originalImage, options);
     } else {
-      image = sharp(originalImage, { failOnError: false }).withMetadata();
+      const metadata = await sharp(originalImage, options).metadata();
+      image = metadata.orientation
+        ? sharp(originalImage, options).withMetadata({ orientation: metadata.orientation })
+        : sharp(originalImage, options).withMetadata();
     }
 
-    if ('image/webp' === request.ContentType && request.outputFormat === 'webp') {
-      image.webp({ effort: 6, alphaQuality: 75 });
-    } else if ('image/png' === request.ContentType) {
-      image.png({ palette: true, quality: 100, effort: 7, compressionLevel: 6 });
-    } else if ('image/jpeg' === request.ContentType) {
-      image.jpeg({ mozjpeg: true });
-    } else if (request.outputFormat !== undefined) {
-      image.toFormat(request.outputFormat);
-    }
-
-    try {
-      const bufferImage = await image.toBuffer();
-      returnImage = bufferImage.toString('base64');
-    } catch (e) {
-      throw {
-        status: 400,
-        code: 'Cropping failed',
-        message: `Cropping failed with "${e}"`,
-      };
-    }
-
-    // If the converted image is larger than Lambda's payload hard limit, throw an error.
-    if (returnImage.length > ApiGWResponseSizeLimit) {
-      throw {
-        status: 413,
-        code: 'TooLargeImageException',
-        message: `The converted image is too large to return. Actual = ${returnImage.length} - max ${ApiGWResponseSizeLimit}`,
-      };
-    }
-
-    return returnImage;
-  }
-
-  /**
-   * Applies image modifications to the original image based on edits
-   * specified in the ImageRequest.
-   * @param {Sharp} image - The original sharp image.
-   * @param {object} edits - The edits to be made to the original image.
-   */
-  async applyEdits(image: sharp.Sharp, edits: any) {
-    if (edits.resize === undefined) {
-      edits.resize = {};
-      edits.resize.fit = 'inside';
-    } else {
-      if (edits.resize.width) edits.resize.width = Math.round(Number(edits.resize.width));
-      if (edits.resize.height) edits.resize.height = Math.round(Number(edits.resize.height));
-    }
-
-    // Apply the image edits
-    for (const editKey in edits) {
-      const value = edits[editKey];
-      if (editKey === 'overlayWith') {
-        let imageMetadata = await image.metadata();
-        if (edits.resize) {
-          let imageBuffer = await image.toBuffer();
-          imageMetadata = await sharp(imageBuffer).resize(edits.resize).metadata();
-        }
-
-        const { bucket, key, wRatio, hRatio, alpha } = value;
-        const overlay = await this.getOverlayImage(bucket, key, wRatio, hRatio, alpha, imageMetadata);
-        const overlayMetadata = await sharp(overlay).metadata();
-
-        let { options } = value;
-        if (options) {
-          if (options.left !== undefined) {
-            let left = options.left;
-            if (isNaN(left) && left.endsWith('p')) {
-              left = parseInt(left.replace('p', ''));
-              if (left < 0) {
-                left = imageMetadata.width + (imageMetadata.width * left) / 100 - overlayMetadata.width;
-              } else {
-                left = (imageMetadata.width * left) / 100;
-              }
-            } else {
-              left = parseInt(left);
-              if (left < 0) {
-                left = imageMetadata.width + left - overlayMetadata.width;
-              }
-            }
-            isNaN(left) ? delete options.left : (options.left = left);
-          }
-          if (options.top !== undefined) {
-            let top = options.top;
-            if (isNaN(top) && top.endsWith('p')) {
-              top = parseInt(top.replace('p', ''));
-              if (top < 0) {
-                top = imageMetadata.height + (imageMetadata.height * top) / 100 - overlayMetadata.height;
-              } else {
-                top = (imageMetadata.height * top) / 100;
-              }
-            } else {
-              top = parseInt(top);
-              if (top < 0) {
-                top = imageMetadata.height + top - overlayMetadata.height;
-              }
-            }
-            isNaN(top) ? delete options.top : (options.top = top);
-          }
-        }
-
-        const params = [{ ...options, input: overlay }];
-        image.composite(params);
-      } else if (editKey === 'roundCrop') {
-        const options = value;
-        const imageBuffer = await image.toBuffer({ resolveWithObject: true });
-        let width = imageBuffer.info.width;
-        let height = imageBuffer.info.height;
-
-        //check for parameters, if not provided, set to defaults
-        const radiusX = options.rx && options.rx >= 0 ? options.rx : Math.min(width, height) / 2;
-        const radiusY = options.ry && options.ry >= 0 ? options.ry : Math.min(width, height) / 2;
-        const topOffset = options.top && options.top >= 0 ? options.top : height / 2;
-        const leftOffset = options.left && options.left >= 0 ? options.left : width / 2;
-
-        if (options) {
-          const ellipse = Buffer.from(
-            `<svg viewBox="0 0 ${width} ${height}"> <ellipse cx="${leftOffset}" cy="${topOffset}" rx="${radiusX}" ry="${radiusY}" /></svg>`,
-          );
-          const params: any = [{ input: ellipse, blend: 'dest-in' }];
-          let data = await image
-            .composite(params)
-            .png() // transparent background instead of black background
-            .toBuffer();
-          image = sharp(data).withMetadata().trim();
-        }
-      } else {
-        image[editKey](value);
-      }
-    }
-    // Return the modified image
     return image;
   }
 
   /**
-   * Gets an image to be used as an overlay to the primary image from an
-   * Amazon S3 bucket.
-   * @param {string} bucket - The name of the bucket containing the overlay.
-   * @param {string} key - The object keyname corresponding to the overlay.
-   * @param {number} wRatio - The width rate of the overlay image.
-   * @param {number} hRatio - The height rate of the overlay image.
-   * @param {number} alpha - The transparency alpha to the overlay.
-   * @param {object} sourceImageMetadata - The metadata of the source image.
+   * Modify an image's output format if specified, also automatically optimize the image based on the output format or content type.
+   * @param modifiedImage the image object.
+   * @param imageRequestInfo the image request
+   * @returns A Sharp image object
    */
-  async getOverlayImage(
-    bucket: any,
-    key: any,
-    wRatio: any,
-    hRatio: any,
-    alpha: any,
-    sourceImageMetadata: sharp.Metadata,
-  ): Promise<Buffer> {
-    const params = { Bucket: bucket, Key: key };
-    try {
-      const { width, height }: sharp.Metadata = sourceImageMetadata;
-      const overlayImage = await this.s3.getObject(params);
-      let resize: Record<any, any> = {
-        fit: 'inside',
-      };
+  private modifyImageOutput(modifiedImage: sharp.Sharp, imageRequestInfo: ImageRequestInfo): sharp.Sharp {
+    const modifiedOutputImage = modifiedImage;
 
-      // Set width and height of the watermark image based on the ratio
-      const zeroToHundred = /^(100|[1-9]?[0-9])$/;
-      if (zeroToHundred.test(wRatio)) {
-        resize['width'] = Math.floor((width! * wRatio) / 100);
-      }
-      if (zeroToHundred.test(hRatio)) {
-        resize['height'] = Math.floor((height! * hRatio) / 100);
+    if (
+      ImageFormatTypes.WEBP === imageRequestInfo.outputFormat ||
+      (undefined === imageRequestInfo.outputFormat && imageRequestInfo.contentType === ContentTypes.WEBP)
+    ) {
+      modifiedOutputImage.webp({ effort: imageRequestInfo.effort ?? 6 });
+    } else if (
+      ImageFormatTypes.PNG === imageRequestInfo.outputFormat ||
+      (undefined === imageRequestInfo.outputFormat && imageRequestInfo.contentType === ContentTypes.PNG)
+    ) {
+      modifiedOutputImage.png({ palette: true, quality: 100, effort: 7, compressionLevel: 6 });
+    } else if (
+      ImageFormatTypes.JPEG === imageRequestInfo.outputFormat ||
+      ImageFormatTypes.JPG === imageRequestInfo.outputFormat ||
+      (undefined === imageRequestInfo.outputFormat && imageRequestInfo.contentType === ContentTypes.JPEG)
+    ) {
+      modifiedOutputImage.jpeg({ mozjpeg: true });
+    }
+
+    return modifiedOutputImage;
+  }
+
+  /**
+   * Main method for processing image requests and outputting modified images.
+   * @param imageRequestInfo An image request.
+   * @returns Processed and modified image encoded as base64 string.
+   */
+  async process(imageRequestInfo: ImageRequestInfo): Promise<string> {
+    const { originalImage, edits } = imageRequestInfo;
+    const options = { failOnError: false, animated: imageRequestInfo.contentType === ContentTypes.GIF };
+    let base64EncodedImage = '';
+
+    // Apply edits if specified
+    if (edits && Object.keys(edits).length) {
+      // convert image to Sharp object
+      options.animated =
+        typeof edits.animated !== 'undefined' ? edits.animated : imageRequestInfo.contentType === ContentTypes.GIF;
+      let image = await this.instantiateSharpImage(originalImage, edits, options);
+
+      // default to non-animated if image does not have multiple pages
+      if (options.animated) {
+        const metadata = await image.metadata();
+        if (!metadata.pages || metadata.pages <= 1) {
+          options.animated = false;
+          image = await this.instantiateSharpImage(originalImage, edits, options);
+        }
       }
 
-      // If alpha is not within 0-100, the default alpha is 0 (fully opaque).
-      if (zeroToHundred.test(alpha)) {
-        alpha = parseInt(alpha);
-      } else {
-        alpha = 0;
-      }
+      // apply image edits
+      let modifiedImage = await this.applyEdits(image, edits, options.animated);
+      // modify image output if requested
+      modifiedImage = this.modifyImageOutput(modifiedImage, imageRequestInfo);
+      // convert to base64 encoded string
+      const imageBuffer = await modifiedImage.toBuffer();
+      base64EncodedImage = imageBuffer.toString('base64');
+    } else {
+      // convert image to Sharp and change output format if specified
+      let image = await this.instantiateSharpImage(originalImage, edits, options);
+      const modifiedImage = this.modifyImageOutput(image, imageRequestInfo);
+      // convert to base64 encoded string
+      const imageBuffer = await modifiedImage.toBuffer();
+      base64EncodedImage = imageBuffer.toString('base64');
+    }
 
-      let input = Buffer.from(await overlayImage.Body?.transformToByteArray()!);
-      return await sharp(input)
-        .resize(resize)
-        .composite([
-          {
-            input: Buffer.from([255, 255, 255, 255 * (1 - alpha / 100)]),
-            raw: {
-              width: 1,
-              height: 1,
-              channels: 4,
-            },
-            tile: true,
-            blend: 'dest-in',
-          },
-        ])
+    // binary data need to be base64 encoded to pass to the API Gateway proxy https://docs.aws.amazon.com/apigateway/latest/developerguide/lambda-proxy-binary-media.html.
+    // checks whether base64 encoded image fits in 6M limit, see https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html.
+    if (base64EncodedImage.length > this.LAMBDA_PAYLOAD_LIMIT) {
+      throw new ImageHandlerError(
+        StatusCodes.REQUEST_TOO_LONG,
+        'TooLargeImageException',
+        'The converted image is too large to return.',
+      );
+    }
+
+    return base64EncodedImage;
+  }
+
+  /**
+   * Applies image modifications to the original image based on edits.
+   * @param originalImage The original sharp image.
+   * @param edits The edits to be made to the original image.
+   * @param isAnimation a flag whether the edit applies to animated files or not.
+   * @returns A modifications to the original image.
+   */
+  public async applyEdits(originalImage: sharp.Sharp, edits: ImageEdits, isAnimation: boolean): Promise<sharp.Sharp> {
+    await this.applyResize(originalImage, edits);
+
+    // Apply the image edits
+    for (const edit in edits) {
+      if (this.skipEdit(edit, isAnimation)) continue;
+
+      switch (edit) {
+        case 'roundCrop': {
+          originalImage = await this.applyRoundCrop(originalImage, edits);
+          break;
+        }
+        case 'crop': {
+          this.applyCrop(originalImage, edits);
+          break;
+        }
+        case 'animated': {
+          break;
+        }
+        default: {
+          if (edit in originalImage) {
+            originalImage[edit](edits[edit]);
+          }
+        }
+      }
+    }
+    // Return the modified image
+    return originalImage;
+  }
+
+  /**
+   * Applies resize edit.
+   * @param originalImage The original sharp image.
+   * @param edits The edits to be made to the original image.
+   */
+  private async applyResize(originalImage: sharp.Sharp, edits: ImageEdits): Promise<void> {
+    if (edits.resize === undefined) {
+      edits.resize = {};
+      edits.resize.fit = ImageFitTypes.INSIDE;
+      return;
+    }
+    const resize = this.validateResizeInputs(edits.resize);
+
+    if (resize.ratio) {
+      const ratio = resize.ratio;
+
+      const { width, height } = resize.width && resize.height ? resize : await originalImage.metadata();
+
+      resize.width = Math.round(width * ratio);
+      resize.height = Math.round(height * ratio);
+      // Sharp doesn't have such parameter for resize(), we got it from Thumbor mapper.  We don't need to keep this field in the `resize` object
+      delete resize.ratio;
+
+      if (!resize.fit) resize.fit = ImageFitTypes.INSIDE;
+    }
+  }
+
+  /**
+   * Validates resize edit parameters.
+   * @param resize The resize parameters.
+   */
+  private validateResizeInputs(resize: any) {
+    if (resize.width) resize.width = Math.round(Number(resize.width));
+    if (resize.height) resize.height = Math.round(Number(resize.height));
+
+    if ((resize.width != null && resize.width <= 0) || (resize.height != null && resize.height <= 0)) {
+      throw new ImageHandlerError(StatusCodes.BAD_REQUEST, 'InvalidResizeException', 'The image size is invalid.');
+    }
+    return resize;
+  }
+
+  /**
+   * Determines if the edits specified contain a valid roundCrop item
+   * @param edits The edits speficed
+   * @returns boolean
+   */
+  private hasRoundCrop(edits: ImageEdits): boolean {
+    return edits.roundCrop === true || typeof edits.roundCrop === 'object';
+  }
+
+  /**
+   * @param param Value of corner to check
+   * @returns Boolean identifying whether roundCrop parameters are valid
+   */
+  private validRoundCropParam(param: number) {
+    return param && param >= 0;
+  }
+
+  /**
+   * Applies round crop edit.
+   * @param originalImage The original sharp image.
+   * @param edits The edits to be made to the original image.
+   */
+  private async applyRoundCrop(originalImage: sharp.Sharp, edits: ImageEdits): Promise<sharp.Sharp> {
+    // round crop can be boolean or object
+    if (this.hasRoundCrop(edits)) {
+      const { top, left, rx, ry } =
+        typeof edits.roundCrop === 'object'
+          ? edits.roundCrop
+          : {
+              top: undefined,
+              left: undefined,
+              rx: undefined,
+              ry: undefined,
+            };
+      const imageBuffer = await originalImage.toBuffer({ resolveWithObject: true });
+      const width = imageBuffer.info.width;
+      const height = imageBuffer.info.height;
+
+      // check for parameters, if not provided, set to defaults
+      const radiusX = this.validRoundCropParam(rx) ? rx : Math.min(width, height) / 2;
+      const radiusY = this.validRoundCropParam(ry) ? ry : Math.min(width, height) / 2;
+      const topOffset = this.validRoundCropParam(top) ? top : height / 2;
+      const leftOffset = this.validRoundCropParam(left) ? left : width / 2;
+
+      const ellipse = Buffer.from(
+        `<svg viewBox="0 0 ${width} ${height}"> <ellipse cx="${leftOffset}" cy="${topOffset}" rx="${radiusX}" ry="${radiusY}" /></svg>`,
+      );
+      const overlayOptions: OverlayOptions[] = [{ input: ellipse, blend: 'dest-in' }];
+
+      // Need to break out into another sharp pipeline to allow for resize after composite
+      const data = await originalImage
+        .composite(overlayOptions)
+        .png() // transparent background instead of black background
         .toBuffer();
-    } catch (err: any) {
-      throw {
-        status: err.statusCode ? err.statusCode : 500,
-        code: err.code.toString(),
-        message: err.message,
-      };
+      return sharp(data).withMetadata().trim();
+    }
+
+    return originalImage;
+  }
+
+  /**
+   * Applies crop edit.
+   * @param originalImage The original sharp image.
+   * @param edits The edits to be made to the original image.
+   */
+  private applyCrop(originalImage: sharp.Sharp, edits: ImageEdits): void {
+    try {
+      originalImage.extract(edits.crop);
+    } catch (error) {
+      throw new ImageHandlerError(
+        StatusCodes.BAD_REQUEST,
+        'Crop::AreaOutOfBounds',
+        'The cropping area you provided exceeds the boundaries of the original image. Please try choosing a correct cropping value.',
+      );
+    }
+  }
+
+  /**
+   * Checks whether an edit needs to be skipped or not.
+   * @param edit the current edit.
+   * @param isAnimation a flag whether the edit applies to `gif` file or not.
+   * @returns whether the edit needs to be skipped or not.
+   */
+  private skipEdit(edit: string, isAnimation: boolean): boolean {
+    return isAnimation && ['rotate', 'smartCrop', 'roundCrop', 'contentModeration'].includes(edit);
+  }
+
+  /**
+   * Converts serverless image handler image format type to 'sharp' format.
+   * @param imageFormatType Result output file type.
+   * @returns Converted 'sharp' format.
+   */
+  private static convertImageFormatType(imageFormatType: ImageFormatTypes): keyof FormatEnum {
+    switch (imageFormatType) {
+      case ImageFormatTypes.JPG:
+        return 'jpg';
+      case ImageFormatTypes.JPEG:
+        return 'jpeg';
+      case ImageFormatTypes.PNG:
+        return 'png';
+      case ImageFormatTypes.WEBP:
+        return 'webp';
+      case ImageFormatTypes.TIFF:
+        return 'tiff';
+      case ImageFormatTypes.HEIF:
+        return 'heif';
+      case ImageFormatTypes.RAW:
+        return 'raw';
+      case ImageFormatTypes.GIF:
+        return 'gif';
+      case ImageFormatTypes.AVIF:
+        return 'avif';
+      default:
+        throw new ImageHandlerError(
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          'UnsupportedOutputImageFormatException',
+          `Format to ${imageFormatType} not supported`,
+        );
     }
   }
 }
