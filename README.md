@@ -86,3 +86,49 @@ Deploy the infrastructure using Terraform with the following Make command:
 Useful links:
 
 * Image too large with default settings: `2023/02/JPCPt616git7/image.png`
+
+## Ströer specific adaptations
+
+### The file name does not matter
+
+The way we process our images does not depend on the file name. The part that copies the images from 
+the CMS into our delivery bucket will rename all images to `image.${extension}`.
+
+When rendering the image, the image-handler will always look for this filename, so it does not matter
+what the original file name was. e.g. 
+
+- `2023/02/JPCPt616git7/seo-title.png` will be served as `image.png`
+- `2023/02/JPCPt616git7/other-usage-different-title.png` will be served as `image.png`
+
+resulting in the same response.
+
+### Cropping coordinates format
+
+- the original solution introduced thumbor cropping in [v6](https://github.com/aws-solutions/serverless-image-handler/commit/76558b787b9417450ee4a4f19dc9548be6dbada7)
+- we have implemented this feature in advance, but with a slightly different syntax:
+  - The original solution uses `crop=left,top,right,bottom`
+  - We use `crop=left,top,width,height` to be more consistent with the CMS
+
+### Expired Content
+
+- The original solution uses the `Expires` header to cache images in the browser
+- Our solution:
+  - reduces the `Cache-Control: max-age` according to the `Expires` header to handle expired content
+  - Also, once the Expires header is reached, the image-handler will return a `http/410 (GONE)` status code 
+
+### Additional filter: thumbhash
+
+- `/filters:thumbhash()/` will trigger a hash-based thumbnail generation. See https://evanw.github.io/thumbhash/
+- The image can be cropped prior to this filter, but will ultimately be resized to `100x100` pixel to generate an efficient thumbnail
+- The response will be `base64` encoded binary that can be converted via `Thumbhash.thumbHashToDataURL()`
+
+### Removal of features not required
+
+If required once more, they need to be pulled from the original repository:
+
+- Recognition and the corresponding code:
+  - "Smart Crop" (aka face recognition)
+  - Content Moderation (e.g. NSFW detection)
+- Watermarking/Overlaying
+- Secretsmanager and URL signing
+- Dynamic S3 bucket selection
