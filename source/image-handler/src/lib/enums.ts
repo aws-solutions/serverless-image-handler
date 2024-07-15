@@ -46,4 +46,5 @@ export enum ContentTypes {
   GIF = 'image/gif',
   SVG = 'image/svg+xml',
   AVIF = 'image/avif',
+  JSON = 'application/json',
 }

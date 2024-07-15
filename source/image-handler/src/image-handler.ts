@@ -13,6 +13,7 @@ import {
   StatusCodes,
 } from './lib';
 import { S3 } from '@aws-sdk/client-s3';
+import { rgbaToThumbHash, thumbHashToDataURL } from './lib/thumbhash';
 
 export class ImageHandler {
   private readonly LAMBDA_PAYLOAD_LIMIT = 6 * 1024 * 1024;
@@ -100,11 +101,15 @@ export class ImageHandler {
 
       // apply image edits
       let modifiedImage = await this.applyEdits(image, edits, options.animated);
-      // modify image output if requested
-      modifiedImage = this.modifyImageOutput(modifiedImage, imageRequestInfo);
-      // convert to base64 encoded string
-      const imageBuffer = await modifiedImage.toBuffer();
-      base64EncodedImage = imageBuffer.toString('base64');
+      if ('thumbhash' in edits) {
+        base64EncodedImage = await this.thumbhash(modifiedImage, imageRequestInfo);
+      } else {
+        // modify image output if requested
+        modifiedImage = this.modifyImageOutput(modifiedImage, imageRequestInfo);
+        // convert to base64 encoded string
+        const imageBuffer = await modifiedImage.toBuffer();
+        base64EncodedImage = imageBuffer.toString('base64');
+      }
     } else {
       // convert image to Sharp and change output format if specified
       let image = await this.instantiateSharpImage(originalImage, edits, options);
@@ -151,6 +156,10 @@ export class ImageHandler {
           break;
         }
         case 'animated': {
+          break;
+        }
+        case 'thumbhash': {
+          originalImage.resize(100, 100, { fit: 'inside' });
           break;
         }
         default: {
@@ -324,5 +333,19 @@ export class ImageHandler {
           `Format to ${imageFormatType} not supported`,
         );
     }
+  }
+
+  private async thumbhash(image: sharp.Sharp, imageRequestInfo: ImageRequestInfo): Promise<string> {
+    const { data, info } = await image.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const binaryThumbHash = rgbaToThumbHash(info.width, info.height, data);
+
+    imageRequestInfo.contentType = ContentTypes.JSON;
+    imageRequestInfo.cacheControl = 'max-age=3600';
+    return Buffer.from(
+      JSON.stringify({
+        base64: Buffer.from(binaryThumbHash).toString('base64'),
+        // base64_url: thumbHashToDataURL(binaryThumbHash), // debugging thedata:image/png;base64 if required, will be done in the frontend
+      }),
+    ).toString('base64');
   }
 }

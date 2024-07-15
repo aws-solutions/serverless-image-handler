@@ -377,6 +377,10 @@ export class ThumborMapper {
         currentEdits.roundCrop = true;
         break;
       }
+      case 'thumbhash': {
+        currentEdits.thumbhash = true;
+        break;
+      }
     }
 
     return currentEdits;
