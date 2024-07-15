@@ -4,7 +4,7 @@
 import { GetObjectCommand, S3, S3Client } from '@aws-sdk/client-s3';
 import { ImageRequest } from '../../src/image-request';
 import { ImageRequestInfo, RequestTypes } from '../../src/lib';
-import { sample_image, sdkStreamFromString } from '../mock';
+import { sampleImageStream, sdkStreamFromString } from '../mock';
 import { build_event } from '../helpers';
 import 'aws-sdk-client-mock-jest';
 import { mockClient } from 'aws-sdk-client-mock';
@@ -326,7 +326,7 @@ describe('setup', () => {
     process.env.SOURCE_BUCKETS = 'test, validBucket, validBucket2';
 
     // Mock
-    mockS3Client.on(GetObjectCommand).resolves({ Body: sample_image });
+    mockS3Client.on(GetObjectCommand).resolves({ Body: sampleImageStream() });
 
     // Act
     const imageRequest = new ImageRequest(new S3({}));

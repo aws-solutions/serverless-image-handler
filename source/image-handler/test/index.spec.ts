@@ -7,9 +7,7 @@ import { build_event } from './helpers';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 import 'aws-sdk-client-mock-jest';
-import fs from 'fs';
-import { sdkStreamMixin } from '@smithy/util-stream';
-import { sample_image, sample_image_base64 } from './mock';
+import { sampleImageStream } from './mock';
 
 describe('index', () => {
   // Arrange
@@ -22,7 +20,7 @@ describe('index', () => {
 
   it('should return the image when there is no error', async () => {
     // Mock
-    mockS3Client.on(GetObjectCommand).resolves({ Body: sample_image, ContentType: 'image/jpeg' });
+    mockS3Client.on(GetObjectCommand).resolves({ Body: sampleImageStream(), ContentType: 'image/jpeg' });
 
     // Arrange
     const event = build_event({ rawPath: '/test.jpg' });
@@ -80,6 +78,39 @@ describe('index', () => {
     expect(mockS3Client).toHaveReceivedCommandWith(GetObjectCommand, {
       Bucket: 'source-bucket',
       Key: 'test.jpg',
+    });
+    expect(result).toEqual(expectedResult);
+  });
+
+  it('should respond with http/410 GONE for expired content', async () => {
+    // Arrange
+    const event = build_event({ rawPath: '/test.webp' });
+    // Mock
+    mockS3Client
+      .on(GetObjectCommand)
+      .resolves({ Expires: new Date('1970-01-01'), Body: sampleImageStream(), ContentType: 'image/webp' });
+
+    // Act
+    const result = await handler(event);
+    const expectedResult = {
+      statusCode: StatusCodes.GONE,
+      isBase64Encoded: false,
+      headers: {
+        'Access-Control-Allow-Methods': 'GET',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: `HTTP/410. Content test.webp has expired.`,
+        code: 'Gone',
+        status: StatusCodes.GONE,
+      }),
+    };
+
+    // Assert
+    expect(mockS3Client).toHaveReceivedCommandWith(GetObjectCommand, {
+      Bucket: 'source-bucket',
+      Key: 'test.webp',
     });
     expect(result).toEqual(expectedResult);
   });

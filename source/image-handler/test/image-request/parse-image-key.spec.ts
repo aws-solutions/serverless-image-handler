@@ -263,4 +263,20 @@ describe('parseImageKey', () => {
     const expectedResult = 'image.jpg';
     expect(result).toEqual(expectedResult);
   });
+
+  it('Should replace stroeer request URLs with default file name.', () => {
+    // Arrange
+    const event = build_event({
+      rawPath:
+        '/2024/07/abcdef/fit-in/400x400/filters:watermark(bucket,key.png,0,0)/seo-optimized-random-image-title.avif',
+    });
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client);
+    const result = imageRequest.parseImageKey(event, RequestTypes.THUMBOR);
+
+    // Assert
+    const expectedResult = '2024/07/abcdef/image.avif';
+    expect(result).toEqual(expectedResult);
+  });
 });

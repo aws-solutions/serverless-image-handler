@@ -244,7 +244,7 @@ export class ImageRequest {
     if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
       let { rawPath } = event;
 
-      return decodeURIComponent(
+      let key = decodeURIComponent(
         rawPath
           .replace(/\/\d+x\d+:\d+x\d+(?=\/)/g, '')
           .replace(/\/\d+x\d+(?=\/)/g, '')
@@ -256,6 +256,13 @@ export class ImageRequest {
           .replace(/\/+/g, '/')
           .replace(/^authors\//, ''),
       );
+
+      // ströer specific: our default image path is /${YYYY}/${MM}/${media_id}/image.${EXT}
+      if (key.match(/^\d{4}\/\d{2}\/.*\/[\w-]+\.\w+$/)) {
+        key = key.replace(/(.*)\/[\w-]+(\.\w+)$/, '$1/image$2');
+      }
+
+      return key;
     }
 
     // Return an error for all other conditions
