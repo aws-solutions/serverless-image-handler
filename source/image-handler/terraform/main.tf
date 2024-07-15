@@ -18,7 +18,7 @@ module "lambda" {
   description                      = "provider of cute kitty pics."
   function_name                    = local.function_name
   ignore_external_function_updates = true
-  memory_size                      = 1536
+  memory_size                      = 2048
   publish                          = true
   runtime                          = "nodejs20.x"
   handler                          = "index.handler"
