@@ -246,6 +246,7 @@ export class ImageRequest {
 
       let key = decodeURIComponent(
         rawPath
+          .replace(/\/__WIDTH__x0\//, '/1200x0/')
           .replace(/\/\d+x\d+:\d+x\d+(?=\/)/g, '')
           .replace(/\/\d+x\d+(?=\/)/g, '')
           .replace(/filters:watermark\(.*\)/u, '')

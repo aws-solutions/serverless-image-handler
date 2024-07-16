@@ -279,4 +279,19 @@ describe('parseImageKey', () => {
     const expectedResult = '2024/07/abcdef/image.avif';
     expect(result).toEqual(expectedResult);
   });
+
+  it('Should ignore next data template /__WIDTH__x0/.', () => {
+    // Arrange
+    const event = build_event({
+      rawPath: '/2024/07/abcdef/fit-in/__WIDTH__x0/file.avif',
+    });
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client);
+    const result = imageRequest.parseImageKey(event, RequestTypes.THUMBOR);
+
+    // Assert
+    const expectedResult = '2024/07/abcdef/image.avif';
+    expect(result).toEqual(expectedResult);
+  });
 });

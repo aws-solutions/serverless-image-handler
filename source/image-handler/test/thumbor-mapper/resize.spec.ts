@@ -4,6 +4,21 @@
 import { ThumborMapper } from '../../src/thumbor-mapper';
 
 describe('resize', () => {
+  it("Should replace next_data's template /__WIDTH__x0/ with an actual resolution of /1200x0/", () => {
+    // Arrange
+    const path = '/fit-in/__WIDTH__x0/test-image-001.jpg';
+
+    // Act
+    const thumborMapper = new ThumborMapper();
+    const edits = thumborMapper.mapPathToEdits(path);
+
+    // Assert
+    const expectedResult = {
+      edits: { resize: { width: 1200, height: null, fit: 'inside' } },
+    };
+    expect(edits).toEqual(expectedResult.edits);
+  });
+
   it('Should pass if the proper edit translations are applied and in the correct order', () => {
     // Arrange
     const path = '/fit-in/400x300/test-image-001.jpg';

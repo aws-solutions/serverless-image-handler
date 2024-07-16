@@ -122,6 +122,15 @@ resulting in the same response.
 - The image can be cropped prior to this filter, but will ultimately be resized to `100x100` pixel to generate an efficient thumbnail
 - The response will be `base64` encoded binary that can be converted via `Thumbhash.thumbHashToDataURL()`
 
+### Next data workaround
+
+Within the HTML markup resides the `next-data` [attribute](https://github.com/vercel/next.js/discussions/15117)
+
+Within this data structure there are some image URLs that are not directly intended to be rendered. Consider 
+them as templates. 
+Google (and other bots) will find and use this URL nonetheless. This image-handler will replace all calls that
+contain template variables `/__WIDTH__x0/` with an actual size to mitigate this.
+
 ### Removal of features not required
 
 If required once more, they need to be pulled from the original repository:

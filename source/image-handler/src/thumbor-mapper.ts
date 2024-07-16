@@ -424,7 +424,7 @@ export class ThumborMapper {
    */
   private mapResize(path: string): ImageEdits {
     // Process the dimensions
-    const dimensionsMatchResult = path.match(/\/((\d+x\d+)|(0x\d+))\//g);
+    const dimensionsMatchResult = path.replace(/\/__WIDTH__x0\//, '/1200x0/').match(/\/((\d+x\d+)|(0x\d+))\//g);
 
     if (dimensionsMatchResult) {
       // Assign dimensions from the first match only to avoid parsing dimension from image file names
