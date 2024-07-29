@@ -1,6 +1,6 @@
 {
   "name": "custom-resource",
-  "version": "6.2.5",
+  "version": "6.2.6",
   "private": true,
   "description": "Serverless Image Handler custom resource",
   "license": "Apache-2.0",
@@ -12,7 +12,8 @@
   "scripts": {
     "clean": "rm -rf node_modules/ dist/ coverage/",
     "pretest": "npm run clean && npm ci",
-    "test": "jest --coverage --silent"
+    "test": "jest --coverage --silent",
+    "bump-version": "npm version $(cat ../../VERSION.txt) --allow-same-version"
   },
   "dependencies": {
     "aws-sdk": "^2.1529.0",

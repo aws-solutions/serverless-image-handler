@@ -26,13 +26,6 @@ export interface PutConfigRequestProperties extends CustomResourceRequestPropert
   DestS3key: string;
 }
 
-export interface CopyS3AssetsRequestProperties extends CustomResourceRequestPropertiesBase {
-  ManifestKey: string;
-  SourceS3Bucket: string;
-  SourceS3key: string;
-  DestS3Bucket: string;
-}
-
 export interface CheckSourceBucketsRequestProperties extends CustomResourceRequestPropertiesBase {
   SourceBuckets: string;
 }
@@ -58,6 +51,7 @@ export interface PolicyStatement {
 
 export interface CreateLoggingBucketRequestProperties extends CustomResourceRequestPropertiesBase {
   BucketSuffix: string;
+  StackId: string;
 }
 
 export interface CustomResourceRequest {

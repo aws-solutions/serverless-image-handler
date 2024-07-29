@@ -43,6 +43,29 @@ describe("getOriginalImage", () => {
     expect(result.originalImage).toEqual(Buffer.from("SampleImageContent\n"));
   });
 
+  it("Should throw an error if an invalid file signature is found, simulating an unsupported image type", async () => {
+    // Mock
+    mockAwsS3.getObject.mockImplementationOnce(() => ({
+      promise() {
+        return Promise.resolve({ Body: Buffer.from("SampleImageContent\n"), ContentType: "binary/octet-stream" });
+      },
+    }));
+
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+
+    // Assert
+    try {
+      await imageRequest.getOriginalImage("validBucket", "validKey");
+    } catch (error) {
+      expect(mockAwsS3.getObject).toHaveBeenCalledWith({
+        Bucket: "validBucket",
+        Key: "validKey",
+      });
+      expect(error.status).toEqual(StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  });
+
   it("Should throw an error if an invalid bucket or key name is provided, simulating a non-existent original image", async () => {
     // Mock
     mockAwsS3.getObject.mockImplementationOnce(() => ({
@@ -87,7 +110,7 @@ describe("getOriginalImage", () => {
         Bucket: "invalidBucket",
         Key: "invalidKey",
       });
-      expect(error.status).toEqual(StatusCodes.INTERNAL_SERVER_ERROR);
+      expect(error.status).toEqual(StatusCodes.NOT_FOUND);
     }
   });
 
@@ -102,6 +125,7 @@ describe("getOriginalImage", () => {
       { hex: [0x49, 0x49, 0x2a, 0x00], expected: "image/tiff" },
       { hex: [0x4d, 0x4d, 0x00, 0x2a], expected: "image/tiff" },
       { hex: [0x47, 0x49, 0x46, 0x38], expected: "image/gif" },
+      { hex: [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x66], expected: "image/avif" },
     ])("Should pass and infer $expected content type if there is no extension", async ({ hex, expected }) => {
       // Mock
       mockAwsS3.getObject.mockImplementationOnce(() => ({
