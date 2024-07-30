@@ -5,12 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [6.2.5] - 2024-01-12
+## [6.2.6] - 2024-06-27
+
+### Added
+- StackId tag to CloudFrontLoggingBucket and its bucket name as a CfnOutput [#529](https://github.com/aws-solutions/serverless-image-handler/issues/529)
+- Test case to verify UTF-8 support in object key [#320](https://github.com/aws-solutions/serverless-image-handler/pull/320)
+- Test cases to verify crop functionality [#459](https://github.com/aws-solutions/serverless-image-handler/pull/459)
+- VERSION.txt and build script change to auto-update local package versions
+- S3:bucket-name tag for defining which source bucket to use in thumbor style requests [#521](https://github.com/aws-solutions/serverless-image-handler/pull/521)
+- Ability to override whether an image should be animated [#456](https://github.com/aws-solutions/serverless-image-handler/issues/456)
+- Support for 8-bit depth AVIF image type inference [#360](https://github.com/aws-solutions/serverless-image-handler/issues/360)
+
+### Changed
+- Decreased permissions allotted to CustomResource Lambda and ImageHandler Lambda
+- cdk update to 2.124.0
+- aws-solutions-constructs update to 2.51.0
+- SourceBucketsParameter to require explicit bucket names
+- Demo-ui dependency update
+- Demo-ui to be a package and manage script/stylesheet dependencies through NPM
+- Modified JPEG SOI marker parsing to only check first 2 bytes [#429]
+
+### Security
+- Upgraded follow-redirects to v1.15.6 for vulnerability CVE-2024-28849
+- Upgraded braces to v3.0.3 for vulnerability CVE-2024-4068
+
+### Removed
+- Unused CopyS3Assets custom resource
+
+### Fixed
+- Some error messages indicating incorrect file types
+- Solution version and id not being passed to Backend Lambda
+- Thumbor-style URL matching being overly permissive
+
+
+## [6.2.5] - 2024-01-03
 
 ### Fixed
 
 - Ensure accurate image metadata when generating Amazon Rekognition compatible images [#374](https://github.com/aws-solutions/serverless-image-handler/issues/374)
-- Upgraded axios to v1.6.5 for vulnerability CVE-2023-26159
 - Exclude demo-ui-config from being deleted upon BucketDeployment update sync when updating to a new version
 
 ### Changed
@@ -19,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - cdk update to 2.118.0
 - typescript update to 5.3.3
 - GIF files without multiple pages are now treated as non-animated, allowing all filters to be used on them [#460](https://github.com/aws-solutions/serverless-image-handler/issues/460)
+
+### Security
+
+- Upgraded axios to v1.6.5 for vulnerability CVE-2023-26159
 
 ## [6.2.4] - 2023-12-06
 

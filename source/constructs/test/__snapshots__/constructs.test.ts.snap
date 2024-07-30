@@ -173,6 +173,15 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
         ],
       },
     },
+    "CloudFrontLoggingBucket": {
+      "Description": "Amazon S3 bucket for storing CloudFront access logs.",
+      "Value": {
+        "Fn::GetAtt": [
+          "CommonResourcesCustomResourcesLogBucketCustomResource2445A3AB",
+          "BucketName",
+        ],
+      },
+    },
     "CorsEnabled": {
       "Description": "Indicates whether Cross-Origin Resource Sharing (CORS) has been enabled for the image handler API.",
       "Value": {
@@ -337,7 +346,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
     "SourceBucketsParameter": {
       "AllowedPattern": ".+",
       "Default": "defaultBucket, bucketNo2, bucketNo3, ...",
-      "Description": "(Required) List the buckets (comma-separated) within your account that contain original image files. If you plan to use Thumbor or Custom image requests with this solution, the source bucket for those requests will be the first bucket listed in this field.",
+      "Description": "(Required) List the buckets (comma-separated) within your account that contain original image files. If you plan to use Thumbor or Custom image requests with this solution, the source bucket for those requests will default to the first bucket listed in this field.",
       "Type": "String",
     },
     "UseSemanticUrlParameter": {
@@ -376,7 +385,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "Solutions:ApplicationType": "AWS-Solutions",
           "Solutions:SolutionID": "S0ABC",
           "Solutions:SolutionName": "sih",
-          "Solutions:SolutionVersion": "v6.2.5",
+          "Solutions:SolutionVersion": "v6.2.6",
         },
       },
       "Type": "AWS::ServiceCatalogAppRegistry::Application",
@@ -1081,21 +1090,98 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
               },
             },
             {
-              "Action": [
-                "s3:GetObject",
-                "s3:PutObject",
-                "s3:ListBucket",
-              ],
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Split": [
+                  ",",
+                  {
+                    "Fn::Sub": [
+                      "arn:aws:s3:::\${rest}/*",
+                      {
+                        "rest": {
+                          "Fn::Join": [
+                            "/*,arn:aws:s3:::",
+                            {
+                              "Fn::Split": [
+                                ",",
+                                {
+                                  "Fn::Join": [
+                                    "",
+                                    {
+                                      "Fn::Split": [
+                                        " ",
+                                        {
+                                          "Ref": "SourceBucketsParameter",
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+            {
+              "Action": "s3:ListBucket",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Split": [
+                  ",",
+                  {
+                    "Fn::Sub": [
+                      "arn:aws:s3:::\${rest}",
+                      {
+                        "rest": {
+                          "Fn::Join": [
+                            ",arn:aws:s3:::",
+                            {
+                              "Fn::Split": [
+                                ",",
+                                {
+                                  "Fn::Join": [
+                                    "",
+                                    {
+                                      "Fn::Split": [
+                                        " ",
+                                        {
+                                          "Ref": "SourceBucketsParameter",
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+            {
+              "Action": "s3:GetObject",
               "Effect": "Allow",
               "Resource": {
                 "Fn::Join": [
                   "",
                   [
-                    "arn:",
+                    "arn:aws:s3:::",
                     {
-                      "Ref": "AWS::Partition",
+                      "Ref": "FallbackImageS3BucketParameter",
                     },
-                    ":s3:::*",
+                    "/",
+                    {
+                      "Ref": "FallbackImageS3KeyParameter",
+                    },
                   ],
                 ],
               },
@@ -1173,7 +1259,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
           "S3Key": "Omitted to remove snapshot dependency on hash",
         },
-        "Description": "sih (v6.2.5): Performs image edits and manipulations",
+        "Description": "sih (v6.2.6): Performs image edits and manipulations",
         "Environment": {
           "Variables": {
             "AUTO_WEBP": {
@@ -1206,6 +1292,8 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
             "SECRET_KEY": {
               "Ref": "SecretsManagerKeyParameter",
             },
+            "SOLUTION_ID": "S0ABC",
+            "SOLUTION_VERSION": "v6.2.6",
             "SOURCE_BUCKETS": {
               "Ref": "SourceBucketsParameter",
             },
@@ -1448,13 +1536,13 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
           "S3Key": "Omitted to remove snapshot dependency on hash",
         },
-        "Description": "sih (v6.2.5): Custom resource",
+        "Description": "sih (v6.2.6): Custom resource",
         "Environment": {
           "Variables": {
             "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
             "RETRY_SECONDS": "5",
             "SOLUTION_ID": "S0ABC",
-            "SOLUTION_VERSION": "v6.2.5",
+            "SOLUTION_VERSION": "v6.2.6",
           },
         },
         "Handler": "index.handler",
@@ -1534,15 +1622,71 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
                   },
                 },
                 {
+                  "Action": "s3:ListBucket",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Split": [
+                      ",",
+                      {
+                        "Fn::Sub": [
+                          "arn:aws:s3:::\${rest}",
+                          {
+                            "rest": {
+                              "Fn::Join": [
+                                ",arn:aws:s3:::",
+                                {
+                                  "Fn::Split": [
+                                    ",",
+                                    {
+                                      "Fn::Join": [
+                                        "",
+                                        {
+                                          "Fn::Split": [
+                                            " ",
+                                            {
+                                              "Ref": "SourceBucketsParameter",
+                                            },
+                                          ],
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+                {
+                  "Action": "s3:GetObject",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:s3:::",
+                        {
+                          "Ref": "FallbackImageS3BucketParameter",
+                        },
+                        "/",
+                        {
+                          "Ref": "FallbackImageS3KeyParameter",
+                        },
+                      ],
+                    ],
+                  },
+                },
+                {
                   "Action": [
                     "s3:putBucketAcl",
                     "s3:putEncryptionConfiguration",
                     "s3:putBucketPolicy",
                     "s3:CreateBucket",
-                    "s3:GetObject",
-                    "s3:PutObject",
-                    "s3:ListBucket",
                     "s3:PutBucketOwnershipControls",
+                    "s3:PutBucketTagging",
                   ],
                   "Effect": "Allow",
                   "Resource": {
@@ -1639,7 +1783,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
         ],
         "SourceObjectKeys": [
-          "c301c2cce52bb1b36720a115d657907f3ec9fa20bd385b4d81bf451fbe77fe4b.zip",
+          "Omitted to remove snapshot dependency on demo ui module hash",
         ],
       },
       "Type": "Custom::CDKBucketDeployment",
@@ -1714,6 +1858,44 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       },
       "Type": "AWS::CloudFormation::CustomResource",
       "UpdateReplacePolicy": "Delete",
+    },
+    "CommonResourcesCustomResourcesWebsiteHostingBucketPolicy3C526944": {
+      "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "FrontEndDistributionToS3S3Bucket3A171D78",
+                        "Arn",
+                      ],
+                    },
+                    "/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CommonResourcesCustomResourcesWebsiteHostingBucketPolicy3C526944",
+        "Roles": [
+          {
+            "Ref": "CommonResourcesCustomResourcesCustomResourceRole8958A1ED",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
     },
     "CommonResourcesSecretsManagerPolicy45FE005E": {
       "Condition": "CommonResourcesEnableSignatureCondition909DC7A1",
@@ -1961,7 +2143,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "applicationType": "AWS-Solutions",
           "solutionID": "S0ABC",
           "solutionName": "sih",
-          "version": "v6.2.5",
+          "version": "v6.2.6",
         },
         "Description": "Attribute group for solution information",
         "Name": {
@@ -2071,18 +2253,14 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
                 ],
               },
               "Id": "TestStackFrontEndDistributionToS3CloudFrontDistributionOrigin12FCDC222",
+              "OriginAccessControlId": {
+                "Fn::GetAtt": [
+                  "FrontEndDistributionToS3CloudFrontOac2BE9C90D",
+                  "Id",
+                ],
+              },
               "S3OriginConfig": {
-                "OriginAccessIdentity": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "origin-access-identity/cloudfront/",
-                      {
-                        "Ref": "FrontEndDistributionToS3CloudFrontDistributionOrigin1S3OriginD10E575E",
-                      },
-                    ],
-                  ],
-                },
+                "OriginAccessIdentity": "",
               },
             },
           ],
@@ -2096,14 +2274,38 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       },
       "Type": "AWS::CloudFront::Distribution",
     },
-    "FrontEndDistributionToS3CloudFrontDistributionOrigin1S3OriginD10E575E": {
+    "FrontEndDistributionToS3CloudFrontOac2BE9C90D": {
       "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
       "Properties": {
-        "CloudFrontOriginAccessIdentityConfig": {
-          "Comment": "Identity for TestStackFrontEndDistributionToS3CloudFrontDistributionOrigin12FCDC222",
+        "OriginAccessControlConfig": {
+          "Description": "Origin access control provisioned by aws-cloudfront-s3",
+          "Name": {
+            "Fn::Join": [
+              "",
+              [
+                "aws-cloudfront-s3-DistnToS3-",
+                {
+                  "Fn::Select": [
+                    2,
+                    {
+                      "Fn::Split": [
+                        "/",
+                        {
+                          "Ref": "AWS::StackId",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            ],
+          },
+          "OriginAccessControlOriginType": "s3",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4",
         },
       },
-      "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+      "Type": "AWS::CloudFront::OriginAccessControl",
     },
     "FrontEndDistributionToS3S3Bucket3A171D78": {
       "Condition": "CommonResourcesDeployDemoUICondition308D3B09",
@@ -2218,14 +2420,28 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
             },
             {
               "Action": "s3:GetObject",
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:cloudfront::",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":distribution/",
+                        {
+                          "Ref": "FrontEndDistributionToS3CloudFrontDistribution15FE13D0",
+                        },
+                      ],
+                    ],
+                  },
+                },
+              },
               "Effect": "Allow",
               "Principal": {
-                "CanonicalUser": {
-                  "Fn::GetAtt": [
-                    "FrontEndDistributionToS3CloudFrontDistributionOrigin1S3OriginD10E575E",
-                    "S3CanonicalUserId",
-                  ],
-                },
+                "Service": "cloudfront.amazonaws.com",
               },
               "Resource": {
                 "Fn::Join": [

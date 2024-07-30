@@ -148,6 +148,7 @@ export class ThumborMapper {
       ImageFormatTypes.TIFF,
       ImageFormatTypes.WEBP,
       ImageFormatTypes.GIF,
+      ImageFormatTypes.AVIF,
     ];
 
     if (acceptedValues.includes(imageFormatType)) {
@@ -206,6 +207,7 @@ export class ThumborMapper {
           ImageFormatTypes.TIFF,
           ImageFormatTypes.HEIF,
           ImageFormatTypes.GIF,
+          ImageFormatTypes.AVIF,
         ].includes(format)
       ) {
         return format;
@@ -365,6 +367,10 @@ export class ThumborMapper {
       }
       case "watermark": {
         this.mapWatermark(filterValue, currentEdits);
+        break;
+      }
+      case "animated": {
+        currentEdits.animated = filterValue.toLowerCase() != "false";
         break;
       }
     }

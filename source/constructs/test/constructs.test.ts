@@ -12,7 +12,7 @@ test("Serverless Image Handler Stack Snapshot", () => {
   const stack = new ServerlessImageHandlerStack(app, "TestStack", {
     solutionId: "S0ABC",
     solutionName: "sih",
-    solutionVersion: "v6.2.5",
+    solutionVersion: "v6.2.6",
   });
 
   const template = Template.fromStack(stack);
@@ -29,6 +29,11 @@ test("Serverless Image Handler Stack Snapshot", () => {
     }
     if (templateJson.Resources[key].Properties?.Content?.S3Key) {
       templateJson.Resources[key].Properties.Content.S3Key = "Omitted to remove snapshot dependency on hash";
+    }
+    if (templateJson.Resources[key].Properties?.SourceObjectKeys) {
+      templateJson.Resources[key].Properties.SourceObjectKeys = [
+        "Omitted to remove snapshot dependency on demo ui module hash",
+      ];
     }
   });
 
