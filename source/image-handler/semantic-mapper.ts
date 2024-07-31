@@ -2,7 +2,7 @@
 // Based on Thumbor mapper
 // SPDX-License-Identifier: Apache-2.0
 
-import { ImageEdits, ImageFitTypes, ImageFormatTypes, ImageHandlerEvent } from "./lib";
+import { ImageEdits, ImageFitTypes, ImageFormatTypes, ImageHandlerError, ImageHandlerEvent, StatusCodes } from "./lib";
 
 export class SemanticMapper {
   private readonly EMPTY_IMAGE_EDITS: ImageEdits = {};
@@ -21,7 +21,12 @@ export class SemanticMapper {
     const { h, w, fit, fm, q } = event.multiValueQueryStringParameters || {};
 
     if ([h, w, fit, fm, q].some(p => p?.length > 1)) {
-      throw new Error("Multiple values for the same parameter are not allowed.");
+      throw new ImageHandlerError(
+        StatusCodes.BAD_REQUEST,
+        "MapPathToEdits::MultipleValuesNotAllowed",
+        "Multiple values for the same parameter are not allowed."
+      );
+
     }
 
     let edits: ImageEdits = this.mergeEdits(
@@ -127,6 +132,14 @@ export class SemanticMapper {
     const format = targetFormat || originalFormat;
     const isJpeg = ['jpg', 'jpeg'].includes(targetFormat);
     const quality = parseInt(qualityParam as string, 10);
+
+    if (targetFormat && !Object.values(ImageFormatTypes).includes(targetFormat as ImageFormatTypes)) {
+      throw new ImageHandlerError(
+        StatusCodes.BAD_REQUEST,
+        "MapFormat::UnsupportedImageFormat",
+       `Unsupported image format: ${targetFormat}`
+      );
+    }
 
     const edits: ImageEdits = {
       ...(targetFormat && { toFormat: targetFormat }),
