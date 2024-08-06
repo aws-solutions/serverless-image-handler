@@ -13,7 +13,7 @@ import {
   StatusCodes,
 } from './lib';
 import { S3 } from '@aws-sdk/client-s3';
-import { rgbaToThumbHash, thumbHashToDataURL } from './lib/thumbhash';
+import { rgbaToThumbHash } from './lib/thumbhash';
 
 export class ImageHandler {
   private readonly LAMBDA_PAYLOAD_LIMIT = 6 * 1024 * 1024;
@@ -159,7 +159,7 @@ export class ImageHandler {
           break;
         }
         case 'thumbhash': {
-          originalImage.resize(100, 100, { fit: 'inside' });
+          originalImage.resize({ width: 100, height: 100, fit: ImageFitTypes.INSIDE });
           break;
         }
         default: {
@@ -180,8 +180,6 @@ export class ImageHandler {
    */
   private async applyResize(originalImage: sharp.Sharp, edits: ImageEdits): Promise<void> {
     if (edits.resize === undefined) {
-      edits.resize = {};
-      edits.resize.fit = ImageFitTypes.INSIDE;
       return;
     }
     const resize = this.validateResizeInputs(edits.resize);
