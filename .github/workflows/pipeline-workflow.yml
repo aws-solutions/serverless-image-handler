@@ -7,7 +7,18 @@ env:
   SOLUTION_NAME: my-serverless-image-handler
   VERSION: 1
 
-on: push
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/**'
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'infrastructure/**'
+  workflow_dispatch:
 
 jobs:
   pipeline-job:
