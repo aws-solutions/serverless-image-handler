@@ -1,6 +1,6 @@
 {
   "name": "custom-resource",
-  "version": "6.2.6",
+  "version": "6.2.7",
   "private": true,
   "description": "Serverless Image Handler custom resource",
   "license": "Apache-2.0",
@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.1529.0",
-    "axios": "^1.6.5",
+    "axios": "^1.7.4",
     "moment": "^2.30.0",
     "uuid": "^9.0.1"
   },
