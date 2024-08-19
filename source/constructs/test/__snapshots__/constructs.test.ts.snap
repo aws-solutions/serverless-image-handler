@@ -359,7 +359,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "Solutions:ApplicationType": "AWS-Solutions",
           "Solutions:SolutionID": "S0ABC",
           "Solutions:SolutionName": "sih",
-          "Solutions:SolutionVersion": "v6.2.6",
+          "Solutions:SolutionVersion": "v6.2.7",
         },
       },
       "Type": "AWS::ServiceCatalogAppRegistry::Application",
@@ -1228,7 +1228,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
           "S3Key": "Omitted to remove snapshot dependency on hash",
         },
-        "Description": "sih (v6.2.6): Performs image edits and manipulations",
+        "Description": "sih (v6.2.7): Performs image edits and manipulations",
         "Environment": {
           "Variables": {
             "AUTO_WEBP": {
@@ -1262,7 +1262,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
               "Ref": "SecretsManagerKeyParameter",
             },
             "SOLUTION_ID": "S0ABC",
-            "SOLUTION_VERSION": "v6.2.6",
+            "SOLUTION_VERSION": "v6.2.7",
             "SOURCE_BUCKETS": {
               "Ref": "SourceBucketsParameter",
             },
@@ -1497,13 +1497,13 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
           "S3Key": "Omitted to remove snapshot dependency on hash",
         },
-        "Description": "sih (v6.2.6): Custom resource",
+        "Description": "sih (v6.2.7): Custom resource",
         "Environment": {
           "Variables": {
             "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
             "RETRY_SECONDS": "5",
             "SOLUTION_ID": "S0ABC",
-            "SOLUTION_VERSION": "v6.2.6",
+            "SOLUTION_VERSION": "v6.2.7",
           },
         },
         "Handler": "index.handler",
@@ -2104,7 +2104,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "applicationType": "AWS-Solutions",
           "solutionID": "S0ABC",
           "solutionName": "sih",
-          "version": "v6.2.6",
+          "version": "v6.2.7",
         },
         "Description": "Attribute group for solution information",
         "Name": {

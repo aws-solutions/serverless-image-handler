@@ -12,7 +12,7 @@ test("Serverless Image Handler Stack Snapshot", () => {
   const stack = new ServerlessImageHandlerStack(app, "TestStack", {
     solutionId: "S0ABC",
     solutionName: "sih",
-    solutionVersion: "v6.2.6",
+    solutionVersion: "v6.2.7",
   });
 
   const template = Template.fromStack(stack);
