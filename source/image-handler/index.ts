@@ -75,7 +75,7 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
         const headers = getResponseHeaders(false, isAlb);
         headers["Content-Type"] = defaultFallbackImage.ContentType;
         headers["Last-Modified"] = defaultFallbackImage.LastModified;
-        headers["Cache-Control"] = "max-age=31536000,public";
+        headers["Cache-Control"] = defaultFallbackImage.CacheControl ?? "max-age=31536000,public";
 
         return {
           statusCode: error.status ? error.status : StatusCodes.INTERNAL_SERVER_ERROR,
