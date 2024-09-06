@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import sharp, { FormatEnum, OverlayOptions } from 'sharp';
+import sharp, { FormatEnum, OverlayOptions, SharpOptions } from 'sharp';
 
 import {
   ContentTypes,
@@ -28,7 +28,11 @@ export class ImageHandler {
    * @returns A Sharp image object
    */
   // eslint-disable-next-line @typescript-eslint/ban-types
-  private async instantiateSharpImage(originalImage: Buffer, edits: ImageEdits, options: Object): Promise<sharp.Sharp> {
+  private async instantiateSharpImage(
+    originalImage: Buffer,
+    edits: ImageEdits,
+    options: SharpOptions,
+  ): Promise<sharp.Sharp> {
     let image: sharp.Sharp;
 
     if (edits && edits.rotate !== undefined && edits.rotate === null) {
@@ -80,7 +84,7 @@ export class ImageHandler {
    */
   async process(imageRequestInfo: ImageRequestInfo): Promise<string> {
     const { originalImage, edits } = imageRequestInfo;
-    const options = { failOnError: false, animated: imageRequestInfo.contentType === ContentTypes.GIF };
+    const options: SharpOptions = { failOn: 'none', animated: imageRequestInfo.contentType === ContentTypes.GIF };
     let base64EncodedImage = '';
 
     // Apply edits if specified
@@ -278,15 +282,7 @@ export class ImageHandler {
    * @param edits The edits to be made to the original image.
    */
   private applyCrop(originalImage: sharp.Sharp, edits: ImageEdits): void {
-    try {
-      originalImage.extract(edits.crop);
-    } catch (error) {
-      throw new ImageHandlerError(
-        StatusCodes.BAD_REQUEST,
-        'Crop::AreaOutOfBounds',
-        'The cropping area you provided exceeds the boundaries of the original image. Please try choosing a correct cropping value.',
-      );
-    }
+    originalImage.extract(edits.crop);
   }
 
   /**

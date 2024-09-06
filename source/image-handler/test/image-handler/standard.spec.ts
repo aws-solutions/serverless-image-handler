@@ -3,8 +3,8 @@
 
 import fs from 'fs';
 import { S3 } from '@aws-sdk/client-s3';
-import sharp from 'sharp';
-import { ImageEdits, ImageRequestInfo, RequestTypes } from '../../src/lib';
+import sharp, { SharpOptions } from 'sharp';
+import { ImageEdits } from '../../src/lib';
 import { ImageHandler } from '../../src/image-handler';
 
 const s3Client = new S3();
@@ -44,7 +44,7 @@ describe('instantiateSharpImage', () => {
     const edits = {
       rotate: null,
     };
-    const options = { faiOnError: false };
+    const options: SharpOptions = { failOn: 'none' };
     const imageHandler = new ImageHandler(s3Client);
 
     // Act
@@ -59,7 +59,7 @@ describe('instantiateSharpImage', () => {
     const edits = {
       rotate: undefined,
     };
-    const options = { faiOnError: false };
+    const options: SharpOptions = { failOn: 'none' };
     const imageHandler = new ImageHandler(s3Client);
 
     // Act
@@ -75,7 +75,7 @@ describe('instantiateSharpImage', () => {
     const edits = {
       rotate: undefined,
     };
-    const options = { faiOnError: false };
+    const options: SharpOptions = { failOn: 'none' };
     const modifiedImage = await sharp(image).withMetadata({ orientation: 1 }).toBuffer();
     const imageHandler = new ImageHandler(s3Client);
 

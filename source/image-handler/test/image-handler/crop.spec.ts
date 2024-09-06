@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { S3 } from '@aws-sdk/client-s3';
-import sharp from 'sharp';
+import sharp, { SharpOptions } from 'sharp';
 
 import { ImageHandler } from '../../src/image-handler';
 import { ImageEdits, StatusCodes } from '../../src/lib';
@@ -61,9 +61,10 @@ describe('crop', () => {
   it('Should fail with an invalid crop request', async () => {
     // 5x5 png
     const originalImage = Buffer.from(image_png_white_5x5, 'base64');
-    const image = sharp(originalImage, { failOnError: false }).withMetadata();
+    const options: SharpOptions = { failOn: 'none' };
+    const image = sharp(originalImage, options).withMetadata();
     const edits: ImageEdits = {
-      crop: { left: 0, right: 0, width: 1, height: 1 },
+      crop: { top: 0, left: 0, width: 1, height: 1 },
     };
 
     // crop an image and compare with the result expected

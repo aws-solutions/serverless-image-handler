@@ -153,10 +153,10 @@ export class ImageRequest {
       let originalImage: GetObjectCommandOutput;
       try {
         const getObjectCommand: GetObjectCommandInput = { Bucket: bucket, Key: key };
-        logger.info('Getting image from S3:', { getObjectCommand });
+        logger.debug('Getting image from S3:', { getObjectCommand });
         originalImage = await this.s3Client.send(new GetObjectCommand(getObjectCommand));
       } catch (error) {
-        logger.warn('Error occurred while getting the image from S3. Error: ', error);
+        logger.info('Error occurred while getting the image from S3. Error: ', error);
         throw new ImageHandlerError(
           StatusCodes.NOT_FOUND,
           'NoSuchKey',

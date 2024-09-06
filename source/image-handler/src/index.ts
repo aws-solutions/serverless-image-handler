@@ -41,7 +41,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<ImageHandl
         body: JSON.stringify({
           message: 'HTTP/410. Content ' + imageRequestInfo.key + ' has expired.',
           code: 'Gone',
-          status: 410,
+          status: StatusCodes.GONE,
         }),
       };
     }
@@ -80,6 +80,19 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<ImageHandl
   } catch (error) {
     if (error.code && error.code !== 'NoSuchKey') {
       logger.warn('Error occurred during image processing', { error });
+    }
+    if (error.message === 'extract_area: bad extract area') {
+      return {
+        statusCode: StatusCodes.BAD_REQUEST,
+        isBase64Encoded: false,
+        headers: getResponseHeaders(true),
+        body: JSON.stringify({
+          code: 'Crop::AreaOutOfBounds',
+          message:
+            'The cropping area you provided exceeds the boundaries of the original image. Please try choosing a correct cropping value.',
+          status: StatusCodes.BAD_REQUEST,
+        }),
+      };
     }
     const { statusCode, body } = getErrorResponse(error);
     return {

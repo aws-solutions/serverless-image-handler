@@ -114,4 +114,35 @@ describe('index', () => {
     });
     expect(result).toEqual(expectedResult);
   });
+
+  it('should respond with http/400 BAD REQUEST when out of bounds', async () => {
+    // Arrange
+    const event = build_event({ rawPath: '/0x0:9999x9999/test.webp' });
+    // Mock
+    mockS3Client.on(GetObjectCommand).resolves({ Body: sampleImageStream(), ContentType: 'image/webp' });
+
+    // Act
+    const result = await handler(event);
+    const expectedResult = {
+      statusCode: StatusCodes.BAD_REQUEST,
+      isBase64Encoded: false,
+      headers: {
+        'Access-Control-Allow-Methods': 'GET',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        code: 'Crop::AreaOutOfBounds',
+        message: `The cropping area you provided exceeds the boundaries of the original image. Please try choosing a correct cropping value.`,
+        status: StatusCodes.BAD_REQUEST,
+      }),
+    };
+
+    // Assert
+    expect(mockS3Client).toHaveReceivedCommandWith(GetObjectCommand, {
+      Bucket: 'source-bucket',
+      Key: 'test.webp',
+    });
+    expect(result).toEqual(expectedResult);
+  });
 });
