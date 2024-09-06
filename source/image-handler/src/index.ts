@@ -37,7 +37,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<ImageHandl
       return {
         statusCode: StatusCodes.GONE,
         isBase64Encoded: false,
-        headers: getResponseHeaders(true),
+        headers: getResponseHeaders(true, StatusCodes.GONE),
         body: JSON.stringify({
           message: 'HTTP/410. Content ' + imageRequestInfo.key + ' has expired.',
           code: 'Gone',
@@ -81,24 +81,12 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<ImageHandl
     if (error.code && error.code !== 'NoSuchKey') {
       logger.warn('Error occurred during image processing', { error });
     }
-    if (error.message === 'extract_area: bad extract area') {
-      return {
-        statusCode: StatusCodes.BAD_REQUEST,
-        isBase64Encoded: false,
-        headers: getResponseHeaders(true),
-        body: JSON.stringify({
-          code: 'Crop::AreaOutOfBounds',
-          message:
-            'The cropping area you provided exceeds the boundaries of the original image. Please try choosing a correct cropping value.',
-          status: StatusCodes.BAD_REQUEST,
-        }),
-      };
-    }
-    const { statusCode, body } = getErrorResponse(error);
+
+    const { statusCode, headers, body } = getErrorResponse(error);
     return {
       statusCode,
       isBase64Encoded: false,
-      headers: getResponseHeaders(true),
+      headers,
       body,
     };
   }
@@ -107,9 +95,10 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<ImageHandl
 /**
  * Generates the appropriate set of response headers based on a success or error condition.
  * @param isError Has an error been thrown.
+ * @param statusCode Http-StatusCode of the Response.
  * @returns Headers.
  */
-function getResponseHeaders(isError: boolean = false): Headers {
+function getResponseHeaders(isError: boolean = false, statusCode: number = StatusCodes.OK): Headers {
   const { CORS_ENABLED, CORS_ORIGIN } = process.env;
   const corsEnabled = CORS_ENABLED === 'Yes';
   const headers: Headers = {
@@ -125,6 +114,23 @@ function getResponseHeaders(isError: boolean = false): Headers {
     headers['Content-Type'] = 'application/json';
   }
 
+  switch (statusCode) {
+    // Cache short-term 4xx errors
+    case StatusCodes.BAD_REQUEST:
+    case StatusCodes.FORBIDDEN:
+    case StatusCodes.NOT_FOUND:
+      headers['Cache-Control'] = 'max-age=3600, immutable';
+      break;
+    // Cache long-term 4xx errors
+    case StatusCodes.GONE:
+    case StatusCodes.REQUEST_TOO_LONG:
+      headers['Cache-Control'] = 'max-age=31536000, immutable';
+      break;
+    // No cache for 5xx errors
+    default:
+      break;
+  }
+
   return headers;
 }
 
@@ -136,34 +142,58 @@ function getResponseHeaders(isError: boolean = false): Headers {
 export function getErrorResponse(error) {
   if (error?.status) {
     return {
+      headers: getResponseHeaders(true, error.status),
       statusCode: error.status,
       body: JSON.stringify(error),
     };
   }
-  /**
-   * if an image overlay is attempted and the overlaying image has greater dimensions
-   * that the base image, sharp will throw an exception and return this string
-   */
-  if (error?.message === 'Image to composite must have same dimensions or smaller') {
-    return {
-      statusCode: StatusCodes.BAD_REQUEST,
-      body: JSON.stringify({
-        /**
-         * return a message indicating overlay dimensions is the issue, the caller may not
-         * know that the sharp composite function was used
-         */
-        message: 'Image to overlay must have same dimensions or smaller',
-        code: 'BadRequest',
-        status: StatusCodes.BAD_REQUEST,
-      }),
-    };
+
+  let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+  switch (error?.message) {
+    /**
+     * if an image overlay is attempted and the overlaying image has greater dimensions
+     * that the base image, sharp will throw an exception and return this string
+     */
+    case 'Image to composite must have same dimensions or smaller':
+      statusCode = StatusCodes.BAD_REQUEST;
+      return {
+        statusCode: statusCode,
+        headers: getResponseHeaders(true, statusCode),
+        body: JSON.stringify({
+          /**
+           * return a message indicating overlay dimensions is the issue, the caller may not
+           * know that the sharp composite function was used
+           */
+          message: 'Image to overlay must have same dimensions or smaller',
+          code: 'BadRequest',
+          status: statusCode,
+        }),
+      };
+    /**
+     * if an image crop is attempted and the crop has greater dimensions
+     * than the base image, sharp will throw an exception and return this string
+     */
+    case 'extract_area: bad extract area':
+      statusCode = StatusCodes.BAD_REQUEST;
+      return {
+        statusCode: statusCode,
+        headers: getResponseHeaders(true, statusCode),
+        body: JSON.stringify({
+          code: 'Crop::AreaOutOfBounds',
+          message:
+            'The cropping area you provided exceeds the boundaries of the original image. Please try choosing a correct cropping value.',
+          status: statusCode,
+        }),
+      };
+    default:
+      return {
+        statusCode: statusCode,
+        headers: getResponseHeaders(true, statusCode),
+        body: JSON.stringify({
+          message: 'Internal error. Please contact the system administrator.',
+          code: 'InternalError',
+          status: statusCode,
+        }),
+      };
   }
-  return {
-    statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-    body: JSON.stringify({
-      message: 'Internal error. Please contact the system administrator.',
-      code: 'InternalError',
-      status: StatusCodes.INTERNAL_SERVER_ERROR,
-    }),
-  };
 }
