@@ -3,6 +3,34 @@
 exports[`Serverless Image Handler Stack Snapshot 1`] = `
 {
   "Conditions": {
+    "BackEndShortLogRetentionCondition72EA1A33": {
+      "Fn::Or": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "LogRetentionPeriodParameter",
+            },
+            "1",
+          ],
+        },
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "LogRetentionPeriodParameter",
+            },
+            "3",
+          ],
+        },
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "LogRetentionPeriodParameter",
+            },
+            "5",
+          ],
+        },
+      ],
+    },
     "CommonResourcesDeployDemoUICondition308D3B09": {
       "Fn::Equals": [
         {
@@ -34,6 +62,27 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
         },
         "Yes",
       ],
+    },
+    "SendAnonymousStatistics": {
+      "Fn::Equals": [
+        {
+          "Fn::FindInMap": [
+            "Solution",
+            "Config",
+            "AnonymousUsage",
+          ],
+        },
+        "Yes",
+      ],
+    },
+  },
+  "Mappings": {
+    "Solution": {
+      "Config": {
+        "AnonymousUsage": "Yes",
+        "SolutionId": "S0ABC",
+        "Version": "v6.3.0",
+      },
     },
   },
   "Metadata": {
@@ -312,7 +361,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
         "1827",
         "3653",
       ],
-      "Default": "1",
+      "Default": "180",
       "Description": "This solution automatically logs events to Amazon CloudWatch. Select the amount of time for CloudWatch logs from this solution to be retained (in days).",
       "Type": "Number",
     },
@@ -359,7 +408,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "Solutions:ApplicationType": "AWS-Solutions",
           "Solutions:SolutionID": "S0ABC",
           "Solutions:SolutionName": "sih",
-          "Solutions:SolutionVersion": "v6.2.7",
+          "Solutions:SolutionVersion": "v6.3.0",
         },
       },
       "Type": "AWS::ServiceCatalogAppRegistry::Application",
@@ -1228,13 +1277,12 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
           "S3Key": "Omitted to remove snapshot dependency on hash",
         },
-        "Description": "sih (v6.2.7): Performs image edits and manipulations",
+        "Description": "sih (v6.3.0): Performs image edits and manipulations",
         "Environment": {
           "Variables": {
             "AUTO_WEBP": {
               "Ref": "AutoWebPParameter",
             },
-            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
             "CORS_ENABLED": {
               "Ref": "CorsEnabledParameter",
             },
@@ -1262,7 +1310,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
               "Ref": "SecretsManagerKeyParameter",
             },
             "SOLUTION_ID": "S0ABC",
-            "SOLUTION_VERSION": "v6.2.7",
+            "SOLUTION_VERSION": "Omitted to remove snapshot dependency on solution version",
             "SOURCE_BUCKETS": {
               "Ref": "SourceBucketsParameter",
             },
@@ -1361,10 +1409,442 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       },
       "Type": "AWS::CloudFront::OriginRequestPolicy",
     },
+    "BackEndSolutionMetricsBilledDurationMemorySizeQuery39F16D58": {
+      "Condition": "SendAnonymousStatistics",
+      "Properties": {
+        "LogGroupNames": [
+          {
+            "Ref": "BackEndImageHandlerLogGroupA0941EEC",
+          },
+        ],
+        "Name": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "AWS::StackName",
+              },
+              "-BilledDurationMemorySizeQuery",
+            ],
+          ],
+        },
+        "QueryString": "stats sum(@billedDuration) as AWSLambdaBilledDuration, max(@memorySize) as AWSLambdaMemorySize",
+      },
+      "Type": "AWS::Logs::QueryDefinition",
+    },
+    "BackEndSolutionMetricsEventbridgeRuleToLambdaEventsRule05009025": {
+      "Condition": "SendAnonymousStatistics",
+      "Properties": {
+        "ScheduleExpression": {
+          "Fn::Join": [
+            "",
+            [
+              "cron(0 23 ? * ",
+              {
+                "Fn::If": [
+                  "BackEndShortLogRetentionCondition72EA1A33",
+                  "*",
+                  "MON",
+                ],
+              },
+              " *)",
+            ],
+          ],
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "BackEndSolutionMetricsMetricsLambdaF4FA4AF7",
+                "Arn",
+              ],
+            },
+            "Id": "Target0",
+            "InputTransformer": {
+              "InputPathsMap": {
+                "detail-type": "$.detail-type",
+                "time": "$.time",
+              },
+              "InputTemplate": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "{"detail-type": <detail-type>, "time": <time>, "metrics-data-query": [{"MetricStat":{"Metric":{"Namespace":"AWS/Lambda","Dimensions":[{"Name":"FunctionName","Value":"",
+                    {
+                      "Ref": "BackEndImageHandlerLambdaFunctionADEF7FF2",
+                    },
+                    ""}],"MetricName":"Invocations"},"Stat":"Sum","Period":604800},"Id":"id_",
+                    {
+                      "Fn::Join": [
+                        "_",
+                        {
+                          "Fn::Split": [
+                            "-",
+                            {
+                              "Ref": "AWS::StackName",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    "_0"},{"MetricStat":{"Metric":{"Namespace":"AWS/CloudFront","Dimensions":[{"Name":"DistributionId","Value":"",
+                    {
+                      "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaCloudFrontToApiGatewayCloudFrontDistribution03AA31B2",
+                    },
+                    ""},{"Name":"Region","Value":"Global"}],"MetricName":"Requests"},"Stat":"Sum","Period":604800},"Id":"id_",
+                    {
+                      "Fn::Join": [
+                        "_",
+                        {
+                          "Fn::Split": [
+                            "-",
+                            {
+                              "Ref": "AWS::StackName",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    "_1"},{"MetricStat":{"Metric":{"Namespace":"AWS/CloudFront","Dimensions":[{"Name":"DistributionId","Value":"",
+                    {
+                      "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaCloudFrontToApiGatewayCloudFrontDistribution03AA31B2",
+                    },
+                    ""},{"Name":"Region","Value":"Global"}],"MetricName":"BytesDownloaded"},"Stat":"Sum","Period":604800},"Id":"id_",
+                    {
+                      "Fn::Join": [
+                        "_",
+                        {
+                          "Fn::Split": [
+                            "-",
+                            {
+                              "Ref": "AWS::StackName",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    "_2"}]}",
+                  ],
+                ],
+              },
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
+    "BackEndSolutionMetricsLambdaToSqsToLambdalambdatosqsqueue60A92083": {
+      "Condition": "SendAnonymousStatistics",
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "DelaySeconds": 900,
+        "KmsMasterKeyId": "alias/aws/sqs",
+        "MaximumMessageSize": 1024,
+        "MessageRetentionPeriod": 86400,
+        "ReceiveMessageWaitTimeSeconds": 20,
+        "Tags": [
+          {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+        "VisibilityTimeout": 1020,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "BackEndSolutionMetricsLambdaToSqsToLambdalambdatosqsqueuePolicy5B9B4D7F": {
+      "Condition": "SendAnonymousStatistics",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:DeleteMessage",
+                "sqs:ReceiveMessage",
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:RemovePermission",
+                "sqs:AddPermission",
+                "sqs:SetQueueAttributes",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":iam::",
+                      {
+                        "Ref": "AWS::AccountId",
+                      },
+                      ":root",
+                    ],
+                  ],
+                },
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "BackEndSolutionMetricsLambdaToSqsToLambdalambdatosqsqueue60A92083",
+                  "Arn",
+                ],
+              },
+              "Sid": "QueueOwnerOnlyAccess",
+            },
+            {
+              "Action": "SQS:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false",
+                },
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "BackEndSolutionMetricsLambdaToSqsToLambdalambdatosqsqueue60A92083",
+                  "Arn",
+                ],
+              },
+              "Sid": "HttpsOnly",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Queues": [
+          {
+            "Ref": "BackEndSolutionMetricsLambdaToSqsToLambdalambdatosqsqueue60A92083",
+          },
+        ],
+      },
+      "Type": "AWS::SQS::QueuePolicy",
+    },
+    "BackEndSolutionMetricsMetricsLambdaAwsEventsLambdaInvokePermission1328BC090": {
+      "Condition": "SendAnonymousStatistics",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "BackEndSolutionMetricsMetricsLambdaF4FA4AF7",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "BackEndSolutionMetricsEventbridgeRuleToLambdaEventsRule05009025",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "BackEndSolutionMetricsMetricsLambdaF4FA4AF7": {
+      "Condition": "SendAnonymousStatistics",
+      "DependsOn": [
+        "BackEndSolutionMetricsMetricsLambdaServiceRoleDefaultPolicyEBDDA47A",
+        "BackEndSolutionMetricsMetricsLambdaServiceRoleF4BC77CD",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
+          },
+          "S3Key": "Omitted to remove snapshot dependency on hash",
+        },
+        "Environment": {
+          "Variables": {
+            "EXECUTION_DAY": {
+              "Fn::If": [
+                "BackEndShortLogRetentionCondition72EA1A33",
+                "*",
+                "MON",
+              ],
+            },
+            "QUERY_PREFIX": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Ref": "AWS::StackName",
+                  },
+                  "-",
+                ],
+              ],
+            },
+            "SOLUTION_ID": "SO0023",
+            "SOLUTION_NAME": "serverless-image-handler",
+            "SOLUTION_VERSION": "Omitted to remove snapshot dependency on solution version",
+            "SQS_QUEUE_URL": {
+              "Ref": "BackEndSolutionMetricsLambdaToSqsToLambdalambdatosqsqueue60A92083",
+            },
+            "UUID": {
+              "Fn::GetAtt": [
+                "CommonResourcesCustomResourcesCustomResourceUuid64E7CCAD",
+                "UUID",
+              ],
+            },
+          },
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "BackEndSolutionMetricsMetricsLambdaServiceRoleF4BC77CD",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs18.x",
+        "Tags": [
+          {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+        "Timeout": 60,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "BackEndSolutionMetricsMetricsLambdaServiceRoleDefaultPolicyEBDDA47A": {
+      "Condition": "SendAnonymousStatistics",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "BackEndSolutionMetricsLambdaToSqsToLambdalambdatosqsqueue60A92083",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "BackEndSolutionMetricsLambdaToSqsToLambdalambdatosqsqueue60A92083",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "cloudwatch:GetMetricData",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "logs:StartQuery",
+                "logs:GetQueryResults",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "BackEndImageHandlerLogGroupA0941EEC",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "logs:DescribeQueryDefinitions",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "BackEndSolutionMetricsMetricsLambdaServiceRoleDefaultPolicyEBDDA47A",
+        "Roles": [
+          {
+            "Ref": "BackEndSolutionMetricsMetricsLambdaServiceRoleF4BC77CD",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "BackEndSolutionMetricsMetricsLambdaServiceRoleF4BC77CD": {
+      "Condition": "SendAnonymousStatistics",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "SolutionId",
+            "Value": "S0ABC",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "BackEndSolutionMetricsMetricsLambdaSqsEventSourceTestStackBackEndSolutionMetricsLambdaToSqsToLambdalambdatosqsqueueC02C743365EF89F7": {
+      "Condition": "SendAnonymousStatistics",
+      "Properties": {
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "BackEndSolutionMetricsLambdaToSqsToLambdalambdatosqsqueue60A92083",
+            "Arn",
+          ],
+        },
+        "FunctionName": {
+          "Ref": "BackEndSolutionMetricsMetricsLambdaF4FA4AF7",
+        },
+      },
+      "Type": "AWS::Lambda::EventSourceMapping",
+    },
     "CommonResourcesCustomResourcesCustomResourceAnonymousMetric51363F57": {
       "DeletionPolicy": "Delete",
       "Properties": {
-        "AnonymousData": "Yes",
+        "AnonymousData": {
+          "Fn::FindInMap": [
+            "Solution",
+            "Config",
+            "AnonymousUsage",
+          ],
+        },
         "AutoWebP": {
           "Ref": "AutoWebPParameter",
         },
@@ -1497,13 +1977,12 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
           "S3Key": "Omitted to remove snapshot dependency on hash",
         },
-        "Description": "sih (v6.2.7): Custom resource",
+        "Description": "sih (v6.3.0): Custom resource",
         "Environment": {
           "Variables": {
-            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
             "RETRY_SECONDS": "5",
             "SOLUTION_ID": "S0ABC",
-            "SOLUTION_VERSION": "v6.2.7",
+            "SOLUTION_VERSION": "Omitted to remove snapshot dependency on solution version",
           },
         },
         "Handler": "index.handler",
@@ -2104,7 +2583,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "applicationType": "AWS-Solutions",
           "solutionID": "S0ABC",
           "solutionName": "sih",
-          "version": "v6.2.7",
+          "version": "v6.3.0",
         },
         "Description": "Attribute group for solution information",
         "Name": {

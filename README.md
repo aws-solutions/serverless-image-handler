@@ -105,8 +105,10 @@ This solution collects anonymous operational metrics to help AWS improve the qua
 - [@Fjool](https://github.com/Fjool) for [#489](https://github.com/aws-solutions/serverless-image-handler/pull/489)
 - [@fvsnippets](https://github.com/fvsnippets) for [#373](https://github.com/aws-solutions/serverless-image-handler/pull/373), [#380](https://github.com/aws-solutions/serverless-image-handler/pull/380)
 - [@ccchapman](https://github.com/ccchapman) for [#490](https://github.com/aws-solutions/serverless-image-handler/pull/490)
-- [@bennet-esyoil][https://github.com/bennet-esyoil] for [#521](https://github.com/aws-solutions/serverless-image-handler/pull/521)
-- [@vaniyokk][https://github.com/vaniyokk] for [#511](https://github.com/aws-solutions/serverless-image-handler/pull/511)
+- [@bennet-esyoil](https://github.com/bennet-esyoil) for [#521](https://github.com/aws-solutions/serverless-image-handler/pull/521)
+- [@vaniyokk](https://github.com/vaniyokk) for [#511](https://github.com/aws-solutions/serverless-image-handler/pull/511)
+- [@nicolasbuch](https://github.com/nicolasbuch) for [#569](https://github.com/aws-solutions/serverless-image-handler/pull/569)
+- [@mrnonz](https://github.com/mrnonz) for [#567](https://github.com/aws-solutions/serverless-image-handler/pull/567)
 
 # License
 

@@ -4,7 +4,6 @@
  */
 
 import { CDKAssetPackager } from "./asset-packager";
-import path from "path";
 
 export async function handler(cdkAssetFolderPath: string | undefined, outputPath: string | undefined) {
   if (!cdkAssetFolderPath || !outputPath) throw new Error("undefined input path");

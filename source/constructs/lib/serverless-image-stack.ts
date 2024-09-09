@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PriceClass } from "aws-cdk-lib/aws-cloudfront";
-import { Aspects, CfnMapping, CfnOutput, CfnParameter, Stack, StackProps, Tags } from "aws-cdk-lib";
+import { Aspects, CfnCondition, CfnMapping, CfnOutput, CfnParameter, Fn, Stack, StackProps, Tags } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { ConditionAspect, SuppressLambdaFunctionCfnRulesAspect } from "../utils/aspects";
 import { BackEnd } from "./back-end/back-end-construct";
@@ -72,7 +72,7 @@ export class ServerlessImageHandlerStack extends Stack {
         "1827",
         "3653",
       ],
-      default: "1",
+      default: "180",
     });
 
     const autoWebPParameter = new CfnParameter(this, "AutoWebPParameter", {
@@ -138,10 +138,13 @@ export class ServerlessImageHandlerStack extends Stack {
           Version: props.solutionVersion,
         },
       },
-      lazy: true,
+      lazy: false,
     });
 
     const anonymousUsage = `${solutionMapping.findInMap("Config", "AnonymousUsage")}`;
+    const sendAnonymousStatistics = new CfnCondition(this, "SendAnonymousStatistics", {
+      expression: Fn.conditionEquals(anonymousUsage, "Yes"),
+    });
 
     const solutionConstructProps: SolutionConstructProps = {
       corsEnabled: corsEnabledParameter.valueAsString,
@@ -175,6 +178,7 @@ export class ServerlessImageHandlerStack extends Stack {
       solutionId: props.solutionId,
       solutionName: props.solutionName,
       secretsManagerPolicy: commonResources.secretsManagerPolicy,
+      sendAnonymousStatistics,
       logsBucket: commonResources.logsBucket,
       uuid: commonResources.customResources.uuid,
       cloudFrontPriceClass: cloudFrontPriceClassParameter.valueAsString,
@@ -326,7 +330,7 @@ export class ServerlessImageHandlerStack extends Stack {
     new CfnOutput(this, "CloudFrontLoggingBucket", {
       value: commonResources.logsBucket.bucketName,
       description: "Amazon S3 bucket for storing CloudFront access logs.",
-    })
+    });
 
     Aspects.of(this).add(new SuppressLambdaFunctionCfnRulesAspect());
     Tags.of(this).add("SolutionId", props.solutionId);

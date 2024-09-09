@@ -55,3 +55,13 @@ ts-jest under the Massachusetts Institute of Technology (MIT) license
 ts-node under the Massachusetts Institute of Technology (MIT) license
 typescript under the Apache License 2.0
 uuid under the Massachusetts Institute of Technology (MIT) license
+@aws-sdk/client-cloudwatch under the Apache License 2.0
+@aws-sdk/client-cloudwatch-logs under the Apache License 2.0
+@aws-sdk/client-sqs under the Apache License 2.0
+@aws-solutions-constructs/aws-eventbridge-lambda under the Apache License 2.0
+@aws-solutions-constructs/aws-lambda-sqs-lambda under the Apache License 2.0
+@types/aws-lambda under the Massachusetts Institute of Technology (MIT) license
+esbuild under the Massachusetts Institute of Technology (MIT) license
+@aws-cdk/aws-servicecatalogappregistry-alpha under the Apache License 2.0
+@types/adm-zip under the Massachusetts Institute of Technology (MIT) license
+prettier under the Massachusetts Institute of Technology (MIT) license

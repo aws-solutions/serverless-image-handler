@@ -256,6 +256,124 @@ describe("index", () => {
     expect(result).toEqual(expectedResult);
   });
 
+  it("should return the cache-control header supplied on fallback image when an error occurs if the default fallback image is enabled", async () => {
+    // Arrange
+    process.env.ENABLE_DEFAULT_FALLBACK_IMAGE = "Yes";
+    process.env.DEFAULT_FALLBACK_IMAGE_BUCKET = "fallback-image-bucket";
+    process.env.DEFAULT_FALLBACK_IMAGE_KEY = "fallback-image.png";
+    process.env.CORS_ENABLED = "Yes";
+    process.env.CORS_ORIGIN = "*";
+
+    // {key: "test.jpg", headers: {Cache-Control: "max-age=11,public"}}
+    const event: ImageHandlerEvent = {
+      path: "ewoia2V5IjogInRlc3QuanBnIiwKImhlYWRlcnMiOiB7CiJDYWNoZS1Db250cm9sIjoibWF4LWFnZT0xMSxwdWJsaWMiCn0KfQ==",
+    };
+
+    // Mock
+    mockAwsS3.getObject.mockReset();
+    mockAwsS3.getObject
+      .mockImplementationOnce(() => ({
+        promise() {
+          return Promise.reject(new ImageHandlerError(StatusCodes.INTERNAL_SERVER_ERROR, "UnknownError", null));
+        },
+      }))
+      .mockImplementationOnce(() => ({
+        promise() {
+          return Promise.resolve({
+            Body: mockFallbackImage,
+            ContentType: "image/png",
+            CacheControl: "max-age=12,public",
+          });
+        },
+      }));
+
+    // Act
+    const result = await handler(event);
+    const expectedResult = {
+      statusCode: StatusCodes.NOT_FOUND,
+      isBase64Encoded: true,
+      headers: {
+        "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Credentials": true,
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "image/png",
+        "Cache-Control": "max-age=12,public",
+        "Last-Modified": undefined,
+      },
+      body: mockFallbackImage.toString("base64"),
+    };
+
+    // Assert
+    expect(mockAwsS3.getObject).toHaveBeenNthCalledWith(1, {
+      Bucket: "source-bucket",
+      Key: "test.jpg",
+    });
+    expect(mockAwsS3.getObject).toHaveBeenNthCalledWith(2, {
+      Bucket: "fallback-image-bucket",
+      Key: "fallback-image.png",
+    });
+    expect(result).toEqual(expectedResult);
+  });
+
+  it("should return the cache-control header attached to image when an error occurs if the default fallback image is enabled and the request does not contain the header", async () => {
+    // Arrange
+    process.env.ENABLE_DEFAULT_FALLBACK_IMAGE = "Yes";
+    process.env.DEFAULT_FALLBACK_IMAGE_BUCKET = "fallback-image-bucket";
+    process.env.DEFAULT_FALLBACK_IMAGE_KEY = "fallback-image.png";
+    process.env.CORS_ENABLED = "Yes";
+    process.env.CORS_ORIGIN = "*";
+
+    const event: ImageHandlerEvent = {
+      path: "ewoia2V5IjogInRlc3QuanBnIiwKImhlYWRlcnMiOiB7CiJDYWNoZS1Db250cm9sIjoibWF4LWFnZT0xMSxwdWJsaWMiCn0KfQ==",
+    };
+
+    // Mock
+    mockAwsS3.getObject.mockReset();
+    mockAwsS3.getObject
+      .mockImplementationOnce(() => ({
+        promise() {
+          return Promise.reject(new ImageHandlerError(StatusCodes.INTERNAL_SERVER_ERROR, "UnknownError", null));
+        },
+      }))
+      .mockImplementationOnce(() => ({
+        promise() {
+          return Promise.resolve({
+            Body: mockFallbackImage,
+            ContentType: "image/png",
+          });
+        },
+      }));
+
+    // Act
+    const result = await handler(event);
+    const expectedResult = {
+      statusCode: StatusCodes.NOT_FOUND,
+      isBase64Encoded: true,
+      headers: {
+        "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Credentials": true,
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "image/png",
+        "Cache-Control": "max-age=11,public",
+        "Last-Modified": undefined,
+      },
+      body: mockFallbackImage.toString("base64"),
+    };
+
+    // Assert
+    expect(mockAwsS3.getObject).toHaveBeenNthCalledWith(1, {
+      Bucket: "source-bucket",
+      Key: "test.jpg",
+    });
+    expect(mockAwsS3.getObject).toHaveBeenNthCalledWith(2, {
+      Bucket: "fallback-image-bucket",
+      Key: "fallback-image.png",
+    });
+    expect(result).toEqual(expectedResult);
+  });
+
   it("should return an error JSON when getting the default fallback image fails if the default fallback image is enabled", async () => {
     // Arrange
     const event: ImageHandlerEvent = {

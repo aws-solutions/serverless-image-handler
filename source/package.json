@@ -1,6 +1,6 @@
 {
   "name": "source",
-  "version": "6.2.7",
+  "version": "6.3.0",
   "private": true,
   "description": "ESLint and prettier dependencies to be used within the solution",
   "license": "Apache-2.0",
@@ -14,7 +14,8 @@
     "install:custom-resource": "cd ./custom-resource && npm run clean && npm ci",
     "install:image-handler": "cd ./image-handler && npm run clean && npm ci",
     "install:demo-ui": "cd ./demo-ui && npm run clean && npm ci",
-    "install:dependencies": "npm run install:custom-resource && npm run install:image-handler && npm run install:demo-ui",
+    "install:metrics-utils": "cd ./metrics-utils && npm ci",
+    "install:dependencies": "npm run install:metrics-utils && npm run install:custom-resource && npm run install:image-handler && npm run install:demo-ui",
     "bump-version": "npm version $(cat ../VERSION.txt) --allow-same-version && npm run bump-child-version",
     "bump-child-version": " npm --prefix ./image-handler run bump-version && npm --prefix ./custom-resource run bump-version && npm --prefix ./constructs run bump-version && npm --prefix ./solution-utils run bump-version && npm --prefix ./demo-ui run bump-version"
   },
