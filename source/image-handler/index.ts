@@ -9,7 +9,7 @@ import { getOptions } from "../solution-utils/get-options";
 import { isNullOrWhiteSpace } from "../solution-utils/helpers";
 import { ImageHandler } from "./image-handler";
 import { ImageRequest } from "./image-request";
-import { Headers, ImageHandlerEvent, ImageHandlerExecutionResult, StatusCodes } from "./lib";
+import { Headers, ImageHandlerEvent, ImageHandlerExecutionResult, RequestTypes, StatusCodes } from "./lib";
 import { SecretProvider } from "./secret-provider";
 
 const awsSdkOptions = getOptions();
@@ -65,24 +65,7 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
       !isNullOrWhiteSpace(DEFAULT_FALLBACK_IMAGE_KEY)
     ) {
       try {
-        const defaultFallbackImage = await s3Client
-          .getObject({
-            Bucket: DEFAULT_FALLBACK_IMAGE_BUCKET,
-            Key: DEFAULT_FALLBACK_IMAGE_KEY,
-          })
-          .promise();
-
-        const headers = getResponseHeaders(false, isAlb);
-        headers["Content-Type"] = defaultFallbackImage.ContentType;
-        headers["Last-Modified"] = defaultFallbackImage.LastModified;
-        headers["Cache-Control"] = "max-age=31536000,public";
-
-        return {
-          statusCode: error.status ? error.status : StatusCodes.INTERNAL_SERVER_ERROR,
-          isBase64Encoded: true,
-          headers,
-          body: defaultFallbackImage.Body.toString("base64"),
-        };
+        return await handleDefaultFallbackImage(imageRequest, event, isAlb, error);
       } catch (error) {
         console.error("Error occurred while getting the default fallback image.", error);
       }
@@ -96,6 +79,47 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
       body,
     };
   }
+}
+
+/**
+ * Retrieve the default fallback image and construct the ImageHandlerExecutionResult
+ * @param imageRequest The ImageRequest object
+ * @param event The Lambda Event object
+ * @param isAlb Whether we're behind an ALB
+ * @param error The error that resulted in us getting the fallback image
+ * @returns Processed request response for fallback image
+ * @
+ */
+export async function handleDefaultFallbackImage(
+  imageRequest: ImageRequest,
+  event: ImageHandlerEvent,
+  isAlb: boolean,
+  error
+): Promise<ImageHandlerExecutionResult> {
+  const { DEFAULT_FALLBACK_IMAGE_BUCKET, DEFAULT_FALLBACK_IMAGE_KEY } = process.env;
+  const defaultFallbackImage = await s3Client
+    .getObject({
+      Bucket: DEFAULT_FALLBACK_IMAGE_BUCKET,
+      Key: DEFAULT_FALLBACK_IMAGE_KEY,
+    })
+    .promise();
+
+  const headers = getResponseHeaders(false, isAlb);
+  headers["Content-Type"] = defaultFallbackImage.ContentType;
+  headers["Last-Modified"] = defaultFallbackImage.LastModified;
+  try {
+    headers["Cache-Control"] = imageRequest.parseImageHeaders(event, RequestTypes.DEFAULT)?.["Cache-Control"];
+  } catch {}
+
+  // Prioritize Cache-Control header attached to the fallback image followed by Cache-Control header provided in request, followed by the default
+  headers["Cache-Control"] = defaultFallbackImage.CacheControl ?? headers["Cache-Control"] ?? "max-age=31536000,public";
+
+  return {
+    statusCode: error.status ? error.status : StatusCodes.INTERNAL_SERVER_ERROR,
+    isBase64Encoded: true,
+    headers,
+    body: defaultFallbackImage.Body.toString("base64"),
+  };
 }
 
 /**

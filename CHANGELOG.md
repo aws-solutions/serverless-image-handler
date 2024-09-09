@@ -5,15 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.3.0] - 2024-09-09
+
+### Added
+
+- Additional anonymized metrics system to help understand how the solution is being used, identify areas of improvement, and drive future roadmap decisions.
+
+### Changed
+
+- Cdk update to 2.151.0
+- Default log retention to 180 days
+- Cache-control header on fallback images to use (in order of priority), fallback image metadata, header provided in image request, and default cache control [#563](https://github.com/aws-solutions/serverless-image-handler/issues/563)
+
+### Security
+
+- Upgraded micromatch to v4.0.8 for vulnerability CVE-2024-4067
+
 ## [6.2.7] - 2024-08-19
 
-### Security 
-- Upgraded axios to v1.7.4 for vulnerability CVE-2024-39338
+### Security
 
+- Upgraded axios to v1.7.4 for vulnerability CVE-2024-39338
 
 ## [6.2.6] - 2024-06-27
 
 ### Added
+
 - StackId tag to CloudFrontLoggingBucket and its bucket name as a CfnOutput [#529](https://github.com/aws-solutions/serverless-image-handler/issues/529)
 - Test case to verify UTF-8 support in object key [#320](https://github.com/aws-solutions/serverless-image-handler/pull/320)
 - Test cases to verify crop functionality [#459](https://github.com/aws-solutions/serverless-image-handler/pull/459)
@@ -23,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for 8-bit depth AVIF image type inference [#360](https://github.com/aws-solutions/serverless-image-handler/issues/360)
 
 ### Changed
+
 - Decreased permissions allotted to CustomResource Lambda and ImageHandler Lambda
 - cdk update to 2.124.0
 - aws-solutions-constructs update to 2.51.0
@@ -32,17 +50,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modified JPEG SOI marker parsing to only check first 2 bytes [#429]
 
 ### Security
+
 - Upgraded follow-redirects to v1.15.6 for vulnerability CVE-2024-28849
 - Upgraded braces to v3.0.3 for vulnerability CVE-2024-4068
 
 ### Removed
+
 - Unused CopyS3Assets custom resource
 
 ### Fixed
+
 - Some error messages indicating incorrect file types
 - Solution version and id not being passed to Backend Lambda
 - Thumbor-style URL matching being overly permissive
-
 
 ## [6.2.5] - 2024-01-03
 
