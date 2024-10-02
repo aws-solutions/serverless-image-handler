@@ -387,6 +387,34 @@ describe("calcOverlaySizeOption", () => {
     expect(result).toEqual(50);
   });
 
+  it("should return the specified parameter if param is a positive number and an integer", () => {
+    // Arrange
+    const imageSize = 100;
+    const editSize = 50;
+    const overlaySize = 50;
+    const imageHandler = new ImageHandler(s3Client, rekognitionClient);
+
+    // Act
+    const result = imageHandler["calcOverlaySizeOption"](editSize, imageSize, overlaySize);
+
+    // Assert
+    expect(result).toEqual(50);
+  });
+
+  it("should return the image size + specified parameter - overlay size if param is less than 0 and an integer", () => {
+    // Arrange
+    const imageSize = 100;
+    const editSize = -60;
+    const overlaySize = 50;
+    const imageHandler = new ImageHandler(s3Client, rekognitionClient);
+
+    // Act
+    const result = imageHandler["calcOverlaySizeOption"](editSize, imageSize, overlaySize);
+
+    // Assert
+    expect(result).toEqual(-10);
+  });
+
   it("should return the image size + specified parameter - overlay size if param is less than 0", () => {
     // Arrange
     const imageSize = 100;
