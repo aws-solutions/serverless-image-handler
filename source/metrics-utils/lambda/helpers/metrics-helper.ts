@@ -18,7 +18,7 @@ import {
   StartQueryCommandInput,
   QueryDefinition,
 } from "@aws-sdk/client-cloudwatch-logs";
-import { EventBridgeQueryEvent, MetricPayload, MetricData, QueryProps, SQSEventBody, ExecutionDay } from "./types";
+import { EventBridgeQueryEvent, MetricPayload, MetricData, QueryProps, SQSEventBody, ExecutionDay, MetricDataProps } from "./types";
 import { SQSEvent } from "aws-lambda";
 import { ClientHelper } from "./client-helper";
 import axios, { RawAxiosRequestConfig } from "axios";
@@ -35,22 +35,35 @@ export class MetricsHelper {
   }
 
   async getMetricsData(event: EventBridgeQueryEvent): Promise<MetricData> {
-    const metricsDataProps: MetricDataQuery[] = event["metrics-data-query"];
+    const metricsDataProps: MetricDataProps[] = event["metrics-data-query"];
     const endTime = new Date(event.time);
-    const input: GetMetricDataCommandInput = {
-      MetricDataQueries: metricsDataProps,
-      StartTime: new Date(endTime.getTime() - ((EXECUTION_DAY == ExecutionDay.DAILY ? 1 : 7) * 86400 * 1000)), // 7 or 1 day(s) previous
-      EndTime: endTime,
-    };
-    return await this.fetchMetricsData(input);
+    const regionedMetricProps = {};
+    for (const metric of metricsDataProps) {
+      const region = metric.region ?? "default";
+      if (!regionedMetricProps[region]) regionedMetricProps[region] = []; 
+      regionedMetricProps[region].push(metric);
+    }
+    let results: MetricData = {}
+    for (const region in regionedMetricProps) {
+      const metricProps = regionedMetricProps[region];
+      const cloudFrontInput: GetMetricDataCommandInput = {
+        MetricDataQueries: metricProps,
+        StartTime: new Date(endTime.getTime() - ((EXECUTION_DAY == ExecutionDay.DAILY ? 1 : 7) * 86400 * 1000)), // 7 or 1 day(s) previous
+        EndTime: endTime,
+      };
+      results = {...results, ...await this.fetchMetricsData(cloudFrontInput, region)};
+    }
+    
+    return results;
   }
 
-  private async fetchMetricsData(input: GetMetricDataCommandInput): Promise<MetricData> {
+  private async fetchMetricsData(input: GetMetricDataCommandInput, region: string): Promise<MetricData> {
     let command = new GetMetricDataCommand(input);
+
     let response: GetMetricDataCommandOutput;
     const results: MetricData = {};
     do {
-      response = await this.clientHelper.getCwClient().send(command);
+      response = await this.clientHelper.getCwClient(region).send(command);
       console.info(response);
 
       input.MetricDataQueries?.forEach((item, index) => {

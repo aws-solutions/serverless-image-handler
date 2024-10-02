@@ -223,10 +223,15 @@ export class ImageHandler {
    * @param overlaySize the size of the overlay
    * @returns the calculated size
    */
-  private calcOverlaySizeOption = (editSize: string | undefined, imageSize: number, overlaySize: number): number => {
+  private calcOverlaySizeOption = (
+    editSize: string | number | undefined,
+    imageSize: number,
+    overlaySize: number
+  ): number => {
     let resultSize = NaN;
 
     if (editSize !== undefined) {
+      editSize = `${editSize}`;
       // if ends with p, it is a percentage
       if (editSize.endsWith("p")) {
         resultSize = parseInt(editSize.replace("p", ""));

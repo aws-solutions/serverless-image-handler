@@ -5,14 +5,15 @@ import { MetricDataQuery } from "@aws-sdk/client-cloudwatch";
 import { StartQueryCommandInput } from "@aws-sdk/client-cloudwatch-logs";
 import { QueryDefinitionProps } from "aws-cdk-lib/aws-logs";
 import { EventBridgeEvent, SQSEvent } from "aws-lambda";
-
 export interface QueryProps extends Pick<StartQueryCommandInput, "queryString" | "logGroupNames"> {}
 export interface EventBridgeQueryEvent extends Pick<EventBridgeEvent<"Scheduled Event", {}>, "detail-type" | "time"> {
-  "metrics-data-query": MetricDataQuery[];
+  "metrics-data-query": MetricDataProps[];
 }
 
 export interface MetricDataProps
-  extends Pick<MetricDataQuery, "MetricStat" | "Expression" | "Label" | "ReturnData" | "Period"> {}
+  extends Pick<MetricDataQuery, "MetricStat" | "Expression" | "Label" | "ReturnData" | "Period" | "Id"> {
+    region?: string
+  }
 
 export enum ExecutionDay {
   DAILY = "*",

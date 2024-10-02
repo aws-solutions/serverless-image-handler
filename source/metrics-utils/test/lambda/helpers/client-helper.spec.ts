@@ -55,6 +55,28 @@ describe("ClientHelper", () => {
     expect(CloudWatchClient).toHaveBeenCalledTimes(1);
   });
 
+  it("should return different CloudWatchClient instances on different provided regions", () => {
+    const cwClient1 = clientHelper.getCwClient();
+    const cwClient2 = clientHelper.getCwClient("us-east-1");
+    expect(cwClient1).not.toBe(cwClient2);
+    expect(CloudWatchClient).toHaveBeenCalledTimes(2);
+  });
+
+  it("should return identical CloudWatchClient instances when AWS_REGION is set", () => {
+    process.env.AWS_REGION = "us-east-1";
+    const cwClient1 = clientHelper.getCwClient();
+    const cwClient2 = clientHelper.getCwClient("us-east-1");
+    expect(cwClient1).toBe(cwClient2);
+    expect(CloudWatchClient).toHaveBeenCalledTimes(1);
+  });
+
+  it("should return different CloudWatchClient instances when AWS_REGION is set", () => {
+    const cwClient1 = clientHelper.getCwClient("us-west-2");
+    const cwClient2 = clientHelper.getCwClient("us-east-1");
+    expect(cwClient1).not.toBe(cwClient2);
+    expect(CloudWatchClient).toHaveBeenCalledTimes(2);
+  });
+
   it("should initialize and return a CloudWatchLogsClient instance", () => {
     const cwLogsClient = clientHelper.getCwLogsClient();
     expect(cwLogsClient).toBeInstanceOf(CloudWatchLogsClient);

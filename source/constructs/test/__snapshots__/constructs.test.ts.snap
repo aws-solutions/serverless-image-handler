@@ -81,7 +81,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       "Config": {
         "AnonymousUsage": "Yes",
         "SolutionId": "S0ABC",
-        "Version": "v6.3.0",
+        "Version": "v6.3.1",
       },
     },
   },
@@ -408,7 +408,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "Solutions:ApplicationType": "AWS-Solutions",
           "Solutions:SolutionID": "S0ABC",
           "Solutions:SolutionName": "sih",
-          "Solutions:SolutionVersion": "v6.3.0",
+          "Solutions:SolutionVersion": "v6.3.1",
         },
       },
       "Type": "AWS::ServiceCatalogAppRegistry::Application",
@@ -1277,7 +1277,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
           "S3Key": "Omitted to remove snapshot dependency on hash",
         },
-        "Description": "sih (v6.3.0): Performs image edits and manipulations",
+        "Description": "sih (v6.3.1): Performs image edits and manipulations",
         "Environment": {
           "Variables": {
             "AUTO_WEBP": {
@@ -1492,7 +1492,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
                     {
                       "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaCloudFrontToApiGatewayCloudFrontDistribution03AA31B2",
                     },
-                    ""},{"Name":"Region","Value":"Global"}],"MetricName":"Requests"},"Stat":"Sum","Period":604800},"Id":"id_",
+                    ""},{"Name":"Region","Value":"Global"}],"MetricName":"Requests"},"Stat":"Sum","Period":604800},"region":"us-east-1","Id":"id_",
                     {
                       "Fn::Join": [
                         "_",
@@ -1510,7 +1510,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
                     {
                       "Ref": "BackEndImageHandlerCloudFrontApiGatewayLambdaCloudFrontToApiGatewayCloudFrontDistribution03AA31B2",
                     },
-                    ""},{"Name":"Region","Value":"Global"}],"MetricName":"BytesDownloaded"},"Stat":"Sum","Period":604800},"Id":"id_",
+                    ""},{"Name":"Region","Value":"Global"}],"MetricName":"BytesDownloaded"},"Stat":"Sum","Period":604800},"region":"us-east-1","Id":"id_",
                     {
                       "Fn::Join": [
                         "_",
@@ -1977,7 +1977,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
           "S3Key": "Omitted to remove snapshot dependency on hash",
         },
-        "Description": "sih (v6.3.0): Custom resource",
+        "Description": "sih (v6.3.1): Custom resource",
         "Environment": {
           "Variables": {
             "RETRY_SECONDS": "5",
@@ -2583,7 +2583,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "applicationType": "AWS-Solutions",
           "solutionID": "S0ABC",
           "solutionName": "sih",
-          "version": "v6.3.0",
+          "version": "v6.3.1",
         },
         "Description": "Attribute group for solution information",
         "Name": {

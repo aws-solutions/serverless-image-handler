@@ -20,6 +20,7 @@ export function addLambdaInvocationCount(this: SolutionsMetrics, functionName: s
       Stat: "Sum",
       Period: period,
     },
+    Id: undefined
   });
 }
 
@@ -48,6 +49,8 @@ export function addCloudFrontMetric(
       Stat: "Sum",
       Period: period,
     },
+    region: "us-east-1",
+    Id: undefined
   });
 }
 
