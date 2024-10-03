@@ -76,8 +76,27 @@ overrideWarningsEnabled=false npx cdk deploy\
 ```
 
 _Note:_
-- **MY_BUCKET**: name of an existing bucket in your account
+- **MY_BUCKET**: name of an existing bucket or the list of comma-separated bucket names in your account
 - **PROFILE_NAME**: name of an AWS CLI profile that has appropriate credentials for deploying in your preferred region
+
+Check the bucket resource policy if the API cannot access the bucket after the successful deployment. You may need to allow **s3:GetObject** and **s3:ListBucket** operations for your the Image Handler lambda role:
+
+```json
+{
+    "Effect": "Allow",
+    "Principal": {
+        "AWS": "arn:aws:iam::XXXXXX:role/ServerlessImageHandlerSta-BackEndImageHandlerFuncti-XXXXXX"
+    },
+    "Action": [
+        "s3:GetObject",
+        "s3:ListBucket"
+    ],
+    "Resource": [
+        "arn:aws:s3:::XXXXXX-bucket",
+        "arn:aws:s3:::XXXXXX-bucket/*"
+    ]
+}
+```
 
 # Collection of operational metrics
 
