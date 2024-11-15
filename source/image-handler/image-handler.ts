@@ -103,7 +103,10 @@ export class ImageHandler {
     } else {
       if (imageRequestInfo.outputFormat !== undefined) {
         // convert image to Sharp and change output format if specified
-        const modifiedImage = this.modifyImageOutput( await this.instantiateSharpImage(originalImage,{}, options), imageRequestInfo);
+        const modifiedImage = this.modifyImageOutput(
+          await this.instantiateSharpImage(originalImage, {}, options),
+          imageRequestInfo
+        );
         // convert to base64 encoded string
         const imageBuffer = await modifiedImage.toBuffer();
         base64EncodedImage = imageBuffer.toString("base64");
