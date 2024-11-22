@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.3.2] - 2024-11-22
+
+### Fixed
+- Upgrade cross-spawn to v7.0.6 for vulnerability [CVE-2024-9506](https://github.com/advisories/GHSA-5j4c-8p2g-v4jx)
+
 ## [6.3.1] - 2024-10-02
 
 ### Fixed
