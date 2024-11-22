@@ -1,6 +1,6 @@
 {
   "name": "source",
-  "version": "6.3.1",
+  "version": "6.3.2",
   "private": true,
   "description": "ESLint and prettier dependencies to be used within the solution",
   "license": "Apache-2.0",

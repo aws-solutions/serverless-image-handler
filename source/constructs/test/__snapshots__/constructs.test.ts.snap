@@ -81,7 +81,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
       "Config": {
         "AnonymousUsage": "Yes",
         "SolutionId": "S0ABC",
-        "Version": "v6.3.1",
+        "Version": "v6.3.2",
       },
     },
   },
@@ -408,7 +408,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "Solutions:ApplicationType": "AWS-Solutions",
           "Solutions:SolutionID": "S0ABC",
           "Solutions:SolutionName": "sih",
-          "Solutions:SolutionVersion": "v6.3.1",
+          "Solutions:SolutionVersion": "v6.3.2",
         },
       },
       "Type": "AWS::ServiceCatalogAppRegistry::Application",
@@ -1277,7 +1277,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
           "S3Key": "Omitted to remove snapshot dependency on hash",
         },
-        "Description": "sih (v6.3.1): Performs image edits and manipulations",
+        "Description": "sih (v6.3.2): Performs image edits and manipulations",
         "Environment": {
           "Variables": {
             "AUTO_WEBP": {
@@ -1977,7 +1977,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           },
           "S3Key": "Omitted to remove snapshot dependency on hash",
         },
-        "Description": "sih (v6.3.1): Custom resource",
+        "Description": "sih (v6.3.2): Custom resource",
         "Environment": {
           "Variables": {
             "RETRY_SECONDS": "5",
@@ -2583,7 +2583,7 @@ exports[`Serverless Image Handler Stack Snapshot 1`] = `
           "applicationType": "AWS-Solutions",
           "solutionID": "S0ABC",
           "solutionName": "sih",
-          "version": "v6.3.1",
+          "version": "v6.3.2",
         },
         "Description": "Attribute group for solution information",
         "Name": {
