@@ -17,6 +17,7 @@ const rekognitionClient = new Rekognition();
 describe("overlay", () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    process.env.SOURCE_BUCKETS = "validBucket, sourceBucket, bucket, sample-bucket";
   });
 
   afterEach(() => {
@@ -305,7 +306,7 @@ describe("overlay", () => {
     expect(overlayImageMetadata.height).toEqual(11);
   });
 
-  it("Should throw an error if an invalid bucket or key name is provided, simulating a nonexistent overlay image", async () => {
+  it("Should throw an error if an invalid key name is provided, simulating a nonexistent overlay image", async () => {
     // Mock
     mockAwsS3.getObject.mockImplementationOnce(() => ({
       promise() {
@@ -328,17 +329,37 @@ describe("overlay", () => {
       )
     ).metadata();
     try {
-      await imageHandler.getOverlayImage("invalidBucket", "invalidKey", "100", "100", "20", metadata);
+      await imageHandler.getOverlayImage("bucket", "invalidKey", "100", "100", "20", metadata);
     } catch (error) {
       // Assert
       expect(mockAwsS3.getObject).toHaveBeenCalledWith({
-        Bucket: "invalidBucket",
+        Bucket: "bucket",
         Key: "invalidKey",
       });
       expect(error).toMatchObject({
         status: StatusCodes.INTERNAL_SERVER_ERROR,
         code: "InternalServerError",
         message: "SimulatedInvalidParameterException",
+      });
+    }
+  });
+  it("Should throw an error if an invalid bucket is provided", async () => {
+    // Act
+    const imageHandler = new ImageHandler(s3Client, rekognitionClient);
+    const metadata = await sharp(
+      Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+        "base64"
+      )
+    ).metadata();
+    try {
+      await imageHandler.getOverlayImage("invalidBucket", "key", "100", "100", "20", metadata);
+    } catch (error) {
+      // Assert
+      expect(error).toMatchObject({
+        status: StatusCodes.FORBIDDEN,
+        code: "ImageBucket::CannotAccessBucket",
+        message: "The overlay image bucket you specified could not be accessed. Please check that the bucket is specified in your SOURCE_BUCKETS.",
       });
     }
   });

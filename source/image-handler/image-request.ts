@@ -15,6 +15,7 @@ import {
   ImageRequestInfo,
   RequestTypes,
   StatusCodes,
+  HEADER_DENY_LIST,
 } from "./lib";
 import { SecretProvider } from "./secret-provider";
 import { ThumborMapper } from "./thumbor-mapper";
@@ -168,14 +169,11 @@ export class ImageRequest {
         );
       }
       const imageBuffer = Buffer.from(originalImage.Body as Uint8Array);
-
+      // Infer from hex headers if provided content type is not supported
       if (originalImage.ContentType) {
-        // If using default S3 ContentType infer from hex headers
-        if (["binary/octet-stream", "application/octet-stream"].includes(originalImage.ContentType)) {
-          result.contentType = this.inferImageType(imageBuffer);
-        } else {
-          result.contentType = originalImage.ContentType;
-        }
+        result.contentType = Object.values(ContentTypes).includes(originalImage.ContentType)
+          ? originalImage.ContentType
+          : this.inferImageType(imageBuffer);
       } else {
         result.contentType = "image";
       }
@@ -217,7 +215,7 @@ export class ImageRequest {
 
       if (request.bucket !== undefined) {
         // Check the provided bucket against the allowed list
-        const sourceBuckets = this.getAllowedSourceBuckets();
+        const sourceBuckets = getAllowedSourceBuckets();
 
         if (sourceBuckets.includes(request.bucket)) {
           return request.bucket;
@@ -230,12 +228,12 @@ export class ImageRequest {
         }
       } else {
         // Try to use the default image source bucket env var
-        const sourceBuckets = this.getAllowedSourceBuckets();
+        const sourceBuckets = getAllowedSourceBuckets();
         return sourceBuckets[0];
       }
     } else if (requestType === RequestTypes.THUMBOR || requestType === RequestTypes.CUSTOM) {
       // Use the default image source bucket env var
-      const sourceBuckets = this.getAllowedSourceBuckets();
+      const sourceBuckets = getAllowedSourceBuckets();
       // Take the path and split it at "/" to get each "word" in the url as array
       let potentialBucket = event.path
         .split("/")
@@ -394,7 +392,7 @@ export class ImageRequest {
     if (requestType === RequestTypes.DEFAULT) {
       const { headers } = this.decodeRequest(event);
       if (headers) {
-        return headers;
+        return filterRestrictedHeaders(headers);
       }
     }
   }
@@ -427,25 +425,6 @@ export class ImageRequest {
         "DecodeRequest::CannotReadPath",
         "The URL path you provided could not be read. Please ensure that it is properly formed according to the solution documentation."
       );
-    }
-  }
-
-  /**
-   * Returns a formatted image source bucket allowed list as specified in the SOURCE_BUCKETS environment variable of the image handler Lambda function.
-   * Provides error handling for missing/invalid values.
-   * @returns A formatted image source bucket.
-   */
-  public getAllowedSourceBuckets(): string[] {
-    const { SOURCE_BUCKETS } = process.env;
-
-    if (SOURCE_BUCKETS === undefined) {
-      throw new ImageHandlerError(
-        StatusCodes.BAD_REQUEST,
-        "GetAllowedSourceBuckets::NoSourceBuckets",
-        "The SOURCE_BUCKETS variable could not be read. Please check that it is not empty and contains at least one source bucket, or multiple buckets separated by commas. Spaces can be provided between commas and bucket names, these will be automatically parsed out when decoding."
-      );
-    } else {
-      return SOURCE_BUCKETS.replace(/\s+/g, "").split(",");
     }
   }
 
@@ -546,4 +525,48 @@ export class ImageRequest {
       }
     }
   }
+}
+
+/**
+ * Returns a formatted image source bucket allowed list as specified in the SOURCE_BUCKETS environment variable of the image handler Lambda function.
+ * Provides error handling for missing/invalid values.
+ * @returns A formatted image source bucket.
+ */
+export function getAllowedSourceBuckets(): string[] {
+  const { SOURCE_BUCKETS } = process.env;
+
+  if (SOURCE_BUCKETS === undefined) {
+    throw new ImageHandlerError(
+      StatusCodes.BAD_REQUEST,
+      "GetAllowedSourceBuckets::NoSourceBuckets",
+      "The SOURCE_BUCKETS variable could not be read. Please check that it is not empty and contains at least one source bucket, or multiple buckets separated by commas. Spaces can be provided between commas and bucket names, these will be automatically parsed out when decoding."
+    );
+  } else {
+    return SOURCE_BUCKETS.replace(/\s+/g, "").split(",");
+  }
+}
+
+/**
+ * Filters out headers that match any pattern in the deny list and returns the safe headers
+ * @param headers Input headers to filter
+ * @returns Safe headers
+ */
+function filterRestrictedHeaders(headers: Record<string, string>): Headers {
+  const safeHeaders: Record<string, string> = {};
+
+  // Process each header using for...of loop
+  for (const [header, value] of Object.entries(headers)) {
+    const headerLower = header.toLowerCase();
+
+    // If the header matches any pattern in the deny list, log and skip
+    if (HEADER_DENY_LIST.some((pattern) => pattern.test(headerLower))) {
+      console.warn("Filtered out restricted header:", header);
+      continue;
+    }
+
+    // Add safe headers
+    safeHeaders[header] = value;
+  }
+
+  return safeHeaders;
 }

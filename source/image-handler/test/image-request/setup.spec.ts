@@ -221,7 +221,7 @@ describe("setup", () => {
       promise() {
         return Promise.resolve({
           CacheControl: "max-age=300,public",
-          ContentType: "custom-type",
+          ContentType: "image/jpeg",
           Expires: "Tue, 24 Dec 2019 13:46:28 GMT",
           LastModified: "Sat, 19 Dec 2009 16:30:47 GMT",
           Body: Buffer.from("SampleImageContent\n"),
@@ -242,7 +242,7 @@ describe("setup", () => {
       },
       originalImage: Buffer.from("SampleImageContent\n"),
       cacheControl: "max-age=300,public",
-      contentType: "custom-type",
+      contentType: "image/jpeg",
       expires: "Tue, 24 Dec 2019 13:46:28 GMT",
       lastModified: "Sat, 19 Dec 2009 16:30:47 GMT",
     };
@@ -271,7 +271,7 @@ describe("setup", () => {
       promise() {
         return Promise.resolve({
           CacheControl: "max-age=300,public",
-          ContentType: "custom-type",
+          ContentType: "image/jpeg",
           Expires: "Tue, 24 Dec 2019 13:46:28 GMT",
           LastModified: "Sat, 19 Dec 2009 16:30:47 GMT",
           Body: Buffer.from("SampleImageContent\n"),
@@ -292,7 +292,7 @@ describe("setup", () => {
       },
       originalImage: Buffer.from("SampleImageContent\n"),
       cacheControl: "max-age=300,public",
-      contentType: "custom-type",
+      contentType: "image/jpeg",
       expires: "Tue, 24 Dec 2019 13:46:28 GMT",
       lastModified: "Sat, 19 Dec 2009 16:30:47 GMT",
     };

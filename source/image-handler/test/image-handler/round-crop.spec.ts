@@ -44,7 +44,7 @@ describe("roundCrop", () => {
     const result = await imageHandler.applyEdits(image, edits, false);
 
     // Assert
-    const expectedResult: ImageEdits = { width: metadata.width / 2, height: metadata.height / 2 };
+    const expectedResult = { width: metadata.width / 2, height: metadata.height / 2 };
     expect(result["options"].input).not.toEqual(expectedResult);
     expect(hasRoundCropSpy).toHaveReturnedWith(true);
     expect(validRoundCropParamSpy).toHaveBeenCalledTimes(4);
@@ -70,7 +70,7 @@ describe("roundCrop", () => {
     const result = await imageHandler.applyEdits(image, edits, false);
 
     // Assert
-    const expectedResult: ImageEdits = { width: metadata.width / 2, height: metadata.height / 2 };
+    const expectedResult = { width: metadata.width / 2, height: metadata.height / 2 };
     expect(result["options"].input).not.toEqual(expectedResult);
     expect(hasRoundCropSpy).toHaveReturnedWith(true);
     expect(validRoundCropParamSpy).toHaveReturnedWith(true);

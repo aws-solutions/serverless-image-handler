@@ -1,6 +1,6 @@
 {
     "name": "demo-ui",
-    "version": "6.3.2",
+    "version": "6.3.3",
     "private": true,
     "description": "Serverless Image Handler demo ui",
     "license": "Apache-2.0",

@@ -219,7 +219,8 @@ export class ServerlessImageHandlerStack extends Stack {
       description: `${props.solutionId} - ${props.solutionName}. Version ${props.solutionVersion}`,
       solutionVersion: props.solutionVersion,
       solutionId: props.solutionId,
-      applicationName: props.solutionName,
+      solutionName: props.solutionName,
+      applicationName: commonResources.customResources.appRegApplicationName,
     });
 
     this.templateOptions.metadata = {

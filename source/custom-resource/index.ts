@@ -1,8 +1,10 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import CloudFormation from "aws-sdk/clients/cloudformation";
 import EC2, { DescribeRegionsRequest } from "aws-sdk/clients/ec2";
 import S3, { CreateBucketRequest, PutBucketEncryptionRequest, PutBucketPolicyRequest } from "aws-sdk/clients/s3";
+import ServiceCatalogAppRegistry from "aws-sdk/clients/servicecatalogappregistry";
 import SecretsManager from "aws-sdk/clients/secretsmanager";
 import axios, { RawAxiosRequestConfig, AxiosResponse } from "axios";
 import { createHash } from "crypto";
@@ -28,11 +30,14 @@ import {
   ResourcePropertyTypes,
   SendMetricsRequestProperties,
   StatusTypes,
+  GetAppRegApplicationNameRequestProperties,
 } from "./lib";
 
 const awsSdkOptions = getOptions();
 const s3Client = new S3(awsSdkOptions);
 const ec2Client = new EC2(awsSdkOptions);
+const cloudformationClient = new CloudFormation(awsSdkOptions);
+const serviceCatalogClient = new ServiceCatalogAppRegistry(awsSdkOptions);
 const secretsManager = new SecretsManager(awsSdkOptions);
 
 const { SOLUTION_ID, SOLUTION_VERSION, AWS_REGION, RETRY_SECONDS } = process.env;
@@ -88,6 +93,14 @@ export async function handler(event: CustomResourceRequest, context: LambdaConte
           response,
           ResourceProperties as CheckSourceBucketsRequestProperties
         );
+        break;
+      }
+      case CustomResourceActions.GET_APP_REG_APPLICATION_NAME: {
+        const allowedRequestTypes = [CustomResourceRequestTypes.CREATE, CustomResourceRequestTypes.UPDATE];
+        await performRequest(getAppRegApplicationName, RequestType, allowedRequestTypes, response, {
+          ...ResourceProperties,
+          StackId: event.StackId,
+        } as GetAppRegApplicationNameRequestProperties);
         break;
       }
       case CustomResourceActions.CHECK_SECRETS_MANAGER: {
@@ -401,6 +414,39 @@ async function validateBuckets(requestProperties: CheckSourceBucketsRequestPrope
       "BucketNotFound",
       `Could not find the following source bucket(s) in your account: ${commaSeparatedErrors}. Please specify at least one source bucket that exists within your account and try again. If specifying multiple source buckets, please ensure that they are comma-separated.`
     );
+  }
+}
+
+/**
+ * Provides the existing app registry application name if it exists, otherwise, returns the default.
+ * @param requestProperties The request properties.
+ * @returns The result of validation.
+ */
+async function getAppRegApplicationName(
+  requestProperties: GetAppRegApplicationNameRequestProperties
+): Promise<{ ApplicationName?: string }> {
+  try {
+    const stackResources = await cloudformationClient
+      .describeStackResources({
+        StackName: requestProperties.StackId,
+        LogicalResourceId: "AppRegistry968496A3",
+      })
+      .promise();
+
+    const application = await serviceCatalogClient
+      .getApplication({
+        application: stackResources.StackResources[0].PhysicalResourceId,
+      })
+      .promise();
+    console.log(application);
+    return {
+      ApplicationName: application?.name ?? requestProperties.DefaultName,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      ApplicationName: requestProperties.DefaultName,
+    };
   }
 }
 

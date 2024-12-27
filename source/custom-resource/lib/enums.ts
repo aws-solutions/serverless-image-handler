@@ -9,6 +9,7 @@ export enum CustomResourceActions {
   CHECK_SECRETS_MANAGER = "checkSecretsManager",
   CHECK_FALLBACK_IMAGE = "checkFallbackImage",
   CREATE_LOGGING_BUCKET = "createCloudFrontLoggingBucket",
+  GET_APP_REG_APPLICATION_NAME = "getAppRegApplicationName",
 }
 
 export enum CustomResourceRequestTypes {

@@ -17,6 +17,8 @@ import {
   RekognitionCompatibleImage,
   StatusCodes,
 } from "./lib";
+import { getAllowedSourceBuckets } from "./image-request";
+import { SHARP_EDIT_ALLOWLIST_ARRAY } from "./lib/constants";
 
 export class ImageHandler {
   private readonly LAMBDA_PAYLOAD_LIMIT = 6 * 1024 * 1024;
@@ -165,7 +167,7 @@ export class ImageHandler {
           break;
         }
         default: {
-          if (edit in originalImage) {
+          if (SHARP_EDIT_ALLOWLIST_ARRAY.includes(edit as any)) {
             originalImage[edit](edits[edit]);
           }
         }
@@ -474,6 +476,13 @@ export class ImageHandler {
     alpha: string,
     sourceImageMetadata: sharp.Metadata
   ): Promise<Buffer> {
+    if (!getAllowedSourceBuckets().includes(bucket)) {
+      throw new ImageHandlerError(
+        StatusCodes.FORBIDDEN,
+        "ImageBucket::CannotAccessBucket",
+        "The overlay image bucket you specified could not be accessed. Please check that the bucket is specified in your SOURCE_BUCKETS."
+      );
+    }
     const params = { Bucket: bucket, Key: key };
     try {
       const { width, height } = sourceImageMetadata;
