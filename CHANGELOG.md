@@ -5,10 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.3.3] - 2024-12-27
+
+### Fixed
+- Overlays not checking for valid S3 buckets
+- Failures when updating deployments created in version 6.1.0 and prior [#559](https://github.com/aws-solutions/serverless-image-handler/issues/559)
+
+### Security 
+
+- Added allowlist on sharp operations. [Info](https://docs.aws.amazon.com/solutions/latest/serverless-image-handler/create-and-use-image-requests.html#restricted-operations)
+- Added deny list on custom headers for base64 encoded requests. [Info](https://docs.aws.amazon.com/solutions/latest/serverless-image-handler/create-and-use-image-requests.html#include-custom-response-headers)
+- Added inference of Content-Type header if S3 Metadata provides an unsupported value
+
 ## [6.3.2] - 2024-11-22
 
 ### Fixed
 - Upgrade cross-spawn to v7.0.6 for vulnerability [CVE-2024-9506](https://github.com/advisories/GHSA-5j4c-8p2g-v4jx)
+
 
 ## [6.3.1] - 2024-10-02
 

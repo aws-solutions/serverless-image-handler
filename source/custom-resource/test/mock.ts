@@ -29,6 +29,18 @@ export const mockAwsSecretManager = {
 
 jest.mock("aws-sdk/clients/secretsmanager", () => jest.fn(() => ({ ...mockAwsSecretManager })));
 
+export const mockCloudFormation = {
+  describeStackResources: jest.fn(),
+};
+
+jest.mock("aws-sdk/clients/cloudformation", () => jest.fn(() => ({ ...mockCloudFormation })));
+
+export const mockServiceCatalogAppRegistry = {
+  getApplication: jest.fn(),
+};
+
+jest.mock("aws-sdk/clients/servicecatalogappregistry", () => jest.fn(() => ({ ...mockServiceCatalogAppRegistry })));
+
 export const mockAxios = {
   put: jest.fn(),
   post: jest.fn(),

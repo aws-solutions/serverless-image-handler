@@ -30,6 +30,29 @@ describe("parseImageHeaders", () => {
     expect(result).toEqual(expectedResult);
   });
 
+  it("001/Should remove restricted headers if included with a base64-encoded image request", () => {
+    //Arrange
+    /** Includes restricted headers:
+     *  'Transfer-encoding',
+     *  'x-api-key',
+     *  'x-amz-header',
+     *  'content-type',
+     *  'Access-Control-Allow-Origin'
+     **/
+    const event = {
+      path: "/eyJidWNrZXQiOiJ2YWxpZEJ1Y2tldCIsImtleSI6InZhbGlkS2V5IiwiaGVhZGVycyI6eyJDYWNoZS1Db250cm9sIjoibWF4LWFnZT0zMTUzNjAwMCxwdWJsaWMiLCAiVHJhbnNmZXItZW5jb2RpbmciOiAidmFsdWUiLCAieC1hcGkta2V5IjogInZhbHVlIiwgIngtYW16LWhlYWRlciI6ICJ2YWx1ZSIsICJjb250ZW50LXR5cGUiOiAiaHRtbCIsICJBY2Nlc3MtQ29udHJvbC1BbGxvdy1PcmlnaW4iOiAiKiJ9LCJvdXRwdXRGb3JtYXQiOiJqcGVnIn0=",
+    };
+    // Act
+    const imageRequest = new ImageRequest(s3Client, secretProvider);
+    const result = imageRequest.parseImageHeaders(event, RequestTypes.DEFAULT);
+
+    // Assert
+    const expectedResult = {
+      "Cache-Control": "max-age=31536000,public",
+    };
+    expect(result).toEqual(expectedResult);
+  });
+
   it("001/Should return undefined if headers are not provided for a base64-encoded image request", () => {
     // Arrange
     const event = {

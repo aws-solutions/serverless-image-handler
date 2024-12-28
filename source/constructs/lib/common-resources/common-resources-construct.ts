@@ -27,6 +27,7 @@ export interface AppRegistryApplicationProps {
   readonly description: string;
   readonly solutionId: string;
   readonly applicationName: string;
+  readonly solutionName: string;
   readonly solutionVersion: string;
 }
 
@@ -91,13 +92,13 @@ export class CommonResources extends Construct {
     const applicationType = "AWS-Solutions";
 
     const application = new appreg.Application(stack, "AppRegistry", {
-      applicationName: Fn.join("-", ["AppRegistry", Aws.STACK_NAME, Aws.REGION, Aws.ACCOUNT_ID]),
-      description: `Service Catalog application to track and manage all your resources for the solution ${props.applicationName}`,
+      applicationName: props.applicationName,
+      description: `Service Catalog application to track and manage all your resources for the solution ${props.solutionName}`,
     });
     application.associateApplicationWithStack(stack);
 
     Tags.of(application).add("Solutions:SolutionID", props.solutionId);
-    Tags.of(application).add("Solutions:SolutionName", props.applicationName);
+    Tags.of(application).add("Solutions:SolutionName", props.solutionName);
     Tags.of(application).add("Solutions:SolutionVersion", props.solutionVersion);
     Tags.of(application).add("Solutions:ApplicationType", applicationType);
 
@@ -108,7 +109,7 @@ export class CommonResources extends Construct {
         applicationType,
         version: props.solutionVersion,
         solutionID: props.solutionId,
-        solutionName: props.applicationName,
+        solutionName: props.solutionName,
       },
     });
     attributeGroup.associateWith(application);

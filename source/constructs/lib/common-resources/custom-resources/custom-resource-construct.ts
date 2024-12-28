@@ -49,6 +49,7 @@ export class CustomResourcesConstruct extends Construct {
   private readonly customResourceRole: Role;
   private readonly customResourceLambda: LambdaFunction;
   public readonly uuid: string;
+  public appRegApplicationName: string;
 
   constructor(scope: Construct, id: string, props: CustomResourcesConstructProps) {
     super(scope, id);
@@ -113,6 +114,40 @@ export class CustomResourcesConstruct extends Construct {
               effect: Effect.ALLOW,
               actions: ["ec2:DescribeRegions"],
               resources: ["*"],
+            }),
+          ],
+        }),
+        AppRegistryPolicy: new PolicyDocument({
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ["cloudformation:DescribeStackResources"],
+              resources: [
+                Stack.of(this).formatArn({
+                  partition: Aws.PARTITION,
+                  service: "cloudformation",
+                  region: Aws.REGION,
+                  account: Aws.ACCOUNT_ID,
+                  resource: "stack",
+                  resourceName: `${Aws.STACK_NAME}/*`,
+                  arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
+                }),
+              ],
+            }),
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ["servicecatalog:GetApplication"],
+              resources: [
+                Stack.of(this).formatArn({
+                  partition: Aws.PARTITION,
+                  service: "servicecatalog",
+                  region: Aws.REGION,
+                  account: Aws.ACCOUNT_ID,
+                  resource: "applications",
+                  resourceName: `*`,
+                  arnFormat: ArnFormat.SLASH_RESOURCE_SLASH_RESOURCE_NAME,
+                }),
+              ],
             }),
           ],
         }),
@@ -187,6 +222,17 @@ export class CustomResourcesConstruct extends Construct {
       Region: Aws.REGION,
       SourceBuckets: props.sourceBuckets,
     });
+
+    const getAppRegApplicationNameResults = this.createCustomResource(
+      "CustomResourceGetAppRegApplicationName",
+      this.customResourceLambda,
+      {
+        CustomAction: "getAppRegApplicationName",
+        Region: Aws.REGION,
+        DefaultName: Fn.join("-", ["AppRegistry", Aws.STACK_NAME, Aws.REGION, Aws.ACCOUNT_ID]),
+      }
+    );
+    this.appRegApplicationName = getAppRegApplicationNameResults.getAttString("ApplicationName");
 
     this.createCustomResource(
       "CustomResourceCheckFallbackImage",

@@ -36,17 +36,19 @@ export async function handler(event: ImageHandlerEvent): Promise<ImageHandlerExe
 
     const processedRequest = await imageHandler.process(imageRequestInfo);
 
-    let headers = getResponseHeaders(false, isAlb);
-    headers["Content-Type"] = imageRequestInfo.contentType;
-    // eslint-disable-next-line dot-notation
-    headers["Expires"] = imageRequestInfo.expires;
-    headers["Last-Modified"] = imageRequestInfo.lastModified;
+    let headers: Headers = {};
+    // Define headers that can be overwritten
     headers["Cache-Control"] = imageRequestInfo.cacheControl;
 
-    // Apply the custom headers overwriting any that may need overwriting
+    // Apply the custom headers
     if (imageRequestInfo.headers) {
       headers = { ...headers, ...imageRequestInfo.headers };
     }
+
+    headers = { ...headers, ...getResponseHeaders(false, isAlb) };
+    headers["Content-Type"] = imageRequestInfo.contentType;
+    headers["Expires"] = imageRequestInfo.expires;
+    headers["Last-Modified"] = imageRequestInfo.lastModified;
 
     return {
       statusCode: StatusCodes.OK,

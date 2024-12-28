@@ -30,6 +30,11 @@ export interface CheckSourceBucketsRequestProperties extends CustomResourceReque
   SourceBuckets: string;
 }
 
+export interface GetAppRegApplicationNameRequestProperties extends CustomResourceRequestPropertiesBase {
+  StackId: string;
+  DefaultName: string;
+}
+
 export interface CheckSecretManagerRequestProperties extends CustomResourceRequestPropertiesBase {
   SecretsManagerName: string;
   SecretsManagerKey: string;
