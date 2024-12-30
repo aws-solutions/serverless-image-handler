@@ -98,6 +98,7 @@ export class ImageRequest {
   public async setup(event: ImageHandlerEvent): Promise<ImageRequestInfo> {
     try {
       await this.validateRequestSignature(event);
+      this.validateRequestExpires(event);
 
       let imageRequestInfo: ImageRequestInfo = <ImageRequestInfo>{};
 
@@ -481,6 +482,19 @@ export class ImageRequest {
   }
 
   /**
+   * Creates a query string similar to API Gateway 2.0 payload's $.rawQueryString
+   * @param queryStringParameters Request's query parameters
+   * @returns URL encoded queryString
+   */
+  private recreateQueryString(queryStringParameters: ImageHandlerEvent['queryStringParameters']): string {
+    return Object
+      .entries(queryStringParameters)
+      .filter(([key]) => key !== 'signature')
+      .map(([key, value]) => [key, value].join('='))
+      .join('&');
+  }
+
+  /**
    * Validates the request's signature.
    * @param event Lambda request body.
    * @returns A promise.
@@ -501,11 +515,14 @@ export class ImageRequest {
         );
       }
 
+      const queryString = this.recreateQueryString(queryStringParameters);
+
       try {
         const { signature } = queryStringParameters;
         const secret = JSON.parse(await this.secretProvider.getSecret(SECRETS_MANAGER));
         const key = secret[SECRET_KEY];
-        const hash = createHmac("sha256", key).update(path).digest("hex");
+        const stringToSign = queryString !== '' ? [path, queryString].join('?') : path;
+        const hash = createHmac('sha256', key).update(stringToSign).digest('hex');
 
         // Signature should be made with the full path.
         if (signature !== hash) {
@@ -523,6 +540,32 @@ export class ImageRequest {
           "Signature validation failed."
         );
       }
+    }
+  }
+
+  private validateRequestExpires(event: ImageHandlerEvent): void {
+    try {
+      const { queryStringParameters } = event;
+      const expires = queryStringParameters?.expires;
+      if (expires !== undefined) {
+        const parsedDate = new Date(expires);
+        if (isNaN(parsedDate.getTime())) {
+          throw new ImageHandlerError(StatusCodes.BAD_REQUEST, 'ImageRequestExpiryFormat', 'Request has invalid expiry date.');
+        }
+        const now = new Date();
+        if (now > parsedDate) {
+          throw new ImageHandlerError(StatusCodes.FORBIDDEN, 'ImageRequestExpired', 'Request has expired.');
+        }
+      }
+    } catch (error) {
+      if (error.code === 'ImageRequestExpired') {
+        throw error;
+      }
+      if (error.code === 'ImageRequestExpiryFormat') {
+        throw error;
+      }
+      console.error('Error occurred while checking expiry.', error);
+      throw new ImageHandlerError(StatusCodes.INTERNAL_SERVER_ERROR, 'ExpiryDateCheckFailure', 'Expiry date check failed.');
     }
   }
 }
